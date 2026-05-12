@@ -1,0 +1,552 @@
+/* ============================================================
+   DOCTNASA & MRBORG :: shared design system
+   used by: home + section pages (disegni, vasi, etc.)
+   NOT used by: tools (they have their own self-contained styles)
+============================================================ */
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #080808;
+  --bg-soft: #0d0d0d;
+  --bg-card: #111111;
+  --fg:      #d0d0d0;
+  --fg-dim:  #6a6a6a;
+  --fg-fade: #3a3a3a;
+  --acc:     #5eff7e;    /* primary green accent — sobrio, vegetale */
+  --acc-dim: #3aaa50;
+  --amber:   #ffb000;    /* matches Cuore_Statico */
+  --blue:    #4af6ff;    /* matches Barene-Frame */
+  --red:     #ff2b4a;
+  --purple:  #c678ff;
+  --line:    #1d1d1d;
+  --line-h:  #2a2a2a;
+  --mono:    "Courier New", Courier, monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.55;
+  min-height: 100vh;
+  letter-spacing: 0.02em;
+}
+
+::selection { background: var(--acc); color: var(--bg); }
+
+a { color: var(--fg); text-decoration: none; }
+a:hover { color: var(--acc); }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding: 18px 16px 60px; }
+
+/* ============================================================
+   NAVIGATION BAR — sticky top, with TOOLS dropdown
+============================================================ */
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(8,8,8,0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+  margin: -18px -16px 22px;
+  padding: 12px 20px;
+}
+.topnav-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.topnav .brand {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--fg);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+.topnav .brand a { color: var(--fg); }
+.topnav .brand a:hover { color: var(--acc); }
+.topnav .brand .amp { color: var(--acc); }
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.nav-links a, .nav-links .nav-dd-btn {
+  font-family: inherit;
+  font-size: 10.5px;
+  letter-spacing: 1.4px;
+  padding: 6px 10px;
+  color: var(--fg-dim);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  text-transform: uppercase;
+  transition: color 0.1s;
+}
+.nav-links a:hover, .nav-links .nav-dd-btn:hover { color: var(--acc); }
+.nav-links a.active { color: var(--acc); }
+
+.nav-dd { position: relative; }
+.nav-dd-btn { display: flex; align-items: center; gap: 4px; }
+.nav-dd-btn .arrow { font-size: 7px; opacity: 0.6; transition: transform 0.18s; }
+.nav-dd.open .nav-dd-btn .arrow { transform: rotate(180deg); }
+.nav-dd-btn.active-section { color: var(--acc); }
+
+.nav-dd-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: var(--bg-soft);
+  border: 1px solid var(--acc);
+  display: none;
+  flex-direction: column;
+  z-index: 41;
+}
+.nav-dd.open .nav-dd-menu { display: flex; }
+.nav-dd-menu a {
+  padding: 10px 12px;
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  border-bottom: 1px dotted var(--line-h);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.nav-dd-menu a:last-child { border-bottom: 0; }
+.nav-dd-menu a .meta-tag {
+  font-size: 8.5px;
+  opacity: 0.5;
+  letter-spacing: 1.5px;
+}
+.nav-dd-menu a.amber:hover { color: var(--amber); background: rgba(255,176,0,0.06); }
+.nav-dd-menu a.blue:hover  { color: var(--blue);  background: rgba(74,246,255,0.06); }
+.nav-dd-menu a.all { color: var(--acc); border-top: 1px solid var(--line-h); }
+
+/* ============================================================
+   HERO / SITE HEADER (home only)
+============================================================ */
+.hero {
+  padding: 30px 0 24px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 26px;
+}
+.hero .site-name {
+  font-size: 28px;
+  letter-spacing: 4px;
+  font-weight: bold;
+  color: var(--fg);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.hero .site-name .amp { color: var(--acc); }
+.hero .tagline {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+}
+.hero .meta-row {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  font-size: 10.5px;
+  letter-spacing: 1.2px;
+  color: var(--fg-dim);
+}
+.hero .meta-row b { color: var(--fg); font-weight: normal; }
+
+/* ============================================================
+   PAGE HEADER (section pages)
+============================================================ */
+.page-head {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 22px;
+}
+.page-head .crumb {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  margin-bottom: 6px;
+}
+.page-head .crumb a { color: var(--fg-dim); border-bottom: 1px dotted var(--line-h); padding-bottom: 1px; }
+.page-head .crumb a:hover { color: var(--acc); }
+.page-head .crumb .sep { opacity: 0.35; margin: 0 4px; }
+.page-head h1 {
+  font-size: 22px;
+  letter-spacing: 3px;
+  font-weight: bold;
+  margin: 4px 0 4px;
+  color: var(--fg);
+}
+.page-head .desc {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--fg-dim);
+}
+.page-head .count {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--acc-dim);
+  margin-top: 6px;
+}
+
+/* ============================================================
+   SECTION GRID (home page — preview cards)
+============================================================ */
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.section-card {
+  display: block;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  padding: 16px 14px 14px;
+  transition: border-color 0.12s, transform 0.12s, background 0.12s;
+  position: relative;
+  overflow: hidden;
+}
+.section-card:hover {
+  border-color: var(--acc);
+  background: var(--bg-card);
+}
+.section-card .id {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  color: var(--fg-fade);
+}
+.section-card .icon {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: var(--acc);
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+.section-card .name {
+  font-size: 14px;
+  letter-spacing: 2px;
+  font-weight: bold;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.section-card:hover .name { color: var(--acc); }
+.section-card .sub {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--fg-dim);
+  margin-bottom: 10px;
+  min-height: 14px;
+}
+.section-card .stats {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px dotted var(--line-h);
+  padding-top: 7px;
+  font-size: 9.5px;
+  letter-spacing: 1.2px;
+  color: var(--fg-dim);
+}
+.section-card .stats .num { color: var(--fg); }
+.section-card.tools { border-left: 2px solid var(--acc); }
+
+/* ============================================================
+   POKEMON-STYLE INVENTORY CARDS (works in section pages)
+============================================================ */
+.inventory {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.inv-card {
+  display: block;
+  border: 2px solid var(--line);
+  background: var(--bg-soft);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.12s;
+}
+.inv-card:hover { border-color: var(--acc); }
+
+.inv-card .corner {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--acc-dim);
+  background: var(--bg-soft);
+  z-index: 2;
+}
+.inv-card .corner.tl { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.inv-card .corner.tr { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
+.inv-card .corner.bl { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
+.inv-card .corner.br { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+.inv-img {
+  aspect-ratio: 4/3;
+  background: #050505;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 2px solid var(--line);
+  position: relative;
+}
+.inv-img img, .inv-img svg {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.inv-img .placeholder {
+  color: var(--fg-fade);
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+.inv-img .badge-id {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  padding: 2px 6px;
+  background: var(--bg);
+  color: var(--acc);
+  border: 1px solid var(--acc-dim);
+}
+.inv-img .badge-year {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  padding: 2px 6px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--line-h);
+}
+
+.inv-body { padding: 10px 12px 12px; }
+.inv-name {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  font-weight: bold;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.inv-type {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--acc-dim);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.inv-desc {
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--fg-dim);
+  margin-bottom: 8px;
+}
+.inv-stats {
+  border-top: 1px dotted var(--line-h);
+  padding-top: 6px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 12px;
+  font-size: 9.5px;
+  letter-spacing: 1px;
+}
+.inv-stats dt { color: var(--fg-fade); }
+.inv-stats dd { color: var(--fg); }
+
+/* ============================================================
+   CHAT-STREAM (blog page)
+============================================================ */
+.chat-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.chat-msg {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.chat-msg.self { flex-direction: row-reverse; }
+
+.chat-avatar {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border: 2px solid var(--line);
+  background: var(--bg-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--acc);
+  position: relative;
+  image-rendering: pixelated;
+}
+.chat-avatar img, .chat-avatar svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+.chat-avatar .label {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  white-space: nowrap;
+}
+
+.chat-bubble {
+  flex: 1;
+  background: var(--bg-soft);
+  border: 2px solid var(--line);
+  padding: 12px 14px;
+  position: relative;
+  min-width: 0;
+}
+.chat-msg.self .chat-bubble {
+  border-color: var(--acc-dim);
+  background: rgba(94,255,126,0.04);
+}
+.chat-bubble::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-right-color: var(--line);
+}
+.chat-bubble::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: -5px;
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+  border-right-color: var(--bg-soft);
+}
+.chat-msg.self .chat-bubble::before {
+  left: auto; right: -8px;
+  border-right-color: transparent;
+  border-left-color: var(--acc-dim);
+}
+.chat-msg.self .chat-bubble::after {
+  left: auto; right: -5px;
+  border-right-color: transparent;
+  border-left-color: rgba(94,255,126,0.04);
+}
+
+.chat-meta {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--fg-fade);
+  margin-bottom: 6px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.chat-meta .author { color: var(--acc); }
+.chat-msg.self .chat-meta .author { color: var(--acc); }
+.chat-title {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  font-weight: bold;
+  color: var(--fg);
+  margin-bottom: 6px;
+}
+.chat-body {
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--fg);
+}
+.chat-body p { margin-bottom: 8px; }
+.chat-body p:last-child { margin-bottom: 0; }
+.chat-tags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.chat-tags span {
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  border: 1px solid var(--line-h);
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   FOOTER
+============================================================ */
+footer.site-foot {
+  border-top: 1px solid var(--line);
+  margin-top: 40px;
+  padding-top: 14px;
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-fade);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+footer.site-foot a { color: var(--fg-dim); }
+footer.site-foot a:hover { color: var(--acc); }
+
+/* ============================================================
+   UTILITIES
+============================================================ */
+.divider {
+  text-align: center;
+  margin: 28px 0;
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--fg-fade);
+}
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  border: 1px dashed var(--line-h);
+  color: var(--fg-dim);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+}
+
+@media (max-width: 540px) {
+  .topnav { padding: 10px 14px; }
+  .topnav .brand { font-size: 10px; letter-spacing: 1.5px; }
+  .nav-links a, .nav-links .nav-dd-btn { padding: 5px 7px; font-size: 9.5px; }
+  .hero .site-name { font-size: 22px; letter-spacing: 3px; }
+}

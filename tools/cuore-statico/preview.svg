@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <rect width="300" height="200" fill="#080808"/>
+  <g opacity="0.18">
+    <line x1="0" y1="20"  x2="300" y2="20"  stroke="#00ff41" stroke-width="0.3"/>
+    <line x1="0" y1="40"  x2="300" y2="40"  stroke="#00ff41" stroke-width="0.3"/>
+    <line x1="0" y1="60"  x2="300" y2="60"  stroke="#00ff41" stroke-width="0.3"/>
+    <line x1="0" y1="80"  x2="300" y2="80"  stroke="#00ff41" stroke-width="0.3"/>
+    <line x1="0" y1="100" x2="300" y2="100" stroke="#00ff41" stroke-width="0.3"/>
+    <line x1="0" y1="120" x2="300" y2="120" stroke="#00ff41" stroke-width="0.3"/>
+    <line x1="0" y1="140" x2="300" y2="140" stroke="#00ff41" stroke-width="0.3"/>
+    <line x1="0" y1="160" x2="300" y2="160" stroke="#00ff41" stroke-width="0.3"/>
+    <line x1="0" y1="180" x2="300" y2="180" stroke="#00ff41" stroke-width="0.3"/>
+  </g>
+  <text x="15" y="26" fill="#1a4d22" font-family="Courier New" font-size="7" letter-spacing="1.5">DOCTNASA&amp;MRBORG // STUDIO_v05</text>
+  <text x="15" y="50" fill="#00ff41" font-family="Courier New" font-size="14" font-weight="bold" letter-spacing="3">CUORE_STATICO</text>
+  <text x="15" y="62" fill="#1a4d22" font-family="Courier New" font-size="6" letter-spacing="1">synth.sampler.recorder.dub_engine</text>
+  <path d="M 15 100 L 30 100 L 35 88 L 42 112 L 48 78 L 55 124 L 62 92 L 70 100 L 80 100 L 86 85 L 94 118 L 102 95 L 112 100 L 124 100 L 130 90 L 138 115 L 146 88 L 154 124 L 162 95 L 172 100 L 184 100 L 192 92 L 200 110 L 210 80 L 220 122 L 230 95 L 242 100 L 285 100"
+        fill="none" stroke="#00ff41" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="14" y="78" width="272" height="44" fill="none" stroke="#0a3d14" stroke-width="0.5"/>
+  <g font-family="Courier New" font-size="6" letter-spacing="0.8">
+    <text x="15" y="140" fill="#00ff41">▶ PLAY</text>
+    <text x="60" y="140" fill="#ffb000">🔔 BEEP</text>
+    <text x="115" y="140" fill="#ff2b4a">⚡ STRIKE</text>
+    <text x="175" y="140" fill="#ff2b4a">⛔ PANIC</text>
+  </g>
+  <g font-family="Courier New" font-size="7" letter-spacing="1.5">
+    <text x="15" y="160" fill="#00ff41" opacity="0.7">MIX</text>
+    <text x="50" y="160" fill="#1a4d22">SYNTH</text>
+    <text x="92" y="160" fill="#1a4d22">SAMPLER</text>
+    <text x="148" y="160" fill="#1a4d22">FX</text>
+    <text x="175" y="160" fill="#1a4d22">REC</text>
+  </g>
+  <g font-family="Courier New" font-size="6">
+    <text x="15" y="180" fill="#1a4d22">OUT_dB</text>
+    <text x="55" y="180" fill="#00ff41" opacity="0.9">-12.4</text>
+    <text x="100" y="180" fill="#1a4d22">CHORD</text>
+    <text x="140" y="180" fill="#c678ff" opacity="0.85">F#m7</text>
+    <text x="180" y="180" fill="#1a4d22">PULSE</text>
+    <text x="220" y="180" fill="#ff2b4a">♥</text>
+  </g>
+  <rect x="14" y="166" width="272" height="6" fill="none" stroke="#0a3d14" stroke-width="0.4"/>
+  <rect x="14" y="166" width="120" height="6" fill="#00ff41" opacity="0.5"/>
+  <text x="285" y="194" text-anchor="end" fill="#0a3d14" font-family="Courier New" font-size="5" letter-spacing="2">v0.5</text>
+</svg>

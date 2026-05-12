@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>CUORE_STATICO_STUDIO // DOCTNASA&MRBORG</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg:  #080808;
+    --fg:  #00ff41;
+    --dim: #1a4d22;
+    --mid: #0a3d14;
+    --red: #ff2b4a;
+    --amber: #ffb000;
+    --blue: #4af6ff;
+    --purple: #c678ff;
+  }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+    min-height: 100vh;
+    user-select: none;
+  }
+  body {
+    background-image: repeating-linear-gradient(0deg, transparent 0, transparent 2px,
+      rgba(0,255,65,0.025) 2px, rgba(0,255,65,0.025) 3px);
+    padding: 18px 16px 60px;
+  }
+
+  .breadcrumb { font-size: 10px; letter-spacing: 1.5px; opacity: 0.55; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px dotted var(--dim); }
+  .breadcrumb a { color: var(--fg); opacity: 0.75; text-decoration: none; border-bottom: 1px dotted var(--dim); }
+  .breadcrumb a:hover { opacity: 1; }
+  .breadcrumb .sep { opacity: 0.35; margin: 0 4px; }
+
+  header { padding-bottom: 12px; border-bottom: 1px solid var(--dim); margin-bottom: 14px; }
+  .brand    { font-size: 9px;  letter-spacing: 2px; opacity: 0.55; }
+  .title    { font-size: 20px; letter-spacing: 3px; font-weight: bold; margin: 4px 0 4px; }
+  .subtitle { font-size: 10px; letter-spacing: 1px; opacity: 0.55; }
+
+  .section { border: 1px solid var(--dim); padding: 12px; margin-bottom: 12px; }
+  .section-title { font-size: 10px; letter-spacing: 2px; opacity: 0.65; margin-bottom: 10px; }
+  .section.amber  { border-color: var(--amber); }
+  .section.amber  .section-title { color: var(--amber); }
+  .section.blue   { border-color: var(--blue); }
+  .section.blue   .section-title { color: var(--blue); }
+  .section.red    { border-color: var(--red); }
+  .section.red    .section-title { color: var(--red); }
+  .section.purple { border-color: var(--purple); }
+  .section.purple .section-title { color: var(--purple); }
+
+  button {
+    font-family: inherit;
+    background: transparent;
+    border: 1px solid var(--fg);
+    color: var(--fg);
+    padding: 8px 6px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    font-size: 11px;
+    transition: background 0.1s, color 0.1s;
+  }
+  button:active { background: var(--fg); color: var(--bg); }
+  button.on     { background: var(--fg); color: var(--bg); }
+  button.big {
+    width: 100%; padding: 20px;
+    font-size: 16px; letter-spacing: 5px;
+    font-weight: bold; margin-bottom: 8px;
+  }
+  button.big.playing { background: var(--fg); color: var(--bg); }
+  button.amber  { border-color: var(--amber); color: var(--amber); }
+  button.amber:active, button.amber.on { background: var(--amber); color: var(--bg); }
+  button.red    { border-color: var(--red); color: var(--red); }
+  button.red:active, button.red.on { background: var(--red); color: var(--bg); }
+  button.blue   { border-color: var(--blue); color: var(--blue); }
+  button.blue:active, button.blue.on { background: var(--blue); color: var(--bg); }
+  button.purple { border-color: var(--purple); color: var(--purple); }
+  button.purple:active, button.purple.on { background: var(--purple); color: var(--bg); }
+  button.small  { font-size: 10px; padding: 6px 4px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
+
+  .row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; line-height: 1.6; }
+  .label { letter-spacing: 1.5px; opacity: 0.85; }
+  .value { color: var(--fg); font-variant-numeric: tabular-nums; }
+  .value.warn-color { color: var(--amber); }
+  .value.flash { animation: flash 0.15s; }
+  @keyframes flash {
+    0%   { color: var(--bg); background: var(--fg); padding: 0 4px; }
+    100% { color: var(--fg); background: transparent; padding: 0; }
+  }
+
+  .slider-block { margin-bottom: 10px; }
+  .slider-block:last-child { margin-bottom: 0; }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 2px; background: var(--mid);
+    outline: none; margin: 4px 0 2px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; background: var(--fg);
+    border-radius: 0; cursor: pointer; border: 1px solid var(--bg);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; background: var(--fg);
+    border: 1px solid var(--bg); border-radius: 0; cursor: pointer;
+  }
+
+  select, input[type="text"], input[type="file"] {
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--dim);
+    padding: 6px 8px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    width: 100%;
+    outline: none;
+  }
+  select:focus, input[type="text"]:focus { border-color: var(--fg); }
+
+  .meter-wrap {
+    border: 1px solid var(--dim);
+    height: 14px;
+    margin-top: 6px;
+    position: relative; overflow: hidden;
+    background: #000;
+  }
+  .meter-bar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: linear-gradient(to right, var(--fg) 0%, var(--fg) 70%, var(--amber) 85%, var(--red) 100%);
+    transition: width 0.04s linear;
+  }
+  .meter-marks {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: repeating-linear-gradient(to right,
+      transparent 0, transparent 9.9%,
+      rgba(0,0,0,0.9) 9.9%, rgba(0,0,0,0.9) 10%);
+  }
+
+  .heart { color: var(--red); display: inline-block; }
+  .heart.beat { animation: pulse 0.18s ease-out; }
+  @keyframes pulse {
+    0%   { opacity: 1; transform: scale(1.3); }
+    100% { opacity: 0.35; transform: scale(1); }
+  }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--dim);
+    margin-bottom: 12px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 10px 12px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--fg);
+    opacity: 0.5;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .tab.active { opacity: 1; border-bottom-color: var(--fg); }
+
+  .tabpanel { display: none; }
+  .tabpanel.active { display: block; animation: fade 0.3s; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  .wave-canvas {
+    width: 100%; height: 80px;
+    border: 1px solid var(--dim);
+    background: #000;
+    display: block;
+    margin-top: 6px;
+  }
+  .wave-canvas.live { border-color: var(--fg); }
+  .wave-canvas.purple-border { border-color: var(--purple); }
+
+  .rec-dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--red);
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .rec-dot.live { animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0.2; } }
+
+  .file-list {
+    border: 1px solid var(--dim);
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
+  }
+  .file-item {
+    padding: 6px 8px;
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+  .file-item a {
+    color: var(--blue);
+    text-decoration: underline;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .file-item .del {
+    color: var(--red);
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0 4px;
+  }
+  .file-wrap {
+    border-bottom: 1px solid var(--mid);
+    padding: 6px 0;
+  }
+  .file-wrap:last-child { border-bottom: none; }
+  .file-wrap audio {
+    width: 100%; margin-top: 4px; height: 30px;
+  }
+
+  footer {
+    border-top: 1px solid var(--dim);
+    margin-top: 18px; padding-top: 12px;
+    font-size: 9px; line-height: 1.7;
+    letter-spacing: 1px; opacity: 0.5;
+  }
+  footer .sig { opacity: 0.7; margin-top: 6px; font-style: italic; }
+  
+  .banner {
+    background: var(--amber);
+    color: var(--bg);
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+  }
+  .banner.show { display: block; animation: blink 1.5s infinite; }
+
+  main { animation: fade 0.6s ease; }
+</style>
+</head>
+<body>
+
+<audio id="silentAudio" playsinline webkit-playsinline loop preload="auto"
+  src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"
+  style="display:none"></audio>
+
+<main>
+
+<div class="breadcrumb">
+  <a href="../#cuore-statico">← tools_index</a>
+  <span class="sep">/</span>
+  cuore_statico
+  <span class="sep">/</span>
+  tool
+</div>
+
+<header>
+  <div class="brand">DOCTNASA&MRBORG // STUDIO_v05</div>
+  <div class="title">CUORE_STATICO</div>
+  <div class="subtitle">synth.sampler.recorder.dub_engine</div>
+</header>
+
+<div id="resumeBanner" class="banner">⚠ AUDIO SOSPESO — TOCCA QUI PER RIAVVIARE</div>
+
+<section class="section">
+  <div class="row"><span class="label">AUDIO_CTX</span><span class="value" id="ctxVal">--</span></div>
+  <div class="row"><span class="label">OUT_dB</span><span class="value" id="dbVal">-∞</span></div>
+  <div class="meter-wrap"><div class="meter-bar" id="meterBar"></div><div class="meter-marks"></div></div>
+  <div class="row" style="margin-top:8px"><span class="label">STATE</span><span class="value" id="stateVal">◼ STBY</span></div>
+  <div class="row"><span class="label">TRIG</span><span class="value" id="trigVal">0</span></div>
+  <div class="row"><span class="label">CHORD</span><span class="value" id="chordVal">---</span></div>
+  <div class="row"><span class="label">PULSE</span><span class="value"><span id="heart" class="heart">♥</span></span></div>
+</section>
+
+<button id="playBtn" class="big">▶ PLAY</button>
+<div class="grid-3" style="margin-bottom: 14px">
+  <button id="beepBtn" class="amber small">🔔 BEEP</button>
+  <button id="strikeBtn" class="red small">⚡ STRIKE</button>
+  <button id="panicBtn" class="red small">⛔ PANIC</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="mix">MIX</button>
+  <button class="tab"        data-tab="synth">SYNTH</button>
+  <button class="tab"        data-tab="sampler">SAMPLER</button>
+  <button class="tab"        data-tab="fx">FX</button>
+  <button class="tab"        data-tab="rec">REC</button>
+</div>
+
+<!-- ============== TAB: MIX ============== -->
+<div class="tabpanel active" id="tab-mix">
+
+  <section class="section">
+    <div class="section-title">// LAYERS</div>
+    <div class="grid-5">
+      <button class="layer on" data-layer="pad">PAD</button>
+      <button class="layer on" data-layer="bass">BASS</button>
+      <button class="layer on" data-layer="lead">LEAD</button>
+      <button class="layer on" data-layer="noise">NSE</button>
+      <button class="layer on" data-layer="sample">SMP</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// KEY</div>
+    <div class="grid-4">
+      <button class="key on" data-key="0"  data-name="Bm">Bm</button>
+      <button class="key"    data-key="-2" data-name="Am">Am</button>
+      <button class="key"    data-key="-5" data-name="F#m">F#m</button>
+      <button class="key"    data-key="-7" data-name="Em">Em</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// PROGRESSION</div>
+    <div class="grid-4">
+      <button class="prog on" data-prog="EMO">EMO</button>
+      <button class="prog"    data-prog="ROMANTIC">ROM</button>
+      <button class="prog"    data-prog="DOOM">DOOM</button>
+      <button class="prog"    data-prog="ASCEND">ASC</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// VOLUMES</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">MASTER</span><span class="value" id="masterVal">0.0 dB</span></div>
+      <input type="range" id="master" min="-40" max="6" step="0.5" value="0">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">PAD_GAIN</span><span class="value" id="padVolVal">-10 dB</span></div>
+      <input type="range" id="padVol" min="-40" max="6" step="0.5" value="-10">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">BASS_GAIN</span><span class="value" id="bassVolVal">2 dB</span></div>
+      <input type="range" id="bassVol" min="-40" max="6" step="0.5" value="2">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">LEAD_GAIN</span><span class="value" id="leadVolVal">-12 dB</span></div>
+      <input type="range" id="leadVol" min="-40" max="6" step="0.5" value="-12">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">NOISE_GAIN</span><span class="value" id="noiseVolVal">-15 dB</span></div>
+      <input type="range" id="noiseVol" min="-40" max="6" step="0.5" value="-15">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">SAMPLE_GAIN</span><span class="value" id="sampleVolVal">-6 dB</span></div>
+      <input type="range" id="sampleVol" min="-40" max="6" step="0.5" value="-6">
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// RHYTHM</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">BPM</span><span class="value" id="bpmVal">76</span></div>
+      <input type="range" id="bpm" min="50" max="140" step="1" value="76">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">LEAD_DENSITY</span><span class="value" id="densVal">0.50</span></div>
+      <input type="range" id="dens" min="0" max="1" step="0.01" value="0.50">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">NOISE_AMOUNT</span><span class="value" id="noiseAmtVal">0.50</span></div>
+      <input type="range" id="noiseAmt" min="0" max="1" step="0.01" value="0.50">
+    </div>
+  </section>
+</div>
+
+<!-- ============== TAB: SYNTH ============== -->
+<div class="tabpanel" id="tab-synth">
+
+  <section class="section">
+    <div class="section-title">// CHOOSE LAYER</div>
+    <div class="grid-4">
+      <button class="synth-target on" data-target="pad">PAD</button>
+      <button class="synth-target"    data-target="bass">BASS</button>
+      <button class="synth-target"    data-target="lead">LEAD</button>
+      <button class="synth-target"    data-target="noise">NOISE</button>
+    </div>
+    <div class="row" style="margin-top: 10px">
+      <span class="label">EDITING</span><span class="value" id="synthEditingVal">PAD</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// LIVE WAVEFORM</div>
+    <canvas id="liveWave" class="wave-canvas live" width="600" height="80"></canvas>
+    <div style="font-size:10px; opacity:0.55; margin-top:6px">
+      Visualizzazione in tempo reale del layer selezionato. Tocca PREVIEW per vedere la forma.
+    </div>
+  </section>
+
+  <!-- ====== SYNTH GROUP: tonal (pad/bass/lead) ====== -->
+  <div id="tonalSynthGroup">
+    <section class="section">
+      <div class="section-title">// OSCILLATOR</div>
+      <div class="slider-block">
+        <div class="row"><span class="label">WAVEFORM</span><span class="value" id="waveVal">fatsawtooth</span></div>
+        <select id="waveSelect">
+          <option value="sine">sine</option>
+          <option value="triangle">triangle</option>
+          <option value="square">square</option>
+          <option value="sawtooth">sawtooth</option>
+          <option value="fatsawtooth" selected>fatsawtooth</option>
+          <option value="fatsquare">fatsquare</option>
+          <option value="fattriangle">fattriangle</option>
+          <option value="pulse">pulse</option>
+          <option value="pwm">pwm</option>
+          <option value="amsawtooth">amsawtooth</option>
+          <option value="fmsquare">fmsquare</option>
+        </select>
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">DETUNE_SPREAD</span><span class="value" id="spreadVal">35</span></div>
+        <input type="range" id="spread" min="0" max="100" step="1" value="35">
+      </div>
+      <button id="previewBtn" class="small" style="width:100%; margin-top:6px">▶ PREVIEW NOTE</button>
+    </section>
+
+    <section class="section">
+      <div class="section-title">// ENVELOPE (ADSR)</div>
+      <div class="slider-block">
+        <div class="row"><span class="label">ATTACK</span><span class="value" id="attVal">0.80 s</span></div>
+        <input type="range" id="att" min="0.001" max="4" step="0.01" value="0.8">
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">DECAY</span><span class="value" id="decVal">1.50 s</span></div>
+        <input type="range" id="dec" min="0.01" max="4" step="0.01" value="1.5">
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">SUSTAIN</span><span class="value" id="susVal">0.60</span></div>
+        <input type="range" id="sus" min="0" max="1" step="0.01" value="0.6">
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">RELEASE</span><span class="value" id="relVal">4.0 s</span></div>
+        <input type="range" id="rel" min="0.01" max="8" step="0.05" value="4">
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">// FM_LEAD ONLY</div>
+      <div class="slider-block">
+        <div class="row"><span class="label">HARMONICITY</span><span class="value" id="harmVal">2.01</span></div>
+        <input type="range" id="harm" min="0.5" max="8" step="0.01" value="2.01">
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">MOD_INDEX</span><span class="value" id="modIdxVal">6.0</span></div>
+        <input type="range" id="modIdx" min="0" max="20" step="0.1" value="6">
+      </div>
+      <div style="font-size:10px; opacity:0.5">Solo applicabili al LEAD (sintesi FM).</div>
+    </section>
+  </div>
+
+  <!-- ====== SYNTH GROUP: noise ====== -->
+  <div id="noiseSynthGroup" style="display:none">
+    <section class="section purple">
+      <div class="section-title">// NOISE SOURCE</div>
+      <div class="slider-block">
+        <div class="row"><span class="label">TYPE</span><span class="value" id="noiseTypeVal">pink</span></div>
+        <select id="noiseTypeSelect">
+          <option value="white">white</option>
+          <option value="pink" selected>pink</option>
+          <option value="brown">brown</option>
+        </select>
+      </div>
+      <button id="previewNoiseBtn" class="small purple" style="width:100%; margin-top:6px">▶ PREVIEW NOISE</button>
+    </section>
+
+    <section class="section purple">
+      <div class="section-title">// BAND FILTER</div>
+      <div class="slider-block">
+        <div class="row"><span class="label">FILTER_TYPE</span><span class="value" id="noiseFiltTypeVal">bandpass</span></div>
+        <select id="noiseFiltTypeSelect">
+          <option value="lowpass">lowpass</option>
+          <option value="highpass">highpass</option>
+          <option value="bandpass" selected>bandpass</option>
+          <option value="notch">notch</option>
+        </select>
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">FILTER_HZ</span><span class="value" id="noiseFiltHzVal">1200</span></div>
+        <input type="range" id="noiseFiltHz" min="60" max="8000" step="10" value="1200">
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">FILTER_Q</span><span class="value" id="noiseFiltQVal">2.0</span></div>
+        <input type="range" id="noiseFiltQ" min="0.1" max="20" step="0.1" value="2.0">
+      </div>
+    </section>
+
+    <section class="section purple">
+      <div class="section-title">// AUTO-FILTER LFO</div>
+      <div class="slider-block">
+        <div class="row"><span class="label">SWEEP_RATE</span><span class="value" id="noiseSweepVal">0.70</span></div>
+        <input type="range" id="noiseSweep" min="0" max="5" step="0.01" value="0.70">
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">SWEEP_OCT</span><span class="value" id="noiseOctVal">3.0</span></div>
+        <input type="range" id="noiseOct" min="0" max="6" step="0.1" value="3.0">
+      </div>
+    </section>
+
+    <section class="section purple">
+      <div class="section-title">// GATE (CRACKLE)</div>
+      <div class="slider-block">
+        <div class="row"><span class="label">GATE_DECAY</span><span class="value" id="noiseGateDecVal">0.12 s</span></div>
+        <input type="range" id="noiseGateDec" min="0.01" max="2" step="0.01" value="0.12">
+      </div>
+      <div class="slider-block">
+        <div class="row"><span class="label">GATE_LEVEL</span><span class="value" id="noiseGateLvlVal">0.08</span></div>
+        <input type="range" id="noiseGateLvl" min="0" max="1" step="0.01" value="0.08">
+      </div>
+      <div style="font-size:10px; opacity:0.55">L'inviluppo si apre ad ogni "crackle". Decay più lungo = sibilo più sostenuto. Level alto = colpo più forte.</div>
+    </section>
+  </div>
+
+  <section class="section">
+    <div class="section-title">// PRESETS (PERSISTENTI)</div>
+    <div class="grid-2" style="margin-bottom: 8px">
+      <input type="text" id="presetName" placeholder="nome preset...">
+      <button id="savePresetBtn" class="small">💾 SAVE</button>
+    </div>
+    <div id="presetList" class="file-list"></div>
+    <div style="font-size:10px; opacity:0.55; margin-top:8px">
+      I preset vengono salvati nella memoria del browser e sopravvivono al reload.
+    </div>
+  </section>
+</div>
+
+<!-- ============== TAB: SAMPLER ============== -->
+<div class="tabpanel" id="tab-sampler">
+
+  <section class="section blue">
+    <div class="section-title">// UPLOAD AUDIO</div>
+    <input type="file" id="sampleFile" accept="audio/*">
+    <div class="row" style="margin-top:10px"><span class="label">LOADED</span><span class="value" id="sampleName">---</span></div>
+    <div class="row"><span class="label">DURATION</span><span class="value" id="sampleDur">0.0 s</span></div>
+    <canvas id="waveCanvas" class="wave-canvas" width="600" height="80"></canvas>
+  </section>
+
+  <section class="section blue">
+    <div class="section-title">// PLAYBACK</div>
+    <div class="grid-2" style="margin-bottom: 8px">
+      <button id="sampleTriggerBtn" class="blue">▶ TRIGGER</button>
+      <button id="sampleLoopBtn"    class="blue">LOOP: OFF</button>
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">PITCH (semitones)</span><span class="value" id="pitchVal">0</span></div>
+      <input type="range" id="pitch" min="-24" max="24" step="1" value="0">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">START</span><span class="value" id="startVal">0.00</span></div>
+      <input type="range" id="startPos" min="0" max="1" step="0.001" value="0">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">END</span><span class="value" id="endVal">1.00</span></div>
+      <input type="range" id="endPos" min="0" max="1" step="0.001" value="1">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">FADE</span><span class="value" id="fadeVal">0.02 s</span></div>
+      <input type="range" id="fade" min="0" max="2" step="0.01" value="0.02">
+    </div>
+  </section>
+
+  <section class="section blue">
+    <div class="section-title">// AUTO-TRIGGER</div>
+    <div class="grid-2" style="margin-bottom: 8px">
+      <button id="autoSampleBtn" class="blue">AUTO: OFF</button>
+      <select id="autoRate">
+        <option value="32">1 bar</option>
+        <option value="16">half bar</option>
+        <option value="8">quarter</option>
+        <option value="4">8th</option>
+        <option value="2">16th</option>
+      </select>
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">AUTO_PROB</span><span class="value" id="autoProbVal">0.50</span></div>
+      <input type="range" id="autoProb" min="0" max="1" step="0.01" value="0.50">
+    </div>
+  </section>
+</div>
+
+<!-- ============== TAB: FX ============== -->
+<div class="tabpanel" id="tab-fx">
+  <section class="section">
+    <div class="section-title">// DUB DELAY</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">FEEDBACK</span><span class="value" id="fbVal">0.65</span></div>
+      <input type="range" id="fb" min="0.30" max="0.92" step="0.01" value="0.65">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">WET</span><span class="value" id="dwetVal">0.50</span></div>
+      <input type="range" id="dwet" min="0" max="1" step="0.01" value="0.50">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">TIME</span><span class="value" id="dtimeVal">8n.</span></div>
+      <select id="dtime">
+        <option value="16n">16n</option>
+        <option value="8n">8n</option>
+        <option value="8n." selected>8n. (dotted)</option>
+        <option value="4n">4n</option>
+        <option value="4n.">4n. (dotted)</option>
+        <option value="2n">2n</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// AUTO-FILTER (DUB BUS)</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">BASE_HZ</span><span class="value" id="fhzVal">800</span></div>
+      <input type="range" id="fhz" min="150" max="4000" step="10" value="800">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">RATE</span><span class="value" id="frateVal">0.05</span></div>
+      <input type="range" id="frate" min="0.01" max="2" step="0.01" value="0.05">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">OCTAVES</span><span class="value" id="foctVal">3</span></div>
+      <input type="range" id="foct" min="0" max="6" step="0.1" value="3">
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// REVERB & DRIVE</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">REVERB_WET</span><span class="value" id="revVal">0.40</span></div>
+      <input type="range" id="rev" min="0" max="1" step="0.01" value="0.40">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">REVERB_ROOM</span><span class="value" id="roomVal">0.92</span></div>
+      <input type="range" id="room" min="0.1" max="0.99" step="0.01" value="0.92">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">BASS_DRIVE</span><span class="value" id="distVal">0.20</span></div>
+      <input type="range" id="dist" min="0" max="0.6" step="0.01" value="0.20">
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="grid-2">
+      <button id="randomBtn">⌬ RANDOMIZE</button>
+      <button id="resetBtn">⟲ RESET</button>
+    </div>
+  </section>
+</div>
+
+<!-- ============== TAB: REC ============== -->
+<div class="tabpanel" id="tab-rec">
+
+  <section class="section red">
+    <div class="section-title">// RECORDER</div>
+    <div class="row" style="margin-bottom: 8px">
+      <span class="label"><span id="recDot" class="rec-dot"></span>STATUS</span>
+      <span class="value" id="recStatus">IDLE</span>
+    </div>
+    <div class="row"><span class="label">TIME</span><span class="value" id="recTime">0:00</span></div>
+    <div class="row" style="margin-bottom:10px"><span class="label">FORMAT</span><span class="value" id="recFormat">--</span></div>
+    <div class="grid-2">
+      <button id="recStartBtn" class="red">● START REC</button>
+      <button id="recStopBtn"  class="red">◼ STOP</button>
+    </div>
+    <div style="font-size:10px; opacity:0.6; line-height:1.5; margin-top:10px">
+      Registra il mix master. Le registrazioni sopravvivono al reload (salvate localmente nel browser).
+    </div>
+  </section>
+
+  <section class="section red">
+    <div class="section-title">// RECORDINGS (PERSISTENTI)</div>
+    <div id="recList" class="file-list">
+      <div style="padding: 10px; opacity: 0.5; font-size: 11px; text-align: center;">caricamento...</div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div>SYNTH/SAMPLE → DUB_BUS → AUTOFILTER → DELAY → REVERB → MASTER → REC/OUT</div>
+  <div class="sig">tieni il telefono vicino al cuore.</div>
+</footer>
+
+</main>
+
+<script>
+'use strict';
+
+// ============================================================
+// PERSISTENT STORAGE (localStorage + IndexedDB)
+// ============================================================
+const STORAGE_KEY = 'cuore_statico_v05';
+const IDB_NAME    = 'cuore_statico_db';
+const IDB_STORE   = 'recordings';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+function saveState(patch) {
+  try {
+    const cur = loadState();
+    Object.assign(cur, patch);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cur));
+  } catch (e) { console.warn('save fail', e); }
+}
+
+let idbReady = null;
+function openIDB() {
+  if (idbReady) return idbReady;
+  idbReady = new Promise((resolve, reject) => {
+    if (!window.indexedDB) { resolve(null); return; }
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => resolve(null);
+  });
+  return idbReady;
+}
+async function idbAdd(record) {
+  const db = await openIDB();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    const req = tx.objectStore(IDB_STORE).add(record);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => resolve(null);
+  });
+}
+async function idbAll() {
+  const db = await openIDB();
+  if (!db) return [];
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror   = () => resolve([]);
+  });
+}
+async function idbDel(id) {
+  const db = await openIDB();
+  if (!db) return;
+  return new Promise((resolve) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+  });
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let A = null;
+let isPlaying = false;
+let playInterval = null;
+let beat16 = 0, chordIdx = 0, bassIdx = 0, trigCount = 0;
+let currentKey = 0, currentProg = 'EMO';
+let density = 0.50, noiseAmt = 0.50;
+let layers = { pad: 1, bass: 1, lead: 1, noise: 1, sample: 1 };
+
+// Synth editor state (loaded from storage if present)
+let synthEditTarget = 'pad';
+const defaultSynthParams = {
+  pad:   { wave: 'fatsawtooth', spread: 35, att: 0.8,  dec: 1.5, sus: 0.6, rel: 4.0 },
+  bass:  { wave: 'sine',        spread: 0,  att: 0.002,dec: 0.5, sus: 0.0, rel: 0.6 },
+  lead:  { wave: 'sine',        spread: 0,  att: 0.08, dec: 1.0, sus: 0.2, rel: 2.5,
+           harm: 2.01, modIdx: 6.0 },
+  noise: { type: 'pink', filtType: 'bandpass', filtHz: 1200, filtQ: 2.0,
+           sweepRate: 0.70, sweepOct: 3.0, gateDec: 0.12, gateLvl: 0.08 }
+};
+const storedState = loadState();
+const synthParams = JSON.parse(JSON.stringify(defaultSynthParams));
+if (storedState.synthParams) {
+  for (const k of Object.keys(synthParams)) {
+    if (storedState.synthParams[k]) Object.assign(synthParams[k], storedState.synthParams[k]);
+  }
+}
+function persistSynthParams() { saveState({ synthParams }); }
+
+// Sampler state
+let sampleBuffer = null;
+let sampleName = '---';
+let sampleLoop = false;
+let samplePitch = 0, sampleStart = 0, sampleEnd = 1, sampleFade = 0.02;
+let autoSample = false, autoSampleRate = 32, autoSampleProb = 0.5;
+let currentSamplePlayer = null;
+
+// Recorder
+let mediaRecorder = null;
+let recordedChunks = [];
+let recStartTime = 0;
+let recTimer = null;
+
+// Musical data
+const PROGS = {
+  EMO:      [[59,62,66],[55,59,62],[62,66,69],[57,61,64]],
+  ROMANTIC: [[59,62,66],[52,55,59],[54,57,61],[59,62,66]],
+  DOOM:     [[59,62,66],[58,62,65],[52,55,59],[57,61,64]],
+  ASCEND:   [[59,62,66],[62,66,69],[66,70,73],[67,71,74]]
+};
+const BASS_PATTERN = [47, 47, null, 47, 47, 42, null, 45];
+const LEAD_SCALE = [0, 2, 3, 5, 7, 8, 10];
+const LEAD_BASE = 59 + 24;
+const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+const $ = (id) => document.getElementById(id);
+function midiToFreq(m) { return Tone.Frequency(m, 'midi').toFrequency(); }
+function chordName(c) {
+  if (!c || c.length < 3) return '---';
+  const root = ((c[0] % 12) + 12) % 12;
+  const i1 = ((c[1] - c[0]) % 12 + 12) % 12;
+  const i2 = ((c[2] - c[0]) % 12 + 12) % 12;
+  return NOTES[root] + ((i1===3 && i2===7) ? 'm' : (i1===4 && i2===7) ? '' : '');
+}
+function bumpTrig() {
+  trigCount++;
+  const el = $('trigVal');
+  el.textContent = trigCount;
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+
+// ============================================================
+// AUDIO INIT
+// ============================================================
+async function unlockAudio() {
+  try {
+    const sa = $('silentAudio');
+    sa.volume = 0;
+    await sa.play().catch(() => {});
+  } catch (e) {}
+  await Tone.start();
+  if (Tone.context.state !== 'running') {
+    try { await Tone.context.resume(); } catch (e) {}
+  }
+}
+
+async function initAudio() {
+  await unlockAudio();
+  if (A) return;
+
+  const limiter = new Tone.Limiter(-1).toDestination();
+  const meter   = new Tone.Meter({ smoothing: 0.7 });
+  const master  = new Tone.Volume(0);
+  const recDest = Tone.context.createMediaStreamDestination();
+  master.connect(limiter);
+  master.connect(meter);
+  const recTap = new Tone.Gain(1);
+  master.connect(recTap);
+  recTap.connect(recDest);
+
+  const reverb = new Tone.Freeverb({ roomSize: 0.92, dampening: 3000, wet: 0.40 }).connect(master);
+  const dubDelay = new Tone.FeedbackDelay({ delayTime: '8n.', feedback: 0.65, wet: 0.50 }).connect(reverb);
+  const dubFilter = new Tone.AutoFilter({
+    frequency: 0.05, baseFrequency: 800, octaves: 3, type: 'sine', wet: 1
+  }).connect(dubDelay).start();
+  const dubBus = new Tone.Gain(0.9).connect(dubFilter);
+
+  const padGain    = new Tone.Volume(-10);
+  const leadGain   = new Tone.Volume(-12);
+  const noiseGain  = new Tone.Volume(-15);
+  const sampleGain = new Tone.Volume(-6);
+  const bassGain   = new Tone.Volume(2);
+
+  // Per-layer analyser for waveform visualization
+  const padAna   = new Tone.Waveform(1024);
+  const bassAna  = new Tone.Waveform(1024);
+  const leadAna  = new Tone.Waveform(1024);
+  const noiseAna = new Tone.Waveform(1024);
+
+  padGain.connect(dubBus);    padGain.connect(padAna);
+  leadGain.connect(dubBus);   leadGain.connect(leadAna);
+  noiseGain.connect(dubBus);  noiseGain.connect(noiseAna);
+  sampleGain.connect(dubBus);
+  bassGain.connect(master);   bassGain.connect(bassAna);
+
+  const bassDist = new Tone.Distortion(0.20).connect(bassGain);
+
+  const pad  = buildPadSynth();  pad.connect(padGain);
+  const bass = buildBassSynth(); bass.connect(bassDist);
+  const lead = buildLeadSynth(); lead.connect(leadGain);
+
+  // Noise chain (rebuilt from synthParams.noise)
+  const noiseNodes = buildNoiseChain();
+  noiseNodes.last.connect(noiseGain);
+
+  A = {
+    limiter, meter, master, recDest, recTap,
+    reverb, dubDelay, dubFilter, dubBus,
+    padGain, leadGain, noiseGain, sampleGain, bassGain,
+    pad, bass, bassDist, lead,
+    noise: noiseNodes,
+    padAna, bassAna, leadAna, noiseAna
+  };
+  applyAllSliders();
+}
+
+function buildPadSynth() {
+  const p = synthParams.pad;
+  return new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: p.wave, count: 4, spread: p.spread },
+    envelope: { attack: p.att, decay: p.dec, sustain: p.sus, release: p.rel },
+    volume: 0
+  });
+}
+function buildBassSynth() {
+  const p = synthParams.bass;
+  return new Tone.MembraneSynth({
+    pitchDecay: 0.028, octaves: 5,
+    oscillator: { type: p.wave },
+    envelope: { attack: p.att, decay: p.dec, sustain: p.sus, release: p.rel },
+    volume: 0
+  });
+}
+function buildLeadSynth() {
+  const p = synthParams.lead;
+  return new Tone.FMSynth({
+    harmonicity: p.harm, modulationIndex: p.modIdx,
+    oscillator: { type: p.wave },
+    modulation: { type: 'sine' },
+    envelope: { attack: p.att, decay: p.dec, sustain: p.sus, release: p.rel },
+    modulationEnvelope: { attack: 0.6, decay: 0.4, sustain: 0.1, release: 1.5 },
+    volume: 0
+  });
+}
+function buildNoiseChain() {
+  const p = synthParams.noise;
+  const src = new Tone.Noise(p.type).start();
+  const filt = new Tone.Filter(p.filtHz, p.filtType, -12);
+  filt.Q.value = p.filtQ;
+  const gate = new Tone.AmplitudeEnvelope({ attack: 0.001, decay: p.gateDec, sustain: 0, release: 0.05 });
+  const auto = new Tone.AutoFilter({ frequency: p.sweepRate, baseFrequency: p.filtHz, octaves: p.sweepOct }).start();
+  src.connect(filt); filt.connect(gate); gate.connect(auto);
+  return { src, filt, gate, auto, last: auto };
+}
+
+function rebuildSynth(layer) {
+  if (!A) return;
+  if (layer === 'noise') {
+    // Dispose old chain
+    try { A.noise.src.dispose(); A.noise.filt.dispose(); A.noise.gate.dispose(); A.noise.auto.dispose(); } catch(e){}
+    const n = buildNoiseChain();
+    n.last.connect(A.noiseGain);
+    A.noise = n;
+    return;
+  }
+  const old = A[layer];
+  let n;
+  if (layer === 'pad')  { n = buildPadSynth();  n.connect(A.padGain); }
+  else if (layer === 'bass') { n = buildBassSynth(); n.connect(A.bassDist); }
+  else { n = buildLeadSynth(); n.connect(A.leadGain); }
+  A[layer] = n;
+  setTimeout(() => { try { old.dispose(); } catch(e) {} }, 200);
+}
+
+// ============================================================
+// METER + AUTO-RESUME LOOP
+// ============================================================
+function meterLoop() {
+  if (A && A.meter) {
+    const db = A.meter.getValue();
+    if (isFinite(db) && db > -120) {
+      const pct = Math.max(0, Math.min(100, (db + 60) * (100/60)));
+      $('meterBar').style.width = pct + '%';
+      $('dbVal').textContent = db.toFixed(1) + ' dB';
+    } else {
+      $('meterBar').style.width = '0%';
+      $('dbVal').textContent = '-∞';
+    }
+  }
+  if (typeof Tone !== 'undefined' && Tone.context) {
+    const s = Tone.context.state;
+    const el = $('ctxVal');
+    el.textContent = s.toUpperCase();
+    el.classList.toggle('warn-color', s !== 'running');
+    // Show resume banner if suspended
+    $('resumeBanner').classList.toggle('show', s !== 'running' && A !== null);
+  }
+  requestAnimationFrame(meterLoop);
+}
+meterLoop();
+
+// Resume on visibility change (returning to tab)
+document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden && A) {
+    try { await Tone.context.resume(); } catch (e) {}
+    // restart silent audio for iOS session
+    try { $('silentAudio').play().catch(()=>{}); } catch(e){}
+  }
+});
+
+// Resume on any touch when suspended
+document.addEventListener('touchstart', async () => {
+  if (A && Tone.context.state !== 'running') {
+    try { await Tone.context.resume(); } catch (e) {}
+  }
+}, { passive: true });
+
+// Banner click manually triggers resume
+$('resumeBanner').addEventListener('click', async () => {
+  await unlockAudio();
+});
+
+// ============================================================
+// LIVE WAVEFORM DRAWING (for synth tab)
+// ============================================================
+const liveCanvas = $('liveWave');
+const liveCtx = liveCanvas.getContext('2d');
+
+function drawLiveWave() {
+  const w = liveCanvas.width, h = liveCanvas.height;
+  liveCtx.fillStyle = '#000';
+  liveCtx.fillRect(0, 0, w, h);
+  // Center line
+  liveCtx.strokeStyle = '#1a4d22';
+  liveCtx.lineWidth = 1;
+  liveCtx.beginPath();
+  liveCtx.moveTo(0, h/2); liveCtx.lineTo(w, h/2); liveCtx.stroke();
+
+  if (!A) {
+    liveCtx.fillStyle = '#1a4d22';
+    liveCtx.font = '11px Courier New';
+    liveCtx.fillText('// AUDIO NOT INITIALIZED — tocca PREVIEW', 10, h/2 - 6);
+    requestAnimationFrame(drawLiveWave);
+    return;
+  }
+
+  const ana =
+    synthEditTarget === 'pad'   ? A.padAna  :
+    synthEditTarget === 'bass'  ? A.bassAna :
+    synthEditTarget === 'lead'  ? A.leadAna :
+    A.noiseAna;
+  const data = ana.getValue();
+
+  const color = synthEditTarget === 'noise' ? '#c678ff' : '#00ff41';
+  liveCtx.strokeStyle = color;
+  liveCtx.lineWidth = 1.5;
+  liveCtx.beginPath();
+  const step = data.length / w;
+  for (let x = 0; x < w; x++) {
+    const v = data[Math.floor(x * step)];
+    const y = (1 - (v + 1) / 2) * h;
+    if (x === 0) liveCtx.moveTo(x, y);
+    else         liveCtx.lineTo(x, y);
+  }
+  liveCtx.stroke();
+
+  requestAnimationFrame(drawLiveWave);
+}
+drawLiveWave();
+
+// ============================================================
+// SCHEDULER
+// ============================================================
+function tick() {
+  if (!A || !isPlaying) return;
+  // Defensive resume check
+  if (Tone.context.state !== 'running') {
+    Tone.context.resume().catch(()=>{});
+    return;
+  }
+  try {
+    const t = Tone.now();
+
+    if (beat16 % 2 === 0) {
+      const note = BASS_PATTERN[bassIdx % BASS_PATTERN.length];
+      if (note !== null) {
+        try {
+          A.bass.triggerAttackRelease(midiToFreq(note + currentKey), '16n', t, 0.95);
+        } catch (e) {}
+        const h = $('heart'); h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
+        bumpTrig();
+      }
+      bassIdx++;
+    }
+    if (beat16 % 32 === 0) {
+      const c = PROGS[currentProg][chordIdx % 4].map(n => n + currentKey);
+      try {
+        A.pad.triggerAttackRelease(c.map(midiToFreq), 6, t, 0.65);
+      } catch (e) {}
+      $('chordVal').textContent = chordName(c);
+      chordIdx++; bumpTrig();
+    }
+    if (beat16 % 8 === 0 && Math.random() < density) {
+      const deg = LEAD_SCALE[Math.floor(Math.random() * LEAD_SCALE.length)];
+      const oct = Math.random() < 0.3 ? -12 : 0;
+      try {
+        A.lead.triggerAttackRelease(
+          midiToFreq(LEAD_BASE + deg + oct + currentKey),
+          Math.random() * 1.5 + 1, t, Math.random() * 0.4 + 0.3
+        );
+      } catch (e) {}
+      bumpTrig();
+    }
+    if (Math.random() < 0.4 * noiseAmt) {
+      try {
+        A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl, t);
+      } catch (e) {}
+    }
+    if (autoSample && sampleBuffer && beat16 % autoSampleRate === 0 && Math.random() < autoSampleProb) {
+      try { playSample(); } catch (e) {}
+    }
+    beat16++;
+  } catch (err) {
+    console.warn('tick error', err);
+    beat16++;
+  }
+}
+
+function startTicker() {
+  stopTicker();
+  const bpm = parseFloat($('bpm').value) || 76;
+  const sixteenthMs = (60 / bpm / 4) * 1000;
+  tick();
+  playInterval = setInterval(tick, sixteenthMs);
+}
+function stopTicker() { if (playInterval) { clearInterval(playInterval); playInterval = null; } }
+function restartTickerIfPlaying() { if (isPlaying) startTicker(); }
+
+// Watchdog: if playing but no triggers for >5s, restart ticker
+let lastTrig = Date.now();
+const origBump = bumpTrig;
+// (already tracked via trigCount)
+setInterval(() => {
+  if (isPlaying && A && Tone.context.state === 'running') {
+    // ensure ticker is alive
+    if (!playInterval) startTicker();
+  }
+}, 2000);
+
+// ============================================================
+// TRANSPORT
+// ============================================================
+async function togglePlay() {
+  try { await initAudio(); } catch (e) { console.error(e); return; }
+  if (isPlaying) {
+    isPlaying = false; stopTicker();
+    $('chordVal').textContent = '---';
+    $('stateVal').textContent = '◼ STBY';
+  } else {
+    isPlaying = true; beat16 = chordIdx = bassIdx = 0;
+    startTicker();
+    $('stateVal').textContent = '▶ TRANSMITTING';
+  }
+  const btn = $('playBtn');
+  btn.textContent = isPlaying ? '◼ STOP' : '▶ PLAY';
+  btn.classList.toggle('playing', isPlaying);
+}
+$('playBtn').addEventListener('click', togglePlay);
+
+$('beepBtn').addEventListener('click', async () => {
+  await unlockAudio();
+  const beep = new Tone.Synth({
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.005, decay: 0.3, sustain: 0, release: 0.05 },
+    volume: -8
+  }).toDestination();
+  beep.triggerAttackRelease('A4', 0.25);
+  setTimeout(() => beep.dispose(), 800);
+});
+$('strikeBtn').addEventListener('click', async () => {
+  await initAudio();
+  const t = Tone.now() + 0.05;
+  const c = PROGS[currentProg][0].map(n => n + currentKey);
+  A.pad.triggerAttackRelease(c.map(midiToFreq), 4, t, 0.8);
+  A.bass.triggerAttackRelease(midiToFreq(47 + currentKey), '8n', t + 0.02, 1.0);
+  A.lead.triggerAttackRelease(midiToFreq(LEAD_BASE + currentKey), '4n', t + 0.3, 0.7);
+  A.noise.gate.triggerAttackRelease(0.4, t + 0.1);
+  bumpTrig();
+});
+
+// PANIC: stop everything, release all synths, momentarily duck delay feedback
+// to clear runaway loops/feedback that can otherwise lock the audio output.
+$('panicBtn').addEventListener('click', async () => {
+  isPlaying = false;
+  stopTicker();
+  const btn = $('playBtn');
+  btn.textContent = '▶ PLAY';
+  btn.classList.remove('playing');
+  $('stateVal').textContent = '⛔ PANIC';
+  $('chordVal').textContent = '---';
+  if (!A) return;
+  try {
+    // Release any held notes
+    if (A.pad.releaseAll)  A.pad.releaseAll(Tone.now());
+    if (A.lead.triggerRelease) A.lead.triggerRelease(Tone.now());
+    // Briefly cut delay feedback and reverb to clear loops
+    const oldFb  = A.dubDelay.feedback.value;
+    const oldWet = A.dubDelay.wet.value;
+    const oldRev = A.reverb.wet.value;
+    A.dubDelay.feedback.value = 0;
+    A.dubDelay.wet.value = 0;
+    A.reverb.wet.value = 0;
+    // Stop any looping sample
+    if (currentSamplePlayer) {
+      try { currentSamplePlayer.stop(); currentSamplePlayer.dispose(); } catch(e) {}
+      currentSamplePlayer = null;
+    }
+    setTimeout(() => {
+      // Restore from current slider values
+      try {
+        A.dubDelay.feedback.value = parseFloat($('fb').value);
+        A.dubDelay.wet.value      = parseFloat($('dwet').value);
+        A.reverb.wet.value        = parseFloat($('rev').value);
+      } catch(e) {}
+      $('stateVal').textContent = '◼ STBY';
+    }, 600);
+  } catch (err) { console.warn('panic err', err); }
+});
+
+// ============================================================
+// TABS
+// ============================================================
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
+    t.classList.add('active');
+    $('tab-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+// ============================================================
+// LAYERS / KEY / PROG
+// ============================================================
+document.querySelectorAll('.layer').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const layer = btn.dataset.layer;
+    layers[layer] = layers[layer] ? 0 : 1;
+    btn.classList.toggle('on', !!layers[layer]);
+    if (!A) return;
+    const node =
+      layer === 'pad'    ? A.padGain    :
+      layer === 'bass'   ? A.bassGain   :
+      layer === 'lead'   ? A.leadGain   :
+      layer === 'sample' ? A.sampleGain :
+      A.noiseGain;
+    node.mute = !layers[layer];
+  });
+});
+document.querySelectorAll('.key').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.key').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on'); currentKey = parseInt(btn.dataset.key);
+  });
+});
+document.querySelectorAll('.prog').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.prog').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on'); currentProg = btn.dataset.prog; chordIdx = 0;
+  });
+});
+
+// ============================================================
+// MIX SLIDERS
+// ============================================================
+const mixApply = {
+  master:    v => { if (A) A.master.volume.rampTo(v, 0.05); },
+  padVol:    v => { if (A) A.padGain.volume.rampTo(v, 0.05); },
+  bassVol:   v => { if (A) A.bassGain.volume.rampTo(v, 0.05); },
+  leadVol:   v => { if (A) A.leadGain.volume.rampTo(v, 0.05); },
+  noiseVol:  v => { if (A) A.noiseGain.volume.rampTo(v, 0.05); },
+  sampleVol: v => { if (A) A.sampleGain.volume.rampTo(v, 0.05); },
+  bpm:       v => { restartTickerIfPlaying(); },
+  dens:      v => { density = v; },
+  noiseAmt:  v => { noiseAmt = v; },
+  fb:        v => { if (A) A.dubDelay.feedback.rampTo(v, 0.05); },
+  dwet:      v => { if (A) A.dubDelay.wet.rampTo(v, 0.05); },
+  fhz:       v => { if (A) A.dubFilter.baseFrequency = v; },
+  frate:     v => { if (A) A.dubFilter.frequency.rampTo(v, 0.1); },
+  foct:      v => { if (A) A.dubFilter.octaves = v; },
+  rev:       v => { if (A) A.reverb.wet.rampTo(v, 0.05); },
+  room:      v => { if (A) A.reverb.roomSize.value = v; },
+  dist:      v => { if (A) A.bassDist.distortion = v; },
+  autoProb:  v => { autoSampleProb = v; },
+};
+const mixFmt = {
+  master:v=>v.toFixed(1)+' dB', padVol:v=>v.toFixed(0)+' dB',
+  bassVol:v=>v.toFixed(0)+' dB', leadVol:v=>v.toFixed(0)+' dB',
+  noiseVol:v=>v.toFixed(0)+' dB', sampleVol:v=>v.toFixed(0)+' dB',
+  bpm:v=>Math.round(v).toString(), dens:v=>v.toFixed(2), noiseAmt:v=>v.toFixed(2),
+  fb:v=>v.toFixed(2), dwet:v=>v.toFixed(2),
+  fhz:v=>Math.round(v).toString(), frate:v=>v.toFixed(2), foct:v=>v.toFixed(1),
+  rev:v=>v.toFixed(2), room:v=>v.toFixed(2), dist:v=>v.toFixed(2), autoProb:v=>v.toFixed(2)
+};
+const mixLabel = {
+  master:'masterVal', padVol:'padVolVal', bassVol:'bassVolVal', leadVol:'leadVolVal',
+  noiseVol:'noiseVolVal', sampleVol:'sampleVolVal',
+  bpm:'bpmVal', dens:'densVal', noiseAmt:'noiseAmtVal',
+  fb:'fbVal', dwet:'dwetVal', fhz:'fhzVal', frate:'frateVal', foct:'foctVal',
+  rev:'revVal', room:'roomVal', dist:'distVal', autoProb:'autoProbVal'
+};
+function bindMix(id) {
+  const el = $(id);
+  const update = () => {
+    const v = parseFloat(el.value);
+    $(mixLabel[id]).textContent = mixFmt[id](v);
+    mixApply[id](v);
+  };
+  el.addEventListener('input', update);
+  update();
+}
+Object.keys(mixApply).forEach(bindMix);
+function applyAllSliders() { Object.keys(mixApply).forEach(id => mixApply[id](parseFloat($(id).value))); }
+
+$('dtime').addEventListener('change', e => {
+  $('dtimeVal').textContent = e.target.value;
+  if (A) A.dubDelay.delayTime.value = e.target.value;
+});
+
+// ============================================================
+// SYNTH EDITOR
+// ============================================================
+document.querySelectorAll('.synth-target').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.synth-target').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    synthEditTarget = btn.dataset.target;
+    $('synthEditingVal').textContent = synthEditTarget.toUpperCase();
+    // Swap UI group
+    const isNoise = synthEditTarget === 'noise';
+    $('tonalSynthGroup').style.display = isNoise ? 'none' : '';
+    $('noiseSynthGroup').style.display = isNoise ? '' : 'none';
+    liveCanvas.classList.toggle('purple-border', isNoise);
+    liveCanvas.classList.toggle('live', !isNoise);
+    loadSynthParamsToUI();
+  });
+});
+
+function loadSynthParamsToUI() {
+  if (synthEditTarget === 'noise') {
+    const p = synthParams.noise;
+    $('noiseTypeSelect').value = p.type;     $('noiseTypeVal').textContent = p.type;
+    $('noiseFiltTypeSelect').value = p.filtType; $('noiseFiltTypeVal').textContent = p.filtType;
+    $('noiseFiltHz').value = p.filtHz;       $('noiseFiltHzVal').textContent = p.filtHz;
+    $('noiseFiltQ').value = p.filtQ;         $('noiseFiltQVal').textContent = p.filtQ.toFixed(1);
+    $('noiseSweep').value = p.sweepRate;     $('noiseSweepVal').textContent = p.sweepRate.toFixed(2);
+    $('noiseOct').value = p.sweepOct;        $('noiseOctVal').textContent = p.sweepOct.toFixed(1);
+    $('noiseGateDec').value = p.gateDec;     $('noiseGateDecVal').textContent = p.gateDec.toFixed(2)+' s';
+    $('noiseGateLvl').value = p.gateLvl;     $('noiseGateLvlVal').textContent = p.gateLvl.toFixed(2);
+    return;
+  }
+  const p = synthParams[synthEditTarget];
+  $('waveSelect').value = p.wave; $('waveVal').textContent = p.wave;
+  $('spread').value = p.spread;   $('spreadVal').textContent = p.spread;
+  $('att').value = p.att;         $('attVal').textContent = p.att.toFixed(2)+' s';
+  $('dec').value = p.dec;         $('decVal').textContent = p.dec.toFixed(2)+' s';
+  $('sus').value = p.sus;         $('susVal').textContent = p.sus.toFixed(2);
+  $('rel').value = p.rel;         $('relVal').textContent = p.rel.toFixed(1)+' s';
+  if (synthEditTarget === 'lead') {
+    $('harm').value = p.harm;     $('harmVal').textContent = p.harm.toFixed(2);
+    $('modIdx').value = p.modIdx; $('modIdxVal').textContent = p.modIdx.toFixed(1);
+  }
+}
+
+// Debounced persist — slider drags fire dozens of events/sec
+let _persistTimer = null;
+function persistSynthParamsDebounced() {
+  if (_persistTimer) clearTimeout(_persistTimer);
+  _persistTimer = setTimeout(() => {
+    try { saveState({ synthParams }); } catch (e) {}
+  }, 400);
+}
+
+// Update tonal synth params WITHOUT rebuilding the node.
+// Apply directly via .set() on the existing instance.
+function updateTonalParam(key, val) {
+  synthParams[synthEditTarget][key] = val;
+  if (A && A[synthEditTarget]) {
+    const synth = A[synthEditTarget];
+    try {
+      if (key === 'wave') {
+        synth.set({ oscillator: { type: val } });
+      } else if (key === 'spread') {
+        synth.set({ oscillator: { spread: val } });
+      } else if (key === 'att') {
+        synth.set({ envelope: { attack: val } });
+      } else if (key === 'dec') {
+        synth.set({ envelope: { decay: val } });
+      } else if (key === 'sus') {
+        synth.set({ envelope: { sustain: val } });
+      } else if (key === 'rel') {
+        synth.set({ envelope: { release: val } });
+      } else if (key === 'harm') {
+        synth.set({ harmonicity: val });
+      } else if (key === 'modIdx') {
+        synth.set({ modulationIndex: val });
+      }
+    } catch (e) { console.warn('tonal param skip', key, e); }
+  }
+  persistSynthParamsDebounced();
+}
+
+// Update noise params WITHOUT rebuilding the chain.
+// Apply directly to the persistent nodes; clamp dangerous values.
+function updateNoiseParam(key, val) {
+  synthParams.noise[key] = val;
+  if (A && A.noise) {
+    try {
+      const n = A.noise;
+      if (key === 'type') {
+        n.src.type = val;
+      } else if (key === 'filtType') {
+        n.filt.type = val;
+      } else if (key === 'filtHz') {
+        const safe = Math.max(40, Math.min(12000, val));
+        n.filt.frequency.value = safe;
+        // Also nudge AutoFilter baseFrequency so the LFO sweep stays around the new center
+        n.auto.baseFrequency = safe;
+      } else if (key === 'filtQ') {
+        n.filt.Q.value = Math.max(0.1, Math.min(18, val));
+      } else if (key === 'sweepRate') {
+        n.auto.frequency.value = Math.max(0.001, val);
+      } else if (key === 'sweepOct') {
+        n.auto.octaves = val;
+      } else if (key === 'gateDec') {
+        n.gate.decay = Math.max(0.01, val);
+      }
+      // gateLvl is used at trigger time only, no node update needed
+    } catch (e) { console.warn('noise param skip', key, e); }
+  }
+  persistSynthParamsDebounced();
+}
+
+// Tonal bindings
+$('waveSelect').addEventListener('change', e => { $('waveVal').textContent = e.target.value; updateTonalParam('wave', e.target.value); });
+$('spread').addEventListener('input', e => { const v = parseFloat(e.target.value); $('spreadVal').textContent = v; updateTonalParam('spread', v); });
+$('att').addEventListener('input', e => { const v = parseFloat(e.target.value); $('attVal').textContent = v.toFixed(2)+' s'; updateTonalParam('att', v); });
+$('dec').addEventListener('input', e => { const v = parseFloat(e.target.value); $('decVal').textContent = v.toFixed(2)+' s'; updateTonalParam('dec', v); });
+$('sus').addEventListener('input', e => { const v = parseFloat(e.target.value); $('susVal').textContent = v.toFixed(2); updateTonalParam('sus', v); });
+$('rel').addEventListener('input', e => { const v = parseFloat(e.target.value); $('relVal').textContent = v.toFixed(1)+' s'; updateTonalParam('rel', v); });
+$('harm').addEventListener('input', e => { const v = parseFloat(e.target.value); $('harmVal').textContent = v.toFixed(2); if (synthEditTarget === 'lead') updateTonalParam('harm', v); });
+$('modIdx').addEventListener('input', e => { const v = parseFloat(e.target.value); $('modIdxVal').textContent = v.toFixed(1); if (synthEditTarget === 'lead') updateTonalParam('modIdx', v); });
+
+// Noise bindings
+$('noiseTypeSelect').addEventListener('change', e => { $('noiseTypeVal').textContent = e.target.value; updateNoiseParam('type', e.target.value); });
+$('noiseFiltTypeSelect').addEventListener('change', e => { $('noiseFiltTypeVal').textContent = e.target.value; updateNoiseParam('filtType', e.target.value); });
+$('noiseFiltHz').addEventListener('input', e => { const v = parseFloat(e.target.value); $('noiseFiltHzVal').textContent = Math.round(v); updateNoiseParam('filtHz', v); });
+$('noiseFiltQ').addEventListener('input', e => { const v = parseFloat(e.target.value); $('noiseFiltQVal').textContent = v.toFixed(1); updateNoiseParam('filtQ', v); });
+$('noiseSweep').addEventListener('input', e => { const v = parseFloat(e.target.value); $('noiseSweepVal').textContent = v.toFixed(2); updateNoiseParam('sweepRate', v); });
+$('noiseOct').addEventListener('input', e => { const v = parseFloat(e.target.value); $('noiseOctVal').textContent = v.toFixed(1); updateNoiseParam('sweepOct', v); });
+$('noiseGateDec').addEventListener('input', e => { const v = parseFloat(e.target.value); $('noiseGateDecVal').textContent = v.toFixed(2)+' s'; updateNoiseParam('gateDec', v); });
+$('noiseGateLvl').addEventListener('input', e => { const v = parseFloat(e.target.value); $('noiseGateLvlVal').textContent = v.toFixed(2); updateNoiseParam('gateLvl', v); });
+
+$('previewBtn').addEventListener('click', async () => {
+  await initAudio();
+  const t = Tone.now() + 0.05;
+  if (synthEditTarget === 'pad') {
+    A.pad.triggerAttackRelease(['B3','D4','F#4'], 2, t, 0.7);
+  } else if (synthEditTarget === 'bass') {
+    A.bass.triggerAttackRelease(midiToFreq(47), '4n', t, 1.0);
+  } else if (synthEditTarget === 'lead') {
+    A.lead.triggerAttackRelease('B5', '2n', t, 0.7);
+  }
+  bumpTrig();
+});
+$('previewNoiseBtn').addEventListener('click', async () => {
+  await initAudio();
+  // Fire multiple gate triggers to demonstrate the noise's character
+  A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl * 4, Tone.now() + 0.05);
+  setTimeout(() => A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl * 3, Tone.now()), 200);
+  setTimeout(() => A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl * 3, Tone.now()), 500);
+  bumpTrig();
+});
+
+// ============================================================
+// PRESETS (PERSISTENT)
+// ============================================================
+function loadPresets() { return loadState().presets || {}; }
+function savePresets(p) { saveState({ presets: p }); }
+
+function refreshPresetList() {
+  const el = $('presetList');
+  const presets = loadPresets();
+  const names = Object.keys(presets);
+  if (names.length === 0) {
+    el.innerHTML = '<div style="padding:10px;opacity:0.5;font-size:11px;text-align:center">nessun preset salvato</div>';
+    return;
+  }
+  el.innerHTML = '';
+  names.forEach(name => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `<span>${escapeHtml(name)} <span style="opacity:0.5">(${presets[name].target})</span></span>
+      <span><button class="small" data-load="${escapeHtml(name)}">LOAD</button>
+      <span class="del" data-del="${escapeHtml(name)}">×</span></span>`;
+    el.appendChild(item);
+  });
+  el.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', () => {
+    const presets = loadPresets();
+    const p = presets[b.dataset.load];
+    if (!p) return;
+    synthEditTarget = p.target;
+    synthParams[p.target] = JSON.parse(JSON.stringify(p.params));
+    persistSynthParams();
+    document.querySelectorAll('.synth-target').forEach(x => x.classList.toggle('on', x.dataset.target === p.target));
+    $('synthEditingVal').textContent = p.target.toUpperCase();
+    const isNoise = p.target === 'noise';
+    $('tonalSynthGroup').style.display = isNoise ? 'none' : '';
+    $('noiseSynthGroup').style.display = isNoise ? '' : 'none';
+    loadSynthParamsToUI();
+    if (A) rebuildSynth(p.target);
+  }));
+  el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => {
+    const presets = loadPresets();
+    delete presets[b.dataset.del];
+    savePresets(presets);
+    refreshPresetList();
+  }));
+}
+$('savePresetBtn').addEventListener('click', () => {
+  const presets = loadPresets();
+  const name = $('presetName').value.trim() || ('preset_' + Object.keys(presets).length);
+  presets[name] = { target: synthEditTarget, params: JSON.parse(JSON.stringify(synthParams[synthEditTarget])) };
+  savePresets(presets);
+  $('presetName').value = '';
+  refreshPresetList();
+});
+
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ============================================================
+// SAMPLER
+// ============================================================
+$('sampleFile').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  await initAudio();
+  try {
+    $('sampleName').textContent = 'loading...';
+    const arrayBuffer = await file.arrayBuffer();
+    const audioBuffer = await Tone.context.decodeAudioData(arrayBuffer);
+    sampleBuffer = new Tone.ToneAudioBuffer(audioBuffer);
+    sampleName = file.name.length > 24 ? file.name.slice(0,21)+'...' : file.name;
+    $('sampleName').textContent = sampleName;
+    $('sampleDur').textContent = audioBuffer.duration.toFixed(2) + ' s';
+    drawWaveform(audioBuffer);
+  } catch (err) {
+    $('sampleName').textContent = 'ERROR';
+    console.error(err);
+  }
+});
+
+function drawWaveform(buf) {
+  const canvas = $('waveCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w, h);
+  const data = buf.getChannelData(0);
+  const step = Math.max(1, Math.floor(data.length / w));
+  ctx.strokeStyle = '#4af6ff'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x < w; x++) {
+    let min = 1, max = -1;
+    for (let j = 0; j < step; j++) {
+      const v = data[x * step + j];
+      if (v < min) min = v; if (v > max) max = v;
+    }
+    ctx.moveTo(x, (1 - (max+1)/2) * h); ctx.lineTo(x, (1 - (min+1)/2) * h);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = '#1a4d22';
+  ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
+}
+
+function playSample() {
+  if (!sampleBuffer || !A) return;
+  try {
+    const dur = sampleBuffer.duration;
+    const offset = sampleStart * dur;
+    const length = Math.max(0.01, (sampleEnd - sampleStart) * dur);
+    const player = new Tone.Player({
+      url: sampleBuffer, loop: sampleLoop,
+      loopStart: offset, loopEnd: offset + length,
+      fadeIn: sampleFade, fadeOut: sampleFade,
+      playbackRate: Math.pow(2, samplePitch / 12)
+    }).connect(A.sampleGain);
+    player.start(undefined, offset, sampleLoop ? undefined : length);
+    if (!sampleLoop) {
+      setTimeout(() => { try { player.dispose(); } catch(e){} }, (length / Math.pow(2, samplePitch/12)) * 1000 + 500);
+    } else {
+      if (currentSamplePlayer) { try { currentSamplePlayer.stop(); currentSamplePlayer.dispose(); } catch(e){} }
+      currentSamplePlayer = player;
+    }
+    bumpTrig();
+  } catch (err) { console.error(err); }
+}
+
+$('sampleTriggerBtn').addEventListener('click', async () => { await initAudio(); playSample(); });
+$('sampleLoopBtn').addEventListener('click', () => {
+  sampleLoop = !sampleLoop;
+  const btn = $('sampleLoopBtn');
+  btn.textContent = sampleLoop ? 'LOOP: ON' : 'LOOP: OFF';
+  btn.classList.toggle('on', sampleLoop);
+  if (!sampleLoop && currentSamplePlayer) {
+    try { currentSamplePlayer.stop(); currentSamplePlayer.dispose(); } catch(e){}
+    currentSamplePlayer = null;
+  }
+});
+$('pitch').addEventListener('input', e => { samplePitch = parseInt(e.target.value); $('pitchVal').textContent = (samplePitch>0?'+':'')+samplePitch; });
+$('startPos').addEventListener('input', e => {
+  sampleStart = parseFloat(e.target.value);
+  if (sampleStart >= sampleEnd) sampleStart = Math.max(0, sampleEnd - 0.01);
+  $('startVal').textContent = sampleStart.toFixed(2);
+});
+$('endPos').addEventListener('input', e => {
+  sampleEnd = parseFloat(e.target.value);
+  if (sampleEnd <= sampleStart) sampleEnd = Math.min(1, sampleStart + 0.01);
+  $('endVal').textContent = sampleEnd.toFixed(2);
+});
+$('fade').addEventListener('input', e => { sampleFade = parseFloat(e.target.value); $('fadeVal').textContent = sampleFade.toFixed(2)+' s'; });
+$('autoSampleBtn').addEventListener('click', () => {
+  autoSample = !autoSample;
+  const btn = $('autoSampleBtn');
+  btn.textContent = autoSample ? 'AUTO: ON' : 'AUTO: OFF';
+  btn.classList.toggle('on', autoSample);
+});
+$('autoRate').addEventListener('change', e => { autoSampleRate = parseInt(e.target.value); });
+
+// ============================================================
+// RECORDER (PERSISTENT via IndexedDB)
+// ============================================================
+function pickMimeType() {
+  const candidates = ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus','audio/ogg'];
+  for (const m of candidates) if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+function fmtTime(sec) { const m = Math.floor(sec/60); const s = Math.floor(sec%60); return m+':'+(s<10?'0':'')+s; }
+
+$('recStartBtn').addEventListener('click', async () => {
+  await initAudio();
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') return;
+  if (!window.MediaRecorder) { $('recStatus').textContent = 'NOT SUPPORTED'; return; }
+  const mime = pickMimeType();
+  $('recFormat').textContent = mime || 'default';
+  recordedChunks = [];
+  try {
+    mediaRecorder = new MediaRecorder(A.recDest.stream, mime ? { mimeType: mime } : undefined);
+  } catch (err) { $('recStatus').textContent = 'ERROR'; console.error(err); return; }
+  mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+  mediaRecorder.onstop = async () => {
+    const blob = new Blob(recordedChunks, { type: mime || 'audio/webm' });
+    const ext = mime.includes('mp4') ? 'm4a' : mime.includes('ogg') ? 'ogg' : 'webm';
+    const ts = new Date();
+    const stamp = ts.toISOString().replace(/[:.]/g,'-').slice(0,19);
+    const name = `cuore_${stamp}.${ext}`;
+    const record = { name, mime: blob.type, size: blob.size, blob, createdAt: ts.getTime() };
+    const id = await idbAdd(record);
+    if (id !== null) addRecordingToList({ id, ...record });
+  };
+  mediaRecorder.start(100);
+  recStartTime = Date.now();
+  $('recStatus').textContent = 'RECORDING';
+  $('recDot').classList.add('live');
+  recTimer = setInterval(() => { $('recTime').textContent = fmtTime((Date.now() - recStartTime)/1000); }, 250);
+});
+
+$('recStopBtn').addEventListener('click', () => {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+  mediaRecorder.stop();
+  clearInterval(recTimer);
+  $('recStatus').textContent = 'IDLE';
+  $('recDot').classList.remove('live');
+  $('recTime').textContent = '0:00';
+});
+
+function addRecordingToList(rec) {
+  const el = $('recList');
+  // Clear "nessuna registrazione" placeholder
+  const placeholder = el.querySelector('div[style*="nessuna"], div[style*="caricamento"]');
+  if (placeholder) placeholder.remove();
+  const url = URL.createObjectURL(rec.blob);
+  const wrap = document.createElement('div');
+  wrap.className = 'file-wrap';
+  wrap.dataset.id = rec.id;
+  const kb = (rec.size / 1024).toFixed(0);
+  wrap.innerHTML = `
+    <div class="file-item">
+      <span>${escapeHtml(rec.name)} <span style="opacity:0.5">(${kb} KB)</span></span>
+      <span><a href="${url}" download="${escapeHtml(rec.name)}">⬇ DL</a>
+        <span class="del">×</span></span>
+    </div>`;
+  const audio = document.createElement('audio');
+  audio.controls = true; audio.src = url;
+  wrap.appendChild(audio);
+  wrap.querySelector('.del').addEventListener('click', async () => {
+    URL.revokeObjectURL(url);
+    await idbDel(rec.id);
+    wrap.remove();
+    if (el.querySelectorAll('.file-wrap').length === 0) {
+      el.innerHTML = '<div style="padding:10px;opacity:0.5;font-size:11px;text-align:center">nessuna registrazione</div>';
+    }
+  });
+  el.appendChild(wrap);
+}
+
+async function loadRecordings() {
+  const el = $('recList');
+  const all = await idbAll();
+  el.innerHTML = '';
+  if (all.length === 0) {
+    el.innerHTML = '<div style="padding:10px;opacity:0.5;font-size:11px;text-align:center">nessuna registrazione</div>';
+    return;
+  }
+  all.sort((a,b) => (a.createdAt||0) - (b.createdAt||0));
+  for (const rec of all) addRecordingToList(rec);
+}
+
+// ============================================================
+// RANDOMIZE / RESET
+// ============================================================
+function setSlider(id, val) { const el = $(id); el.value = val; el.dispatchEvent(new Event('input')); }
+$('randomBtn').addEventListener('click', () => {
+  const rnd = (a,b) => a + Math.random() * (b-a);
+  setSlider('fb',   rnd(0.55, 0.92).toFixed(2));
+  setSlider('dwet', rnd(0.4,  0.95).toFixed(2));
+  setSlider('fhz',  Math.round(rnd(200, 3500)));
+  setSlider('frate',rnd(0.03, 0.6).toFixed(2));
+  setSlider('rev',  rnd(0.2,  0.85).toFixed(2));
+  setSlider('dens', rnd(0.25, 0.85).toFixed(2));
+  setSlider('noiseAmt', rnd(0.2, 0.9).toFixed(2));
+  setSlider('dist', rnd(0,    0.45).toFixed(2));
+});
+$('resetBtn').addEventListener('click', () => {
+  setSlider('master', 0); setSlider('bpm', 76);
+  setSlider('fb', 0.65); setSlider('dwet', 0.50);
+  setSlider('fhz', 800); setSlider('frate', 0.05); setSlider('foct', 3);
+  setSlider('rev', 0.40); setSlider('room', 0.92);
+  setSlider('dens', 0.50); setSlider('noiseAmt', 0.50); setSlider('dist', 0.20);
+});
+
+// ============================================================
+// INIT UI
+// ============================================================
+loadSynthParamsToUI();
+refreshPresetList();
+loadRecordings();
+
+</script>
+</body>
+</html>

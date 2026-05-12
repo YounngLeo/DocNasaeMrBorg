@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" width="240" height="160">
+  <rect width="240" height="160" fill="#0a0e0a"/>
+  <rect x="14" y="10" width="212" height="140" fill="none" stroke="#1f3a25" stroke-width="0.4" stroke-dasharray="2,2"/>
+  <g fill="none" stroke="#5eff7e" stroke-width="0.4" stroke-linecap="round" opacity="0.4">
+    <path d="M 20 14 Q 60 8 100 18 T 180 12 Q 215 20 226 30 Q 232 70 220 110 Q 215 145 180 148 T 100 145 Q 50 152 14 145"/>
+    <path d="M 24 22 Q 65 15 105 24 T 175 20 Q 215 35 222 60 Q 218 90 210 120"/>
+  </g>
+  <g fill="none" stroke-width="0.5" stroke-linecap="round" opacity="0.8">
+    <path d="M 70 50 Q 60 70 50 90 T 30 130" stroke="#ff6e8a"/>
+    <path d="M 70 50 Q 90 65 110 75 T 145 90" stroke="#ff6e8a"/>
+    <path d="M 70 50 Q 65 35 75 25 T 95 18" stroke="#ff6e8a"/>
+    <path d="M 145 60 Q 165 50 185 55 T 215 50" stroke="#62c8ff"/>
+    <path d="M 145 60 Q 155 80 145 100 T 130 130" stroke="#62c8ff"/>
+    <path d="M 180 110 Q 165 125 145 130 T 110 140" stroke="#ffc44a"/>
+    <path d="M 180 110 Q 200 95 220 100 T 232 115" stroke="#ffc44a"/>
+  </g>
+  <g>
+    <circle cx="70" cy="50" r="32" fill="none" stroke="#ff6e8a" stroke-width="0.5" opacity="0.5"/>
+    <circle cx="70" cy="50" r="5" fill="#ff6e8a"/>
+    <text x="70" y="53" text-anchor="middle" fill="#050805" font-family="Courier New" font-size="6" font-weight="bold">A</text>
+  </g>
+  <g>
+    <circle cx="145" cy="60" r="28" fill="none" stroke="#62c8ff" stroke-width="0.5" opacity="0.5"/>
+    <circle cx="145" cy="60" r="5" fill="#62c8ff"/>
+    <text x="145" y="63" text-anchor="middle" fill="#050805" font-family="Courier New" font-size="6" font-weight="bold">B</text>
+  </g>
+  <g>
+    <circle cx="180" cy="110" r="35" fill="none" stroke="#ffc44a" stroke-width="0.5" opacity="0.5"/>
+    <circle cx="180" cy="110" r="5" fill="#ffc44a"/>
+    <text x="180" y="113" text-anchor="middle" fill="#050805" font-family="Courier New" font-size="6" font-weight="bold">C</text>
+  </g>
+  <text x="120" y="156" text-anchor="middle" fill="#294029" font-family="Courier New" font-size="5" letter-spacing="2">ATTRACTORS ACTIVE</text>
+</svg>

@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BARENE_FRAME // CONNECTED.NET</title>
+<style>
+:root {
+  --bg-0: #050805;
+  --bg-1: #0a0e0a;
+  --bg-2: #121812;
+  --fg-0: #d8ffe2;
+  --fg-1: #66dd88;
+  --fg-2: #4a8a5e;
+  --fg-3: #294029;
+  --acc:  #5eff7e;
+  --acc-2:#95ff62;
+  --att-A:#ff6e8a;
+  --att-B:#62c8ff;
+  --att-C:#ffc44a;
+  --warn: #ffb050;
+  --mono: 'Courier New','Courier',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg-0);color:var(--fg-1);font-family:var(--mono);font-size:12px;line-height:1.5;min-height:100vh;letter-spacing:.02em}
+::selection{background:var(--acc);color:var(--bg-0)}
+.app{max-width:1480px;margin:0 auto;padding:18px;display:flex;flex-direction:column;gap:14px;min-height:100vh}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;border-bottom:1px solid var(--fg-3);padding-bottom:10px;flex-wrap:wrap}
+.head .title{display:flex;flex-direction:column;gap:2px}
+.head h1{font-size:14px;font-weight:normal;letter-spacing:.18em;color:var(--acc)}
+.head .sub{color:var(--fg-2);font-size:10.5px;letter-spacing:.1em}
+.head .meta{color:var(--fg-2);font-size:10.5px;text-align:right;letter-spacing:.08em}
+.head .meta b{color:var(--fg-1);font-weight:normal}
+main{display:grid;grid-template-columns:1fr 320px;gap:14px;flex:1;min-height:0}
+@media (max-width:940px){main{grid-template-columns:1fr}}
+.stage{position:relative;background:var(--bg-1);border:1px solid var(--fg-3);overflow:hidden}
+canvas{display:block;width:100%;height:auto;background:transparent;cursor:default}
+canvas.grabbing{cursor:grabbing}
+canvas.hovering{cursor:grab}
+.stage .corner{position:absolute;color:var(--fg-2);font-size:10px;letter-spacing:.08em;pointer-events:none;text-shadow:0 0 4px var(--bg-0)}
+.stage .corner.tl{top:8px;left:10px}
+.stage .corner.tr{top:8px;right:10px}
+.stage .corner.bl{bottom:8px;left:10px}
+.stage .corner.br{bottom:8px;right:10px}
+.stage .modetag{position:absolute;top:8px;left:50%;transform:translateX(-50%);color:var(--acc);font-size:10px;letter-spacing:.16em;background:rgba(5,8,5,.7);padding:3px 10px;border:1px solid var(--fg-3)}
+.panel{display:flex;flex-direction:column;gap:14px;overflow-y:auto;max-height:calc(100vh - 110px);padding-right:4px}
+.panel::-webkit-scrollbar{width:6px}
+.panel::-webkit-scrollbar-track{background:var(--bg-1)}
+.panel::-webkit-scrollbar-thumb{background:var(--fg-3)}
+.box{background:var(--bg-1);border:1px solid var(--fg-3);padding:12px;flex-shrink:0}
+.box.attA{border-left:2px solid var(--att-A)}
+.box.attB{border-left:2px solid var(--att-B)}
+.box.attC{border-left:2px solid var(--att-C)}
+.box .lab{color:var(--fg-2);font-size:10px;letter-spacing:.14em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.box .lab .v{color:var(--acc);letter-spacing:.05em}
+.box.attA .lab .v{color:var(--att-A)}
+.box.attB .lab .v{color:var(--att-B)}
+.box.attC .lab .v{color:var(--att-C)}
+.subhead{color:var(--fg-2);font-size:9.5px;letter-spacing:.16em;margin:8px 0 4px;padding-top:7px;border-top:1px dotted var(--fg-3)}
+.ctrl{display:flex;flex-direction:column;gap:9px}
+.ctrl .row{display:flex;flex-direction:column;gap:3px}
+.ctrl .row label{display:flex;justify-content:space-between;font-size:10.5px;color:var(--fg-1);letter-spacing:.06em}
+.ctrl .row label .vv{color:var(--fg-0);font-size:10.5px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:14px;background:transparent;cursor:pointer;outline:none}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--fg-3)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:10px;height:10px;background:var(--acc);border:0;margin-top:-4.5px;cursor:pointer}
+input[type=range]::-moz-range-track{height:1px;background:var(--fg-3)}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;background:var(--acc);border:0;border-radius:0;cursor:pointer}
+input[type=range]:focus::-webkit-slider-thumb{box-shadow:0 0 0 2px var(--fg-3)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+button{font-family:inherit;font-size:10.5px;letter-spacing:.1em;background:transparent;color:var(--fg-1);border:1px solid var(--fg-3);padding:7px 8px;cursor:pointer;text-align:left;transition:.08s;text-transform:uppercase}
+button:hover{border-color:var(--acc);color:var(--acc)}
+button:active{background:var(--acc);color:var(--bg-0)}
+button.full{grid-column:1/-1}
+button.pri{border-color:var(--fg-1);color:var(--acc)}
+button.obj{border-color:var(--acc-2);color:var(--acc-2)}
+button.obj:hover{background:var(--acc-2);color:var(--bg-0);border-color:var(--acc-2)}
+button.attA{border-color:var(--att-A);color:var(--att-A)}
+button.attA:hover{background:var(--att-A);color:var(--bg-0)}
+button.attB{border-color:var(--att-B);color:var(--att-B)}
+button.attB:hover{background:var(--att-B);color:var(--bg-0)}
+button.attC{border-color:var(--att-C);color:var(--att-C)}
+button.attC:hover{background:var(--att-C);color:var(--bg-0)}
+button.off{opacity:.4}
+button .k{color:var(--fg-2);margin-right:6px}
+button:hover .k{color:var(--fg-1)}
+.kbd{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:10px;color:var(--fg-2);letter-spacing:.06em}
+.kbd span b{color:var(--fg-1);font-weight:normal;border:1px solid var(--fg-3);padding:1px 5px;margin-right:4px}
+.foot{border-top:1px solid var(--fg-3);padding-top:8px;color:var(--fg-2);font-size:10px;letter-spacing:.08em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg-2);border:1px solid var(--acc);color:var(--acc);padding:8px 14px;font-size:11px;letter-spacing:.1em;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+.modal{position:fixed;inset:0;background:rgba(5,8,5,.92);display:none;align-items:center;justify-content:center;z-index:80;padding:20px}
+.modal.on{display:flex}
+.modal-content{background:var(--bg-1);border:1px solid var(--acc);padding:18px;max-width:380px;width:100%}
+.modal-content h3{font-size:12px;letter-spacing:.14em;color:var(--acc);margin-bottom:12px;font-weight:normal}
+.modal-content input{width:100%;background:var(--bg-2);border:1px solid var(--fg-3);color:var(--fg-1);font-family:inherit;font-size:12px;padding:9px 11px;letter-spacing:.06em;outline:none;margin-bottom:12px}
+.modal-content input:focus{border-color:var(--acc)}
+.modal-content .modal-btns{display:flex;gap:6px;justify-content:flex-end}
+.modal-content .modal-btns button{font-family:inherit;font-size:10.5px;letter-spacing:.1em;background:transparent;border:1px solid var(--fg-3);color:var(--fg-1);padding:7px 12px;cursor:pointer;text-transform:uppercase}
+.modal-content .modal-btns button.primary{border-color:var(--acc);color:var(--acc)}
+.modal-content .modal-btns button:hover{border-color:var(--acc);color:var(--acc)}
+.bracket{color:var(--fg-3)}
+.legend{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:10px;color:var(--fg-2);letter-spacing:.08em}
+.legend .ramp{flex:1;height:8px;background:linear-gradient(to right,#1a3d1f,#5eff7e)}
+.btnRow{display:flex;gap:4px;margin-bottom:8px}
+.btnRow button{flex:1;padding:5px 6px;font-size:10px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="head">
+  <div class="title">
+    <div style="font-size:10px;color:var(--fg-2);letter-spacing:.12em;margin-bottom:3px"><a href="../#barene-frame" style="color:var(--fg-2);text-decoration:none;border-bottom:1px dotted var(--fg-3)">← tools_index</a> <span class="bracket">/</span> barene_frame <span class="bracket">/</span> tool</div>
+    <h1><span class="bracket">[</span> BARENE_FRAME <span class="bracket">::</span> CONNECTED NETWORK <span class="bracket">]</span></h1>
+    <div class="sub">tributaries always connect — closest other attractor or snapped frame point</div>
+  </div>
+  <div class="meta">
+    600 × 400 MM <span class="bracket">·</span> CANALE 15 × 5 MM<br>
+    <b id="m_seed">seed: —</b> <span class="bracket">·</span> <b id="m_count">tot: —</b>
+  </div>
+</header>
+
+<main>
+  <div class="stage">
+    <canvas id="cnv"></canvas>
+    <div class="modetag" id="modetag">VIEW: PATHS</div>
+    <div class="corner tl">[ 0,0 ]</div>
+    <div class="corner tr">[ 600,0 ]</div>
+    <div class="corner bl">[ 0,400 ]</div>
+    <div class="corner br">[ 600,400 ]</div>
+  </div>
+
+  <aside class="panel">
+    <div class="box">
+      <div class="lab">FRAME PATHS <span class="v" id="m_n">N=10</span></div>
+      <div class="ctrl">
+        <div class="row">
+          <label><span>// agenti perimetro</span><span class="vv" id="v_n">10</span></label>
+          <input type="range" id="b_n" min="3" max="24" value="10" step="1">
+        </div>
+        <div class="row">
+          <label><span>// ampiezza meandro</span><span class="vv" id="v_amp">25 mm</span></label>
+          <input type="range" id="b_amp" min="3" max="60" value="25" step="1">
+        </div>
+        <div class="row">
+          <label><span>// dettaglio</span><span class="vv" id="v_freq">1.00×</span></label>
+          <input type="range" id="b_freq" min="0.3" max="3.0" value="1.0" step="0.05">
+        </div>
+        <div class="row">
+          <label><span>// variabilità</span><span class="vv" id="v_var">0.60</span></label>
+          <input type="range" id="b_var" min="0" max="1" value="0.6" step="0.05">
+        </div>
+        <div class="row">
+          <label><span>// componente longitud.</span><span class="vv" id="v_lon">0.30</span></label>
+          <input type="range" id="b_lon" min="0" max="1" value="0.3" step="0.05">
+        </div>
+        <div class="row">
+          <label><span>// opacità tracce</span><span class="vv" id="v_op">0.65</span></label>
+          <input type="range" id="b_op" min="0.1" max="1" value="0.65" step="0.05">
+        </div>
+      </div>
+      <div class="legend"><span>Z-</span><div class="ramp"></div><span>Z+</span></div>
+    </div>
+
+    <div class="box attA">
+      <div class="lab">ATTRACTOR A <span class="v" id="m_attA_pos">— , —</span></div>
+      <div class="btnRow">
+        <button class="attA" id="b_attA_on">ON</button>
+        <button class="attA" id="b_attA_swirl">SWIRL +</button>
+        <button class="attA" id="b_attA_reset">RESET</button>
+      </div>
+      <div class="ctrl">
+        <div class="row">
+          <label><span>// raggio campo</span><span class="vv" id="v_attA_r">120 mm</span></label>
+          <input type="range" id="b_attA_r" min="20" max="300" value="120" step="5">
+        </div>
+        <div class="row">
+          <label><span>// forza</span><span class="vv" id="v_attA_s">0.70</span></label>
+          <input type="range" id="b_attA_s" min="0" max="2" value="0.7" step="0.05">
+        </div>
+        <div class="row">
+          <label><span>// turbolenza</span><span class="vv" id="v_attA_t">0.30</span></label>
+          <input type="range" id="b_attA_t" min="0" max="1" value="0.3" step="0.05">
+        </div>
+      </div>
+      <div class="subhead">// SOURCE GENERATOR</div>
+      <div class="ctrl">
+        <div class="row">
+          <label><span>// punti generati</span><span class="vv" id="v_attA_gen">3</span></label>
+          <input type="range" id="b_attA_gen" min="0" max="12" value="3" step="1">
+        </div>
+        <div class="row">
+          <label><span>// sinuosità tributario</span><span class="vv" id="v_attA_sin">0.50</span></label>
+          <input type="range" id="b_attA_sin" min="0" max="1.5" value="0.5" step="0.05">
+        </div>
+      </div>
+    </div>
+
+    <div class="box attB">
+      <div class="lab">ATTRACTOR B <span class="v" id="m_attB_pos">— , —</span></div>
+      <div class="btnRow">
+        <button class="attB" id="b_attB_on">ON</button>
+        <button class="attB" id="b_attB_swirl">SWIRL −</button>
+        <button class="attB" id="b_attB_reset">RESET</button>
+      </div>
+      <div class="ctrl">
+        <div class="row">
+          <label><span>// raggio campo</span><span class="vv" id="v_attB_r">90 mm</span></label>
+          <input type="range" id="b_attB_r" min="20" max="300" value="90" step="5">
+        </div>
+        <div class="row">
+          <label><span>// forza</span><span class="vv" id="v_attB_s">0.55</span></label>
+          <input type="range" id="b_attB_s" min="0" max="2" value="0.55" step="0.05">
+        </div>
+        <div class="row">
+          <label><span>// turbolenza</span><span class="vv" id="v_attB_t">0.50</span></label>
+          <input type="range" id="b_attB_t" min="0" max="1" value="0.5" step="0.05">
+        </div>
+      </div>
+      <div class="subhead">// SOURCE GENERATOR</div>
+      <div class="ctrl">
+        <div class="row">
+          <label><span>// punti generati</span><span class="vv" id="v_attB_gen">4</span></label>
+          <input type="range" id="b_attB_gen" min="0" max="12" value="4" step="1">
+        </div>
+        <div class="row">
+          <label><span>// sinuosità tributario</span><span class="vv" id="v_attB_sin">0.70</span></label>
+          <input type="range" id="b_attB_sin" min="0" max="1.5" value="0.7" step="0.05">
+        </div>
+      </div>
+    </div>
+
+    <div class="box attC">
+      <div class="lab">ATTRACTOR C <span class="v" id="m_attC_pos">— , —</span></div>
+      <div class="btnRow">
+        <button class="attC" id="b_attC_on">ON</button>
+        <button class="attC" id="b_attC_swirl">SWIRL +</button>
+        <button class="attC" id="b_attC_reset">RESET</button>
+      </div>
+      <div class="ctrl">
+        <div class="row">
+          <label><span>// raggio campo</span><span class="vv" id="v_attC_r">150 mm</span></label>
+          <input type="range" id="b_attC_r" min="20" max="300" value="150" step="5">
+        </div>
+        <div class="row">
+          <label><span>// forza</span><span class="vv" id="v_attC_s">0.40</span></label>
+          <input type="range" id="b_attC_s" min="0" max="2" value="0.4" step="0.05">
+        </div>
+        <div class="row">
+          <label><span>// turbolenza</span><span class="vv" id="v_attC_t">0.70</span></label>
+          <input type="range" id="b_attC_t" min="0" max="1" value="0.7" step="0.05">
+        </div>
+      </div>
+      <div class="subhead">// SOURCE GENERATOR</div>
+      <div class="ctrl">
+        <div class="row">
+          <label><span>// punti generati</span><span class="vv" id="v_attC_gen">2</span></label>
+          <input type="range" id="b_attC_gen" min="0" max="12" value="2" step="1">
+        </div>
+        <div class="row">
+          <label><span>// sinuosità tributario</span><span class="vv" id="v_attC_sin">0.90</span></label>
+          <input type="range" id="b_attC_sin" min="0" max="1.5" value="0.9" step="0.05">
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="lab">3D MESH / FUSIONE</div>
+      <div class="ctrl">
+        <div class="row">
+          <label><span>// largh. piramide</span><span class="vv" id="v_pw">15 mm</span></label>
+          <input type="range" id="b_pw" min="6" max="40" value="15" step="0.5">
+        </div>
+        <div class="row">
+          <label><span>// altezza Z max</span><span class="vv" id="v_zmax">6.0 mm</span></label>
+          <input type="range" id="b_zmax" min="1" max="15" value="6" step="0.5">
+        </div>
+        <div class="row">
+          <label><span>// altezza Z min</span><span class="vv" id="v_zmin">2.0 mm</span></label>
+          <input type="range" id="b_zmin" min="0.5" max="10" value="2" step="0.5">
+        </div>
+        <div class="row">
+          <label><span>// spessore base</span><span class="vv" id="v_base">2.0 mm</span></label>
+          <input type="range" id="b_base" min="0.5" max="6" value="2" step="0.5">
+        </div>
+        <div class="row">
+          <label><span>// grid mesh OBJ</span><span class="vv" id="v_res">3.0 mm</span></label>
+          <input type="range" id="b_res" min="1.5" max="6" value="3" step="0.5">
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="lab">AZIONI</div>
+      <div class="btns">
+        <button id="b_regen" class="pri full"><span class="k">R</span>RIGENERA SEED</button>
+        <button id="b_view"><span class="k">V</span>VIEW: PATHS</button>
+        <button id="b_anim"><span class="k">␣</span>REPLAY</button>
+        <button id="b_chan"><span class="k">C</span>CANALE</button>
+        <button id="b_grid"><span class="k">G</span>GRID</button>
+        <button id="b_speak"><span class="k">S</span>SPEAKER</button>
+        <button id="b_atts"><span class="k">A</span>ATTRACTORS UI</button>
+        <button id="b_targ"><span class="k">T</span>TARGET LINES</button>
+        <button id="b_allon"><span class="k">1</span>ALL ATTR ON</button>
+        <button id="b_alloff"><span class="k">0</span>ALL ATTR OFF</button>
+        <button id="b_savepreset" class="full" style="border-color:#95ff62;color:#95ff62"><span class="k">⌘S</span>SAVE PRESET</button>
+        <button id="b_png" class="full"><span class="k">P</span>EXPORT PNG (DEPTH MAP)</button>
+        <button id="b_svg" class="full"><span class="k">E</span>EXPORT SVG CENTERLINES</button>
+        <button id="b_svgch" class="full"><span class="k">W</span>EXPORT SVG W/CHANNEL</button>
+        <button id="b_obj" class="obj full"><span class="k">O</span>EXPORT OBJ (3D MESH)</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="lab">SHORTCUTS · DRAG ATTR. SU CANVAS</div>
+      <div class="kbd">
+        <span><b>R</b>regen</span>
+        <span><b>SPC</b>anim</span>
+        <span><b>V</b>view</span>
+        <span><b>C</b>canale</span>
+        <span><b>G</b>grid</span>
+        <span><b>S</b>speaker</span>
+        <span><b>A</b>att UI</span>
+        <span><b>T</b>targets</span>
+        <span><b>1</b>on</span>
+        <span><b>0</b>off</span>
+        <span><b>P</b>png</span>
+        <span><b>E</b>svg</span>
+        <span><b>W</b>svg+ch</span>
+        <span><b>O</b>obj</span>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="foot">
+  <span>// directional cone targeting · attractor-or-frame-snap · sin-envelope meander · pinned endpoints · max-blend heightmap</span>
+  <span>DoctNasa<span class="bracket">&amp;</span>MrBorg <span class="bracket">//</span> v0.5</span>
+</footer>
+
+</div>
+
+<div class="toast" id="toast">EXPORTED.</div>
+
+<div class="modal" id="presetModal">
+  <div class="modal-content">
+    <h3>[ SAVE PRESET ]</h3>
+    <input type="text" id="presetName" placeholder="nome preset..." spellcheck="false" autocomplete="off">
+    <div class="modal-btns">
+      <button id="presetCancel">CANCEL</button>
+      <button id="presetOK" class="primary">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/presets.js"></script>
+<script>
+(function(){
+const SLUG = 'barene-frame';
+window.__DNMB_SLUG__ = SLUG;
+
+window.__DNMB_collectState = function() {
+  const state = {};
+  document.querySelectorAll('input[type=range]').forEach(el => { state[el.id] = el.value; });
+  state.__attractors = ['A','B','C'].map(id => ({
+    id, on: !document.getElementById('b_att'+id+'_on').classList.contains('off'),
+    x: window.__DNMB_attractors ? window.__DNMB_attractors.find(a=>a.id===id).x : null,
+    y: window.__DNMB_attractors ? window.__DNMB_attractors.find(a=>a.id===id).y : null,
+    swirl: window.__DNMB_attractors ? window.__DNMB_attractors.find(a=>a.id===id).swirl : null
+  }));
+  state.__seed = window.__DNMB_seedBase || null;
+  state.__view = window.__DNMB_viewMode || 'paths';
+  return state;
+};
+
+window.__DNMB_applyState = function(state) {
+  if (!state) return;
+  Object.keys(state).forEach(k => {
+    if (k.startsWith('__')) return;
+    const el = document.getElementById(k);
+    if (el && el.type === 'range') {
+      el.value = state[k];
+      el.dispatchEvent(new Event('input'));
+    }
+  });
+  if (state.__attractors && window.__DNMB_attractors) {
+    state.__attractors.forEach(s => {
+      const a = window.__DNMB_attractors.find(x => x.id === s.id);
+      if (!a) return;
+      if (s.x !== null) a.x = s.x;
+      if (s.y !== null) a.y = s.y;
+      if (s.swirl !== null) {
+        a.swirl = s.swirl;
+        const btn = document.getElementById('b_att' + s.id + '_swirl');
+        if (btn) btn.textContent = 'SWIRL ' + (s.swirl > 0 ? '+' : '−');
+      }
+      a.on = s.on;
+      document.getElementById('b_att' + s.id + '_on').classList.toggle('off', !s.on);
+    });
+  }
+  if (state.__seed != null) window.__DNMB_seedBase = state.__seed;
+  if (window.__DNMB_makeAgents) {
+    window.__DNMB_makeAgents();
+    if (window.__DNMB_draw) window.__DNMB_draw();
+  }
+};
+
+document.getElementById('b_savepreset').addEventListener('click', () => {
+  document.getElementById('presetModal').classList.add('on');
+  setTimeout(() => document.getElementById('presetName').focus(), 50);
+});
+document.getElementById('presetCancel').addEventListener('click', () => {
+  document.getElementById('presetModal').classList.remove('on');
+});
+document.getElementById('presetOK').addEventListener('click', () => {
+  const name = document.getElementById('presetName').value.trim() || 'preset_untitled';
+  const state = window.__DNMB_collectState();
+  DNMB_Presets.save(SLUG, name, state);
+  document.getElementById('presetModal').classList.remove('on');
+  document.getElementById('presetName').value = '';
+  const t = document.getElementById('toast');
+  t.textContent = 'PRESET SALVATO · "' + name + '"';
+  t.classList.add('on');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('on'), 1500);
+});
+document.getElementById('presetName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('presetOK').click();
+  else if (e.key === 'Escape') document.getElementById('presetCancel').click();
+});
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault();
+    document.getElementById('b_savepreset').click();
+  }
+});
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const pending = sessionStorage.getItem('dnmb_pending_preset');
+    if (pending) {
+      sessionStorage.removeItem('dnmb_pending_preset');
+      try {
+        const state = JSON.parse(pending);
+        window.__DNMB_applyState(state);
+        const t = document.getElementById('toast');
+        t.textContent = 'PRESET CARICATO';
+        t.classList.add('on');
+        clearTimeout(t._tm);
+        t._tm = setTimeout(() => t.classList.remove('on'), 1500);
+      } catch {}
+    }
+  }, 300);
+});
+})();
+</script>
+
+<script>
+(function(){
+const W = 600, H = 400, R_CORNER = 15;
+const Lx = W - 2*R_CORNER, Ly = H - 2*R_CORNER;
+const La = Math.PI/2 * R_CORNER;
+const PERI = 2*Lx + 2*Ly + 4*La;
+const SAMPLES = 800;
+const CHANNEL_W = 15;
+const MARGIN = 50;
+const totalW = W + 2*MARGIN;
+const totalH = H + 2*MARGIN;
+const HANDLE_R = 9;
+const EMIT_STEP = 1.8;
+const FIELD_DISP_SCALE = 0.4;
+const ALIGN_THRESH = 0.4;
+
+const segs = [
+  {t:'l',sx:R_CORNER,sy:0,ex:W-R_CORNER,ey:0,len:Lx,tx:1,ty:0,nx:0,ny:-1},
+  {t:'a',cx:W-R_CORNER,cy:R_CORNER,sa:-Math.PI/2,ea:0,len:La,r:R_CORNER},
+  {t:'l',sx:W,sy:R_CORNER,ex:W,ey:H-R_CORNER,len:Ly,tx:0,ty:1,nx:1,ny:0},
+  {t:'a',cx:W-R_CORNER,cy:H-R_CORNER,sa:0,ea:Math.PI/2,len:La,r:R_CORNER},
+  {t:'l',sx:W-R_CORNER,sy:H,ex:R_CORNER,ey:H,len:Lx,tx:-1,ty:0,nx:0,ny:1},
+  {t:'a',cx:R_CORNER,cy:H-R_CORNER,sa:Math.PI/2,ea:Math.PI,len:La,r:R_CORNER},
+  {t:'l',sx:0,sy:H-R_CORNER,ex:0,ey:R_CORNER,len:Ly,tx:0,ty:-1,nx:-1,ny:0},
+  {t:'a',cx:R_CORNER,cy:R_CORNER,sa:Math.PI,ea:3*Math.PI/2,len:La,r:R_CORNER}
+];
+
+function pp(t){
+  t = ((t % PERI) + PERI) % PERI;
+  let acc = 0;
+  for (const s of segs) {
+    if (t < acc + s.len) {
+      const u = (t - acc) / s.len;
+      if (s.t === 'l') {
+        return {x: s.sx + (s.ex-s.sx)*u, y: s.sy + (s.ey-s.sy)*u, tx: s.tx, ty: s.ty, nx: s.nx, ny: s.ny};
+      } else {
+        const a = s.sa + (s.ea - s.sa)*u;
+        const ca = Math.cos(a), sn = Math.sin(a);
+        return {x: s.cx + s.r*ca, y: s.cy + s.r*sn, tx: -sn, ty: ca, nx: ca, ny: sn};
+      }
+    }
+    acc += s.len;
+  }
+  return {x:0, y:0, tx:1, ty:0, nx:0, ny:-1};
+}
+
+function noise(t, seed, oct, baseFreq){
+  let s = 0, total = 0, amp = 1, freq = baseFreq;
+  for (let o = 0; o < oct; o++) {
+    s += Math.sin(t * 0.018 * freq + seed * (o+1) * 1.7 + seed * 13.0) * amp;
+    total += amp;
+    amp *= 0.55;
+    freq *= 2.05;
+  }
+  return s / total;
+}
+
+function noise2D(x, y, seed, oct){
+  let s = 0, total = 0, amp = 1, freq = 0.012;
+  for (let o = 0; o < oct; o++) {
+    s += Math.sin(x * freq + seed * (o+1) * 1.31) * Math.cos(y * freq * 1.07 + seed * (o+1) * 0.83) * amp;
+    total += amp;
+    amp *= 0.55;
+    freq *= 2.05;
+  }
+  return s / total;
+}
+
+function smoothstep(edge0, edge1, x){
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+function assignDepths(N, seed){
+  if (N <= 0) return [];
+  const arr = [];
+  for (let i = 0; i < N; i++) arr.push(N === 1 ? 1 : i / (N - 1));
+  let rng = (seed * 7919) | 0;
+  for (let i = arr.length - 1; i > 0; i--) {
+    rng = (rng * 1103515245 + 12345) | 0;
+    const j = Math.abs(rng) % (i + 1);
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+const attractors = [
+  {id:'A', name:'A', x: 150, y: 200, on:false, color:'#ff6e8a', swirl:+1, targets:[]},
+  {id:'B', name:'B', x: 300, y: 100, on:false, color:'#62c8ff', swirl:-1, targets:[]},
+  {id:'C', name:'C', x: 450, y: 200, on:false, color:'#ffc44a', swirl:+1, targets:[]}
+];
+
+let seedBase = Math.floor(Math.random() * 100000);
+let agents = [];
+let drawProgress = 1, animStart = 0, animDuration = 1800, animating = false;
+let showChannel = false, showGrid = true, showSpeaker = true, showAttUI = true, showTargets = false;
+let viewMode = 'paths';
+let heightmapCache = null;
+let heightmapImageCache = null;
+let dragging = null, dragOff = {x:0, y:0};
+let hoveringAtt = null;
+
+const $ = (id) => document.getElementById(id);
+
+function getAttParams(id){
+  return {
+    r: parseFloat($('b_att' + id + '_r').value),
+    s: parseFloat($('b_att' + id + '_s').value),
+    t: parseFloat($('b_att' + id + '_t').value)
+  };
+}
+
+function getAttGenParams(id){
+  return {
+    n: parseInt($('b_att' + id + '_gen').value),
+    sin: parseFloat($('b_att' + id + '_sin').value)
+  };
+}
+
+function applyAttractorsDisp(x, y, tt, seed, exclPull){
+  let dx = 0, dy = 0;
+  const isSet = exclPull && typeof exclPull.has === 'function';
+  for (const a of attractors) {
+    if (!a.on) continue;
+    const p = getAttParams(a.id);
+    if (p.s === 0) continue;
+    const ex = a.x - x, ey = a.y - y;
+    const dist = Math.sqrt(ex*ex + ey*ey);
+    if (dist > p.r || dist < 0.01) continue;
+    const fall = smoothstep(p.r, 0, dist);
+    const inv = 1 / dist;
+    const ux = ex * inv, uy = ey * inv;
+    const px = -uy, py = ux;
+    const swirlNoise = noise(tt + a.x * 0.31 + a.y * 0.27, seed * 0.5, 3, 0.6);
+    const turbNoise1 = noise2D(x + tt * 0.4, y - tt * 0.3, seed * 1.7 + (a.id.charCodeAt(0)), 3);
+    const turbNoise2 = noise2D(x - tt * 0.2, y + tt * 0.5, seed * 0.7 + (a.id.charCodeAt(0)) * 1.3, 3);
+    const excludePull = exclPull == null ? false : (isSet ? exclPull.has(a.id) : a.id === exclPull);
+    if (!excludePull) {
+      dx += ux * fall * p.s * 60;
+      dy += uy * fall * p.s * 60;
+    }
+    const swirlAmp = fall * p.s * 50;
+    dx += px * swirlAmp * a.swirl * (0.6 + 0.4 * swirlNoise);
+    dy += py * swirlAmp * a.swirl * (0.6 + 0.4 * swirlNoise);
+    const turbAmp = p.t * fall * p.s * 35;
+    dx += turbNoise1 * turbAmp;
+    dy += turbNoise2 * turbAmp;
+  }
+  return {dx, dy};
+}
+
+function rayFrameHit(cx, cy, ang){
+  const dx = Math.cos(ang);
+  const dy = Math.sin(ang);
+  let bestT = Infinity;
+  if (dx > 1e-6) bestT = Math.min(bestT, (W - cx) / dx);
+  else if (dx < -1e-6) bestT = Math.min(bestT, (-cx) / dx);
+  if (dy > 1e-6) bestT = Math.min(bestT, (H - cy) / dy);
+  else if (dy < -1e-6) bestT = Math.min(bestT, (-cy) / dy);
+  if (bestT === Infinity || bestT < 0) return null;
+  return {x: cx + dx * bestT, y: cy + dy * bestT};
+}
+
+function snapToFramePath(idealX, idealY, mainAgents){
+  let bestDist2 = Infinity;
+  let bestPt = null;
+  for (let m = 0; m < mainAgents.length; m++) {
+    const path = mainAgents[m].path;
+    for (let p = 0; p < path.length; p++) {
+      const pt = path[p];
+      const ddx = pt.x - idealX;
+      const ddy = pt.y - idealY;
+      const d2 = ddx*ddx + ddy*ddy;
+      if (d2 < bestDist2) {
+        bestDist2 = d2;
+        bestPt = pt;
+      }
+    }
+  }
+  return bestPt;
+}
+
+function findTarget(attractor, baseAngle, mainAgents){
+  const sx = Math.max(2, Math.min(W - 2, attractor.x));
+  const sy = Math.max(2, Math.min(H - 2, attractor.y));
+  const dirX = Math.cos(baseAngle);
+  const dirY = Math.sin(baseAngle);
+
+  let bestAttr = null;
+  let bestAttrDist = Infinity;
+  for (const o of attractors) {
+    if (o.id === attractor.id || !o.on) continue;
+    const ox = Math.max(2, Math.min(W - 2, o.x));
+    const oy = Math.max(2, Math.min(H - 2, o.y));
+    const ex = ox - sx;
+    const ey = oy - sy;
+    const dist = Math.sqrt(ex*ex + ey*ey);
+    if (dist < 1e-6) continue;
+    const dot = (ex * dirX + ey * dirY) / dist;
+    if (dot < ALIGN_THRESH) continue;
+    if (dist < bestAttrDist) {
+      bestAttrDist = dist;
+      bestAttr = {x: ox, y: oy, type: 'attractor', id: o.id};
+    }
+  }
+
+  const frameHit = rayFrameHit(sx, sy, baseAngle);
+  let frameDist = Infinity;
+  let frameTarget = null;
+  if (frameHit) {
+    const ddx = frameHit.x - sx;
+    const ddy = frameHit.y - sy;
+    frameDist = Math.sqrt(ddx*ddx + ddy*ddy);
+    const snapped = mainAgents.length ? snapToFramePath(frameHit.x, frameHit.y, mainAgents) : null;
+    if (snapped) frameTarget = {x: snapped.x, y: snapped.y, type: 'frame', id: null};
+    else frameTarget = {x: frameHit.x, y: frameHit.y, type: 'frame', id: null};
+  }
+
+  if (bestAttr && bestAttrDist <= frameDist) return bestAttr;
+  return frameTarget;
+}
+
+function makeMainAgent(i, N, ampUI, freqUI, varUI, lonUI){
+  const seed = seedBase * 0.001 + i * 7.31 + 0.5;
+  const phase = (i / N) * PERI;
+  const path = [];
+  for (let k = 0; k <= SAMPLES; k++) {
+    const tt = (k / SAMPLES) * PERI + phase;
+    const p = pp(tt);
+    const ampMod = 1 - varUI * 0.5 + varUI * 0.5 * noise(tt, seed * 0.13, 2, 0.22);
+    const lat = noise(tt, seed, 4, freqUI) * ampUI * ampMod;
+    const lon = noise(tt + 1000, seed * 1.7, 3, freqUI) * ampUI * lonUI * ampMod;
+    let bx = p.x + p.nx*lat + p.tx*lon;
+    let by = p.y + p.ny*lat + p.ty*lon;
+    const att = applyAttractorsDisp(bx, by, tt, seed, null);
+    bx += att.dx;
+    by += att.dy;
+    bx = Math.max(2, Math.min(W - 2, bx));
+    by = Math.max(2, Math.min(H - 2, by));
+    path.push({x: bx, y: by});
+  }
+  path.push({x: path[0].x, y: path[0].y});
+  return {seed, path, closed: true, sourceAttr: null, targetType: null, targetId: null};
+}
+
+function makeEmittedAgent(attractor, target, seed, params, ampUI, freqUI, varUI, lonUI){
+  const sx = Math.max(2, Math.min(W - 2, attractor.x));
+  const sy = Math.max(2, Math.min(H - 2, attractor.y));
+  const ex = target.x;
+  const ey = target.y;
+  const dxT = ex - sx;
+  const dyT = ey - sy;
+  const dist = Math.sqrt(dxT*dxT + dyT*dyT);
+  if (dist < 8) return null;
+
+  const numSteps = Math.max(30, Math.floor(dist / EMIT_STEP));
+  const tx = dxT / dist;
+  const ty = dyT / dist;
+  const nx = -ty;
+  const ny = tx;
+
+  const amp = ampUI * params.sin;
+  const path = [];
+
+  const exclSet = new Set([attractor.id]);
+  if (target.type === 'attractor' && target.id) exclSet.add(target.id);
+
+  for (let k = 0; k <= numSteps; k++) {
+    const t = k / numSteps;
+    const tt = t * dist;
+    const env = Math.sin(t * Math.PI);
+
+    const ampMod = 1 - varUI * 0.5 + varUI * 0.5 * noise(tt, seed * 0.13, 2, 0.22);
+    const lat = noise(tt, seed, 4, freqUI) * amp * ampMod * env;
+    const lon = noise(tt + 1000, seed * 1.7, 3, freqUI) * amp * lonUI * ampMod * env;
+
+    let bx = sx + tx * dist * t + nx * lat + tx * lon;
+    let by = sy + ty * dist * t + ny * lat + ty * lon;
+
+    const att = applyAttractorsDisp(bx, by, tt, seed, exclSet);
+    bx += att.dx * env * FIELD_DISP_SCALE;
+    by += att.dy * env * FIELD_DISP_SCALE;
+
+    bx = Math.max(2, Math.min(W - 2, bx));
+    by = Math.max(2, Math.min(H - 2, by));
+
+    if (k === 0) { bx = sx; by = sy; }
+    if (k === numSteps) { bx = ex; by = ey; }
+
+    path.push({x: bx, y: by});
+  }
+
+  return {
+    seed, path, closed: false,
+    sourceAttr: attractor.id,
+    targetType: target.type,
+    targetId: target.id
+  };
+}
+
+function makeAgents(){
+  const N = parseInt($('b_n').value);
+  const ampUI = parseFloat($('b_amp').value);
+  const freqUI = parseFloat($('b_freq').value);
+  const varUI = parseFloat($('b_var').value);
+  const lonUI = parseFloat($('b_lon').value);
+
+  for (const a of attractors) a.targets = [];
+
+  const mainAgents = [];
+  for (let i = 0; i < N; i++) {
+    mainAgents.push(makeMainAgent(i, N, ampUI, freqUI, varUI, lonUI));
+  }
+
+  const emittedAgents = [];
+  let saltCounter = 1;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  for (const a of attractors) {
+    if (!a.on) continue;
+    const gen = getAttGenParams(a.id);
+    if (gen.n <= 0) continue;
+    const angOffset = a.id.charCodeAt(0) * 1.137 + seedBase * 0.0007;
+    for (let i = 0; i < gen.n; i++) {
+      const seed = seedBase * 0.0007 + a.id.charCodeAt(0) * 0.31 + i * 11.13 + saltCounter * 3.7;
+      saltCounter++;
+      const baseAngle = i * goldenAngle + angOffset;
+      const target = findTarget(a, baseAngle, mainAgents);
+      if (!target) continue;
+      a.targets.push(target);
+      const ag = makeEmittedAgent(a, target, seed, gen, ampUI, freqUI, varUI, lonUI);
+      if (ag) emittedAgents.push(ag);
+    }
+  }
+
+  const allAgents = mainAgents.concat(emittedAgents);
+  const depths = assignDepths(allAgents.length, seedBase);
+  for (let i = 0; i < allAgents.length; i++) allAgents[i].depth = depths[i];
+
+  agents = allAgents;
+  $('m_n').textContent = 'N=' + N + (emittedAgents.length > 0 ? ' +' + emittedAgents.length : '');
+  $('m_seed').textContent = 'seed: ' + seedBase;
+  $('m_count').textContent = 'tot: ' + allAgents.length + ' tracce';
+  invalidateHeightmap();
+  updateAttLabels();
+}
+
+function updateAttLabels(){
+  for (const a of attractors) {
+    const gen = getAttGenParams(a.id);
+    if (!a.on) {
+      $('m_att' + a.id + '_pos').textContent = 'OFF';
+    } else {
+      const targetSummary = a.targets.length
+        ? ' → ' + a.targets.map(t => t.type === 'attractor' ? t.id : 'F').join('')
+        : '';
+      $('m_att' + a.id + '_pos').textContent = Math.round(a.x) + ',' + Math.round(a.y) + targetSummary;
+    }
+  }
+}
+
+function invalidateHeightmap(){
+  heightmapCache = null;
+  heightmapImageCache = null;
+}
+
+function pointSegDist2(px, py, ax, ay, bx, by){
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx*dx + dy*dy;
+  if (len2 < 1e-9) {
+    const ex = px - ax, ey = py - ay;
+    return ex*ex + ey*ey;
+  }
+  let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+  if (t < 0) t = 0;
+  else if (t > 1) t = 1;
+  const cx = ax + t*dx, cy = ay + t*dy;
+  const ex = px - cx, ey = py - cy;
+  return ex*ex + ey*ey;
+}
+
+function buildHeightmap(){
+  const gridStep = parseFloat($('b_res').value);
+  const pyramidW = parseFloat($('b_pw').value);
+  const zMax = parseFloat($('b_zmax').value);
+  const zMin = parseFloat($('b_zmin').value);
+  const cols = Math.floor(W / gridStep) + 1;
+  const rows = Math.floor(H / gridStep) + 1;
+  const heightmap = new Float32Array(cols * rows);
+  const halfW = pyramidW / 2;
+  const halfW2 = halfW * halfW;
+
+  for (let i = 0; i < agents.length; i++) {
+    const ag = agents[i];
+    const peakZ = zMin + (zMax - zMin) * ag.depth;
+    const path = ag.path;
+    for (let k = 0; k < path.length - 1; k++) {
+      const a = path[k], b = path[k+1];
+      const minX = Math.min(a.x, b.x) - halfW;
+      const maxX = Math.max(a.x, b.x) + halfW;
+      const minY = Math.min(a.y, b.y) - halfW;
+      const maxY = Math.max(a.y, b.y) + halfW;
+      const c0 = Math.max(0, Math.floor(minX / gridStep));
+      const c1 = Math.min(cols - 1, Math.ceil(maxX / gridStep));
+      const r0 = Math.max(0, Math.floor(minY / gridStep));
+      const r1 = Math.min(rows - 1, Math.ceil(maxY / gridStep));
+      for (let r = r0; r <= r1; r++) {
+        for (let c = c0; c <= c1; c++) {
+          const px = c * gridStep, py = r * gridStep;
+          const d2 = pointSegDist2(px, py, a.x, a.y, b.x, b.y);
+          if (d2 < halfW2) {
+            const d = Math.sqrt(d2);
+            const z = peakZ * (1 - d / halfW);
+            const idx = r * cols + c;
+            if (z > heightmap[idx]) heightmap[idx] = z;
+          }
+        }
+      }
+    }
+  }
+  return {heightmap, cols, rows, gridStep};
+}
+
+function getHeightmap(){
+  if (!heightmapCache) heightmapCache = buildHeightmap();
+  return heightmapCache;
+}
+
+function buildHeightmapImage(){
+  const hm = getHeightmap();
+  const off = document.createElement('canvas');
+  off.width = hm.cols;
+  off.height = hm.rows;
+  const offCtx = off.getContext('2d');
+  const id = offCtx.createImageData(hm.cols, hm.rows);
+  let maxH = 0;
+  for (let i = 0; i < hm.heightmap.length; i++) if (hm.heightmap[i] > maxH) maxH = hm.heightmap[i];
+  if (maxH === 0) maxH = 1;
+  for (let r = 0; r < hm.rows; r++) {
+    for (let c = 0; c < hm.cols; c++) {
+      const z = hm.heightmap[r * hm.cols + c];
+      const v = z / maxH;
+      let dzdx = 0, dzdy = 0;
+      if (c > 0 && c < hm.cols - 1) dzdx = (hm.heightmap[r*hm.cols+c+1] - hm.heightmap[r*hm.cols+c-1]) / (2 * hm.gridStep);
+      if (r > 0 && r < hm.rows - 1) dzdy = (hm.heightmap[(r+1)*hm.cols+c] - hm.heightmap[(r-1)*hm.cols+c]) / (2 * hm.gridStep);
+      const lx = -0.6, ly = -0.6, lz = 1.5;
+      const nlen = Math.sqrt(dzdx*dzdx + dzdy*dzdy + 1);
+      const llen = Math.sqrt(lx*lx + ly*ly + lz*lz);
+      const dot = (-dzdx*lx + -dzdy*ly + 1*lz) / (nlen * llen);
+      const shade = Math.max(0.25, dot);
+      const baseR = 14 + v * 95;
+      const baseG = 22 + v * 215;
+      const baseB = 14 + v * 95;
+      id.data[(r*hm.cols+c)*4]   = Math.min(255, Math.floor(baseR * shade));
+      id.data[(r*hm.cols+c)*4+1] = Math.min(255, Math.floor(baseG * shade));
+      id.data[(r*hm.cols+c)*4+2] = Math.min(255, Math.floor(baseB * shade));
+      id.data[(r*hm.cols+c)*4+3] = 255;
+    }
+  }
+  offCtx.putImageData(id, 0, 0);
+  return off;
+}
+
+function getHeightmapImage(){
+  if (!heightmapImageCache) heightmapImageCache = buildHeightmapImage();
+  return heightmapImageCache;
+}
+
+const cnv = $('cnv');
+const ctx = cnv.getContext('2d');
+
+function setupCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  const dispW = cnv.clientWidth || cnv.parentElement.clientWidth || 700;
+  const dispH = dispW * (totalH / totalW);
+  cnv.style.height = dispH + 'px';
+  cnv.width = Math.round(dispW * dpr);
+  cnv.height = Math.round(dispH * dpr);
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+}
+
+function drawPaths(){
+  if (showGrid) {
+    ctx.strokeStyle = '#102016';
+    ctx.lineWidth = 0.3;
+    ctx.beginPath();
+    for (let gx = 0; gx <= W; gx += 50) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
+    for (let gy = 0; gy <= H; gy += 50) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#1f3a25';
+  ctx.lineWidth = 0.6;
+  ctx.setLineDash([5, 5]);
+  ctx.strokeRect(0, 0, W, H);
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = '#16271a';
+  ctx.lineWidth = 0.4;
+  ctx.beginPath();
+  let p0 = pp(0);
+  ctx.moveTo(p0.x, p0.y);
+  for (let s = 1; s <= 240; s++) {
+    const p = pp((s/240) * PERI);
+    ctx.lineTo(p.x, p.y);
+  }
+  ctx.closePath();
+  ctx.stroke();
+
+  const opacity = parseFloat($('b_op').value);
+  const sorted = agents.slice().sort((a, b) => a.depth - b.depth);
+
+  for (let i = 0; i < sorted.length; i++) {
+    const ag = sorted[i];
+    const path = ag.path;
+    const drawN = Math.max(2, Math.floor(path.length * drawProgress));
+    const lit = 22 + ag.depth * 65;
+    const sat = 70;
+    const hue = 130;
+
+    if (showChannel) {
+      ctx.strokeStyle = 'hsla(' + hue + ',' + (sat-20) + '%,' + (lit*0.4) + '%,' + (opacity*0.45) + ')';
+      ctx.lineWidth = CHANNEL_W;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      for (let k = 1; k < drawN; k++) ctx.lineTo(path[k].x, path[k].y);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'hsla(' + hue + ',' + sat + '%,' + lit + '%,' + opacity + ')';
+    ctx.lineWidth = 0.9;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(path[0].x, path[0].y);
+    for (let k = 1; k < drawN; k++) ctx.lineTo(path[k].x, path[k].y);
+    ctx.stroke();
+
+    if (drawProgress < 1 && drawN < path.length) {
+      const lead = path[drawN - 1];
+      ctx.fillStyle = 'hsla(' + hue + ',100%,' + Math.min(95, lit + 15) + '%,0.95)';
+      ctx.beginPath();
+      ctx.arc(lead.x, lead.y, 2.0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawRelief(){
+  ctx.fillStyle = '#080c08';
+  ctx.fillRect(0, 0, W, H);
+  const img = getHeightmapImage();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, W, H);
+  if (showGrid) {
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 0.3;
+    ctx.beginPath();
+    for (let gx = 0; gx <= W; gx += 50) { ctx.moveTo(gx, 0); ctx.lineTo(gx, H); }
+    for (let gy = 0; gy <= H; gy += 50) { ctx.moveTo(0, gy); ctx.lineTo(W, gy); }
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#3a6a48';
+  ctx.lineWidth = 0.6;
+  ctx.setLineDash([5, 5]);
+  ctx.strokeRect(0, 0, W, H);
+  ctx.setLineDash([]);
+}
+
+function drawTargetLines(){
+  if (!showTargets) return;
+  for (const a of attractors) {
+    if (!a.on || !a.targets || !a.targets.length) continue;
+    ctx.strokeStyle = a.color + '55';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([3, 4]);
+    for (const t of a.targets) {
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(t.x, t.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = a.color + 'aa';
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.setLineDash([3, 4]);
+    }
+    ctx.setLineDash([]);
+  }
+}
+
+function drawAttractorUI(){
+  if (!showAttUI) return;
+  for (const a of attractors) {
+    const p = getAttParams(a.id);
+    const isHover = hoveringAtt === a.id;
+    const isDrag = dragging === a.id;
+    ctx.lineWidth = a.on ? 1 : 0.6;
+    ctx.setLineDash(a.on ? [] : [3, 4]);
+    ctx.strokeStyle = a.color + (a.on ? '88' : '44');
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, p.r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    if (a.on && p.t > 0.05) {
+      ctx.strokeStyle = a.color + '33';
+      ctx.lineWidth = 0.5;
+      const innerR = p.r * 0.55;
+      ctx.beginPath();
+      for (let k = 0; k <= 60; k++) {
+        const angle = (k/60) * Math.PI * 2;
+        const wob = Math.sin(angle * 5 + a.x * 0.01) * p.t * 6;
+        const rr = innerR + wob;
+        const px = a.x + Math.cos(angle) * rr;
+        const py = a.y + Math.sin(angle) * rr;
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+    if (a.on && a.targets && a.targets.length) {
+      ctx.strokeStyle = a.color + '77';
+      ctx.lineWidth = 0.5;
+      for (const t of a.targets) {
+        const dx = t.x - a.x, dy = t.y - a.y;
+        const len = Math.sqrt(dx*dx + dy*dy);
+        if (len < 1) continue;
+        const ux = dx/len, uy = dy/len;
+        ctx.beginPath();
+        ctx.moveTo(a.x + ux * 11, a.y + uy * 11);
+        ctx.lineTo(a.x + ux * 18, a.y + uy * 18);
+        ctx.stroke();
+        ctx.fillStyle = a.color + 'aa';
+        ctx.beginPath();
+        ctx.arc(a.x + ux * 18, a.y + uy * 18, 1.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    if (a.on) {
+      ctx.strokeStyle = a.color + 'aa';
+      ctx.lineWidth = 0.6;
+      const arrowR = 14;
+      const dir = a.swirl;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, arrowR, -Math.PI*0.3, Math.PI*1.2 * dir, dir < 0);
+      ctx.stroke();
+      const tipA = Math.PI*1.2 * dir;
+      const tipX = a.x + Math.cos(tipA) * arrowR;
+      const tipY = a.y + Math.sin(tipA) * arrowR;
+      const back = tipA - 0.4 * dir;
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(tipX - Math.cos(back) * 4 - Math.sin(tipA) * 2 * dir, tipY - Math.sin(back) * 4 + Math.cos(tipA) * 2 * dir);
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(tipX - Math.cos(back) * 4 + Math.sin(tipA) * 2 * dir, tipY - Math.sin(back) * 4 - Math.cos(tipA) * 2 * dir);
+      ctx.stroke();
+    }
+    ctx.fillStyle = a.on ? a.color : a.color + '66';
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, isHover || isDrag ? HANDLE_R + 1 : HANDLE_R - 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#050805';
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(a.name, a.x, a.y + 0.5);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+  }
+}
+
+function draw(){
+  const cw = cnv.clientWidth, ch = cnv.clientHeight;
+  if (!cw || !ch) return;
+  const scale = cw / totalW;
+  ctx.clearRect(0, 0, cw, ch);
+
+  ctx.save();
+  ctx.translate(MARGIN * scale, MARGIN * scale);
+  ctx.scale(scale, scale);
+
+  if (viewMode === 'paths') drawPaths();
+  else drawRelief();
+
+  drawTargetLines();
+
+  if (showSpeaker) {
+    ctx.strokeStyle = viewMode === 'paths' ? '#2e5a3a' : 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.arc(W/2, H/2, 80, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(W/2, H/2, 50, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(W/2 - 8, H/2); ctx.lineTo(W/2 + 8, H/2);
+    ctx.moveTo(W/2, H/2 - 8); ctx.lineTo(W/2, H/2 + 8);
+    ctx.stroke();
+    ctx.fillStyle = viewMode === 'paths' ? '#3a7048' : 'rgba(255,255,255,0.5)';
+    ctx.font = '8px monospace';
+    ctx.fillText('SPEAKER', W/2 - 16, H/2 - 90);
+  }
+
+  drawAttractorUI();
+
+  ctx.restore();
+
+  const barLen = 100, barPx = barLen * scale;
+  ctx.strokeStyle = '#5eff7e';
+  ctx.fillStyle = '#5eff7e';
+  ctx.lineWidth = 1;
+  ctx.font = '9px monospace';
+  ctx.beginPath();
+  ctx.moveTo(cw - 18 - barPx, ch - 18);
+  ctx.lineTo(cw - 18, ch - 18);
+  ctx.moveTo(cw - 18 - barPx, ch - 22); ctx.lineTo(cw - 18 - barPx, ch - 14);
+  ctx.moveTo(cw - 18, ch - 22); ctx.lineTo(cw - 18, ch - 14);
+  ctx.stroke();
+  ctx.fillText('100 mm', cw - 18 - barPx, ch - 24);
+}
+
+function animate(ts){
+  if (!animating) return;
+  if (animStart === 0) animStart = ts;
+  const elapsed = ts - animStart;
+  drawProgress = Math.min(1, elapsed / animDuration);
+  draw();
+  if (drawProgress < 1) requestAnimationFrame(animate);
+  else animating = false;
+}
+
+function startAnim(){
+  if (viewMode !== 'paths') { drawProgress = 1; draw(); return; }
+  animating = true;
+  animStart = 0;
+  drawProgress = 0;
+  requestAnimationFrame(animate);
+}
+
+function regen(){
+  seedBase = Math.floor(Math.random() * 100000);
+  makeAgents();
+  startAnim();
+}
+
+function update(){
+  animating = false;
+  makeAgents();
+  drawProgress = 1;
+  draw();
+}
+
+function update3D(){
+  invalidateHeightmap();
+  if (viewMode === 'relief') draw();
+}
+
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('on'), 1500);
+}
+
+function clientToCanvas(ev){
+  const rect = cnv.getBoundingClientRect();
+  const cw = rect.width;
+  const scale = cw / totalW;
+  const x = (ev.clientX - rect.left) / scale - MARGIN;
+  const y = (ev.clientY - rect.top) / scale - MARGIN;
+  return {x, y};
+}
+
+function hitAttractor(x, y){
+  for (const a of attractors) {
+    const dx = a.x - x, dy = a.y - y;
+    if (dx*dx + dy*dy <= (HANDLE_R + 4) * (HANDLE_R + 4)) return a.id;
+  }
+  return null;
+}
+
+cnv.addEventListener('mousedown', (ev) => {
+  const p = clientToCanvas(ev);
+  const id = hitAttractor(p.x, p.y);
+  if (id) {
+    const a = attractors.find(x => x.id === id);
+    if (!a.on) {
+      a.on = true;
+      $('b_att' + id + '_on').classList.remove('off');
+    }
+    dragging = id;
+    dragOff.x = a.x - p.x;
+    dragOff.y = a.y - p.y;
+    cnv.classList.add('grabbing');
+    ev.preventDefault();
+  }
+});
+
+cnv.addEventListener('mousemove', (ev) => {
+  const p = clientToCanvas(ev);
+  if (dragging) {
+    const a = attractors.find(x => x.id === dragging);
+    a.x = Math.max(-30, Math.min(W + 30, p.x + dragOff.x));
+    a.y = Math.max(-30, Math.min(H + 30, p.y + dragOff.y));
+    update();
+  } else {
+    const id = hitAttractor(p.x, p.y);
+    hoveringAtt = id;
+    cnv.classList.toggle('hovering', !!id);
+    if (showAttUI) draw();
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  if (dragging) {
+    dragging = null;
+    cnv.classList.remove('grabbing');
+    draw();
+  }
+});
+
+cnv.addEventListener('touchstart', (ev) => {
+  if (ev.touches.length !== 1) return;
+  const p = clientToCanvas(ev.touches[0]);
+  const id = hitAttractor(p.x, p.y);
+  if (id) {
+    const a = attractors.find(x => x.id === id);
+    if (!a.on) { a.on = true; $('b_att' + id + '_on').classList.remove('off'); }
+    dragging = id;
+    dragOff.x = a.x - p.x;
+    dragOff.y = a.y - p.y;
+    ev.preventDefault();
+  }
+}, {passive:false});
+
+cnv.addEventListener('touchmove', (ev) => {
+  if (!dragging || ev.touches.length !== 1) return;
+  const p = clientToCanvas(ev.touches[0]);
+  const a = attractors.find(x => x.id === dragging);
+  a.x = Math.max(-30, Math.min(W + 30, p.x + dragOff.x));
+  a.y = Math.max(-30, Math.min(H + 30, p.y + dragOff.y));
+  update();
+  ev.preventDefault();
+}, {passive:false});
+
+cnv.addEventListener('touchend', () => { dragging = null; });
+
+function exportSVG(withChannel){
+  let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  svg += '<svg xmlns="http://www.w3.org/2000/svg" width="' + totalW + 'mm" height="' + totalH + 'mm" viewBox="0 0 ' + totalW + ' ' + totalH + '">\n';
+  svg += '  <g transform="translate(' + MARGIN + ',' + MARGIN + ')">\n';
+  svg += '    <rect x="0" y="0" width="' + W + '" height="' + H + '" fill="none" stroke="#888" stroke-width="0.3" stroke-dasharray="3,3" />\n';
+  if (withChannel) {
+    svg += '    <g id="canale" stroke="#aaa" stroke-width="' + CHANNEL_W + '" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.3">\n';
+    for (const ag of agents) {
+      let d = '';
+      for (let k = 0; k < ag.path.length; k++) d += (k===0?'M ':'L ') + ag.path[k].x.toFixed(2) + ' ' + ag.path[k].y.toFixed(2) + ' ';
+      const target = ag.targetType ? ag.targetType + (ag.targetId ? '_' + ag.targetId : '') : 'frame_loop';
+      svg += '      <path d="' + d.trim() + '" data-depth="' + ag.depth.toFixed(3) + '" data-source="' + (ag.sourceAttr || 'frame') + '" data-target="' + target + '" />\n';
+    }
+    svg += '    </g>\n';
+  }
+  svg += '    <g id="centerlines" stroke="#000" stroke-width="0.4" fill="none" stroke-linecap="round" stroke-linejoin="round">\n';
+  for (const ag of agents) {
+    let d = '';
+    for (let k = 0; k < ag.path.length; k++) d += (k===0?'M ':'L ') + ag.path[k].x.toFixed(3) + ' ' + ag.path[k].y.toFixed(3) + ' ';
+    const target = ag.targetType ? ag.targetType + (ag.targetId ? '_' + ag.targetId : '') : 'frame_loop';
+    svg += '      <path d="' + d.trim() + '" data-depth="' + ag.depth.toFixed(3) + '" data-source="' + (ag.sourceAttr || 'frame') + '" data-target="' + target + '" />\n';
+  }
+  svg += '    </g>\n  </g>\n</svg>\n';
+  download(svg, 'barene_frame_' + seedBase + (withChannel ? '_canale' : '') + '.svg', 'image/svg+xml');
+  toast('SVG EXPORTED.');
+}
+
+function exportPNG(){
+  const link = document.createElement('a');
+  link.download = 'barene_frame_' + seedBase + '_' + viewMode + '.png';
+  link.href = cnv.toDataURL('image/png');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast('PNG EXPORTED (' + viewMode + ').');
+}
+
+function exportOBJ(){
+  toast('BUILDING OBJ MESH...');
+  setTimeout(() => {
+    const t0 = performance.now();
+    const hm = getHeightmap();
+    const baseT = parseFloat($('b_base').value);
+    const cols = hm.cols, rows = hm.rows, step = hm.gridStep;
+    const heightmap = hm.heightmap;
+    const numTop = cols * rows;
+    const mainCount = agents.filter(a => a.closed).length;
+    const emittedCount = agents.length - mainCount;
+    const lines = [];
+    lines.push('# barene_frame_generator OBJ');
+    lines.push('# seed: ' + seedBase);
+    lines.push('# units: mm');
+    lines.push('# bbox: ' + W + ' x ' + H + ' x ' + (baseT + parseFloat($('b_zmax').value)).toFixed(2));
+    lines.push('# frame agents: ' + mainCount + ' / emitted: ' + emittedCount);
+    lines.push('# pyramid_w: ' + $('b_pw').value + ' / z_min: ' + $('b_zmin').value + ' / z_max: ' + $('b_zmax').value + ' / base: ' + baseT + ' / grid: ' + step);
+    for (const a of attractors) {
+      if (a.on) {
+        const g = getAttGenParams(a.id);
+        const tStr = a.targets.map(t => t.type === 'attractor' ? t.id : 'frame').join(',');
+        lines.push('# attractor ' + a.id + ': pos=(' + a.x.toFixed(1) + ',' + a.y.toFixed(1) + ') r=' + $('b_att'+a.id+'_r').value + ' s=' + $('b_att'+a.id+'_s').value + ' t=' + $('b_att'+a.id+'_t').value + ' swirl=' + a.swirl + ' gen=' + g.n + ' sin=' + g.sin + ' targets=[' + tStr + ']');
+      }
+    }
+    lines.push('o barene_frame_' + seedBase);
+    lines.push('');
+    lines.push('# top surface vertices');
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = Math.min(W, c * step);
+        const y = Math.min(H, r * step);
+        const z = baseT + heightmap[r * cols + c];
+        lines.push('v ' + x.toFixed(3) + ' ' + y.toFixed(3) + ' ' + z.toFixed(3));
+      }
+    }
+    lines.push('');
+    lines.push('# bottom surface vertices');
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = Math.min(W, c * step);
+        const y = Math.min(H, r * step);
+        lines.push('v ' + x.toFixed(3) + ' ' + y.toFixed(3) + ' 0.000');
+      }
+    }
+    lines.push('');
+    lines.push('g top');
+    for (let r = 0; r < rows - 1; r++) {
+      for (let c = 0; c < cols - 1; c++) {
+        const v1 = r * cols + c + 1;
+        const v2 = v1 + 1;
+        const v3 = (r + 1) * cols + c + 1;
+        const v4 = v3 + 1;
+        lines.push('f ' + v1 + ' ' + v3 + ' ' + v2);
+        lines.push('f ' + v2 + ' ' + v3 + ' ' + v4);
+      }
+    }
+    lines.push('');
+    lines.push('g bottom');
+    for (let r = 0; r < rows - 1; r++) {
+      for (let c = 0; c < cols - 1; c++) {
+        const v1 = numTop + r * cols + c + 1;
+        const v2 = v1 + 1;
+        const v3 = numTop + (r + 1) * cols + c + 1;
+        const v4 = v3 + 1;
+        lines.push('f ' + v1 + ' ' + v2 + ' ' + v3);
+        lines.push('f ' + v3 + ' ' + v2 + ' ' + v4);
+      }
+    }
+    lines.push('');
+    lines.push('g walls');
+    for (let c = 0; c < cols - 1; c++) {
+      const tA = c + 1, tB = c + 2;
+      const bA = numTop + c + 1, bB = numTop + c + 2;
+      lines.push('f ' + tA + ' ' + tB + ' ' + bB);
+      lines.push('f ' + tA + ' ' + bB + ' ' + bA);
+    }
+    for (let c = 0; c < cols - 1; c++) {
+      const tA = (rows - 1) * cols + c + 1, tB = tA + 1;
+      const bA = numTop + (rows - 1) * cols + c + 1, bB = bA + 1;
+      lines.push('f ' + tA + ' ' + bB + ' ' + tB);
+      lines.push('f ' + tA + ' ' + bA + ' ' + bB);
+    }
+    for (let r = 0; r < rows - 1; r++) {
+      const tA = r * cols + 1, tB = (r + 1) * cols + 1;
+      const bA = numTop + r * cols + 1, bB = numTop + (r + 1) * cols + 1;
+      lines.push('f ' + tA + ' ' + bB + ' ' + tB);
+      lines.push('f ' + tA + ' ' + bA + ' ' + bB);
+    }
+    for (let r = 0; r < rows - 1; r++) {
+      const tA = r * cols + cols, tB = (r + 1) * cols + cols;
+      const bA = numTop + r * cols + cols, bB = numTop + (r + 1) * cols + cols;
+      lines.push('f ' + tA + ' ' + tB + ' ' + bB);
+      lines.push('f ' + tA + ' ' + bB + ' ' + bA);
+    }
+    const obj = lines.join('\n') + '\n';
+    const dt = (performance.now() - t0) / 1000;
+    download(obj, 'barene_frame_' + seedBase + '.obj', 'model/obj');
+    toast('OBJ EXPORTED · ' + cols + '×' + rows + ' grid · ' + dt.toFixed(2) + 's');
+  }, 30);
+}
+
+function download(content, filename, mime){
+  const blob = new Blob([content], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 250);
+}
+
+const sliders2D = [
+  ['b_n','v_n', v => v, () => update()],
+  ['b_amp','v_amp', v => v + ' mm', () => update()],
+  ['b_freq','v_freq', v => parseFloat(v).toFixed(2) + '×', () => update()],
+  ['b_var','v_var', v => parseFloat(v).toFixed(2), () => update()],
+  ['b_lon','v_lon', v => parseFloat(v).toFixed(2), () => update()],
+  ['b_op','v_op', v => parseFloat(v).toFixed(2), () => draw()]
+];
+const sliders3D = [
+  ['b_pw','v_pw', v => parseFloat(v).toFixed(1) + ' mm', () => update3D()],
+  ['b_zmax','v_zmax', v => parseFloat(v).toFixed(1) + ' mm', () => update3D()],
+  ['b_zmin','v_zmin', v => parseFloat(v).toFixed(1) + ' mm', () => update3D()],
+  ['b_base','v_base', v => parseFloat(v).toFixed(1) + ' mm', () => {}],
+  ['b_res','v_res', v => parseFloat(v).toFixed(1) + ' mm', () => update3D()]
+];
+const slidersAtt = [];
+['A','B','C'].forEach(id => {
+  slidersAtt.push(['b_att'+id+'_r','v_att'+id+'_r', v => v + ' mm', () => update()]);
+  slidersAtt.push(['b_att'+id+'_s','v_att'+id+'_s', v => parseFloat(v).toFixed(2), () => update()]);
+  slidersAtt.push(['b_att'+id+'_t','v_att'+id+'_t', v => parseFloat(v).toFixed(2), () => update()]);
+  slidersAtt.push(['b_att'+id+'_gen','v_att'+id+'_gen', v => v, () => update()]);
+  slidersAtt.push(['b_att'+id+'_sin','v_att'+id+'_sin', v => parseFloat(v).toFixed(2), () => update()]);
+});
+[].concat(sliders2D, sliders3D, slidersAtt).forEach(([id, vid, fmt, cb]) => {
+  const el = $(id), out = $(vid);
+  out.textContent = fmt(el.value);
+  el.addEventListener('input', () => { out.textContent = fmt(el.value); cb(); });
+});
+
+function toggleView(){
+  viewMode = viewMode === 'paths' ? 'relief' : 'paths';
+  $('b_view').innerHTML = '<span class="k">V</span>VIEW: ' + viewMode.toUpperCase();
+  $('modetag').textContent = 'VIEW: ' + viewMode.toUpperCase();
+  draw();
+}
+
+function toggleAttOn(id){
+  const a = attractors.find(x => x.id === id);
+  a.on = !a.on;
+  $('b_att' + id + '_on').classList.toggle('off', !a.on);
+  update();
+}
+
+function toggleSwirl(id){
+  const a = attractors.find(x => x.id === id);
+  a.swirl = -a.swirl;
+  $('b_att' + id + '_swirl').textContent = 'SWIRL ' + (a.swirl > 0 ? '+' : '−');
+  update();
+}
+
+function resetAttPos(id){
+  const a = attractors.find(x => x.id === id);
+  if (id === 'A') { a.x = 150; a.y = 200; }
+  else if (id === 'B') { a.x = 300; a.y = 100; }
+  else if (id === 'C') { a.x = 450; a.y = 200; }
+  update();
+}
+
+function setAllAtt(state){
+  for (const a of attractors) {
+    a.on = state;
+    $('b_att' + a.id + '_on').classList.toggle('off', !state);
+  }
+  update();
+}
+
+['A','B','C'].forEach(id => {
+  const a = attractors.find(x => x.id === id);
+  $('b_att' + id + '_on').classList.toggle('off', !a.on);
+  $('b_att' + id + '_on').addEventListener('click', () => toggleAttOn(id));
+  $('b_att' + id + '_swirl').addEventListener('click', () => toggleSwirl(id));
+  $('b_att' + id + '_reset').addEventListener('click', () => resetAttPos(id));
+});
+
+$('b_regen').addEventListener('click', regen);
+$('b_view').addEventListener('click', toggleView);
+$('b_anim').addEventListener('click', () => { drawProgress = 0; startAnim(); });
+$('b_chan').addEventListener('click', () => { showChannel = !showChannel; draw(); });
+$('b_grid').addEventListener('click', () => { showGrid = !showGrid; draw(); });
+$('b_speak').addEventListener('click', () => { showSpeaker = !showSpeaker; draw(); });
+$('b_atts').addEventListener('click', () => { showAttUI = !showAttUI; draw(); });
+$('b_targ').addEventListener('click', () => { showTargets = !showTargets; draw(); });
+$('b_allon').addEventListener('click', () => setAllAtt(true));
+$('b_alloff').addEventListener('click', () => setAllAtt(false));
+$('b_svg').addEventListener('click', () => exportSVG(false));
+$('b_svgch').addEventListener('click', () => exportSVG(true));
+$('b_png').addEventListener('click', exportPNG);
+$('b_obj').addEventListener('click', exportOBJ);
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  const k = e.key.toLowerCase();
+  if (k === 'r') { regen(); e.preventDefault(); }
+  else if (k === ' ') { drawProgress = 0; startAnim(); e.preventDefault(); }
+  else if (k === 'v') { toggleView(); e.preventDefault(); }
+  else if (k === 'c') { showChannel = !showChannel; draw(); e.preventDefault(); }
+  else if (k === 'g') { showGrid = !showGrid; draw(); e.preventDefault(); }
+  else if (k === 's') { showSpeaker = !showSpeaker; draw(); e.preventDefault(); }
+  else if (k === 'a') { showAttUI = !showAttUI; draw(); e.preventDefault(); }
+  else if (k === 't') { showTargets = !showTargets; draw(); e.preventDefault(); }
+  else if (k === '1') { setAllAtt(true); e.preventDefault(); }
+  else if (k === '0') { setAllAtt(false); e.preventDefault(); }
+  else if (k === 'p') { exportPNG(); e.preventDefault(); }
+  else if (k === 'e') { exportSVG(false); e.preventDefault(); }
+  else if (k === 'w') { exportSVG(true); e.preventDefault(); }
+  else if (k === 'o') { exportOBJ(); e.preventDefault(); }
+});
+
+let resizeT;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => { setupCanvas(); draw(); }, 120);
+});
+
+function init(){
+  setupCanvas();
+  if (cnv.clientWidth === 0) { setTimeout(init, 100); return; }
+  window.__DNMB_attractors = attractors;
+  window.__DNMB_makeAgents = makeAgents;
+  window.__DNMB_draw = draw;
+  Object.defineProperty(window, '__DNMB_seedBase', {
+    get: () => seedBase,
+    set: (v) => { seedBase = v; }
+  });
+  Object.defineProperty(window, '__DNMB_viewMode', {
+    get: () => viewMode,
+    set: (v) => { viewMode = v; }
+  });
+  makeAgents();
+  startAnim();
+}
+setTimeout(init, 60);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200">
+  <rect width="300" height="200" fill="#050805"/>
+  <rect x="20" y="14" width="260" height="172" fill="none" stroke="#1f3a25" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <g fill="none" stroke="#5eff7e" stroke-width="0.7" stroke-linecap="round">
+    <path d="M 28 20 Q 50 12 80 24 T 130 18 Q 160 28 200 16 T 270 22 L 275 28 Q 285 50 270 80 T 280 130 Q 270 160 282 200" opacity="0.5"/>
+    <path d="M 26 30 Q 45 50 35 90 T 50 140 Q 70 170 100 180 T 160 175 Q 200 180 240 170 T 280 160" opacity="0.6"/>
+    <path d="M 30 50 Q 80 70 60 100 T 90 140 Q 130 130 160 145 T 220 130 Q 250 110 270 90" opacity="0.7"/>
+    <path d="M 22 75 Q 55 100 50 130 T 75 165 Q 110 155 140 165 T 195 158 Q 230 165 268 145" opacity="0.55"/>
+    <path d="M 35 130 Q 65 145 90 130 T 130 142 Q 165 135 195 148 T 260 138" opacity="0.45"/>
+  </g>
+  <g fill="#5eff7e" opacity="0.7">
+    <circle cx="95" cy="100" r="3"/>
+    <circle cx="180" cy="65" r="3"/>
+    <circle cx="220" cy="130" r="3"/>
+  </g>
+  <g fill="none" stroke="#5eff7e" stroke-width="0.3" opacity="0.25">
+    <circle cx="95" cy="100" r="35"/>
+    <circle cx="180" cy="65" r="28"/>
+    <circle cx="220" cy="130" r="40"/>
+  </g>
+  <text x="150" y="194" text-anchor="middle" fill="#294029" font-family="Courier New" font-size="6" letter-spacing="2">BARENE_FRAME · 600×400 MM</text>
+</svg>

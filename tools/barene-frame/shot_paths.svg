@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" width="240" height="160">
+  <rect width="240" height="160" fill="#0a0e0a"/>
+  <rect x="14" y="10" width="212" height="140" fill="none" stroke="#1f3a25" stroke-width="0.4" stroke-dasharray="2,2"/>
+  <g fill="none" stroke="#5eff7e" stroke-width="0.5" stroke-linecap="round">
+    <path d="M 20 14 Q 60 8 100 18 T 180 12 Q 215 20 226 30 Q 232 70 220 110 Q 215 145 180 148 T 100 145 Q 50 152 14 145 Q 8 110 18 70 T 20 14" opacity="0.5"/>
+    <path d="M 24 22 Q 65 15 105 24 T 175 20 Q 215 35 222 60 Q 218 90 210 120 Q 200 138 170 140 T 105 138 Q 55 145 22 138 Q 17 100 25 65 T 24 22" opacity="0.6"/>
+    <path d="M 28 30 Q 70 25 110 32 T 170 30 Q 210 42 215 65 Q 212 95 200 115 Q 195 130 160 132 T 110 130 Q 60 135 28 128 Q 23 95 30 70 T 28 30" opacity="0.55"/>
+  </g>
+  <text x="120" y="156" text-anchor="middle" fill="#294029" font-family="Courier New" font-size="5" letter-spacing="2">VIEW: PATHS</text>
+</svg>
