@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ERBARIO MONTI BERICI SUD // DoctNasa&MrBorg</title>
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="brand"><a href="../../">DOCTNASA<span class="amp">&amp;</span>MRBORG</a></div>
+    <div class="nav-links">
+      <a href="../../disegni/" class="">DISEGNI</a>
+      <a href="../../vasi/" class="">VASI</a>
+      <a href="../../coltivazione/" class="">COLTIVAZIONE</a>
+      <a href="../../installazioni/" class="">INSTALLAZIONI</a>
+      <a href="../../luci/" class="">LUCI</a>
+      <a href="../../blog/" class="">BLOG</a>
+      <a href="../../ricerca/" class="active">RICERCA</a>
+      <div class="nav-dd">
+        <button class="nav-dd-btn">TOOLS <span class="arrow">▼</span></button>
+        <div class="nav-dd-menu">
+          <a href="../../tools/#cuore-statico" class="amber"><span>CUORE_STATICO</span><span class="meta-tag">AUDIO</span></a>
+          <a href="../../tools/#barene-frame" class="blue"><span>BARENE_FRAME</span><span class="meta-tag">CASTING</span></a>
+          <a href="../../tools/" class="all">→ TUTTI I TOOLS</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="crumb">
+      <a href="../../">home</a><span class="sep">/</span>
+      <a href="../">ricerca</a><span class="sep">/</span>
+      erbario
+    </div>
+    <h1>ERBARIO MONTI BERICI SUD</h1>
+    <div class="desc">flora spontanea · osservazioni di campo · territorio sud-vicentino</div>
+    <div class="count">// 0 SCHEDE · PROGETTO APERTO · COLLABORATIVO</div>
+  </header>
+
+  <!-- ── SCHEDE BOTANICHE ───────────────────────────────────── -->
+  <div class="research-section-head">// SCHEDE BOTANICHE</div>
+
+  <div class="herb-grid" id="herb-entries">
+
+    <!-- Esempio di card (commentata — da attivare con la prima scheda reale) -->
+    <!--
+    <div class="herb-card">
+      <div class="herb-img">
+        <img src="foto/MB-001.jpg" alt="Orchis purpurea" loading="lazy"
+             data-lb="MB·001 · ERBARIO MONTI BERICI SUD">
+        <span class="herb-id-badge">MB·001</span>
+        <span class="herb-author-badge">L. Fornasa</span>
+      </div>
+      <div class="herb-sheet">
+        <div class="herb-name-comune">Orchide porporina</div>
+        <div class="herb-name-sci">Orchis purpurea Hudson, 1762</div>
+        <div class="herb-desc">
+          Specie calcicola tipica dei boschi radi e dei margini erbosi.
+          Rinvenuta su substrato calcareo a esposizione sud.
+        </div>
+        <dl class="herb-data">
+          <dt>Famiglia</dt><dd>Orchidaceae</dd>
+          <dt>Località</dt><dd>Monti Berici, versante sud</dd>
+          <dt>Quota</dt><dd>~220 m s.l.m.</dd>
+          <dt>Data</dt><dd>15 apr 2026</dd>
+          <dt>Autore</dt><dd>L. Fornasa</dd>
+        </dl>
+      </div>
+    </div>
+    -->
+
+    <div class="empty-state">
+      // ERBARIO IN COSTRUZIONE · PRIME SCHEDE IN ARRIVO<br>
+      <span style="font-size:9px; opacity:0.6; letter-spacing:1px; display:block; margin-top:8px;">contribuisci con le tue osservazioni ↓</span>
+    </div>
+
+  </div>
+
+  <!-- ── CONTRIBUISCI ───────────────────────────────────────── -->
+  <div class="contrib-panel">
+
+    <div class="contrib-header">
+      <div>
+        <div class="ch-title">CONTRIBUISCI ALL'ERBARIO</div>
+        <div class="ch-sub">invia una scheda botanica — le osservazioni verificate saranno pubblicate</div>
+      </div>
+      <span style="font-size:9px; letter-spacing:1.5px; color:var(--acc-dim); padding:4px 8px; border:1px solid var(--acc-dim);">OPEN · COLLABORATIVO</span>
+    </div>
+
+    <div class="contrib-workflow">
+      <span class="wf-step active">① COMPILA IL MODULO</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-step active">② ALLEGA LA FOTO ALL'EMAIL</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-step">③ VERIFICA DEL CURATORE</span>
+      <span class="wf-arrow">→</span>
+      <span class="wf-step">④ PUBBLICAZIONE</span>
+    </div>
+
+    <form class="contrib-form" id="herb-form" novalidate>
+
+      <div class="cf-row">
+        <div class="cf-field">
+          <label for="cf-mittente">Il tuo nome *</label>
+          <input type="text" id="cf-mittente" name="mittente" placeholder="es. Mario Rossi" required>
+        </div>
+        <div class="cf-field">
+          <label for="cf-email">La tua email *</label>
+          <input type="email" id="cf-email" name="email" placeholder="es. mario@esempio.it" required>
+        </div>
+      </div>
+
+      <div class="cf-row">
+        <div class="cf-field">
+          <label for="cf-nome-comune">Nome comune della pianta *</label>
+          <input type="text" id="cf-nome-comune" name="nome_comune" placeholder="es. Orchide porporina" required>
+        </div>
+        <div class="cf-field">
+          <label for="cf-nome-sci">Nome scientifico (se noto)</label>
+          <input type="text" id="cf-nome-sci" name="nome_sci" placeholder="es. Orchis purpurea">
+        </div>
+      </div>
+
+      <div class="cf-row">
+        <div class="cf-field">
+          <label for="cf-localita">Località *</label>
+          <input type="text" id="cf-localita" name="localita" placeholder="es. Bosco della Castellara, Villaga" required>
+        </div>
+        <div class="cf-field">
+          <label for="cf-data">Data avvistamento *</label>
+          <input type="date" id="cf-data" name="data" required>
+        </div>
+      </div>
+
+      <div class="cf-row full">
+        <div class="cf-field">
+          <label for="cf-desc">Descrizione / note di campo *</label>
+          <textarea id="cf-desc" name="descrizione"
+            placeholder="Descrivi habitat, substrato, esposizione, stato di fioritura, particolarità osservate..." required></textarea>
+        </div>
+      </div>
+
+      <div class="cf-note">
+        <b>⚠ IMPORTANTE</b> — dopo aver cliccato "INVIA RICHIESTA" si aprirà il tuo client di posta con un'email pre-compilata.
+        <b>Allega la tua foto (o più foto) all'email prima di inviarla.</b>
+        La pubblicazione avverrà solo dopo verifica del curatore (Leonardo Fornasa).
+        I dati forniti verranno utilizzati esclusivamente per la scheda erbario.
+      </div>
+
+      <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+        <button type="submit" class="contrib-submit">INVIA RICHIESTA →</button>
+        <div class="contrib-submit-msg" id="submit-msg">
+          // EMAIL APERTA · RICORDATI DI ALLEGARE LA FOTO
+        </div>
+      </div>
+
+    </form>
+  </div><!-- /contrib-panel -->
+
+  <footer class="site-foot">
+    <span>// DOCTNASA&amp;MRBORG · ERBARIO MONTI BERICI SUD · PROGETTO APERTO</span>
+    <span><a href="../">← back to ricerca</a></span>
+  </footer>
+
+</div>
+
+<script src="../../assets/site.js"></script>
+<script>
+(function(){
+  var form = document.getElementById('herb-form');
+  if (!form) return;
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    var mittente    = document.getElementById('cf-mittente').value.trim();
+    var emailMit    = document.getElementById('cf-email').value.trim();
+    var nomeComune  = document.getElementById('cf-nome-comune').value.trim();
+    var nomeSci     = document.getElementById('cf-nome-sci').value.trim();
+    var localita    = document.getElementById('cf-localita').value.trim();
+    var data        = document.getElementById('cf-data').value;
+    var desc        = document.getElementById('cf-desc').value.trim();
+
+    if (!mittente || !emailMit || !nomeComune || !localita || !data || !desc) {
+      var fields = form.querySelectorAll('[required]');
+      fields.forEach(function(f){
+        f.style.borderColor = f.value.trim() ? '' : 'var(--red)';
+      });
+      return;
+    }
+
+    var subject = '[ERBARIO] Proposta scheda: ' + nomeComune;
+    var body = [
+      'PROPOSTA SCHEDA — ERBARIO MONTI BERICI SUD',
+      '═══════════════════════════════════════════',
+      '',
+      'MITTENTE:          ' + mittente,
+      'EMAIL MITTENTE:    ' + emailMit,
+      '',
+      'NOME COMUNE:       ' + nomeComune,
+      'NOME SCIENTIFICO:  ' + (nomeSci || '—'),
+      'LOCALITÀ:          ' + localita,
+      'DATA AVVISTAMENTO: ' + data,
+      '',
+      'DESCRIZIONE / NOTE DI CAMPO:',
+      desc,
+      '',
+      '───────────────────────────────────────────',
+      '⚠ ALLEGA LA FOTO A QUESTA EMAIL prima di inviarla.',
+      'La pubblicazione avverrà solo dopo verifica del curatore.',
+    ].join('\n');
+
+    var mailto = 'mailto:fornasaleonardo@gmail.com'
+      + '?subject=' + encodeURIComponent(subject)
+      + '&body='    + encodeURIComponent(body);
+
+    window.location.href = mailto;
+
+    document.getElementById('submit-msg').classList.add('visible');
+  });
+
+  // reset field error color on input
+  form.querySelectorAll('input, textarea').forEach(function(el){
+    el.addEventListener('input', function(){ this.style.borderColor = ''; });
+  });
+})();
+</script>
+</body>
+</html>
