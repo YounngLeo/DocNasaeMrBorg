@@ -16,7 +16,7 @@
     }
 
     /* — LIGHTBOX — */
-    var imgs = Array.from(document.querySelectorAll('.inv-img img[data-lb]'));
+    var imgs = Array.from(document.querySelectorAll('img[data-lb]'));
     if (!imgs.length) return;
 
     var overlay = document.createElement('div');

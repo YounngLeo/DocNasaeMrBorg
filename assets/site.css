@@ -576,6 +576,66 @@ footer.site-foot a:hover { color: var(--acc); }
 }
 
 /* ============================================================
+   DRONE VIEW — full-bleed aerial photography layout
+============================================================ */
+.drone-feed {
+  margin-top: 28px;
+}
+.drone-loc {
+  margin-bottom: 56px;
+}
+.drone-loc-head {
+  font-size: 18px;
+  letter-spacing: 5px;
+  font-weight: bold;
+  color: var(--fg);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-h);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.drone-loc-head .dlh-count {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--fg-dim);
+  font-weight: normal;
+}
+
+/* Break out of the .wrap container for full-width photos */
+.drone-photo {
+  position: relative;
+  width: 100vw;
+  left: 50%;
+  margin-left: -50vw;
+  margin-bottom: 4px;
+  overflow: hidden;
+  cursor: zoom-in;
+  background: #000;
+}
+.drone-photo img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: opacity 0.15s;
+}
+.drone-photo:hover img { opacity: 0.92; }
+
+.drone-photo-label {
+  position: absolute;
+  bottom: 10px;
+  left: max(16px, calc(50vw - 540px + 16px));
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.55);
+  background: rgba(0,0,0,0.45);
+  padding: 3px 9px;
+  pointer-events: none;
+  backdrop-filter: blur(3px);
+}
+
+/* ============================================================
    SERVICE / PROPOSAL NOTE (coltivazione verticale, etc.)
 ============================================================ */
 .service-note {
