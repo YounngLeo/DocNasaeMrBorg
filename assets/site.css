@@ -1380,6 +1380,14 @@ footer.site-foot a:hover { color: var(--acc); }
 }
 .lb-overlay.open { display: flex; }
 
+.lb-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  max-width: 96vw;
+  max-height: 92vh;
+}
 .lb-img-wrap {
   position: relative;
   max-width: 94vw;
@@ -1395,6 +1403,125 @@ footer.site-foot a:hover { color: var(--acc); }
   display: block;
   box-shadow: 0 0 60px rgba(0,0,0,0.8);
   cursor: default;
+}
+
+/* ── tavola botanica laterale (solo erbario) ── */
+.lb-plate { display: none; }
+.lb-overlay.has-plate .lb-plate {
+  display: block;
+  width: 320px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #0f110d;
+  border: 1px solid var(--line-h);
+  padding: 14px 14px 18px;
+  cursor: default;
+  font-family: var(--mono);
+  color: var(--fg);
+  position: relative;
+}
+.lb-overlay.has-plate .lb-img-wrap {
+  max-width: calc(96vw - 340px);
+}
+.lb-overlay.has-plate .lb-img-wrap img {
+  max-width: calc(96vw - 340px);
+}
+.lb-plate::before {
+  content: "TAB. BOT.";
+  position: absolute;
+  top: -1px; right: -1px;
+  background: var(--acc-dim);
+  color: var(--bg);
+  font-size: 8px;
+  letter-spacing: 2px;
+  padding: 2px 6px;
+  font-weight: 700;
+}
+.plate-title {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  color: var(--acc);
+  border-bottom: 1px dotted var(--line-h);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+.plate-title small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--fg-dim);
+  margin-top: 3px;
+  font-style: italic;
+}
+.plate-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.plate-fig {
+  border: 1px dotted var(--line-h);
+  padding: 8px 6px 6px;
+  text-align: center;
+  background: #0a0c08;
+  position: relative;
+}
+.plate-fig svg {
+  width: 100%;
+  height: 90px;
+  display: block;
+}
+.plate-fig .fig-label {
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  margin-top: 6px;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+.plate-fig .fig-id {
+  position: absolute;
+  top: 3px; left: 5px;
+  font-size: 8px;
+  color: var(--acc);
+  letter-spacing: 1px;
+}
+.plate-note {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dotted var(--line-h);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--fg-dim);
+  line-height: 1.5;
+}
+.plate-note b { color: var(--fg); letter-spacing: 1px; }
+.plate-scale {
+  margin-top: 8px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  color: var(--fg-fade);
+  text-align: right;
+}
+
+/* hide the per-card embedded plate (only used as data source for lightbox) */
+.herb-plate { display: none; }
+
+@media (max-width: 900px) {
+  .lb-overlay.has-plate .lb-stage {
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 60px 0 60px;
+  }
+  .lb-overlay.has-plate .lb-img-wrap,
+  .lb-overlay.has-plate .lb-img-wrap img {
+    max-width: 96vw;
+    max-height: 60vh;
+  }
+  .lb-overlay.has-plate .lb-plate {
+    width: 96vw;
+    max-height: none;
+  }
 }
 .lb-close {
   position: fixed;

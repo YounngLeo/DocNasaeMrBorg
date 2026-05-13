@@ -23,7 +23,10 @@
     overlay.className = 'lb-overlay';
     overlay.innerHTML =
       '<button class="lb-nav lb-prev">&#8592;</button>' +
-      '<div class="lb-img-wrap"><img src="" alt=""></div>' +
+      '<div class="lb-stage">' +
+        '<div class="lb-img-wrap"><img src="" alt=""></div>' +
+        '<aside class="lb-plate" aria-hidden="true"></aside>' +
+      '</div>' +
       '<button class="lb-nav lb-next">&#8594;</button>' +
       '<button class="lb-close">[ ESC / CHIUDI ]</button>' +
       '<div class="lb-badge"></div>';
@@ -31,6 +34,7 @@
 
     var lbImg   = overlay.querySelector('.lb-img-wrap img');
     var lbBadge = overlay.querySelector('.lb-badge');
+    var lbPlate = overlay.querySelector('.lb-plate');
     var current = 0;
 
     function open(idx) {
@@ -39,6 +43,18 @@
       lbImg.src = el.src;
       lbImg.alt = el.alt;
       lbBadge.textContent = el.dataset.lb;
+
+      /* Tavola botanica laterale (se presente nella card erbario) */
+      var card = el.closest ? el.closest('.herb-card') : null;
+      var plateSrc = card ? card.querySelector('.herb-plate') : null;
+      if (plateSrc) {
+        lbPlate.innerHTML = plateSrc.innerHTML;
+        overlay.classList.add('has-plate');
+      } else {
+        lbPlate.innerHTML = '';
+        overlay.classList.remove('has-plate');
+      }
+
       overlay.classList.add('open');
       document.body.style.overflow = 'hidden';
     }
@@ -57,9 +73,10 @@
     overlay.querySelector('.lb-prev').addEventListener('click', function(e){ e.stopPropagation(); prev(); });
     overlay.querySelector('.lb-next').addEventListener('click', function(e){ e.stopPropagation(); next(); });
     overlay.addEventListener('click', function(e){
-      if (e.target === overlay || e.target === overlay.querySelector('.lb-img-wrap')) close();
+      if (e.target === overlay || e.target === overlay.querySelector('.lb-stage')) close();
     });
     overlay.querySelector('.lb-img-wrap').addEventListener('click', function(e){ e.stopPropagation(); });
+    overlay.querySelector('.lb-plate').addEventListener('click', function(e){ e.stopPropagation(); });
 
     document.addEventListener('keydown', function(e){
       if (!overlay.classList.contains('open')) return;
