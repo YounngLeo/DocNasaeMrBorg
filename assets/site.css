@@ -545,6 +545,127 @@ footer.site-foot a:hover { color: var(--acc); }
 }
 
 /* ============================================================
+   COLLECTION DIVIDER (section pages — multi-collection)
+============================================================ */
+.coll-header {
+  margin: 32px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-h);
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.coll-header .coll-name {
+  font-size: 11px;
+  letter-spacing: 3px;
+  font-weight: bold;
+  color: var(--acc);
+}
+.coll-header .coll-meta {
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+}
+
+/* ============================================================
+   PAPER / RESEARCH CARDS (ricerca page)
+============================================================ */
+.paper-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.paper-card {
+  border: 2px solid var(--line);
+  background: var(--bg-soft);
+  padding: 16px 18px 14px;
+  position: relative;
+  transition: border-color 0.12s;
+}
+.paper-card:hover { border-color: var(--acc); }
+
+.paper-card .corner {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--acc-dim);
+  background: var(--bg-soft);
+  z-index: 2;
+}
+.paper-card .corner.tl { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.paper-card .corner.tr { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
+.paper-card .corner.bl { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
+.paper-card .corner.br { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+.paper-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.paper-id {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  padding: 2px 7px;
+  background: var(--bg);
+  color: var(--acc);
+  border: 1px solid var(--acc-dim);
+  flex-shrink: 0;
+}
+.paper-year {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  padding: 2px 7px;
+  background: var(--bg);
+  color: var(--fg-dim);
+  border: 1px solid var(--line-h);
+  flex-shrink: 0;
+}
+.paper-status {
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+}
+.paper-status.done  { color: var(--acc-dim); }
+.paper-status.wip   { color: var(--amber); }
+
+.paper-title {
+  font-size: 13px;
+  letter-spacing: 1.2px;
+  font-weight: bold;
+  color: var(--fg);
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+.paper-field {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--acc-dim);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.paper-desc {
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--fg-dim);
+  margin-bottom: 10px;
+}
+.paper-stats {
+  border-top: 1px dotted var(--line-h);
+  padding-top: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--fg-dim);
+}
+.paper-stats span { color: var(--fg); }
+
+/* ============================================================
    LIGHTBOX
 ============================================================ */
 .lb-overlay {
