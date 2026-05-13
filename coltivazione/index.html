@@ -492,6 +492,359 @@
   let totalTraces = 0;
   let animState = { running: false, raf: 0 };
 
+  let iconsPlaced = [];
+  let iconsAppearStart = 0;
+  let iconsAppearRaf = 0;
+  const BOTANICAL_COLOR = '#ffc44a';
+  const BOTANICAL_COLOR_2 = '#ff8a6a';
+
+  // ─── icone botaniche stilizzate ispirate all'erbario MB ──────
+  // foglia ovata acuminata (Cotinus, Cornus)
+  function icLeafOvate(ctx){
+    ctx.beginPath();
+    ctx.moveTo(0,-11);
+    ctx.bezierCurveTo(7,-8, 6,8, 0,11);
+    ctx.bezierCurveTo(-6,8, -7,-8, 0,-11);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0,-11); ctx.lineTo(0,10); ctx.stroke();
+    for (let y = -7; y <= 6; y += 3) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(y % 2 === 0 ? 4 : -4, y + 1.6);
+      ctx.stroke();
+    }
+    ctx.beginPath(); ctx.moveTo(0,11); ctx.lineTo(0,14); ctx.stroke();
+  }
+  // foglia palmata (Hedera helix)
+  function icLeafPalmate(ctx){
+    const base = {x:0, y:6};
+    const lobes = 5;
+    const spread = 0.6;
+    const len = 11;
+    const pts = [];
+    for (let i = 0; i < lobes; i++) {
+      const a = -Math.PI/2 + (i - (lobes-1)/2) * spread;
+      pts.push({x: base.x + Math.cos(a)*len, y: base.y + Math.sin(a)*len});
+    }
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i-1], b = pts[i];
+      const mx = (a.x + b.x)/2 + (b.y - a.y)*0.18;
+      const my = (a.y + b.y)/2 - (b.x - a.x)*0.18 + 1;
+      ctx.quadraticCurveTo(mx, my, b.x, b.y);
+    }
+    ctx.lineTo(base.x, base.y);
+    ctx.closePath();
+    ctx.stroke();
+    for (const p of pts) {
+      ctx.beginPath();
+      ctx.moveTo(base.x, base.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+    ctx.beginPath(); ctx.moveTo(base.x,base.y); ctx.lineTo(base.x, base.y+4); ctx.stroke();
+  }
+  // foglia lanceolata (Lactuca serriola, salice)
+  function icLeafLanceolate(ctx){
+    ctx.beginPath();
+    ctx.moveTo(0,-13);
+    ctx.bezierCurveTo(4,-8, 4,8, 0,13);
+    ctx.bezierCurveTo(-4,8, -4,-8, 0,-13);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0,-13); ctx.lineTo(0,13); ctx.stroke();
+    for (let y = -9; y <= 9; y += 4) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(y < 0 ? 3 : -3, y + 1.4);
+      ctx.stroke();
+    }
+  }
+  // foglia lobata (quercia)
+  function icLeafLobed(ctx){
+    ctx.beginPath();
+    const r1 = 11, r2 = 5;
+    const N = 9;
+    for (let i = 0; i < N; i++) {
+      const a = -Math.PI/2 + (i/(N-1)) * Math.PI + Math.PI/2;
+      const r = (i % 2 === 0) ? r1 : r2;
+      const tx = Math.cos(a) * r;
+      const ty = Math.sin(a) * r * 1.1;
+      if (i === 0) ctx.moveTo(tx, ty);
+      else ctx.lineTo(tx, ty);
+    }
+    ctx.lineTo(0, 12);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 12); ctx.lineTo(0, -10);
+    ctx.stroke();
+  }
+  // foglia trifogliata (Rubus, Fragaria)
+  function icLeafTrifoliate(ctx){
+    for (let i = -1; i <= 1; i++) {
+      ctx.save();
+      ctx.translate(i*6, -2);
+      ctx.rotate(i*0.55);
+      ctx.beginPath();
+      ctx.moveTo(0,-6);
+      ctx.bezierCurveTo(3.5,-4, 3.5,4, 0,7);
+      ctx.bezierCurveTo(-3.5,4, -3.5,-4, 0,-6);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0,-6); ctx.lineTo(0,7); ctx.stroke();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.moveTo(0, 5); ctx.lineTo(0, 13);
+    ctx.stroke();
+  }
+  // fiore 5 petali (Rosa canina, Prunus)
+  function icFlower5(ctx){
+    const r = 7;
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI/2 + i * Math.PI*2/5;
+      const cx = Math.cos(a) * r * 0.55;
+      const cy = Math.sin(a) * r * 0.55;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r*0.45, r*0.7, a + Math.PI/2, 0, Math.PI*2);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 1.8, 0, Math.PI*2);
+    ctx.fill();
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI/4;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a)*2.3, Math.sin(a)*2.3);
+      ctx.lineTo(Math.cos(a)*3.5, Math.sin(a)*3.5);
+      ctx.stroke();
+    }
+  }
+  // fiore a spiga (Lamium, Salvia, orchidee)
+  function icFlowerSpike(ctx){
+    ctx.beginPath();
+    ctx.moveTo(0, -12); ctx.lineTo(0, 12);
+    ctx.stroke();
+    for (let i = 0; i < 7; i++) {
+      const y = -10 + i * 3.2;
+      const side = (i % 2 === 0) ? 1 : -1;
+      const size = 2.6 - i * 0.12;
+      ctx.beginPath();
+      ctx.ellipse(side * 3, y, size, size * 1.4, side * 0.4, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(side * 3, y, 0.7, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+  // fiore capolino (Lactuca, Cirsium)
+  function icFlowerHead(ctx){
+    ctx.beginPath();
+    ctx.arc(0, 0, 4.5, 0, Math.PI*2);
+    ctx.stroke();
+    for (let i = 0; i < 14; i++) {
+      const a = i * Math.PI*2/14;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 4.5, Math.sin(a) * 4.5);
+      ctx.lineTo(Math.cos(a) * 8.5, Math.sin(a) * 8.5);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0, 8.5); ctx.lineTo(0, 14);
+    ctx.stroke();
+  }
+  // ombrella (Hedera helix, Apiaceae)
+  function icFlowerUmbel(ctx){
+    const cx = 0, cy = -1;
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI/2 + (i - 4) * 0.35;
+      const tx = cx + Math.cos(a) * 8;
+      const ty = cy + Math.sin(a) * 8;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(tx, ty, 1.7, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(cx, 12);
+    ctx.stroke();
+  }
+  // pannocchia piumosa (Cotinus coggygria)
+  function icPanicle(ctx){
+    ctx.beginPath();
+    ctx.moveTo(0, 12); ctx.lineTo(0, -2);
+    ctx.stroke();
+    for (let i = 0; i < 20; i++) {
+      const a = -Math.PI/2 + (Math.sin(i*1.71) * 0.6);
+      const len = 5 + (i % 4) * 1.7;
+      const ox = Math.sin(i*0.91) * 5;
+      const oy = -3 - (i % 5) * 2.2;
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(ox + Math.cos(a) * len, oy + Math.sin(a) * len);
+      ctx.stroke();
+    }
+  }
+  // grappolo bacche (Hedera helix, Dioscorea, Sambucus)
+  function icBerryCluster(ctx){
+    const positions = [
+      [0,-7,3], [-4,-3,2.8], [4,-3,2.8],
+      [-2,2,2.6], [2,2,2.6], [0,5,2.8],
+      [-5,1,2.2], [5,1,2.2]
+    ];
+    for (const [px, py, pr] of positions) {
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(px - pr*0.3, py - pr*0.3, pr*0.4, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.moveTo(0, -10); ctx.lineTo(0, -14);
+    ctx.stroke();
+  }
+  // drupa singola (Prunus mahaleb)
+  function icDrupe(ctx){
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 5, 6.2, 0, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(-1.6, -1.8, 1.6, 1.2, -0.5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0, -6); ctx.lineTo(0, -12);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -12); ctx.lineTo(3, -14);
+    ctx.stroke();
+  }
+  // capsula tonda (Tamus, Leopoldia)
+  function icCapsule(ctx){
+    ctx.beginPath();
+    ctx.arc(0, 0, 5.5, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-5.5, 0); ctx.lineTo(5.5, 0);
+    ctx.moveTo(0, -5.5); ctx.lineTo(0, 5.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -5.5); ctx.lineTo(0, -11);
+    ctx.lineTo(2, -13);
+    ctx.stroke();
+  }
+  // ramo spinoso (Rosa canina, Rubus ulmifolius)
+  function icThornStem(ctx){
+    ctx.beginPath();
+    ctx.moveTo(-9, 11);
+    ctx.quadraticCurveTo(-2, 0, 9, -11);
+    ctx.stroke();
+    const thorns = [{t:0.2,s:1},{t:0.4,s:-1},{t:0.6,s:1},{t:0.8,s:-1}];
+    for (const th of thorns) {
+      const x = -9 + th.t * 18;
+      const y = 11 - th.t * 22 + Math.sin(th.t * Math.PI) * 4;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + th.s * 4, y - 3);
+      ctx.stroke();
+    }
+  }
+  // ramo con cirro (Dioscorea, Bryonia, Lonicera)
+  function icTendril(ctx){
+    ctx.beginPath();
+    ctx.moveTo(-9, 11); ctx.lineTo(2, -2);
+    ctx.stroke();
+    ctx.beginPath();
+    const cx = 6, cy = -6;
+    for (let t = 0; t <= 1; t += 0.04) {
+      const a = t * Math.PI * 3.4;
+      const r = 3.5 * (1 - t * 0.6);
+      const x = cx + Math.cos(a) * r;
+      const y = cy - t * 4 + Math.sin(a) * r;
+      if (t === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  // achenio piumoso / pappo (Lactuca, Tussilago)
+  function icPappus(ctx){
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 1.4, 2.4, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0, 5); ctx.lineTo(0, -2);
+    ctx.stroke();
+    for (let i = 0; i < 9; i++) {
+      const a = -Math.PI/2 + (i - 4) * 0.28;
+      ctx.beginPath();
+      ctx.moveTo(0, -2);
+      ctx.lineTo(Math.cos(a) * 9, -2 + Math.sin(a) * 9);
+      ctx.stroke();
+    }
+  }
+  // gemma (bocciolo chiuso)
+  function icBud(ctx){
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.bezierCurveTo(4, -7, 4, 4, 0, 5);
+    ctx.bezierCurveTo(-4, 4, -4, -7, 0, -8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-3, -2); ctx.lineTo(3, -2);
+    ctx.moveTo(0, -2); ctx.lineTo(0, 5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 5); ctx.lineTo(0, 12);
+    ctx.stroke();
+  }
+  // foglia cuoriforme (Anacamptis, Cyclamen)
+  function icLeafCordate(ctx){
+    ctx.beginPath();
+    ctx.moveTo(0, -10);
+    ctx.bezierCurveTo(8, -8, 9, 4, 0, 11);
+    ctx.bezierCurveTo(-9, 4, -8, -8, 0, -10);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-2, -8); ctx.bezierCurveTo(-1, -10.5, 1, -10.5, 2, -8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -8); ctx.lineTo(0, 11);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 11); ctx.lineTo(0, 14);
+    ctx.stroke();
+  }
+
+  const ICONS = [
+    { fn: icLeafOvate,       fill: false },
+    { fn: icLeafPalmate,     fill: false },
+    { fn: icLeafLanceolate,  fill: false },
+    { fn: icLeafLobed,       fill: false },
+    { fn: icLeafTrifoliate,  fill: false },
+    { fn: icLeafCordate,     fill: false },
+    { fn: icFlower5,         fill: true,  alt: true },
+    { fn: icFlowerSpike,     fill: true,  alt: true },
+    { fn: icFlowerHead,      fill: true,  alt: true },
+    { fn: icFlowerUmbel,     fill: true,  alt: true },
+    { fn: icPanicle,         fill: false, alt: true },
+    { fn: icBerryCluster,    fill: true,  alt: true },
+    { fn: icDrupe,           fill: true,  alt: true },
+    { fn: icCapsule,         fill: false },
+    { fn: icThornStem,       fill: false },
+    { fn: icTendril,         fill: false },
+    { fn: icPappus,          fill: true },
+    { fn: icBud,             fill: false }
+  ];
+
   function setupCanvas() {
     const r = stage.getBoundingClientRect();
     W = Math.max(320, Math.floor(r.width));
@@ -577,6 +930,12 @@
     branches = [];
     cells = new Map();
     treeCells = [];
+    iconsPlaced = [];
+    iconsAppearStart = 0;
+    if (iconsAppearRaf) {
+      cancelAnimationFrame(iconsAppearRaf);
+      iconsAppearRaf = 0;
+    }
     coverage = 0;
     totalTraces = 0;
     placeSeeds();
@@ -738,12 +1097,115 @@
 
   function drawReadout() {
     const pct = Math.round(coverage * 100);
-    readout.textContent = 'SEED ' + seed + ' · COPERTURA ' + pct + '% · TRACCE ' + totalTraces;
+    const ic = iconsPlaced.length ? ' · FLORA ' + iconsPlaced.length : '';
+    readout.textContent = 'SEED ' + seed + ' · COPERTURA ' + pct + '% · TRACCE ' + totalTraces + ic;
   }
 
-  function draw() {
+  function placeIcons() {
+    iconsPlaced = [];
+    if (W < 50 || H < 50) return;
+
+    const filled = new Set();
+    const PAD_CELLS = 1;
+    for (let i = 0; i < branches.length; i++) {
+      const pts = branches[i].pts;
+      for (let k = 0; k < pts.length; k++) {
+        const gx = Math.floor(pts[k].x / CELL);
+        const gy = Math.floor(pts[k].y / CELL);
+        for (let dx = -PAD_CELLS; dx <= PAD_CELLS; dx++) {
+          for (let dy = -PAD_CELLS; dy <= PAD_CELLS; dy++) {
+            filled.add((gx + dx) + ',' + (gy + dy));
+          }
+        }
+      }
+    }
+
+    let rs = (seed * 2654435761) >>> 0;
+    const rng = () => {
+      rs = (rs * 1664525 + 1013904223) >>> 0;
+      return rs / 0xffffffff;
+    };
+
+    const margin = 24;
+    const usableW = W - 2 * margin;
+    const usableH = H - 2 * margin;
+    const totalArea = usableW * usableH;
+    const occupiedArea = filled.size * CELL * CELL;
+    const voidArea = Math.max(0, totalArea - occupiedArea);
+    const target = Math.min(140, Math.max(8, Math.floor(voidArea / 1400)));
+    const minDist2 = 30 * 30;
+
+    let attempts = 0;
+    const maxAttempts = target * 35;
+    while (iconsPlaced.length < target && attempts < maxAttempts) {
+      attempts++;
+      const x = margin + rng() * usableW;
+      const y = margin + rng() * usableH;
+      const gx = Math.floor(x / CELL);
+      const gy = Math.floor(y / CELL);
+      if (filled.has(gx + ',' + gy)) continue;
+
+      let tooClose = false;
+      for (let i = iconsPlaced.length - 1; i >= 0; i--) {
+        const ic = iconsPlaced[i];
+        const dxIc = ic.x - x, dyIc = ic.y - y;
+        if (dxIc * dxIc + dyIc * dyIc < minDist2) { tooClose = true; break; }
+      }
+      if (tooClose) continue;
+
+      iconsPlaced.push({
+        x: x,
+        y: y,
+        iconIdx: Math.floor(rng() * ICONS.length),
+        rot: (rng() - 0.5) * 0.7,
+        scale: 0.78 + rng() * 0.55,
+        alt: rng() < 0.35
+      });
+    }
+  }
+
+  function drawIcons(opacity) {
+    if (!iconsPlaced.length) return;
+    const alpha = Math.max(0, Math.min(1, opacity));
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (let i = 0; i < iconsPlaced.length; i++) {
+      const ic = iconsPlaced[i];
+      const spec = ICONS[ic.iconIdx];
+      const useAlt = spec.alt && ic.alt;
+      const stroke = useAlt ? BOTANICAL_COLOR_2 : BOTANICAL_COLOR;
+      ctx.save();
+      ctx.translate(ic.x, ic.y);
+      ctx.rotate(ic.rot);
+      ctx.scale(ic.scale, ic.scale);
+      ctx.globalAlpha = alpha * 0.92;
+      ctx.strokeStyle = stroke;
+      ctx.fillStyle = stroke;
+      ctx.lineWidth = 0.85;
+      spec.fn(ctx);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function iconsTick() {
+    const elapsed = performance.now() - iconsAppearStart;
+    const op = Math.min(1, elapsed / 700);
+    draw(op);
+    if (op < 1) {
+      iconsAppearRaf = requestAnimationFrame(iconsTick);
+    } else {
+      iconsAppearRaf = 0;
+    }
+  }
+
+  function draw(iconOp) {
     drawWallBackdrop();
     drawBranches();
+    if (iconsPlaced.length) {
+      const op = (iconOp != null) ? iconOp : 1;
+      drawIcons(op);
+    }
     drawReadout();
   }
 
@@ -755,6 +1217,10 @@
     const someAlive = branches.some(b => b.alive);
     if (!someAlive || cells.size >= targetCells) {
       animState.running = false;
+      placeIcons();
+      iconsAppearStart = performance.now();
+      if (iconsAppearRaf) cancelAnimationFrame(iconsAppearRaf);
+      iconsAppearRaf = requestAnimationFrame(iconsTick);
       return;
     }
     animState.raf = requestAnimationFrame(tick);
