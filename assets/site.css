@@ -986,6 +986,34 @@ footer.site-foot a:hover { color: var(--acc); }
   flex-shrink: 0;
 }
 
+/* Simulation sub-label (inside DA PROIETTARE, separates multiple sims) */
+.fs-sim-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  margin: 14px 14px 0;
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+}
+.fs-sim-sub .ss-id {
+  color: var(--fg-dim);
+  border: 1px solid var(--line-h);
+  padding: 3px 9px;
+  flex-shrink: 0;
+}
+.fs-sim-sub .ss-meta {
+  color: var(--fg-fade);
+  flex-shrink: 0;
+}
+.fs-sim-sub .ss-line {
+  flex: 1;
+  height: 1px;
+  background: var(--line-h);
+}
+
 /* Cards grid inside the module */
 .fs-grid {
   display: grid;
