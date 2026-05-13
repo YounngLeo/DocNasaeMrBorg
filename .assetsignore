@@ -1,0 +1,25 @@
+# Esclude file e cartelle dall'upload su Cloudflare Workers Assets
+# Sintassi simile a .gitignore
+
+# Cartella git (sempre escludere — può contenere pack files > 25 MiB)
+.git
+.git/**
+
+# Config locali
+.gitignore
+.assetsignore
+.cursor
+.vscode
+
+# Wrangler auto-generated
+wrangler.jsonc
+node_modules
+node_modules/**
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Project-specific
+agent-tools
+agent-tools/**
