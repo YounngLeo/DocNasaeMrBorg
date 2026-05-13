@@ -1132,8 +1132,8 @@
     const totalArea = usableW * usableH;
     const occupiedArea = filled.size * CELL * CELL;
     const voidArea = Math.max(0, totalArea - occupiedArea);
-    const target = Math.min(140, Math.max(8, Math.floor(voidArea / 1400)));
-    const minDist2 = 30 * 30;
+    const target = Math.min(160, Math.max(12, Math.floor(voidArea / 1000)));
+    const minDist2 = 26 * 26;
 
     let attempts = 0;
     const maxAttempts = target * 35;
@@ -1302,13 +1302,27 @@
   });
 
   let resizeT;
-  window.addEventListener('resize', () => {
+  const triggerResize = () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
-      setupCanvas();
-      regen(false);
-    }, 180);
-  });
+      const r = stage.getBoundingClientRect();
+      const nw = Math.max(320, Math.floor(r.width));
+      const nh = Math.max(320, Math.floor(r.height));
+      if (Math.abs(nw - W) > 18 || Math.abs(nh - H) > 18) {
+        setupCanvas();
+        regen(false);
+      }
+    }, 160);
+  };
+
+  window.addEventListener('resize', triggerResize);
+
+  if (typeof ResizeObserver !== 'undefined') {
+    try {
+      const ro = new ResizeObserver(triggerResize);
+      ro.observe(stage);
+    } catch (e) { /* ignore */ }
+  }
 
   function start() {
     setupCanvas();
