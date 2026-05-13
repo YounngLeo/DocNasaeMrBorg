@@ -486,6 +486,7 @@
   let branches = [];
   let seedPoints = [];
   let cells = new Map();
+  let treeCells = [];
   const CELL = 14;
   let coverage = 0;
   let totalTraces = 0;
@@ -524,22 +525,28 @@
     return Math.floor(x / CELL) + ',' + Math.floor(y / CELL);
   }
 
-  function addToCells(x, y) {
+  function addToCells(x, y, seedId) {
     const k = cellKey(x, y);
     cells.set(k, (cells.get(k) || 0) + 1);
+    if (seedId != null) {
+      if (!treeCells[seedId]) treeCells[seedId] = new Map();
+      treeCells[seedId].set(k, (treeCells[seedId].get(k) || 0) + 1);
+    }
   }
 
-  function isCrowded(x, y, age) {
-    if (age < 6) return false;
+  function isCrowded(x, y, br) {
+    if (br.age < 6) return false;
     const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
-    let count = 0;
+    const own = treeCells[br.seedId];
+    let total = 0, mine = 0;
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
-        const v = cells.get((cx + dx) + ',' + (cy + dy));
-        if (v) count += v;
+        const k = (cx + dx) + ',' + (cy + dy);
+        total += (cells.get(k) || 0);
+        if (own) mine += (own.get(k) || 0);
       }
     }
-    return count > 3;
+    return (total - mine) > 2;
   }
 
   function placeSeeds() {
@@ -569,6 +576,7 @@
   function init() {
     branches = [];
     cells = new Map();
+    treeCells = [];
     coverage = 0;
     totalTraces = 0;
     placeSeeds();
@@ -583,7 +591,7 @@
         seedId: i,
         bseed: seed * 0.0007 + i * 11.13 + 0.31
       });
-      addToCells(s.x, s.y);
+      addToCells(s.x, s.y, i);
     }
   }
 
@@ -616,12 +624,12 @@
           br.alive = false;
           continue;
         }
-        if (isCrowded(nx, ny, br.age)) {
+        if (isCrowded(nx, ny, br)) {
           br.alive = false;
           continue;
         }
         br.pts.push({ x: nx, y: ny });
-        addToCells(nx, ny);
+        addToCells(nx, ny, br.seedId);
         br.age++;
 
         if (br.depth < 5 && br.age > 12 && rng(br.bseed + br.age * 0.7) < params.branchProb * 0.06) {
