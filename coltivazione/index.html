@@ -1230,9 +1230,9 @@
     iconsPlaced = [];
     if (W < 50 || H < 50) return;
 
-    // celle "occupate" dai tralci (con buffer)
+    // celle "occupate" dai tralci (con piccolo buffer minimo)
     const filled = new Set();
-    const PAD_CELLS = 2;
+    const PAD_CELLS = 1;
     for (let i = 0; i < branches.length; i++) {
       const pts = branches[i].pts;
       for (let k = 0; k < pts.length; k++) {
@@ -1263,11 +1263,12 @@
 
     if (haveErbario) {
       // CLUSTERS: ogni cluster = una pianta, contiene tutte le icone della specie raggruppate
-      const targetPlants = Math.min(90, Math.max(10, Math.floor(voidArea / 1100)));
-      const minClusterDist2 = 18 * 18;   // piante diverse possono sovrapporsi un po'
+      const targetPlants = Math.min(160, Math.max(14, Math.floor(voidArea / 500)));
+      const minClusterDist2 = 13 * 13;   // piante diverse possono sovrapporsi
+      const cellsAroundBranch = filled.size;
 
       let attempts = 0;
-      const maxAttempts = targetPlants * 50;
+      const maxAttempts = targetPlants * 80;
       const clusters = [];
       while (clusters.length < targetPlants && attempts < maxAttempts) {
         attempts++;
@@ -1277,7 +1278,7 @@
         const gy = Math.floor(y / CELL);
         if (filled.has(gx + ',' + gy)) continue;
 
-        // distanza minima fra centri delle piante (consente leggera sovrapposizione)
+        // distanza minima fra centri delle piante (consente sovrapposizione del fogliame)
         let tooClose = false;
         for (let i = clusters.length - 1; i >= 0; i--) {
           const c = clusters[i];
@@ -1288,29 +1289,35 @@
 
         const specIdx = Math.floor(rng() * herbariumSpecies.length);
         const spec = herbariumSpecies[specIdx];
-        clusters.push({ x, y, spec, rotBase: (rng() - 0.5) * 0.7 });
+        clusters.push({ x, y, spec, rotBase: (rng() - 0.5) * 0.6 });
       }
 
-      // posiziona le icone di ogni cluster
+      // Posizioni canoniche delle 4 parti della pianta (foglia, fiore, frutto, peculiarità)
+      // ruotate da rotBase per varietà
+      const canonical = [
+        { a: Math.PI / 2,        rBase: 11 },  // foglia: in basso
+        { a: -Math.PI / 2,       rBase: 11 },  // fiore: in alto
+        { a: 0,                  rBase: 10 },  // frutto: a destra
+        { a: Math.PI,            rBase: 10 }   // peculiarità: a sinistra
+      ];
+
       for (const c of clusters) {
         const icons = c.spec.iconImgs.filter(ic => ic.ready);
         if (!icons.length) continue;
-        const baseScale = 0.85 + rng() * 0.45;
-        const N = icons.length;
-        const ringR = 14 + rng() * 8;
-        const angleOffset = rng() * Math.PI * 2;
-        for (let i = 0; i < N; i++) {
+        const baseScale = 0.78 + rng() * 0.42;
+        const orient = c.rotBase;
+        for (let i = 0; i < icons.length; i++) {
           const ic = icons[i];
-          // ordine: la foglia un po' più in basso, il fiore in alto
-          let a = angleOffset + (i / N) * Math.PI * 2;
-          let r = ringR * (0.4 + rng() * 0.7);
+          const pos = canonical[i % canonical.length];
+          const a = pos.a + orient;
+          const r = pos.rBase * (0.7 + rng() * 0.5);
           const ox = Math.cos(a) * r;
           const oy = Math.sin(a) * r;
           const scale = baseScale * (0.85 + rng() * 0.35);
           iconsPlaced.push({
             x: c.x + ox,
             y: c.y + oy,
-            rot: c.rotBase + (rng() - 0.5) * 0.85,
+            rot: orient + (rng() - 0.5) * 0.55,
             scale: scale,
             img: ic.img,
             color: c.spec.color,
