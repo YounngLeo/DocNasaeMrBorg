@@ -38,22 +38,203 @@
   <header class="page-head">
     <div class="crumb"><a href="../">home</a><span class="sep">/</span>installazioni</div>
     <h1>INSTALLAZIONI</h1>
-    <div class="desc">lavori interattivi, sensoriali, spaziali</div>
-    <div class="count">// 2 ITEMS · ID 04</div>
+    <div class="desc">lavori interattivi, sensoriali, ibridi tra natura ed elettronica</div>
+    <div class="count">// 5 PROGETTI · ID 04 · IN COSTRUZIONE</div>
   </header>
+
+  <!-- ── 1 · DEATH NATURE TOTEM ──────────────────────────── -->
+  <div class="coll-header">
+    <span class="coll-name">DEATH NATURE TOTEM</span>
+    <span class="coll-meta">SCULTURA · ORGANICO / LEGNO · ASSEMBLAGGIO</span>
+  </div>
+
+  <div class="service-note">
+    <div class="sn-body">
+      <div class="sn-tag">// SCULPTURE · DECAY ASSEMBLAGE</div>
+      <div class="sn-title">Totem da materia morta</div>
+      <div class="sn-desc">
+        Sculture totemiche costruite per assemblaggio di elementi naturali esauriti — fiori secchi, infiorescenze appassite, rami caduti, cortecce, scheletri vegetali. Ogni totem è una stratigrafia del decadimento, una composizione verticale in cui la forma persiste oltre la vita biologica del materiale.
+      </div>
+    </div>
+  </div>
 
   <div class="inventory">
     <div class="inv-card">
       <div class="corner tl"></div><div class="corner tr"></div>
       <div class="corner bl"></div><div class="corner br"></div>
       <div class="inv-img">
-        <div class="placeholder">// I01</div>
-        <div class="badge-id">I01</div>
+        <div class="placeholder">// DNT · 01</div>
+        <div class="badge-id">DNT·01</div>
+        <div class="badge-year">WIP</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">TOTEM_01</div>
+        <div class="inv-type">DEATH NATURE · SCULTURA</div>
+        <div class="inv-desc">Prima struttura totemica. Documentazione in caricamento.</div>
+        <dl class="inv-stats">
+          <dt>MATERIALI</dt><dd>fiori secchi · legno</dd>
+          <dt>TECNICA</dt><dd>assemblaggio verticale</dd>
+          <dt>STATO</dt><dd>in costruzione</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="inv-card">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="placeholder">// DNT · 02</div>
+        <div class="badge-id">DNT·02</div>
+        <div class="badge-year">WIP</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">TOTEM_02</div>
+        <div class="inv-type">DEATH NATURE · SCULTURA</div>
+        <div class="inv-desc">Variante seconda. Documentazione in caricamento.</div>
+        <dl class="inv-stats">
+          <dt>MATERIALI</dt><dd>infiorescenze · cortecce</dd>
+          <dt>TECNICA</dt><dd>assemblaggio</dd>
+          <dt>STATO</dt><dd>in costruzione</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2 · CONTROLLO RESISTENZA ELETTRICA PIANTE ─────────── -->
+  <div class="coll-header">
+    <span class="coll-name">CONTROLLO RESISTENZA ELETTRICA PIANTE</span>
+    <span class="coll-meta">BIO-SENSING · OHM · DATA → VISUAL/AUDIO</span>
+  </div>
+
+  <div class="service-note">
+    <div class="sn-body">
+      <div class="sn-tag">// PLANT BIO-RESISTANCE · INTERFACCIA</div>
+      <div class="sn-title">Le piante come potenziometro</div>
+      <div class="sn-desc">
+        Installazione di lettura continua della resistenza elettrica del tessuto vegetale (R = V/I, misurata via partitore o INA125/ADS1115 su MCU). La variazione di Ω nel tempo — dipendente da umidità, conducibilità della linfa, stress cellulare — viene mappata su parametri di output (luce, suono, posizione di un attuatore) creando un canale di comunicazione diretto pianta → macchina.
+      </div>
+    </div>
+  </div>
+
+  <div class="inventory">
+    <div class="inv-card">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="placeholder">// REP · 01</div>
+        <div class="badge-id">REP·01</div>
+        <div class="badge-year">WIP</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">RES_ELETTRICA_v1</div>
+        <div class="inv-type">BIO-SENSOR · MIXED</div>
+        <div class="inv-desc">Prototipo lettura resistenza fogliare con elettrodi a baionetta. Output da definire.</div>
+        <dl class="inv-stats">
+          <dt>SENSORE</dt><dd>partitore + ADS1115</dd>
+          <dt>RANGE</dt><dd>10 kΩ – 5 MΩ</dd>
+          <dt>OUTPUT</dt><dd>seriale → mapping</dd>
+          <dt>STATO</dt><dd>in costruzione</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3 · DIVISIONE FLUSSO FLUIDO EMITTITORE ──────────── -->
+  <div class="coll-header">
+    <span class="coll-name">DIVISIONE FLUSSO DI UN FLUIDO EMITTITORE</span>
+    <span class="coll-meta">FLUIDODINAMICA · SPLIT MANIFOLD · EROGAZIONE PARAMETRICA</span>
+  </div>
+
+  <div class="service-note">
+    <div class="sn-body">
+      <div class="sn-tag">// FLUID SPLITTER · BIFURCATION</div>
+      <div class="sn-title">Un emettitore, molti rami</div>
+      <div class="sn-desc">
+        Studio del partizionamento controllato di un singolo flusso liquido — alimentato da una pompa o una colonna gravitazionale — in N rami secondari di portata bilanciata o sbilanciata. Geometrie di manifold a Y, a T, biforcazioni frattali, valvole pinch su silicone, controllo via servo o PWM. La scultura nasce dalla scia visiva delle correnti che si dividono.
+      </div>
+    </div>
+  </div>
+
+  <div class="inventory">
+    <div class="inv-card">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="placeholder">// FLW · 01</div>
+        <div class="badge-id">FLW·01</div>
+        <div class="badge-year">WIP</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">SPLIT_MANIFOLD_v1</div>
+        <div class="inv-type">FLUIDODINAMICA · KINETIC</div>
+        <div class="inv-desc">Manifold biforcato a Y per studio della ripartizione di portata. Setup di test in caricamento.</div>
+        <dl class="inv-stats">
+          <dt>POMPA</dt><dd>sommersa · 12 V</dd>
+          <dt>RAMI</dt><dd>1 → N</dd>
+          <dt>CONTROLLO</dt><dd>servo / pinch valves</dd>
+          <dt>STATO</dt><dd>in costruzione</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4 · CONTROLLO VISUAL & AUDIO DA TEKKEN 3 ──────────── -->
+  <div class="coll-header">
+    <span class="coll-name">CONTROLLO VISUAL &amp; AUDIO DA TEKKEN 3</span>
+    <span class="coll-meta">CONTROLLER PS1 · HACK · MIDI / OSC · VJ + AV</span>
+  </div>
+
+  <div class="service-note">
+    <div class="sn-body">
+      <div class="sn-tag">// TEKKEN 3 CONTROLLER · HARDWARE HACK</div>
+      <div class="sn-title">Il combo come partitura</div>
+      <div class="sn-desc">
+        Re-routing del controller PS1 originale di Tekken 3 verso un'interfaccia MIDI / OSC. Le sequenze di tasti, le combo, gli stick analogici diventano vettori di controllo per parametri visuali (mappatura su shader, filtri, generatori) e parametri audio (synth, sample, effetti). L'estetica gestuale del fighting game si trasforma in una performance audiovisuale.
+      </div>
+    </div>
+  </div>
+
+  <div class="inventory">
+    <div class="inv-card">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="placeholder">// TK3 · 01</div>
+        <div class="badge-id">TK3·01</div>
+        <div class="badge-year">WIP</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">TEKKEN3_AV_CTRL</div>
+        <div class="inv-type">CONTROLLER · A/V · LIVE</div>
+        <div class="inv-desc">Hack del controller PS1 mappato su MIDI/OSC. Documentazione tecnica in caricamento.</div>
+        <dl class="inv-stats">
+          <dt>INPUT</dt><dd>Dualshock PS1 · 10 tasti + D-pad</dd>
+          <dt>BRIDGE</dt><dd>Arduino → MIDI / OSC</dd>
+          <dt>USCITA</dt><dd>VJ + synth</dd>
+          <dt>STATO</dt><dd>in costruzione</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5 · HARDWARE CINETICO (esistente) ─────────────── -->
+  <div class="coll-header">
+    <span class="coll-name">HARDWARE CINETICO</span>
+    <span class="coll-meta">POMPE · LED · ESP32 · DMX</span>
+  </div>
+
+  <div class="inventory">
+    <div class="inv-card">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="placeholder">// HK · 01</div>
+        <div class="badge-id">HK·01</div>
         <div class="badge-year">2026</div>
       </div>
       <div class="inv-body">
         <div class="inv-name">CUORE_PUMP_v1</div>
-        <div class="inv-type">INTERACTIVE</div>
+        <div class="inv-type">INTERACTIVE · KINETIC</div>
         <div class="inv-desc">Installazione con pompa sommersa e LED RGBW controllati via Art-Net DMX su ESP32.</div>
         <dl class="inv-stats">
           <dt>SIZE</dt><dd>variable</dd>
@@ -62,29 +243,10 @@
         </dl>
       </div>
     </div>
-    <div class="inv-card">
-      <div class="corner tl"></div><div class="corner tr"></div>
-      <div class="corner bl"></div><div class="corner br"></div>
-      <div class="inv-img">
-        <div class="placeholder">// I02</div>
-        <div class="badge-id">I02</div>
-        <div class="badge-year">WIP</div>
-      </div>
-      <div class="inv-body">
-        <div class="inv-name">VAR_INSTALL_02</div>
-        <div class="inv-type">SENSORIAL</div>
-        <div class="inv-desc">Setup multisensoriale, work in progress.</div>
-        <dl class="inv-stats">
-          <dt>SIZE</dt><dd>—</dd>
-          <dt>TECH</dt><dd>—</dd>
-          <dt>SERIES</dt><dd>—</dd>
-        </dl>
-      </div>
-    </div>
   </div>
 
   <footer class="site-foot">
-    <span>// DOCTNASA&amp;MRBORG · INSTALLAZIONI · 2 ITEMS</span>
+    <span>// DOCTNASA&amp;MRBORG · INSTALLAZIONI · 5 PROGETTI</span>
     <span><a href="../">← back to home</a></span>
   </footer>
 
