@@ -576,6 +576,60 @@ footer.site-foot a:hover { color: var(--acc); }
 }
 
 /* ============================================================
+   SERVICE / PROPOSAL NOTE (coltivazione verticale, etc.)
+============================================================ */
+.service-note {
+  border: 1px solid var(--acc-dim);
+  border-left: 3px solid var(--acc-dim);
+  background: rgba(94,255,126,0.03);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.service-note .sn-body { flex: 1; min-width: 200px; }
+.service-note .sn-tag {
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  color: var(--acc);
+  margin-bottom: 5px;
+}
+.service-note .sn-title {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  font-weight: bold;
+  color: var(--fg);
+  margin-bottom: 5px;
+}
+.service-note .sn-desc {
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--fg-dim);
+}
+.service-note .sn-cta {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  padding: 8px 16px;
+  border: 1px solid var(--acc-dim);
+  color: var(--acc);
+  background: transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+  transition: background 0.12s, border-color 0.12s;
+  text-decoration: none;
+}
+.service-note .sn-cta:hover {
+  background: rgba(94,255,126,0.08);
+  border-color: var(--acc);
+  color: var(--acc);
+}
+
+/* ============================================================
    RICERCA — CATEGORY CARDS (index of ricerca sub-sections)
 ============================================================ */
 .research-cats {
