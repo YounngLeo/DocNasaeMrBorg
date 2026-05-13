@@ -545,6 +545,236 @@ footer.site-foot a:hover { color: var(--acc); }
 }
 
 /* ============================================================
+   FLUID SIMULATION MODULE — industrial / P&ID aesthetic
+============================================================ */
+.fs-module {
+  margin-top: 36px;
+  border: 1px solid var(--fg-dim);
+  position: relative;
+}
+.fs-module::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid var(--line-h);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* P&ID Title Block */
+.fs-titleblock {
+  border-bottom: 1px solid var(--fg-dim);
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  position: relative;
+  z-index: 1;
+}
+.fs-titleblock-main {
+  padding: 10px 14px 8px;
+  border-right: 1px solid var(--line-h);
+}
+.fs-titleblock-main .fs-doc {
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  margin-bottom: 4px;
+}
+.fs-titleblock-main .fs-title {
+  font-size: 14px;
+  letter-spacing: 3px;
+  font-weight: bold;
+  color: var(--fg);
+  line-height: 1.2;
+}
+.fs-titleblock-main .fs-subtitle {
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  margin-top: 3px;
+}
+.fs-titleblock-cell {
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-right: 1px solid var(--line-h);
+  min-width: 90px;
+}
+.fs-titleblock-cell:last-child { border-right: none; }
+.fs-titleblock-cell .tb-label {
+  font-size: 7.5px;
+  letter-spacing: 2px;
+  color: var(--fg-fade);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+.fs-titleblock-cell .tb-val {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--fg);
+  font-weight: bold;
+}
+.fs-titleblock-cell .tb-val.active { color: var(--acc); }
+.fs-titleblock-cell .tb-val.amber  { color: var(--amber); }
+
+/* Subsection pipe header */
+.fs-pipe {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 14px;
+  margin: 20px 14px 0;
+  position: relative;
+  z-index: 1;
+}
+.fs-pipe-label {
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+.fs-pipe-label.hold     { color: var(--amber); background: rgba(255,176,0,0.06); }
+.fs-pipe-label.deployed { color: var(--acc);   background: rgba(94,255,126,0.05); }
+.fs-pipe-label.empty    { color: var(--fg-fade); border-style: dashed; }
+
+.fs-pipe-line {
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--line-h) 0px, var(--line-h) 6px,
+    transparent 6px, transparent 10px
+  );
+  margin-left: 10px;
+}
+.fs-pipe-count {
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-fade);
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+
+/* Cards grid inside the module */
+.fs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 8px;
+  padding: 12px 14px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Individual FS card */
+.fs-card {
+  border: 1px solid var(--line-h);
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.12s;
+}
+.fs-card:hover { border-color: var(--fg-dim); }
+
+/* TAG label — P&ID instrument bubble */
+.fs-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  padding: 3px 7px;
+  background: var(--bg);
+  border: 1px solid var(--fg-dim);
+  color: var(--fg);
+  line-height: 1;
+}
+.fs-tag::before {
+  content: '◈ ';
+  font-size: 7px;
+  color: var(--fg-dim);
+}
+
+/* Status badge top-right */
+.fs-status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  font-size: 7.5px;
+  letter-spacing: 1.8px;
+  padding: 3px 7px;
+  background: var(--bg);
+  border: 1px solid currentColor;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.fs-status.hold     { color: var(--amber); }
+.fs-status.deployed { color: var(--acc); }
+
+.fs-img {
+  aspect-ratio: 16/9;
+  background: #030303;
+  overflow: hidden;
+  position: relative;
+  border-bottom: 1px solid var(--line-h);
+  cursor: zoom-in;
+}
+.fs-img img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.85) contrast(1.05);
+  transition: filter 0.2s;
+}
+.fs-card:hover .fs-img img {
+  filter: saturate(1) contrast(1.1);
+}
+.fs-img .video-flag {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  padding: 2px 7px;
+  background: var(--bg);
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  z-index: 2;
+}
+
+/* Data plate — bottom of card */
+.fs-dataplate {
+  padding: 7px 10px 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 8px;
+  font-size: 8.5px;
+  letter-spacing: 1px;
+  border-top: 1px solid var(--line-h);
+}
+.fs-dataplate dt { color: var(--fg-fade); }
+.fs-dataplate dd { color: var(--fg-dim); }
+.fs-dataplate.deployed dt { color: var(--fg-fade); }
+.fs-dataplate.deployed dd { color: var(--fg); }
+
+/* Empty state inside module */
+.fs-empty {
+  margin: 0 14px 20px;
+  padding: 22px;
+  border: 1px dashed var(--line-h);
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--fg-fade);
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
    COLLECTION DIVIDER (section pages — multi-collection)
 ============================================================ */
 .coll-header {
@@ -745,6 +975,22 @@ footer.site-foot a:hover { color: var(--acc); }
 .lb-next { right: 10px; }
 
 .inv-img { cursor: zoom-in; }
+
+@media (max-width: 700px) {
+  .fs-titleblock {
+    grid-template-columns: 1fr;
+  }
+  .fs-titleblock-cell {
+    border-right: none;
+    border-top: 1px solid var(--line-h);
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+  }
+  .fs-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
 
 @media (max-width: 540px) {
   .topnav { padding: 10px 14px; }
