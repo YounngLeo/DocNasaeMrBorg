@@ -2013,6 +2013,205 @@ footer.site-foot a:hover { color: var(--acc); }
 
 .inv-img { cursor: zoom-in; }
 
+/* ───────────────────────────────────────────────────────────
+   WALL IVY MODULE — piano interattivo · copertura vegetale
+   ─────────────────────────────────────────────────────────── */
+.wall-module {
+  border: 1px solid var(--line-h);
+  background: var(--bg-soft);
+  margin: 18px 0 28px;
+  position: relative;
+}
+.wall-module::before {
+  content: '// PIANO INTERATTIVO · COPERTURA VEGETALE · GROWTH SIMULATION';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  background: var(--bg);
+  border: 1px solid var(--acc);
+  color: var(--acc);
+  font-size: 9.5px;
+  letter-spacing: 2.5px;
+  padding: 5px 12px;
+  z-index: 2;
+}
+.wall-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 0;
+  margin-top: 26px;
+  min-height: 520px;
+}
+.wall-stage {
+  position: relative;
+  background: #050505;
+  border-right: 1px solid var(--line-h);
+  overflow: hidden;
+}
+.wall-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  touch-action: none;
+}
+.wall-stage .ws-corner {
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--fg-fade);
+  pointer-events: none;
+  z-index: 1;
+}
+.wall-stage .ws-corner.tl { top: 8px; left: 10px; }
+.wall-stage .ws-corner.tr { top: 8px; right: 10px; }
+.wall-stage .ws-corner.bl { bottom: 8px; left: 10px; }
+.wall-stage .ws-corner.br { bottom: 8px; right: 10px; }
+.wall-stage .ws-readout {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--acc);
+  background: rgba(5, 5, 5, 0.7);
+  padding: 3px 10px;
+  border: 1px solid var(--line-h);
+  z-index: 1;
+}
+.wall-panel {
+  background: var(--bg-card);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: var(--mono);
+}
+.wp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wp-block + .wp-block {
+  border-top: 1px dotted var(--line-h);
+  padding-top: 12px;
+}
+.wp-title {
+  font-size: 9.5px;
+  letter-spacing: 2px;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+}
+.wp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wp-row-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--fg);
+  letter-spacing: 0.5px;
+}
+.wp-row-head .vv {
+  color: var(--acc);
+}
+.wp-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+.wp-row input[type="range"]::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--line-h);
+}
+.wp-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  background: var(--acc);
+  border: 0;
+  margin-top: -4.5px;
+  cursor: pointer;
+}
+.wp-row input[type="range"]::-moz-range-track {
+  height: 1px;
+  background: var(--line-h);
+}
+.wp-row input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: var(--acc);
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+.wp-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.wp-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line-h);
+  padding: 7px 8px;
+  cursor: pointer;
+  text-align: center;
+  text-transform: uppercase;
+  transition: 0.1s;
+}
+.wp-btn:hover {
+  border-color: var(--acc);
+  color: var(--acc);
+}
+.wp-btn.pri {
+  border-color: var(--acc-dim);
+  color: var(--acc);
+}
+.wp-btn.pri:hover {
+  background: var(--acc);
+  color: var(--bg);
+}
+.wp-btn.full { grid-column: 1 / -1; }
+.wp-note {
+  font-size: 9.5px;
+  color: var(--fg-dim);
+  letter-spacing: 0.5px;
+  line-height: 1.55;
+  padding-top: 6px;
+  border-top: 1px dotted var(--line-h);
+}
+.wp-note b { color: var(--acc); font-weight: normal; }
+@media (max-width: 820px) {
+  .wall-grid {
+    grid-template-columns: 1fr;
+  }
+  .wall-stage {
+    border-right: none;
+    border-bottom: 1px solid var(--line-h);
+    min-height: 380px;
+  }
+  .wall-module::before {
+    font-size: 8.5px;
+    letter-spacing: 1.5px;
+    padding: 5px 8px;
+  }
+}
+
 @media (max-width: 700px) {
   .fs-titleblock {
     grid-template-columns: 1fr;

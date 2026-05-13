@@ -38,9 +38,15 @@
   <header class="page-head">
     <div class="crumb"><a href="../">home</a><span class="sep">/</span>coltivazione</div>
     <h1>COLTIVAZIONE</h1>
-    <div class="desc">specie coltivate, cicli, note di campo, esperimenti</div>
-    <div class="count">// 1 IMPIANTO PILOTA · 14 PROPOSTE VERTICALE</div>
+    <div class="desc">progetti pilota, simulazioni di copertura vegetale, installazioni su misura</div>
+    <div class="count">// 2 PROGETTI PILOTA · 1 PIANO INTERATTIVO · 14 PROPOSTE VERTICALE</div>
   </header>
+
+  <!-- ── PROGETTI PILOTA ───────────────────────────────────── -->
+  <div class="coll-header">
+    <span class="coll-name">PROGETTI PILOTA</span>
+    <span class="coll-meta">2 PROGETTI · R&amp;D · BIOTECH</span>
+  </div>
 
   <div class="inventory">
     <div class="inv-card">
@@ -61,6 +67,97 @@
           <dt>FASE</dt><dd>pilot scale</dd>
         </dl>
       </div>
+    </div>
+
+    <div class="inv-card">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="placeholder">// PILOT · BIO-POOL</div>
+        <div class="badge-id">PT·02</div>
+        <div class="badge-year">R&amp;D</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">BIO_PISCINA_FITOPULIZIA</div>
+        <div class="inv-type">ECOSISTEMA · ACQUA BIOLOGICA</div>
+        <div class="inv-desc">Bio-piscina artificiale a balneabilità naturale: vasca di nuoto integrata con zona di fitodepurazione in cui macrofite e microflora bentonica filtrano l'acqua senza cloro né disinfettanti chimici. Studio di portate, dimensionamento dei letti vegetali e bilancio dei nutrienti.</div>
+        <dl class="inv-stats">
+          <dt>TIPO</dt><dd>bio-pool · piante depuranti</dd>
+          <dt>STATO</dt><dd>in progettazione</dd>
+          <dt>FASE</dt><dd>pilot scale</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PIANO INTERATTIVO · COPERTURA VEGETALE ──────────── -->
+  <div class="wall-module">
+    <div class="wall-grid">
+      <div class="wall-stage" id="wall-stage">
+        <canvas id="wall-canvas"></canvas>
+        <div class="ws-corner tl">[ 0,0 ]</div>
+        <div class="ws-corner tr">[ W,0 ]</div>
+        <div class="ws-corner bl">[ 0,H ]</div>
+        <div class="ws-corner br">[ W,H ]</div>
+        <div class="ws-readout" id="ws-readout">SEED — · COVER 0% · TRACCE 0</div>
+      </div>
+
+      <aside class="wall-panel">
+
+        <div class="wp-block">
+          <div class="wp-title">// COPERTURA · PARAMETRI</div>
+
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// numero di punti</span><span class="vv" id="wv_n">5</span></div>
+            <input type="range" id="wp_n" min="1" max="12" value="5" step="1">
+          </div>
+
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// percentuale di vuoto</span><span class="vv" id="wv_void">35%</span></div>
+            <input type="range" id="wp_void" min="10" max="90" value="35" step="1">
+          </div>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// MORFOLOGIA TRALCI</div>
+
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// sinuosità</span><span class="vv" id="wv_sin">0.55</span></div>
+            <input type="range" id="wp_sin" min="0" max="1" value="0.55" step="0.05">
+          </div>
+
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// ramificazioni</span><span class="vv" id="wv_branch">0.40</span></div>
+            <input type="range" id="wp_branch" min="0" max="1" value="0.4" step="0.05">
+          </div>
+
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// fototropismo (verso l'alto)</span><span class="vv" id="wv_grav">0.60</span></div>
+            <input type="range" id="wp_grav" min="0" max="1" value="0.6" step="0.05">
+          </div>
+
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// spessore tralci</span><span class="vv" id="wv_thick">1.0 px</span></div>
+            <input type="range" id="wp_thick" min="0.4" max="2.5" value="1.0" step="0.1">
+          </div>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// AZIONI</div>
+          <div class="wp-btns">
+            <button class="wp-btn pri full" id="wp_regen">RIGENERA SEED</button>
+            <button class="wp-btn" id="wp_replay">REPLAY ↻</button>
+            <button class="wp-btn" id="wp_svg">EXPORT SVG</button>
+          </div>
+        </div>
+
+        <div class="wp-note">
+          // differential growth · noise-based wandering · self-repulsion · branching.
+          Trascina il valore di <b>vuoto</b> per cambiare la densità della copertura,
+          aumenta i <b>punti</b> per moltiplicare i germogli iniziali.
+        </div>
+
+      </aside>
     </div>
   </div>
 
@@ -353,12 +450,404 @@
   </div>
 
   <footer class="site-foot">
-    <span>// DOCTNASA&amp;MRBORG · COLTIVAZIONE · 1 IMPIANTO PILOTA · 14 PROPOSTE</span>
+    <span>// DOCTNASA&amp;MRBORG · COLTIVAZIONE · 2 PROGETTI PILOTA · 1 PIANO INTERATTIVO · 14 PROPOSTE</span>
     <span><a href="../">← back to home</a></span>
   </footer>
 
 </div>
 
 <script src="../assets/site.js"></script>
+
+<!-- ─────────────────────────────────────────────────────────
+     WALL IVY GROWTH SIMULATION
+     differential growth · curve da punti seed · self-repulsion
+     ───────────────────────────────────────────────────────── -->
+<script>
+(function(){
+  const canvas = document.getElementById('wall-canvas');
+  const stage = document.getElementById('wall-stage');
+  const readout = document.getElementById('ws-readout');
+  if (!canvas || !stage) return;
+  const ctx = canvas.getContext('2d');
+
+  let W = 800, H = 500;
+  let DPR = window.devicePixelRatio || 1;
+  let seed = Math.floor(Math.random() * 100000);
+
+  let params = {
+    n: 5,
+    voidPct: 35,
+    sinuosity: 0.55,
+    branchProb: 0.40,
+    grav: 0.60,
+    thickness: 1.0
+  };
+
+  let branches = [];
+  let seedPoints = [];
+  let cells = new Map();
+  const CELL = 14;
+  let coverage = 0;
+  let totalTraces = 0;
+  let animState = { running: false, raf: 0 };
+
+  function setupCanvas() {
+    const r = stage.getBoundingClientRect();
+    W = Math.max(320, Math.floor(r.width));
+    H = Math.max(320, Math.floor(r.height));
+    DPR = window.devicePixelRatio || 1;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(DPR, DPR);
+  }
+
+  function rng(s) {
+    let x = Math.sin(s * 9301 + 49297) * 233280;
+    return x - Math.floor(x);
+  }
+
+  function noise1D(t, s) {
+    let v = 0, amp = 1, freq = 0.6, total = 0;
+    for (let o = 0; o < 3; o++) {
+      v += Math.sin(t * 0.02 * freq + s * (o + 1) * 1.71) * amp;
+      total += amp;
+      amp *= 0.55;
+      freq *= 2.05;
+    }
+    return v / total;
+  }
+
+  function cellKey(x, y) {
+    return Math.floor(x / CELL) + ',' + Math.floor(y / CELL);
+  }
+
+  function addToCells(x, y) {
+    const k = cellKey(x, y);
+    cells.set(k, (cells.get(k) || 0) + 1);
+  }
+
+  function isCrowded(x, y, age) {
+    if (age < 6) return false;
+    const cx = Math.floor(x / CELL), cy = Math.floor(y / CELL);
+    let count = 0;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const v = cells.get((cx + dx) + ',' + (cy + dy));
+        if (v) count += v;
+      }
+    }
+    return count > 3;
+  }
+
+  function placeSeeds() {
+    seedPoints = [];
+    const margin = 18;
+    const perimeter = [];
+    const segs = 80;
+    for (let i = 0; i < segs; i++) {
+      perimeter.push({ x: margin + (W - 2 * margin) * (i / segs), y: H - margin, dir: -Math.PI / 2 });
+    }
+    for (let i = 0; i < segs * 0.6; i++) {
+      perimeter.push({ x: margin, y: H - margin - (H - 2 * margin) * (i / (segs * 0.6)), dir: 0 });
+    }
+    for (let i = 0; i < segs * 0.6; i++) {
+      perimeter.push({ x: W - margin, y: H - margin - (H - 2 * margin) * (i / (segs * 0.6)), dir: Math.PI });
+    }
+    const step = perimeter.length / params.n;
+    const offset = rng(seed) * step;
+    for (let i = 0; i < params.n; i++) {
+      const idx = Math.floor((offset + i * step)) % perimeter.length;
+      const p = perimeter[idx];
+      const dirJitter = (rng(seed * 0.131 + i * 13.7) - 0.5) * 0.6;
+      seedPoints.push({ x: p.x, y: p.y, dir: p.dir + dirJitter });
+    }
+  }
+
+  function init() {
+    branches = [];
+    cells = new Map();
+    coverage = 0;
+    totalTraces = 0;
+    placeSeeds();
+    for (let i = 0; i < seedPoints.length; i++) {
+      const s = seedPoints[i];
+      branches.push({
+        pts: [{ x: s.x, y: s.y }],
+        dir: s.dir,
+        alive: true,
+        depth: 0,
+        age: 0,
+        seedId: i,
+        bseed: seed * 0.0007 + i * 11.13 + 0.31
+      });
+      addToCells(s.x, s.y);
+    }
+  }
+
+  function step(steps) {
+    const margin = 6;
+    const stepLen = 2.6;
+    const targetCells = Math.max(40, ((W * H) / (CELL * CELL)) * (1 - params.voidPct / 100) * 0.55);
+
+    for (let s = 0; s < steps; s++) {
+      if (cells.size >= targetCells) break;
+      let anyAlive = false;
+      const newBranches = [];
+      for (let i = 0; i < branches.length; i++) {
+        const br = branches[i];
+        if (!br.alive) continue;
+        anyAlive = true;
+
+        const tip = br.pts[br.pts.length - 1];
+        const tt = br.age * 1.0;
+        const wobble = noise1D(tt, br.bseed) * params.sinuosity * 0.42;
+        const desiredDir = -Math.PI / 2;
+        const bias = (desiredDir - br.dir);
+        let biasNorm = Math.atan2(Math.sin(bias), Math.cos(bias));
+        br.dir += wobble + biasNorm * 0.012 * params.grav;
+
+        const nx = tip.x + Math.cos(br.dir) * stepLen;
+        const ny = tip.y + Math.sin(br.dir) * stepLen;
+
+        if (nx < margin || nx > W - margin || ny < margin || ny > H - margin) {
+          br.alive = false;
+          continue;
+        }
+        if (isCrowded(nx, ny, br.age)) {
+          br.alive = false;
+          continue;
+        }
+        br.pts.push({ x: nx, y: ny });
+        addToCells(nx, ny);
+        br.age++;
+
+        if (br.depth < 5 && br.age > 12 && rng(br.bseed + br.age * 0.7) < params.branchProb * 0.06) {
+          const side = rng(br.bseed + br.age * 1.31) < 0.5 ? -1 : 1;
+          const ang = side * (Math.PI / 4 + rng(br.bseed + br.age * 0.43) * Math.PI / 4);
+          newBranches.push({
+            pts: [{ x: nx, y: ny }],
+            dir: br.dir + ang,
+            alive: true,
+            depth: br.depth + 1,
+            age: 0,
+            seedId: br.seedId,
+            bseed: br.bseed * 1.13 + br.age * 0.07
+          });
+        }
+      }
+      if (newBranches.length) branches = branches.concat(newBranches);
+      if (!anyAlive) break;
+    }
+
+    coverage = Math.min(1, cells.size / (((W * H) / (CELL * CELL)) * 0.55));
+    totalTraces = branches.length;
+  }
+
+  function drawWallBackdrop() {
+    ctx.fillStyle = '#070707';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.strokeStyle = '#101010';
+    ctx.lineWidth = 0.6;
+    const brickH = 28;
+    const brickW = 72;
+    for (let y = 0; y < H; y += brickH) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+      const offset = (Math.floor(y / brickH) % 2) * (brickW / 2);
+      for (let x = -offset; x < W; x += brickW) {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y + brickH);
+        ctx.stroke();
+      }
+    }
+
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeRect(8, 8, W - 16, H - 16);
+    ctx.setLineDash([]);
+  }
+
+  function drawBranches() {
+    const sorted = branches.slice().sort((a, b) => a.depth - b.depth);
+    for (let i = 0; i < sorted.length; i++) {
+      const br = sorted[i];
+      if (br.pts.length < 2) continue;
+
+      const litBase = 26 + (1 - br.depth / 5) * 35;
+      const alpha = 0.62 + (1 - br.depth / 5) * 0.32;
+      const thick = params.thickness * (1 - br.depth * 0.12);
+
+      ctx.strokeStyle = 'hsla(135, 70%, ' + litBase + '%, ' + alpha + ')';
+      ctx.lineWidth = Math.max(0.4, thick);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const p = br.pts;
+      ctx.beginPath();
+      ctx.moveTo(p[0].x, p[0].y);
+      for (let k = 1; k < p.length - 1; k++) {
+        const mx = (p[k].x + p[k + 1].x) / 2;
+        const my = (p[k].y + p[k + 1].y) / 2;
+        ctx.quadraticCurveTo(p[k].x, p[k].y, mx, my);
+      }
+      const last = p[p.length - 1];
+      ctx.lineTo(last.x, last.y);
+      ctx.stroke();
+
+      if (br.pts.length > 10 && br.depth >= 1) {
+        const skip = Math.max(8, 22 - br.depth * 3);
+        ctx.fillStyle = 'hsla(135, 75%, ' + Math.min(70, litBase + 10) + '%, 0.5)';
+        for (let k = skip; k < br.pts.length; k += skip) {
+          const pt = br.pts[k];
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, Math.max(0.7, thick * 1.1), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    ctx.fillStyle = '#5eff7e';
+    ctx.strokeStyle = '#5eff7e';
+    ctx.lineWidth = 0.6;
+    for (let i = 0; i < seedPoints.length; i++) {
+      const s = seedPoints[i];
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, 5.2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  function drawReadout() {
+    const pct = Math.round(coverage * 100);
+    readout.textContent = 'SEED ' + seed + ' · COPERTURA ' + pct + '% · TRACCE ' + totalTraces;
+  }
+
+  function draw() {
+    drawWallBackdrop();
+    drawBranches();
+    drawReadout();
+  }
+
+  function tick() {
+    if (!animState.running) return;
+    step(8);
+    draw();
+    const targetCells = Math.max(40, ((W * H) / (CELL * CELL)) * (1 - params.voidPct / 100) * 0.55);
+    const someAlive = branches.some(b => b.alive);
+    if (!someAlive || cells.size >= targetCells) {
+      animState.running = false;
+      return;
+    }
+    animState.raf = requestAnimationFrame(tick);
+  }
+
+  function regen(newSeed) {
+    if (animState.raf) cancelAnimationFrame(animState.raf);
+    if (newSeed) seed = Math.floor(Math.random() * 100000);
+    init();
+    draw();
+    animState.running = true;
+    animState.raf = requestAnimationFrame(tick);
+  }
+
+  function readParams() {
+    params.n = parseInt(document.getElementById('wp_n').value);
+    params.voidPct = parseInt(document.getElementById('wp_void').value);
+    params.sinuosity = parseFloat(document.getElementById('wp_sin').value);
+    params.branchProb = parseFloat(document.getElementById('wp_branch').value);
+    params.grav = parseFloat(document.getElementById('wp_grav').value);
+    params.thickness = parseFloat(document.getElementById('wp_thick').value);
+  }
+
+  const sliders = [
+    ['wp_n', 'wv_n', v => v],
+    ['wp_void', 'wv_void', v => v + '%'],
+    ['wp_sin', 'wv_sin', v => parseFloat(v).toFixed(2)],
+    ['wp_branch', 'wv_branch', v => parseFloat(v).toFixed(2)],
+    ['wp_grav', 'wv_grav', v => parseFloat(v).toFixed(2)],
+    ['wp_thick', 'wv_thick', v => parseFloat(v).toFixed(1) + ' px']
+  ];
+  sliders.forEach(([id, vid, fmt]) => {
+    const el = document.getElementById(id);
+    const out = document.getElementById(vid);
+    out.textContent = fmt(el.value);
+    let debounce;
+    el.addEventListener('input', () => {
+      out.textContent = fmt(el.value);
+      readParams();
+      clearTimeout(debounce);
+      debounce = setTimeout(() => regen(false), 80);
+    });
+  });
+
+  document.getElementById('wp_regen').addEventListener('click', () => regen(true));
+  document.getElementById('wp_replay').addEventListener('click', () => regen(false));
+
+  document.getElementById('wp_svg').addEventListener('click', () => {
+    let svg = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    svg += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '">\n';
+    svg += '  <rect width="' + W + '" height="' + H + '" fill="#070707"/>\n';
+    svg += '  <g fill="none" stroke-linecap="round" stroke-linejoin="round">\n';
+    const sorted = branches.slice().sort((a, b) => a.depth - b.depth);
+    for (const br of sorted) {
+      if (br.pts.length < 2) continue;
+      const litBase = 26 + (1 - br.depth / 5) * 35;
+      const col = 'hsl(135,70%,' + litBase.toFixed(0) + '%)';
+      const sw = Math.max(0.4, params.thickness * (1 - br.depth * 0.12)).toFixed(2);
+      let d = 'M ' + br.pts[0].x.toFixed(2) + ' ' + br.pts[0].y.toFixed(2);
+      for (let k = 1; k < br.pts.length - 1; k++) {
+        const mx = (br.pts[k].x + br.pts[k + 1].x) / 2;
+        const my = (br.pts[k].y + br.pts[k + 1].y) / 2;
+        d += ' Q ' + br.pts[k].x.toFixed(2) + ' ' + br.pts[k].y.toFixed(2) + ' ' + mx.toFixed(2) + ' ' + my.toFixed(2);
+      }
+      const last = br.pts[br.pts.length - 1];
+      d += ' L ' + last.x.toFixed(2) + ' ' + last.y.toFixed(2);
+      svg += '    <path d="' + d + '" stroke="' + col + '" stroke-width="' + sw + '" opacity="0.85" data-depth="' + br.depth + '"/>\n';
+    }
+    svg += '  </g>\n</svg>\n';
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'copertura_vegetale_' + seed + '.svg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 300);
+  });
+
+  let resizeT;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(() => {
+      setupCanvas();
+      regen(false);
+    }, 180);
+  });
+
+  function start() {
+    setupCanvas();
+    if (W < 50 || H < 50) {
+      setTimeout(start, 100);
+      return;
+    }
+    readParams();
+    regen(false);
+  }
+  setTimeout(start, 80);
+})();
+</script>
+
 </body>
 </html>
