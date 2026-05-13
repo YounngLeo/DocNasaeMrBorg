@@ -476,6 +476,239 @@ a:hover { color: var(--acc); }
   background: rgba(255,176,0,0.04);
 }
 
+/* ── wallet module: ETH MetaMask + BTC ── */
+.wallet-module {
+  border: 1px solid var(--line-h);
+  background: var(--bg-soft);
+  margin-bottom: 26px;
+  position: relative;
+}
+.wallet-module::before {
+  content: "// WALLET · PAGAMENTI ACCETTATI";
+  position: absolute;
+  top: -1px; left: -1px;
+  background: var(--amber);
+  color: var(--bg);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 3px 8px;
+  font-weight: bold;
+}
+.wm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--line-h);
+  margin-top: 26px;
+}
+.wm-card {
+  padding: 18px 18px 16px;
+  position: relative;
+}
+.wm-card + .wm-card { border-left: 1px solid var(--line-h); }
+.wm-chain {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+.wm-chain .wm-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border: 1px solid var(--line-h);
+  font-size: 16px;
+}
+.wm-chain.eth .wm-glyph { color: #cebbff; border-color: rgba(206,187,255,0.3); }
+.wm-chain.btc .wm-glyph { color: #ffb000; border-color: rgba(255,176,0,0.3); }
+.wm-chain .wm-name { color: var(--fg); font-weight: bold; }
+.wm-chain .wm-net {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  border: 1px solid var(--line-h);
+  padding: 2px 6px;
+  margin-left: auto;
+}
+.wm-addr-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #050505;
+  border: 1px solid var(--line-h);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.wm-addr-lbl {
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  color: var(--fg-fade);
+  flex-shrink: 0;
+}
+.wm-addr {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--fg);
+  letter-spacing: 0.4px;
+  flex: 1;
+  word-break: break-all;
+  user-select: all;
+}
+.wm-addr.eth { color: #cebbff; }
+.wm-addr.btc { color: #ffb000; }
+.wm-addr.placeholder { color: var(--fg-fade); font-style: italic; }
+.copy-btn {
+  background: transparent;
+  border: 1px solid var(--line-h);
+  color: var(--fg-dim);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  padding: 4px 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color .12s, border-color .12s;
+}
+.copy-btn:hover { color: var(--amber); border-color: var(--amber); }
+.copy-btn.copied { color: var(--acc); border-color: var(--acc); }
+.wm-note {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--fg-dim);
+  line-height: 1.55;
+  margin-top: 8px;
+}
+.wm-note b { color: var(--fg); letter-spacing: 1.2px; }
+
+/* MetaMask connect button */
+.mm-connect {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  background: transparent;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 2px;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background .12s, color .12s;
+}
+.mm-connect:hover { background: var(--amber); color: var(--bg); }
+.mm-connect .mm-fox {
+  display: inline-block;
+  width: 14px; height: 14px;
+  background: var(--amber);
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  flex-shrink: 0;
+}
+.mm-connect:hover .mm-fox { background: var(--bg); }
+.mm-status {
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  margin-top: 10px;
+  font-family: var(--mono);
+  display: none;
+}
+.mm-status.show { display: block; }
+.mm-status.success { color: var(--acc); }
+.mm-status.error { color: var(--red); }
+.mm-status .mm-addr-show {
+  display: inline-block;
+  background: rgba(94,255,126,0.06);
+  border: 1px solid rgba(94,255,126,0.2);
+  padding: 4px 8px;
+  margin-left: 6px;
+  color: var(--acc);
+  word-break: break-all;
+}
+
+@media (max-width: 700px) {
+  .wm-grid { grid-template-columns: 1fr; }
+  .wm-card + .wm-card { border-left: none; border-top: 1px solid var(--line-h); }
+}
+
+/* ── buy-flow: istruzioni acquisto NFT ── */
+.buy-flow {
+  border: 1px solid var(--line-h);
+  background: var(--bg-soft);
+  margin: 30px 0;
+  position: relative;
+}
+.buy-flow::before {
+  content: "// COME ACQUISTARE";
+  position: absolute;
+  top: -1px; left: -1px;
+  background: var(--amber);
+  color: var(--bg);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 3px 8px;
+  font-weight: bold;
+}
+.buy-flow-body {
+  padding: 30px 22px 22px;
+}
+.buy-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.buy-step {
+  border: 1px dotted var(--line-h);
+  padding: 14px 12px;
+  position: relative;
+  background: #0a0a08;
+}
+.buy-step .bs-num {
+  position: absolute;
+  top: -10px; left: 10px;
+  background: var(--bg);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  padding: 2px 7px;
+  font-weight: bold;
+}
+.buy-step .bs-title {
+  font-size: 10.5px;
+  letter-spacing: 2px;
+  color: var(--fg);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  margin-top: 4px;
+  font-weight: bold;
+}
+.buy-step .bs-desc {
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  color: var(--fg-dim);
+  line-height: 1.55;
+}
+.buy-step .bs-desc code {
+  font-family: var(--mono);
+  background: rgba(255,176,0,0.08);
+  color: var(--amber);
+  padding: 1px 4px;
+  font-size: 9px;
+  word-break: break-all;
+}
+@media (max-width: 800px) {
+  .buy-steps { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .buy-steps { grid-template-columns: 1fr; }
+}
+
 /* ============================================================
    POKEMON-STYLE INVENTORY CARDS (works in section pages)
 ============================================================ */
