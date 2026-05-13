@@ -132,6 +132,11 @@
           </div>
 
           <div class="wp-row">
+            <div class="wp-row-head"><span>// noise (barene/rami)</span><span class="vv" id="wv_noise">0.30</span></div>
+            <input type="range" id="wp_noise" min="0" max="1" value="0.3" step="0.05">
+          </div>
+
+          <div class="wp-row">
             <div class="wp-row-head"><span>// fototropismo (verso l'alto)</span><span class="vv" id="wv_grav">0.60</span></div>
             <input type="range" id="wp_grav" min="0" max="1" value="0.6" step="0.05">
           </div>
@@ -152,9 +157,10 @@
         </div>
 
         <div class="wp-note">
-          // differential growth · noise-based wandering · self-repulsion · branching.
-          Trascina il valore di <b>vuoto</b> per cambiare la densità della copertura,
-          aumenta i <b>punti</b> per moltiplicare i germogli iniziali.
+          // differential growth · 2D fractal noise · self-repulsion · branching.
+          Le icone botaniche sono <b>auto-importate</b> dall'erbario MB:
+          ogni nuova scheda compare anche qui. Aumenta il <b>noise</b> per linee
+          più frastagliate (stile barene/rami naturali).
         </div>
 
       </aside>
@@ -479,9 +485,112 @@
     voidPct: 35,
     sinuosity: 0.55,
     branchProb: 0.40,
+    noise: 0.30,
     grav: 0.60,
     thickness: 1.0
   };
+
+  // ─── palette bioluminescente ──────────────────────────────
+  const BIO_PALETTE = [
+    '#3afff0', '#aaff3a', '#fff03a', '#ffa83a',
+    '#ff3a6a', '#ff5ec8', '#c850ff', '#5e8aff',
+    '#3affb8', '#ff8a3a'
+  ];
+
+  // Mappa colore in base a indizi semantici nella descrizione
+  function colorForCard(card) {
+    const text = (
+      (card.querySelector('.herb-name-comune')?.textContent || '') + ' ' +
+      (card.querySelector('.herb-name-sci')?.textContent || '') + ' ' +
+      (card.querySelector('.herb-desc')?.textContent || '')
+    ).toLowerCase();
+    if (text.match(/(porporin|porpora|magenta|orchid|porporine)/)) return '#ff5ec8';
+    if (text.match(/(viol[ae]|amaranto|lillac|lavanda)/)) return '#c850ff';
+    if (text.match(/(rosa pall|rosa chiar|rosa s|rosa,)/)) return '#ff8aae';
+    if (text.match(/(rosso|coccin|sanguig|scarl|aranci)/)) return '#ff3a6a';
+    if (text.match(/(arancio)/)) return '#ffa83a';
+    if (text.match(/(giall|aurat|ocra|paglieri|dorat)/)) return '#fff03a';
+    if (text.match(/(azzurr|celest|blu|cerul)/)) return '#5e8aff';
+    if (text.match(/(verd|smerald)/)) return '#aaff3a';
+    if (text.match(/(bianc|ivory|crema|avorio|niveo)/)) return '#aff0d8';
+    // fallback hash-based
+    const seedStr = card.querySelector('.herb-name-sci')?.textContent || card.querySelector('.herb-id-badge')?.textContent || 'x';
+    let h = 0;
+    for (let i = 0; i < seedStr.length; i++) h = (h * 31 + seedStr.charCodeAt(i)) | 0;
+    return BIO_PALETTE[Math.abs(h) % BIO_PALETTE.length];
+  }
+
+  function tintSVG(svgString, color) {
+    let s = svgString;
+    s = s.replace(/stroke="(?!none\b)[^"]*"/g, 'stroke="' + color + '"');
+    s = s.replace(/fill="(?!none\b)[^"]*"/g, 'fill="' + color + '"');
+    s = s.replace(/<svg(\s[^>]*)?>/i, function(m, attrs) {
+      return '<svg' + (attrs || '') + ' style="color:' + color + '">';
+    });
+    return s;
+  }
+
+  let herbariumSpecies = [];
+  let herbariumLoaded = false;
+
+  function loadHerbarium() {
+    return fetch('/ricerca/erbario/', { cache: 'no-cache' })
+      .then(r => r.ok ? r.text() : Promise.reject())
+      .then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const cards = doc.querySelectorAll('.herb-card');
+        const out = [];
+        const imageLoads = [];
+        cards.forEach(card => {
+          const idBadge = card.querySelector('.herb-id-badge');
+          if (!idBadge) return;
+          const id = idBadge.textContent.trim();
+          const nameSci = (card.querySelector('.herb-name-sci')?.textContent || '').trim();
+          const color = colorForCard(card);
+          const figs = card.querySelectorAll('.herb-plate .plate-fig');
+          const iconImgs = [];
+          figs.forEach(fig => {
+            const svg = fig.querySelector('svg');
+            if (!svg) return;
+            const labelEl = fig.querySelector('.fig-label');
+            const label = labelEl ? labelEl.textContent.trim() : '';
+            if (!svg.getAttribute('xmlns')) svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            const tinted = tintSVG(svg.outerHTML, color);
+            const blob = new Blob([tinted], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            const entry = { img, label, ready: false };
+            const p = new Promise(resolve => {
+              img.onload = () => { entry.ready = true; resolve(); };
+              img.onerror = () => resolve();
+              img.src = url;
+            });
+            imageLoads.push(p);
+            iconImgs.push(entry);
+          });
+          if (iconImgs.length) {
+            out.push({ id, nameSci, color, iconImgs });
+          }
+        });
+        return Promise.all(imageLoads).then(() => {
+          herbariumSpecies = out.filter(s => s.iconImgs.some(ic => ic.ready));
+          herbariumLoaded = true;
+        });
+      })
+      .catch(() => { herbariumLoaded = true; /* fallback to canvas icons */ });
+  }
+
+  // 2D fractal noise (no external lib): octave-summed sin/cos
+  function noise2D(x, y, sd) {
+    let v = 0, amp = 1, freq = 0.012, total = 0;
+    for (let o = 0; o < 4; o++) {
+      v += Math.sin(x * freq + sd * (o + 1) * 1.31) * Math.cos(y * freq * 1.07 + sd * (o + 1) * 0.83) * amp;
+      total += amp;
+      amp *= 0.55;
+      freq *= 2.05;
+    }
+    return v / total;
+  }
 
   let branches = [];
   let seedPoints = [];
@@ -495,8 +604,8 @@
   let iconsPlaced = [];
   let iconsAppearStart = 0;
   let iconsAppearRaf = 0;
-  const BOTANICAL_COLOR = '#ffc44a';
-  const BOTANICAL_COLOR_2 = '#ff8a6a';
+  const FALLBACK_COLOR = '#3afff0';
+  const FALLBACK_COLOR_2 = '#ff5ec8';
 
   // ─── icone botaniche stilizzate ispirate all'erbario MB ──────
   // foglia ovata acuminata (Cotinus, Cornus)
@@ -974,7 +1083,12 @@
         const desiredDir = -Math.PI / 2;
         const bias = (desiredDir - br.dir);
         let biasNorm = Math.atan2(Math.sin(bias), Math.cos(bias));
-        br.dir += wobble + biasNorm * 0.012 * params.grav;
+        // fractal turbulence (barene/rami) — multi-scale, position-based
+        const turbCoarse = noise2D(tip.x, tip.y, br.bseed) * 0.55;
+        const turbMid = noise2D(tip.x * 2.4, tip.y * 2.4, br.bseed * 1.31) * 0.30;
+        const turbFine = noise2D(tip.x * 6.2, tip.y * 6.2, br.bseed * 0.71) * 0.18;
+        const fractal = (turbCoarse + turbMid + turbFine) * params.noise * 0.65;
+        br.dir += wobble + biasNorm * 0.012 * params.grav + fractal;
 
         const nx = tip.x + Math.cos(br.dir) * stepLen;
         const ny = tip.y + Math.sin(br.dir) * stepLen;
@@ -1056,6 +1170,8 @@
       ctx.lineWidth = Math.max(0.4, thick);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
+      ctx.shadowColor = 'rgba(94,255,126,0.6)';
+      ctx.shadowBlur = 3.5;
 
       const p = br.pts;
       ctx.beginPath();
@@ -1068,6 +1184,7 @@
       const last = p[p.length - 1];
       ctx.lineTo(last.x, last.y);
       ctx.stroke();
+      ctx.shadowBlur = 0;
 
       if (br.pts.length > 10 && br.depth >= 1) {
         const skip = Math.max(8, 22 - br.depth * 3);
@@ -1097,16 +1214,25 @@
 
   function drawReadout() {
     const pct = Math.round(coverage * 100);
-    const ic = iconsPlaced.length ? ' · FLORA ' + iconsPlaced.length : '';
-    readout.textContent = 'SEED ' + seed + ' · COPERTURA ' + pct + '% · TRACCE ' + totalTraces + ic;
+    let flora = '';
+    if (iconsPlaced.length) {
+      if (herbariumSpecies.length) {
+        const speciesSet = new Set(iconsPlaced.map(ic => ic.species).filter(Boolean));
+        flora = ' · FLORA ' + iconsPlaced.length + ' icone / ' + speciesSet.size + ' specie';
+      } else {
+        flora = ' · FLORA ' + iconsPlaced.length;
+      }
+    }
+    readout.textContent = 'SEED ' + seed + ' · COPERTURA ' + pct + '% · TRACCE ' + totalTraces + flora;
   }
 
   function placeIcons() {
     iconsPlaced = [];
     if (W < 50 || H < 50) return;
 
+    // celle "occupate" dai tralci (con buffer)
     const filled = new Set();
-    const PAD_CELLS = 1;
+    const PAD_CELLS = 2;
     for (let i = 0; i < branches.length; i++) {
       const pts = branches[i].pts;
       for (let k = 0; k < pts.length; k++) {
@@ -1126,41 +1252,102 @@
       return rs / 0xffffffff;
     };
 
-    const margin = 24;
+    const margin = 22;
     const usableW = W - 2 * margin;
     const usableH = H - 2 * margin;
     const totalArea = usableW * usableH;
     const occupiedArea = filled.size * CELL * CELL;
     const voidArea = Math.max(0, totalArea - occupiedArea);
-    const target = Math.min(160, Math.max(12, Math.floor(voidArea / 1000)));
-    const minDist2 = 26 * 26;
 
-    let attempts = 0;
-    const maxAttempts = target * 35;
-    while (iconsPlaced.length < target && attempts < maxAttempts) {
-      attempts++;
-      const x = margin + rng() * usableW;
-      const y = margin + rng() * usableH;
-      const gx = Math.floor(x / CELL);
-      const gy = Math.floor(y / CELL);
-      if (filled.has(gx + ',' + gy)) continue;
+    const haveErbario = herbariumSpecies.length > 0;
 
-      let tooClose = false;
-      for (let i = iconsPlaced.length - 1; i >= 0; i--) {
-        const ic = iconsPlaced[i];
-        const dxIc = ic.x - x, dyIc = ic.y - y;
-        if (dxIc * dxIc + dyIc * dyIc < minDist2) { tooClose = true; break; }
+    if (haveErbario) {
+      // CLUSTERS: ogni cluster = una pianta, contiene tutte le icone della specie raggruppate
+      const targetPlants = Math.min(90, Math.max(10, Math.floor(voidArea / 1100)));
+      const minClusterDist2 = 18 * 18;   // piante diverse possono sovrapporsi un po'
+
+      let attempts = 0;
+      const maxAttempts = targetPlants * 50;
+      const clusters = [];
+      while (clusters.length < targetPlants && attempts < maxAttempts) {
+        attempts++;
+        const x = margin + rng() * usableW;
+        const y = margin + rng() * usableH;
+        const gx = Math.floor(x / CELL);
+        const gy = Math.floor(y / CELL);
+        if (filled.has(gx + ',' + gy)) continue;
+
+        // distanza minima fra centri delle piante (consente leggera sovrapposizione)
+        let tooClose = false;
+        for (let i = clusters.length - 1; i >= 0; i--) {
+          const c = clusters[i];
+          const dxC = c.x - x, dyC = c.y - y;
+          if (dxC * dxC + dyC * dyC < minClusterDist2) { tooClose = true; break; }
+        }
+        if (tooClose) continue;
+
+        const specIdx = Math.floor(rng() * herbariumSpecies.length);
+        const spec = herbariumSpecies[specIdx];
+        clusters.push({ x, y, spec, rotBase: (rng() - 0.5) * 0.7 });
       }
-      if (tooClose) continue;
 
-      iconsPlaced.push({
-        x: x,
-        y: y,
-        iconIdx: Math.floor(rng() * ICONS.length),
-        rot: (rng() - 0.5) * 0.7,
-        scale: 0.78 + rng() * 0.55,
-        alt: rng() < 0.35
-      });
+      // posiziona le icone di ogni cluster
+      for (const c of clusters) {
+        const icons = c.spec.iconImgs.filter(ic => ic.ready);
+        if (!icons.length) continue;
+        const baseScale = 0.85 + rng() * 0.45;
+        const N = icons.length;
+        const ringR = 14 + rng() * 8;
+        const angleOffset = rng() * Math.PI * 2;
+        for (let i = 0; i < N; i++) {
+          const ic = icons[i];
+          // ordine: la foglia un po' più in basso, il fiore in alto
+          let a = angleOffset + (i / N) * Math.PI * 2;
+          let r = ringR * (0.4 + rng() * 0.7);
+          const ox = Math.cos(a) * r;
+          const oy = Math.sin(a) * r;
+          const scale = baseScale * (0.85 + rng() * 0.35);
+          iconsPlaced.push({
+            x: c.x + ox,
+            y: c.y + oy,
+            rot: c.rotBase + (rng() - 0.5) * 0.85,
+            scale: scale,
+            img: ic.img,
+            color: c.spec.color,
+            type: ic.label,
+            species: c.spec.id
+          });
+        }
+      }
+    } else {
+      // fallback: icone canvas legacy (in attesa che l'erbario si carichi)
+      const target = Math.min(160, Math.max(12, Math.floor(voidArea / 1000)));
+      const minDist2 = 26 * 26;
+      let attempts = 0;
+      const maxAttempts = target * 35;
+      while (iconsPlaced.length < target && attempts < maxAttempts) {
+        attempts++;
+        const x = margin + rng() * usableW;
+        const y = margin + rng() * usableH;
+        const gx = Math.floor(x / CELL);
+        const gy = Math.floor(y / CELL);
+        if (filled.has(gx + ',' + gy)) continue;
+        let tooClose = false;
+        for (let i = iconsPlaced.length - 1; i >= 0; i--) {
+          const ic = iconsPlaced[i];
+          const dxIc = ic.x - x, dyIc = ic.y - y;
+          if (dxIc * dxIc + dyIc * dyIc < minDist2) { tooClose = true; break; }
+        }
+        if (tooClose) continue;
+        iconsPlaced.push({
+          x: x, y: y,
+          iconIdx: Math.floor(rng() * ICONS.length),
+          rot: (rng() - 0.5) * 0.7,
+          scale: 0.78 + rng() * 0.55,
+          alt: rng() < 0.5,
+          legacy: true
+        });
+      }
     }
   }
 
@@ -1169,22 +1356,57 @@
     const alpha = Math.max(0, Math.min(1, opacity));
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+
+    // pass 1: glow di base (più ampio, bassa opacità)
+    ctx.globalAlpha = alpha * 0.55;
     for (let i = 0; i < iconsPlaced.length; i++) {
       const ic = iconsPlaced[i];
-      const spec = ICONS[ic.iconIdx];
-      const useAlt = spec.alt && ic.alt;
-      const stroke = useAlt ? BOTANICAL_COLOR_2 : BOTANICAL_COLOR;
       ctx.save();
       ctx.translate(ic.x, ic.y);
       ctx.rotate(ic.rot);
       ctx.scale(ic.scale, ic.scale);
-      ctx.globalAlpha = alpha * 0.92;
-      ctx.strokeStyle = stroke;
-      ctx.fillStyle = stroke;
-      ctx.lineWidth = 0.85;
-      spec.fn(ctx);
+      ctx.shadowColor = ic.color || FALLBACK_COLOR;
+      ctx.shadowBlur = 14;
+      if (ic.img) {
+        const w = 36, h = 36;
+        try { ctx.drawImage(ic.img, -w/2, -h/2, w, h); } catch (e) {}
+      } else if (ic.legacy) {
+        const spec = ICONS[ic.iconIdx];
+        const stroke = ic.alt ? FALLBACK_COLOR_2 : FALLBACK_COLOR;
+        ctx.strokeStyle = stroke;
+        ctx.fillStyle = stroke;
+        ctx.lineWidth = 1.0;
+        spec.fn(ctx);
+      }
       ctx.restore();
     }
+
+    // pass 2: nitido (alpha pieno, glow lieve)
+    ctx.globalAlpha = alpha * 0.96;
+    for (let i = 0; i < iconsPlaced.length; i++) {
+      const ic = iconsPlaced[i];
+      ctx.save();
+      ctx.translate(ic.x, ic.y);
+      ctx.rotate(ic.rot);
+      ctx.scale(ic.scale, ic.scale);
+      ctx.shadowColor = ic.color || FALLBACK_COLOR;
+      ctx.shadowBlur = 5;
+      if (ic.img) {
+        const w = 36, h = 36;
+        try { ctx.drawImage(ic.img, -w/2, -h/2, w, h); } catch (e) {}
+      } else if (ic.legacy) {
+        const spec = ICONS[ic.iconIdx];
+        const stroke = ic.alt ? FALLBACK_COLOR_2 : FALLBACK_COLOR;
+        ctx.strokeStyle = stroke;
+        ctx.fillStyle = stroke;
+        ctx.lineWidth = 0.85;
+        spec.fn(ctx);
+      }
+      ctx.restore();
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
     ctx.globalAlpha = 1;
   }
 
@@ -1240,6 +1462,7 @@
     params.voidPct = parseInt(document.getElementById('wp_void').value);
     params.sinuosity = parseFloat(document.getElementById('wp_sin').value);
     params.branchProb = parseFloat(document.getElementById('wp_branch').value);
+    params.noise = parseFloat(document.getElementById('wp_noise').value);
     params.grav = parseFloat(document.getElementById('wp_grav').value);
     params.thickness = parseFloat(document.getElementById('wp_thick').value);
   }
@@ -1249,6 +1472,7 @@
     ['wp_void', 'wv_void', v => v + '%'],
     ['wp_sin', 'wv_sin', v => parseFloat(v).toFixed(2)],
     ['wp_branch', 'wv_branch', v => parseFloat(v).toFixed(2)],
+    ['wp_noise', 'wv_noise', v => parseFloat(v).toFixed(2)],
     ['wp_grav', 'wv_grav', v => parseFloat(v).toFixed(2)],
     ['wp_thick', 'wv_thick', v => parseFloat(v).toFixed(1) + ' px']
   ];
@@ -1332,6 +1556,16 @@
     }
     readParams();
     regen(false);
+    // Carica l'erbario in background (auto-import icone botaniche)
+    loadHerbarium().then(() => {
+      // se la sim è già finita, riposiziona le icone con quelle vere
+      if (!animState.running) {
+        placeIcons();
+        iconsAppearStart = performance.now();
+        if (iconsAppearRaf) cancelAnimationFrame(iconsAppearRaf);
+        iconsAppearRaf = requestAnimationFrame(iconsTick);
+      }
+    });
   }
   setTimeout(start, 80);
 })();
