@@ -45,7 +45,7 @@
     <div class="site-name">DOCTNASA<span class="amp">&amp;</span>MRBORG</div>
     <div class="tagline">studio di ricerca · pratiche ibride · arte tecnologica</div>
     <div class="meta-row">
-      <span><b>09</b> SEZIONI</span>
+      <span><b>11</b> SEZIONI</span>
       <span><b>02</b> TOOLS</span>
       <span><b>2026</b></span>
       <span>MONTI BERICI · IT</span>
@@ -107,7 +107,7 @@
       <div class="icon">⬡</div>
       <div class="name">RICERCA</div>
       <div class="sub">articoli · studi · stati dell'arte</div>
-      <div class="stats"><span>PAPERS <span class="num">03</span></span><span>2019 → 2026</span></div>
+      <div class="stats"><span>PAPERS <span class="num">03</span></span><span>2 progetti campo</span></div>
     </a>
 
     <a href="drone/" class="section-card">
@@ -126,6 +126,23 @@
       <div class="stats"><span>MINTED <span class="num">00</span></span><span>ETH · BTC · genesis</span></div>
     </a>
 
+    <button type="button" class="section-card service" id="open-modal-print3d" aria-haspopup="dialog">
+      <div class="id">// 10</div>
+      <div class="icon">◇</div>
+      <div class="name">SERVIZIO STAMPA 3D</div>
+      <div class="sub">preventivo e invio file tecnici</div>
+      <span class="service-mat">pla · petg · tpu · resina · clay</span>
+      <div class="stats"><span>QUOTE</span><span>via mail</span></div>
+    </button>
+
+    <button type="button" class="section-card service service-amber" id="open-modal-storage" aria-haspopup="dialog">
+      <div class="id">// 11</div>
+      <div class="icon">▣</div>
+      <div class="name">SERVIZIO STOCCAGGIO</div>
+      <div class="sub">magazzino coperto · pallet · CCTV</div>
+      <div class="stats"><span>LOGISTICA</span><span>richiesta slot</span></div>
+    </button>
+
     <a href="tools/" class="section-card tools">
       <div class="id">// X</div>
       <div class="icon">⚙</div>
@@ -141,6 +158,77 @@
     <span>END_OF_HOME</span>
   </footer>
 
+</div>
+
+<div id="home-service-modals" class="home-modal-overlay" aria-hidden="true">
+  <div class="home-modal-scrim" data-home-modal-close tabindex="-1" aria-label="Chiudi"></div>
+
+  <div id="modal-print3d" class="home-modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-print3d-title" hidden>
+    <div class="home-modal-head">
+      <h2 id="modal-print3d-title">RICHIESTA PREVENTIVO · STAMPA 3D</h2>
+      <button type="button" class="home-modal-close" data-home-modal-close>CHIUDI</button>
+    </div>
+    <form class="home-modal-body" id="form-print3d" novalidate>
+      <div class="hm-row">
+        <label class="hm-lab" for="print3d-files">FILE STL (o simili)</label>
+        <input type="file" id="print3d-files" name="files" accept=".stl,.STL,.obj,.OBJ,.3mf,.3MF" multiple>
+        <p class="hm-hint">Seleziona uno o più file dal tuo computer. I client di posta non allegano i file da questa pagina: dopo aver inviato la mail, rispondi al messaggio allegando gli STL.</p>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="print3d-material">MATERIALE</label>
+        <select id="print3d-material" name="material" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="PLA">PLA</option>
+          <option value="PETG">PETG</option>
+          <option value="TPU">TPU</option>
+          <option value="Resina">Resina</option>
+          <option value="Clay (argilla)">Clay (argilla)</option>
+        </select>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="print3d-notes">NOTE</label>
+        <textarea id="print3d-notes" name="notes" rows="4" placeholder="Quantità, tolleranze, finitura, deadline…"></textarea>
+      </div>
+      <button type="submit" class="home-modal-submit">RICHIEDI PREVENTIVO</button>
+    </form>
+  </div>
+
+  <div id="modal-storage" class="home-modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-storage-title" hidden>
+    <div class="home-modal-head">
+      <h2 id="modal-storage-title">RICHIESTA STOCCAGGIO</h2>
+      <button type="button" class="home-modal-close" data-home-modal-close>CHIUDI</button>
+    </div>
+    <form class="home-modal-body" id="form-storage" novalidate>
+      <p class="hm-info" style="margin-top:0">
+        La merce viene <b>incellofanata</b>, posizionata su <b>pallet</b> in un <b>magazzino coperto</b>, vigilata da <b>telecamere</b>.
+      </p>
+      <div class="hm-row">
+        <label class="hm-lab" for="storage-dims">INGOMBRO TOTALE (L × P × H o volume indicativo)</label>
+        <input type="text" id="storage-dims" name="dims" required autocomplete="off" placeholder="es. 120×80×100 cm · ~1 m³">
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="storage-duration">DURATA STIMASTA DELLO STOCCAGGIO</label>
+        <input type="text" id="storage-duration" name="duration" required autocomplete="off" placeholder="es. 2 mesi · fino a settembre 2026">
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="storage-check">CONTROLLO / PRESENZA FISICA RICHIESTA</label>
+        <select id="storage-check" name="periodic" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="Nessuna necessità di presenza fisica periodica">Nessuna necessità di presenza fisica periodica</option>
+          <option value="Controllo / accesso settimanale">Controllo / accesso settimanale</option>
+          <option value="Controllo / accesso mensile">Controllo / accesso mensile</option>
+          <option value="Controllo / accesso annuale">Controllo / accesso annuale</option>
+          <option value="Altro (vedi note)">Altro (vedi note)</option>
+        </select>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="storage-notes">NOTE AGGIUNTIVE</label>
+        <textarea id="storage-notes" name="notes" rows="3" placeholder="Tipo di merce, vincoli, fasce orarie…"></textarea>
+      </div>
+      <button type="submit" class="home-modal-submit">INVIA RICHIESTA VIA MAIL</button>
+      <p class="hm-hint">Si aprirà il programma di posta con un messaggio bozza. Verifica l&apos;indirizzo e invia quando pronto.</p>
+    </form>
+  </div>
 </div>
 
 <script src="assets/site.js"></script>

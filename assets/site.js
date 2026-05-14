@@ -17,8 +17,7 @@
 
     /* — LIGHTBOX — */
     var imgs = Array.from(document.querySelectorAll('img[data-lb]'));
-    if (!imgs.length) return;
-
+    if (imgs.length) {
     var overlay = document.createElement('div');
     overlay.className = 'lb-overlay';
     overlay.innerHTML =
@@ -84,6 +83,110 @@
       if (e.key === 'ArrowLeft')   prev();
       if (e.key === 'ArrowRight')  next();
     });
+
+    }
+
+    /* — HOME: servizi stampa 3D / stoccaggio (modali + mailto) — */
+    var modalRoot = document.getElementById('home-service-modals');
+    var panelPrint = document.getElementById('modal-print3d');
+    var panelStor  = document.getElementById('modal-storage');
+    var btnPrint = document.getElementById('open-modal-print3d');
+    var btnStor  = document.getElementById('open-modal-storage');
+    var mailTo = 'fornasaleonardo@gmail.com';
+
+    function closeHomeModals() {
+      if (!modalRoot) return;
+      modalRoot.classList.remove('open');
+      modalRoot.setAttribute('aria-hidden', 'true');
+      if (panelPrint) panelPrint.hidden = true;
+      if (panelStor)  panelStor.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function openHomeModal(panel) {
+      if (!modalRoot || !panel) return;
+      if (panelPrint) panelPrint.hidden = panel !== panelPrint;
+      if (panelStor)  panelStor.hidden = panel !== panelStor;
+      modalRoot.classList.add('open');
+      modalRoot.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    if (modalRoot && panelPrint && panelStor) {
+      if (btnPrint) btnPrint.addEventListener('click', function(){ openHomeModal(panelPrint); });
+      if (btnStor)  btnStor.addEventListener('click', function(){ openHomeModal(panelStor); });
+
+      modalRoot.querySelectorAll('[data-home-modal-close]').forEach(function(el){
+        el.addEventListener('click', function(e){
+          if (e.target === el) closeHomeModals();
+        });
+      });
+
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape' && modalRoot.classList.contains('open')) closeHomeModals();
+      });
+    }
+
+    var formPrint = document.getElementById('form-print3d');
+    if (formPrint) {
+      formPrint.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var mat = document.getElementById('print3d-material');
+        var notes = document.getElementById('print3d-notes');
+        var filesIn = document.getElementById('print3d-files');
+        if (!mat || !mat.value) {
+          mat && mat.focus();
+          return;
+        }
+
+        var names = [];
+        if (filesIn && filesIn.files && filesIn.files.length) {
+          for (var i = 0; i < filesIn.files.length; i++) names.push(filesIn.files[i].name);
+        } else {
+          names.push('(nessun file selezionato — conferma in mail e allega gli STL)');
+        }
+
+        var body =
+          'Richiesta preventivo stampa 3D\r\n\r\n' +
+          'MATERIALE: ' + mat.value + '\r\n\r\n' +
+          'FILE (nomi): ' + names.join(', ') + '\r\n\r\n' +
+          'NOTE:\r\n' + (notes && notes.value ? notes.value : '—') + '\r\n\r\n' +
+          '— Allegare gli STL (o altri file) rispondendo a questa mail.';
+
+        var href = 'mailto:' + mailTo +
+          '?subject=' + encodeURIComponent('Richiesta preventivo stampa 3D — DoctNasa&MrBorg') +
+          '&body=' + encodeURIComponent(body);
+        window.location.href = href;
+        closeHomeModals();
+      });
+    }
+
+    var formStor = document.getElementById('form-storage');
+    if (formStor) {
+      formStor.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var d = document.getElementById('storage-dims');
+        var du = document.getElementById('storage-duration');
+        var p = document.getElementById('storage-check');
+        var n = document.getElementById('storage-notes');
+        if (!d || !d.value.trim()) { d && d.focus(); return; }
+        if (!du || !du.value.trim()) { du && du.focus(); return; }
+        if (!p || !p.value) { p && p.focus(); return; }
+
+        var body =
+          'Richiesta servizio stoccaggio\r\n\r\n' +
+          'INGOMBRO: ' + d.value.trim() + '\r\n' +
+          'DURATA: ' + du.value.trim() + '\r\n' +
+          'CONTROLLO / PRESENZA: ' + p.value + '\r\n\r\n' +
+          'NOTE:\r\n' + (n && n.value ? n.value : '—');
+
+        var href = 'mailto:' + mailTo +
+          '?subject=' + encodeURIComponent('Richiesta stoccaggio — DoctNasa&MrBorg') +
+          '&body=' + encodeURIComponent(body);
+        window.location.href = href;
+        closeHomeModals();
+      });
+    }
 
   });
 })();
