@@ -38,47 +38,111 @@
   <header class="page-head">
     <div class="crumb"><a href="../">home</a><span class="sep">/</span>luci</div>
     <h1>LUCI / PROIEZIONI</h1>
-    <div class="desc">controllo luci dmx · art-net · proiezioni video · esp32 stage</div>
-    <div class="count">// 2 RIGS · 1 MODULO ATTIVO</div>
+    <div class="desc">controllo luci dmx · art-net · proiezioni video · laser · crt</div>
+    <div class="count">// 4 CATEGORIE · GIÀ PROIETTATE · uploading</div>
   </header>
 
-  <div class="inventory">
-    <div class="inv-card">
-      <div class="corner tl"></div><div class="corner tr"></div>
-      <div class="corner bl"></div><div class="corner br"></div>
-      <div class="inv-img">
-        <div class="placeholder">// L01</div>
-        <div class="badge-id">L01</div>
-        <div class="badge-year">2026</div>
-      </div>
-      <div class="inv-body">
-        <div class="inv-name">DMX_RIG_v1</div>
-        <div class="inv-type">LIGHT CONTROL</div>
-        <div class="inv-desc">Rig di test per controllo LED RGBW via Art-Net DMX su WiFi, firmware ESP32.</div>
-        <dl class="inv-stats">
-          <dt>SIZE</dt><dd>4 ch</dd>
-          <dt>TECH</dt><dd>ESP32 + Art-Net</dd>
-          <dt>SERIES</dt><dd>firmware</dd>
-        </dl>
+  <div class="service-note" style="margin-bottom: 20px;">
+    <div class="sn-body">
+      <div class="sn-tag">// CATEGORIE LIVE</div>
+      <div class="sn-desc">
+        Ogni blocco è una cartella sul sito (<code style="font-size:9px">luci/…</code>): finché non carichi foto o video, la scheda resta chiusa al click con la fascia <b>uploading</b> in alto. A materiale presente potrai aprirle come le altre sezioni.
       </div>
     </div>
-    <div class="inv-card">
+  </div>
+
+  <!-- ── 1 · CRT + monitor ─────────────────────────────────── -->
+  <div class="coll-header">
+    <span class="coll-name">Proiezioni con TV a tubo catodico e monitor</span>
+    <span class="coll-meta">GIÀ PROIETTATO IN EVENTO · ARCHIVIO uploading</span>
+  </div>
+  <div class="inventory">
+    <div class="inv-card upload-slot">
       <div class="corner tl"></div><div class="corner tr"></div>
       <div class="corner bl"></div><div class="corner br"></div>
       <div class="inv-img">
-        <div class="placeholder">// L02</div>
-        <div class="badge-id">L02</div>
-        <div class="badge-year">WIP</div>
+        <div class="upload-ribbon">uploading</div>
+        <div class="placeholder">// CRT · ARCHIVIO</div>
+        <div class="badge-id">L·CRT</div>
+        <div class="badge-year">LIVE</div>
       </div>
       <div class="inv-body">
-        <div class="inv-name">PROJ_LOOP_01</div>
-        <div class="inv-type">VIDEO LOOP</div>
-        <div class="inv-desc">Loop visivo per proiezione su tessuto, in evoluzione.</div>
-        <dl class="inv-stats">
-          <dt>SIZE</dt><dd>1920×1080</dd>
-          <dt>TECH</dt><dd>loop seamless</dd>
-          <dt>SERIES</dt><dd>proiezioni</dd>
-        </dl>
+        <div class="inv-name">PROIEZIONI_CRT_MONITOR</div>
+        <div class="inv-type">CARTELLA · TUBO CATODICO / MONITOR</div>
+        <div class="inv-desc">Segnale su CRT e schermi a tubo; materiale da caricare in cartella.</div>
+        <div class="upload-slot-path">luci/proiezioni-crt-monitor/</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2 · Proiezioni classiche ──────────────────────────── -->
+  <div class="coll-header">
+    <span class="coll-name">Proiezioni classiche</span>
+    <span class="coll-meta">GIÀ PROIETTATO IN EVENTO · ARCHIVIO uploading</span>
+  </div>
+  <div class="inventory">
+    <div class="inv-card upload-slot">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="upload-ribbon">uploading</div>
+        <div class="placeholder">// CLA · ARCHIVIO</div>
+        <div class="badge-id">L·CLA</div>
+        <div class="badge-year">LIVE</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">PROIEZIONI_CLASSICHE</div>
+        <div class="inv-type">CARTELLA · VIDEOPROIETTORE / SUPERFICI</div>
+        <div class="inv-desc">Percorso classico videoproiettore e superfici tradizionali.</div>
+        <div class="upload-slot-path">luci/proiezioni-classiche/</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3 · Laser su medium ─────────────────────────────────── -->
+  <div class="coll-header">
+    <span class="coll-name">Proiezioni su medium attraverso laser</span>
+    <span class="coll-meta">GIÀ PROIETTATO IN EVENTO · ARCHIVIO uploading</span>
+  </div>
+  <div class="inventory">
+    <div class="inv-card upload-slot">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="upload-ribbon">uploading</div>
+        <div class="placeholder">// LSR · ARCHIVIO</div>
+        <div class="badge-id">L·LSR</div>
+        <div class="badge-year">LIVE</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">PROIEZIONI_MEDIUM_LASER</div>
+        <div class="inv-type">CARTELLA · LASER · MEDIUM</div>
+        <div class="inv-desc">Disegni e volumi con sorgenti laser su nebbia / polvere / medium.</div>
+        <div class="upload-slot-path">luci/proiezioni-medium-laser/</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4 · Controllo luci ──────────────────────────────────── -->
+  <div class="coll-header">
+    <span class="coll-name">Controllo luci</span>
+    <span class="coll-meta">GIÀ PROIETTATO IN EVENTO · ARCHIVIO uploading</span>
+  </div>
+  <div class="inventory">
+    <div class="inv-card upload-slot">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="upload-ribbon">uploading</div>
+        <div class="placeholder">// DMX · ARCHIVIO</div>
+        <div class="badge-id">L·CTL</div>
+        <div class="badge-year">LIVE</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">CONTROLLO_LUCI</div>
+        <div class="inv-type">CARTELLA · DMX · DESK · FIXTURE</div>
+        <div class="inv-desc">Banco luci e cue negli stessi contesti delle proiezioni.</div>
+        <div class="upload-slot-path">luci/controllo-luci/</div>
       </div>
     </div>
   </div>
@@ -361,7 +425,7 @@
   </div><!-- /fs-module -->
 
   <footer class="site-foot">
-    <span>// DOCTNASA&amp;MRBORG · LUCI / PROIEZIONI · FS-MOD-01</span>
+    <span>// DOCTNASA&amp;MRBORG · LUCI · 4 CATEGORIE uploading · FS-MOD-01</span>
     <span><a href="../">← back to home</a></span>
   </footer>
 

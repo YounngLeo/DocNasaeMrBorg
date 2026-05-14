@@ -1707,6 +1707,41 @@ footer.site-foot a:hover { color: var(--acc); }
   color: var(--fg-dim);
 }
 
+/* ── Upload slot (cartella materiale non ancora sul sito) ───────── */
+.inv-card.upload-slot {
+  pointer-events: none;
+  cursor: default;
+  user-select: none;
+}
+.inv-card.upload-slot:hover {
+  border-color: var(--line);
+}
+.inv-card.upload-slot .inv-img {
+  position: relative;
+}
+.upload-ribbon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 5px;
+  padding: 7px 10px;
+  background: rgba(8, 8, 8, 0.92);
+  border-bottom: 1px solid var(--amber);
+  color: var(--amber);
+}
+.upload-slot-path {
+  font-size: 8.5px;
+  letter-spacing: 1.2px;
+  color: var(--fg-dim);
+  margin-top: 10px;
+  word-break: break-all;
+}
+
 /* ============================================================
    PAPER / RESEARCH CARDS (ricerca page)
 ============================================================ */
