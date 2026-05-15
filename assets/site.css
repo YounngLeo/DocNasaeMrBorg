@@ -430,6 +430,45 @@ button.section-card {
   background: var(--acc);
   color: var(--bg);
 }
+
+/* Disegni: CTA commissione + modale (riusa home-modal-*) */
+.disegni-cta-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dotted var(--line-h);
+}
+.disegni-cta-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--acc);
+  color: var(--acc);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.disegni-cta-btn:hover {
+  background: var(--acc);
+  color: var(--bg);
+}
+.disegni-cta-hint {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--fg-fade);
+  max-width: 420px;
+  line-height: 1.45;
+}
+.disegni-commission-panel.home-modal-panel {
+  max-width: 460px;
+}
+
 .section-card.nft   { border-left: 2px solid var(--amber); }
 .section-card.nft .icon { color: var(--amber); }
 .section-card.nft:hover { border-color: var(--amber); }

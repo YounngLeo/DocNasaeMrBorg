@@ -39,8 +39,15 @@
     <div class="crumb"><a href="../">home</a><span class="sep">/</span>disegni</div>
     <h1>DISEGNI</h1>
     <div class="desc">opere su carta, taccuini, esplorazioni grafiche</div>
-    <div class="count">// 32 ITEMS · 3 COLLEZIONI</div>
+    <div class="count">// 32 ITEMS · 4 COLLEZIONI</div>
   </header>
+
+  <div class="disegni-cta-wrap">
+    <button type="button" class="disegni-cta-btn" id="open-disegni-commission" aria-haspopup="dialog">
+      GET A TATTOO / DRAWING
+    </button>
+    <span class="disegni-cta-hint">Richiesta disegno, dipinto o tatuaggio · mail diretta all&apos;autore scelto</span>
+  </div>
 
   <div class="coll-header">
     <span class="coll-name">GRAMMS</span>
@@ -677,12 +684,88 @@
 
   </div>
 
+  <div class="coll-header">
+    <span class="coll-name">COLLEZIONE CAPANNO DISEGNI</span>
+    <span class="coll-meta">DONI DA AMICI ARTISTI · ARCHIVIO uploading</span>
+  </div>
+
+  <div class="inventory">
+    <div class="inv-card upload-slot">
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="inv-img">
+        <div class="upload-ribbon">uploading</div>
+        <div class="placeholder">// CAP · ARCHIVIO</div>
+        <div class="badge-id">D·CAP</div>
+        <div class="badge-year">—</div>
+      </div>
+      <div class="inv-body">
+        <div class="inv-name">COLLEZIONE_CAPANNO_DISEGNI</div>
+        <div class="inv-type">CARTELLA · AMICI · REGALI</div>
+        <div class="inv-desc">Disegni regalati da altri artisti; carica le immagini in cartella con credito autore.</div>
+        <div class="upload-slot-path">disegni/collezione-capanno-disegni/</div>
+      </div>
+    </div>
+  </div>
+
   <footer class="site-foot">
-    <span>// DOCTNASA&amp;MRBORG · DISEGNI · 32 ITEMS · GRAMMS + CARATTERI + ANGELS</span>
+    <span>// DOCTNASA&amp;MRBORG · DISEGNI · 32 ITEMS · GRAMMS + CARATTERI + ANGELS + CAPANNO</span>
 
     <span><a href="../">← back to home</a></span>
   </footer>
 
+</div>
+
+<div id="disegni-commission-overlay" class="home-modal-overlay" aria-hidden="true">
+  <div class="home-modal-scrim" data-disegni-commission-close tabindex="-1" aria-label="Chiudi"></div>
+  <div id="disegni-commission-panel" class="home-modal-panel disegni-commission-panel" role="dialog" aria-modal="true" aria-labelledby="disegni-commission-title" hidden>
+    <div class="home-modal-head">
+      <h2 id="disegni-commission-title">RICHIESTA · DISEGNO / TATUAGGIO</h2>
+      <button type="button" class="home-modal-close" data-disegni-commission-close>CHIUDI</button>
+    </div>
+    <form class="home-modal-body" id="form-disegni-commission" novalidate>
+      <p class="hm-hint" style="margin-top:0">
+        Compila e invia: si apre la mail verso l&apos;autore selezionato. Per artisti ospiti senza casella dedicata, imposta <code style="font-size:9px">data-email</code> sulle <code style="font-size:9px">&lt;option&gt;</code> in questo file (o usa lo studio come bridge).
+      </p>
+      <div class="hm-row">
+        <label class="hm-lab" for="dc-kind">COSA TI INTERESSA</label>
+        <select id="dc-kind" name="kind" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="Disegno (su carta / digitale)">Disegno (su carta / digitale)</option>
+          <option value="Dipinto">Dipinto</option>
+          <option value="Tatuaggio">Tatuaggio</option>
+          <option value="Altro (descrivi nelle note)">Altro (descrivi nelle note)</option>
+        </select>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="dc-artist">AUTORE / ARTISTA</label>
+        <!-- Per ogni amico: <option value="id" data-email="sua@mail.it">Nome · collezione capanno</option> -->
+        <select id="dc-artist" name="artist" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="leonardo" data-email="fornasaleonardo@gmail.com">Leonardo Fornasari · DoctNasa&amp;MrBorg</option>
+          <option value="capanno-ospite" data-email="">Artista · collezione capanno (imposta data-email)</option>
+        </select>
+        <p class="hm-hint">Aggiungi voci duplicando un <code style="font-size:9px">&lt;option&gt;</code> con <code style="font-size:9px">data-email="nome@..."</code> per ogni amico.</p>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="dc-budget">BUDGET INDICATIVO</label>
+        <select id="dc-budget" name="budget" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="Fino a 150 €">Fino a 150 €</option>
+          <option value="150 – 400 €">150 – 400 €</option>
+          <option value="400 – 800 €">400 – 800 €</option>
+          <option value="Oltre 800 € (da concordare)">Oltre 800 € (da concordare)</option>
+          <option value="Preferisco parlarne con l&apos;artista">Preferisco parlarne con l&apos;artista</option>
+        </select>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="dc-notes">NOTE (opzionale)</label>
+        <textarea id="dc-notes" name="notes" rows="3" placeholder="Idee, dimensioni, riferimenti, date…"></textarea>
+      </div>
+      <button type="submit" class="home-modal-submit">INVIA RICHIESTA VIA MAIL</button>
+      <p class="hm-hint">Si apre il client di posta con messaggio bozza; verifica destinatario e invia.</p>
+    </form>
+  </div>
 </div>
 
 <script src="../assets/site.js"></script>

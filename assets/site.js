@@ -188,5 +188,79 @@
       });
     }
 
+    /* — DISEGNI: GET A TATTOO / DRAWING (modale + mailto autore) — */
+    var dcOverlay = document.getElementById('disegni-commission-overlay');
+    var dcPanel = document.getElementById('disegni-commission-panel');
+    var dcOpenBtn = document.getElementById('open-disegni-commission');
+    var studioMail = 'fornasaleonardo@gmail.com';
+
+    function closeDisegniCommission() {
+      if (!dcOverlay) return;
+      dcOverlay.classList.remove('open');
+      dcOverlay.setAttribute('aria-hidden', 'true');
+      if (dcPanel) dcPanel.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function openDisegniCommission() {
+      if (!dcOverlay || !dcPanel) return;
+      dcPanel.hidden = false;
+      dcOverlay.classList.add('open');
+      dcOverlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    if (dcOverlay && dcPanel) {
+      if (dcOpenBtn) dcOpenBtn.addEventListener('click', openDisegniCommission);
+      dcOverlay.querySelectorAll('[data-disegni-commission-close]').forEach(function(el){
+        el.addEventListener('click', function(e){
+          if (e.target === el) closeDisegniCommission();
+        });
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape' && dcOverlay.classList.contains('open')) closeDisegniCommission();
+      });
+    }
+
+    var formDc = document.getElementById('form-disegni-commission');
+    if (formDc) {
+      formDc.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var kind = document.getElementById('dc-kind');
+        var artistSel = document.getElementById('dc-artist');
+        var budget = document.getElementById('dc-budget');
+        var notes = document.getElementById('dc-notes');
+        if (!kind || !kind.value) { kind && kind.focus(); return; }
+        if (!artistSel || artistSel.selectedIndex < 1) { artistSel && artistSel.focus(); return; }
+        if (!budget || !budget.value) { budget && budget.focus(); return; }
+
+        var opt = artistSel.options[artistSel.selectedIndex];
+        var artistLabel = opt.textContent.replace(/\s+/g, ' ').trim();
+        var email = (opt.getAttribute('data-email') || '').trim();
+        var extra = (opt.getAttribute('data-note') || '').trim();
+        var bridge = '';
+        if (!email) {
+          email = studioMail;
+          bridge =
+            '\r\n[INVIO A STUDIO] L\'opzione artista non ha ancora data-email: inoltra al destinatario reale quando configurato su disegni/index.html.\r\n';
+        }
+
+        var body =
+          'Richiesta da sito DoctNasa&MrBorg — GET A TATTOO / DRAWING\r\n\r\n' +
+          'TIPO: ' + kind.value + '\r\n' +
+          'ARTISTA SCELTO: ' + artistLabel + '\r\n' +
+          'BUDGET: ' + budget.value + '\r\n' +
+          (extra ? 'NOTA: ' + extra + '\r\n' : '') +
+          bridge + '\r\n' +
+          'NOTE:\r\n' + (notes && notes.value ? notes.value : '—') + '\r\n';
+
+        var subj = 'Richiesta ' + kind.value + ' — contatto per ' + artistLabel;
+        window.location.href = 'mailto:' + email +
+          '?subject=' + encodeURIComponent(subj) +
+          '&body=' + encodeURIComponent(body);
+        closeDisegniCommission();
+      });
+    }
+
   });
 })();
