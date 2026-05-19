@@ -2984,3 +2984,53 @@ footer.site-foot a:hover { color: var(--acc); }
   .tr-grid { grid-template-columns: 1fr; }
   .tr-stage { min-height: 300px; }
 }
+
+/* ============================================================
+   INSTALLAZIONI — divisione flusso vapore / cupola
+============================================================ */
+.fl-module::before {
+  content: '// SIM VAPORE · CUPOLA BIOMORFA · USCITA SOLO DAI BUCHI';
+}
+.fl-module .wall-grid { margin-top: 26px; }
+.fl-grid { grid-template-columns: 1fr 280px; }
+.fl-stage {
+  position: relative;
+  min-height: 380px;
+  background: #050608;
+  overflow: hidden;
+}
+.fl-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 380px;
+}
+.fl-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+}
+.fl-label select {
+  font-family: var(--mono);
+  background: var(--bg);
+  border: 1px solid var(--line-h);
+  color: var(--fg);
+  padding: 6px 8px;
+  font-size: 11px;
+}
+.fl-stats {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--fg-dim);
+  margin-top: 6px;
+}
+.fl-panel { max-height: 520px; overflow-y: auto; }
+@media (max-width: 900px) {
+  .fl-grid { grid-template-columns: 1fr; }
+  .fl-stage { min-height: 300px; }
+  .fl-stage canvas { min-height: 300px; }
+}

@@ -328,6 +328,72 @@
     </div>
   </div>
 
+  <!-- ── SIM VAPORE · CUPOLA BIOMORFA PERFORATA ───────────── -->
+  <div class="wall-module fl-module">
+    <div class="wall-grid fl-grid">
+      <div class="wall-stage fl-stage">
+        <canvas id="fl-canvas" aria-label="Simulazione vapore e cupola biomorfa"></canvas>
+        <div class="ws-corner tl">[ EMETTITORE VAPORE ]</div>
+        <div class="ws-corner tr">[ CUPOLA BIOMORFA ]</div>
+        <div class="ws-corner bl">[ COLLISIONE · USCITA BUCHI ]</div>
+        <div class="ws-corner br">[ FLUID SPLIT ]</div>
+        <div class="ws-readout" id="fl-readout">FLUSSO · —</div>
+      </div>
+
+      <aside class="wall-panel fl-panel">
+        <div class="wp-block">
+          <div class="wp-title">// CUPOLA · FORMA</div>
+          <label class="fl-label">MORFOLOGIA
+            <select id="fl-shape">
+              <option value="bulbo">bulbo</option>
+              <option value="alto">alto</option>
+              <option value="largo">largo</option>
+              <option value="spirale">spirale</option>
+            </select>
+          </label>
+          <button type="button" class="wp-btn pri full" id="fl-regen">↻ RIGENERA FORMA</button>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// PERFORAZIONI</div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// n buchi</span><span class="vv" id="fl-holes-val">5</span></div>
+            <input type="range" id="fl-holes" min="0" max="12" step="1" value="5">
+          </div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// ampiezza</span><span class="vv" id="fl-hole-size-val">8%</span></div>
+            <input type="range" id="fl-hole-size" min="3" max="16" step="1" value="8">
+          </div>
+          <label class="fl-label">DISPOSIZIONE
+            <select id="fl-pattern">
+              <option value="anello">anello</option>
+              <option value="cluster">cluster</option>
+              <option value="random">random</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// VAPORE</div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// pressione</span><span class="vv" id="fl-steam-val">55</span></div>
+            <input type="range" id="fl-steam" min="10" max="100" step="1" value="55">
+          </div>
+          <div class="wp-btns">
+            <button type="button" class="wp-btn pri on" id="fl-pause">SIM: ON</button>
+            <button type="button" class="wp-btn" id="fl-clear">SVUOTA</button>
+          </div>
+          <div class="fl-stats" id="fl-stats">particelle 0</div>
+        </div>
+
+        <div class="wp-note">
+          Il vapore nasce dall’<b>emettitore</b> interno, collide con la cupola biomorfa e
+          <b>esce solo dai buchi</b>. Pareti solide riflettono il flusso; le fessure lo dividono in scie esterne.
+        </div>
+      </aside>
+    </div>
+  </div>
+
   <div class="inventory">
     <div class="inv-card upload-slot">
       <div class="corner tl"></div><div class="corner tr"></div>
@@ -392,5 +458,6 @@
 <script src="../assets/site.js"></script>
 <script src="totem-builder.js"></script>
 <script src="terrarium-lab.js"></script>
+<script src="flux-steam.js"></script>
 </body>
 </html>
