@@ -150,11 +150,23 @@
   <div class="wall-module tr-module">
     <div class="wall-grid tr-grid">
       <div class="wall-stage tr-stage">
-        <div class="tr-ext-lights" id="tr-ext-lights" aria-hidden="true">
-          <div class="tr-light tr-light-n" data-side="n"></div>
-          <div class="tr-light tr-light-e" data-side="e"></div>
-          <div class="tr-light tr-light-s" data-side="s"></div>
-          <div class="tr-light tr-light-w" data-side="w"></div>
+        <div class="tr-cocoons" id="tr-cocoons" aria-hidden="true">
+          <div class="tr-cocoon tr-cocoon-n" data-side="n" title="lux · fotosintesi">
+            <div class="tr-cocoon-shell"><div class="tr-cocoon-core"></div><div class="tr-cocoon-filament"></div></div>
+            <span class="tr-cocoon-label">LUX</span>
+          </div>
+          <div class="tr-cocoon tr-cocoon-e" data-side="e" title="temp · O₂">
+            <div class="tr-cocoon-shell"><div class="tr-cocoon-core"></div><div class="tr-cocoon-filament"></div></div>
+            <span class="tr-cocoon-label">T·O₂</span>
+          </div>
+          <div class="tr-cocoon tr-cocoon-s" data-side="s" title="pH · CO₂">
+            <div class="tr-cocoon-shell"><div class="tr-cocoon-core"></div><div class="tr-cocoon-filament"></div></div>
+            <span class="tr-cocoon-label">pH</span>
+          </div>
+          <div class="tr-cocoon tr-cocoon-w" data-side="w" title="bio R · pianta">
+            <div class="tr-cocoon-shell"><div class="tr-cocoon-core"></div><div class="tr-cocoon-filament"></div></div>
+            <span class="tr-cocoon-label">RΩ</span>
+          </div>
         </div>
         <svg id="tr-svg" class="tr-svg" viewBox="0 0 420 320" aria-label="Terrario con sensori e condotti gas">
           <defs>
@@ -180,6 +192,11 @@
             <text y="28" class="tr-pipe-label">O₂ IN</text>
           </g>
           <path class="tr-pipe tr-pipe-o2" d="M308 160 H272" stroke-dasharray="4 3"/>
+          <!-- scarico gas (uscita verso esterno) -->
+          <path id="tr-pipe-co2-out" class="tr-pipe tr-pipe-co2 tr-pipe-out" d="M175 248 L175 292 L48 292" stroke-dasharray="5 4"/>
+          <text x="52" y="304" class="tr-pipe-label">CO₂ OUT ↓</text>
+          <path id="tr-pipe-o2-out" class="tr-pipe tr-pipe-o2 tr-pipe-out" d="M245 248 L245 278 L372 278" stroke-dasharray="5 4"/>
+          <text x="318" y="290" class="tr-pipe-label">O₂ OUT ↑</text>
           <!-- vaso terrario -->
           <rect x="148" y="72" width="124" height="176" rx="6" class="tr-vessel"/>
           <rect x="152" y="76" width="116" height="168" rx="4" fill="url(#tr-glass)" stroke="none"/>
@@ -218,7 +235,7 @@
           <circle cx="235" cy="188" r="1.2" class="tr-bubble tr-bubble-o2"/>
         </svg>
         <div class="ws-corner tl">[ TERRARIO ]</div>
-        <div class="ws-corner tr">[ LUCI ESTERNE ]</div>
+        <div class="ws-corner tr">[ BOZZOLI BIOLUM ]</div>
         <div class="ws-corner bl">[ VALVOLE CO₂ · O₂ ]</div>
         <div class="ws-corner br">[ SIM LIVE ]</div>
         <div class="ws-readout" id="tr-readout">TERRARIO · —</div>
@@ -240,22 +257,23 @@
         <div class="wp-block">
           <div class="wp-title">// VALVOLE · FLUSSO GAS</div>
           <div class="wp-row">
-            <div class="wp-row-head"><span>CO₂</span><span class="vv tr-co2" id="tr-valve-co2-val">35%</span></div>
-            <input type="range" id="tr-valve-co2" min="0" max="100" step="1" value="35">
+            <div class="wp-row-head"><span>CO₂ IN</span><span class="vv tr-co2" id="tr-valve-co2-val">20%</span></div>
+            <input type="range" id="tr-valve-co2" min="0" max="100" step="1" value="20">
           </div>
           <div class="wp-row">
-            <div class="wp-row-head"><span>O₂</span><span class="vv tr-o2" id="tr-valve-o2-val">40%</span></div>
-            <input type="range" id="tr-valve-o2" min="0" max="100" step="1" value="40">
+            <div class="wp-row-head"><span>O₂ IN</span><span class="vv tr-o2" id="tr-valve-o2-val">15%</span></div>
+            <input type="range" id="tr-valve-o2" min="0" max="100" step="1" value="15">
           </div>
+          <p class="tr-light-note">CO₂ scende in basso · O₂ sale — scarico passivo quando i valori superano l’equilibrio.</p>
         </div>
 
         <div class="wp-block">
-          <div class="wp-title">// LUCI ESTERNE</div>
+          <div class="wp-title">// BOZZOLI BIOLUMINESCENTI</div>
           <div class="tr-light-map">
-            <span>N · lux+bio</span><span>E · temp+O₂</span>
-            <span>S · pH+CO₂</span><span>W · inverso pH+lux</span>
+            <span>N · lux</span><span>E · temp+O₂</span>
+            <span>S · pH+CO₂</span><span>W · bio R</span>
           </div>
-          <p class="tr-light-note">Intensità e colore modulati dai valori dei sensori simulati (pianta + ambiente).</p>
+          <p class="tr-light-note">Quattro bozzoli esterni pulsano in strobo: frequenza e colore seguono i sensori del microclima e il segnale della pianta.</p>
         </div>
 
         <div class="wp-block">
@@ -268,8 +286,8 @@
         </div>
 
         <div class="wp-note">
-          I sensori simulano letture da <b>tessuto vegetale</b> e microclima. Le valvole regolano i condotti CO₂/O₂;
-          i valori pilotano le <b>4 luci esterne</b> attorno al terrario.
+          I sensori simulano letture da <b>tessuto vegetale</b> e microclima. Le valvole alimentano i condotti CO₂/O₂;
+          lo <b>scarico passivo</b> espelle l’eccesso. I <b>bozzoli bioluminescenti</b> strobano in sync con i dati.
         </div>
       </aside>
     </div>
