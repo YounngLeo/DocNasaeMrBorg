@@ -86,6 +86,7 @@
   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
   .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
   .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
+  .grid-6 { display: grid; grid-template-columns: repeat(6,1fr); gap: 4px; }
 
   /* Pattern sequencer */
   .pat-steps {
@@ -113,6 +114,9 @@
   .pat-step.layer-lead.on   { border-color: var(--purple); color: var(--purple); background: rgba(198,120,255,0.08); }
   .pat-step.layer-noise.on  { border-color: var(--amber); color: var(--amber); background: rgba(255,176,0,0.08); }
   .pat-step.layer-sample.on { border-color: var(--blue); color: var(--blue); }
+  .pat-step.layer-drums.on  { border-color: var(--red); color: var(--red); background: rgba(255,68,68,0.08); }
+  button.drum-kit.on, button.pat-drum-voice.on { background: var(--fg); color: var(--bg); }
+  button.drum-kit, button.pat-drum-voice { font-size: 9px; letter-spacing: 0.5px; }
   .pat-step-nums {
     display: grid;
     grid-template-columns: repeat(16, 1fr);
@@ -372,10 +376,11 @@
 
   <section class="section">
     <div class="section-title">// LAYERS</div>
-    <div class="grid-5">
+    <div class="grid-6">
       <button class="layer on" data-layer="pad">PAD</button>
       <button class="layer on" data-layer="bass">BASS</button>
       <button class="layer on" data-layer="lead">LEAD</button>
+      <button class="layer on" data-layer="drums">DRUMS</button>
       <button class="layer on" data-layer="noise">NSE</button>
       <button class="layer on" data-layer="sample">SMP</button>
     </div>
@@ -418,6 +423,10 @@
     <div class="slider-block">
       <div class="row"><span class="label">LEAD_GAIN</span><span class="value" id="leadVolVal">-12 dB</span></div>
       <input type="range" id="leadVol" min="-40" max="6" step="0.5" value="-12">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">DRUMS_GAIN</span><span class="value" id="drumsVolVal">-4 dB</span></div>
+      <input type="range" id="drumsVol" min="-40" max="6" step="0.5" value="-4">
     </div>
     <div class="slider-block">
       <div class="row"><span class="label">NOISE_GAIN</span><span class="value" id="noiseVolVal">-15 dB</span></div>
@@ -669,12 +678,22 @@
       <button id="patModeBtn" class="amber on">PATTERN: ON</button>
       <button id="patLegacyBtn" class="small">↺ IMPORT LEGACY</button>
     </div>
-    <div class="grid-5" style="margin-bottom: 8px">
+    <div class="grid-6" style="margin-bottom: 8px">
       <button class="pat-target on" data-player="bass">BASS</button>
       <button class="pat-target"    data-player="pad">PAD</button>
       <button class="pat-target"    data-player="lead">LEAD</button>
+      <button class="pat-target"    data-player="drums">DRUMS</button>
       <button class="pat-target"    data-player="noise">NSE</button>
       <button class="pat-target"    data-player="sample">SMP</button>
+    </div>
+    <div id="patDrumRows" hidden style="margin-bottom: 8px">
+      <div class="section-title" style="margin-bottom: 6px">// DRUM MACHINE · ROLAND</div>
+      <div class="grid-2" style="margin-bottom: 6px">
+        <button type="button" class="drum-kit on" data-kit="808">TR-808</button>
+        <button type="button" class="drum-kit" data-kit="909">TR-909</button>
+      </div>
+      <button type="button" id="patDrumPresetBtn" class="small full" style="margin-bottom: 6px">↺ LOAD KIT PATTERN</button>
+      <div class="grid-4" id="patDrumVoices"></div>
     </div>
     <div class="row">
       <span class="label">EDITING</span>
@@ -888,7 +907,7 @@ let playInterval = null;
 let beat16 = 0, chordIdx = 0, bassIdx = 0, trigCount = 0;
 let currentKey = 0, currentProg = 'EMO';
 let density = 0.50, noiseAmt = 0.50;
-let layers = { pad: 1, bass: 1, lead: 1, noise: 1, sample: 1 };
+let layers = { pad: 1, bass: 1, lead: 1, drums: 1, noise: 1, sample: 1 };
 
 // Synth editor state (loaded from storage if present)
 let synthEditTarget = 'pad';
@@ -938,6 +957,29 @@ const PAT_LEN = 16;
 const BASS_CYCLE = [null, 40, 42, 43, 45, 47, 50, 52];
 const PAD_CYCLE  = [0, 1, 2, 3, 4, 5]; // 0=rest, 1-4=chord slot, 5=auto
 const LEAD_CYCLE = [null, 0, 1, 2, 3, 4, 5, 6, 100, 101, 102, 103, 104, 105, 106]; // 100+ = +12 oct
+const DRUM_VOICES = ['kick', 'snare', 'clap', 'ch', 'oh', 'tom', 'rim'];
+const DRUM_VOICE_LABELS = { kick: 'KICK', snare: 'SNR', clap: 'CLP', ch: 'CH', oh: 'OH', tom: 'TOM', rim: 'RIM' };
+
+function defaultDrumPatterns(kit) {
+  const p = {};
+  DRUM_VOICES.forEach(function (v) { p[v] = mkPatternRow(0); });
+  if (kit === '909') {
+    p.kick  = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
+    p.snare = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
+    p.clap  = [0,0,0,0, 1,0,0,1, 0,0,0,0, 1,0,0,1];
+    p.ch    = [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0];
+    p.oh    = [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0];
+    p.tom   = [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,1,0,0];
+    p.rim   = [0,0,1,0, 0,1,0,0, 0,0,1,0, 0,1,0,0];
+  } else {
+    p.kick  = [1,0,0,0, 0,0,1,0, 0,1,0,0, 1,0,0,0];
+    p.snare = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
+    p.ch    = [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1];
+    p.oh    = [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0];
+    p.tom   = [0,0,0,1, 0,0,0,0, 0,0,1,0, 0,0,0,0];
+  }
+  return p;
+}
 
 function mkPatternRow(val) {
   return Array(PAT_LEN).fill(val);
@@ -948,25 +990,37 @@ const defaultPatterns = {
   pad:    [5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0],
   lead:   [null, null, null, null, 4, null, null, null, null, null, null, null, 7, null, null, null],
   noise:  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-  sample: mkPatternRow(0)
+  sample: mkPatternRow(0),
+  drums:  defaultDrumPatterns('808')
 };
 
 let patterns = JSON.parse(JSON.stringify(defaultPatterns));
 let patternEditTarget = 'bass';
+let patternEditDrumVoice = 'kick';
+let drumKit = '808';
 let usePatternMode = true;
 let patternGenTimer = null;
 let patternClipboard = null;
 
 if (storedState.patterns) {
-  for (const k of Object.keys(defaultPatterns)) {
+  for (const k of ['bass', 'pad', 'lead', 'noise', 'sample']) {
     if (Array.isArray(storedState.patterns[k]) && storedState.patterns[k].length === PAT_LEN) {
       patterns[k] = storedState.patterns[k].slice();
     }
   }
+  if (storedState.patterns.drums && typeof storedState.patterns.drums === 'object') {
+    patterns.drums = defaultDrumPatterns('808');
+    DRUM_VOICES.forEach(function (v) {
+      if (Array.isArray(storedState.patterns.drums[v]) && storedState.patterns.drums[v].length === PAT_LEN) {
+        patterns.drums[v] = storedState.patterns.drums[v].slice();
+      }
+    });
+  }
 }
+if (storedState.drumKit === '808' || storedState.drumKit === '909') drumKit = storedState.drumKit;
 if (typeof storedState.usePatternMode === 'boolean') usePatternMode = storedState.usePatternMode;
 
-function persistPatterns() { saveState({ patterns, usePatternMode }); }
+function persistPatterns() { saveState({ patterns, usePatternMode, drumKit }); }
 
 function bassNoteLabel(n) {
   if (n == null) return '·';
@@ -991,13 +1045,20 @@ function patternStepLabel(layer, v) {
   if (layer === 'bass') return bassNoteLabel(v);
   if (layer === 'pad') return padStepLabel(v);
   if (layer === 'lead') return leadStepLabel(v);
+  if (layer === 'drums') return v ? 'X' : '·';
   return v ? 'X' : '·';
 }
 
 function patternStepActive(layer, v) {
   if (layer === 'bass' || layer === 'lead') return v != null && v !== -1;
   if (layer === 'pad') return v > 0;
+  if (layer === 'drums') return !!v;
   return !!v;
+}
+
+function getPatternRow(layer) {
+  if (layer === 'drums') return patterns.drums[patternEditDrumVoice];
+  return patterns[layer];
 }
 
 function cyclePatternValue(layer, val, reverse) {
@@ -1012,6 +1073,31 @@ function cyclePatternValue(layer, val, reverse) {
   return cycle[idx];
 }
 
+function syncDrumKitUI() {
+  document.querySelectorAll('.drum-kit').forEach(function (btn) {
+    btn.classList.toggle('on', btn.dataset.kit === drumKit);
+  });
+}
+
+function renderDrumVoiceButtons() {
+  const wrap = $('patDrumVoices');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  DRUM_VOICES.forEach(function (v) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pat-drum-voice' + (patternEditDrumVoice === v ? ' on' : '');
+    btn.dataset.voice = v;
+    btn.textContent = DRUM_VOICE_LABELS[v];
+    btn.addEventListener('click', function () {
+      patternEditDrumVoice = v;
+      renderDrumVoiceButtons();
+      renderPatternGrid();
+    });
+    wrap.appendChild(btn);
+  });
+}
+
 function renderPatternGrid() {
   const grid = $('patGrid');
   const nums = $('patNums');
@@ -1019,7 +1105,13 @@ function renderPatternGrid() {
   grid.innerHTML = '';
   nums.innerHTML = '';
   const layer = patternEditTarget;
-  const row = patterns[layer];
+  const row = getPatternRow(layer);
+  const drumRows = $('patDrumRows');
+  if (drumRows) drumRows.hidden = layer !== 'drums';
+  if (layer === 'drums') {
+    syncDrumKitUI();
+    renderDrumVoiceButtons();
+  }
   for (let i = 0; i < PAT_LEN; i++) {
     const n = document.createElement('div');
     n.className = 'pat-num';
@@ -1045,11 +1137,14 @@ function renderPatternGrid() {
     bass:   'BASS — click: REST → note. SHIFT+click indietro.',
     pad:    'PAD — · rest · C1-C4 accordo · A auto-avanza progressione.',
     lead:   'LEAD — gradi scala · ^ ottava alta (es. ^7).',
+    drums:  'DRUMS — TR-808 / TR-909 · seleziona voce · click step on/off.',
     noise:  'NOISE — gate on/off per step.',
     sample: 'SAMPLE — trigger on/off per step (richiede sample caricato).'
   };
   $('patHint').textContent = hints[layer] || '';
-  $('patEditingVal').textContent = layer.toUpperCase();
+  $('patEditingVal').textContent = layer === 'drums'
+    ? 'DRUMS · ' + DRUM_VOICE_LABELS[patternEditDrumVoice] + ' · ' + drumKit
+    : layer.toUpperCase();
 }
 
 function updatePatternPlayhead() {
@@ -1066,6 +1161,7 @@ function buildCompositionObject() {
     key: currentKey,
     progression: currentProg,
     steps: PAT_LEN,
+    drumKit: drumKit,
     patterns: JSON.parse(JSON.stringify(patterns)),
     layers: Object.assign({}, layers),
     synthParams: JSON.parse(JSON.stringify(synthParams)),
@@ -1082,6 +1178,12 @@ function compositionToScore(comp) {
   ['bass', 'pad', 'lead', 'noise', 'sample'].forEach(function (layer) {
     const row = comp.patterns[layer].map(v => patternStepLabel(layer, v)).join(' ');
     lines.push(layer.toUpperCase().padEnd(6) + row);
+  });
+  lines.push('');
+  lines.push('DRUMS · ' + (comp.drumKit || '808'));
+  DRUM_VOICES.forEach(function (v) {
+    const drow = (comp.patterns.drums && comp.patterns.drums[v]) || mkPatternRow(0);
+    lines.push(v.toUpperCase().padEnd(6) + drow.map(x => x ? 'X' : '·').join(' '));
   });
   return lines.join('\n');
 }
@@ -1100,6 +1202,7 @@ function importLegacyPatterns() {
     if (i % 6 === 5) patterns.noise[i] = 1;
   }
   patterns.sample = mkPatternRow(0);
+  patterns.drums = defaultDrumPatterns(drumKit);
   persistPatterns();
   renderPatternGrid();
 }
@@ -1211,6 +1314,14 @@ function tickPattern() {
   const t = Tone.now();
   const step = beat16 % PAT_LEN;
 
+  if (layers.drums && patterns.drums) {
+    DRUM_VOICES.forEach(function (v) {
+      if (patterns.drums[v] && patterns.drums[v][step]) {
+        try { triggerDrum(v, t); bumpTrig(); } catch (e) {}
+      }
+    });
+  }
+
   const bNote = patterns.bass[step];
   if (bNote != null && layers.bass) {
     try {
@@ -1274,6 +1385,107 @@ function bumpTrig() {
   el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
 }
 
+function disposeDrums(d) {
+  if (!d) return;
+  ['kick', 'snareNoise', 'snareTone', 'clap', 'ch', 'oh', 'tom', 'rim'].forEach(function (k) {
+    try { if (d[k] && d[k].dispose) d[k].dispose(); } catch (e) {}
+  });
+}
+
+function buildDrumKit(kit, outGain) {
+  const is909 = kit === '909';
+  const kick = new Tone.MembraneSynth({
+    pitchDecay: is909 ? 0.008 : 0.016,
+    octaves: is909 ? 7 : 4.5,
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.001, decay: is909 ? 0.28 : 0.45, sustain: 0, release: 0.01 }
+  }).connect(outGain);
+
+  const snareNoise = new Tone.NoiseSynth({
+    noise: { type: 'white' },
+    envelope: { attack: 0.001, decay: is909 ? 0.12 : 0.22, sustain: 0, release: 0.04 }
+  }).connect(outGain);
+
+  const snareTone = new Tone.MembraneSynth({
+    pitchDecay: 0.008, octaves: 2,
+    oscillator: { type: 'triangle' },
+    envelope: { attack: 0.001, decay: 0.08, sustain: 0, release: 0.01 },
+    volume: is909 ? -8 : -12
+  }).connect(outGain);
+
+  const clap = new Tone.NoiseSynth({
+    noise: { type: 'pink' },
+    envelope: { attack: 0.001, decay: is909 ? 0.18 : 0.25, sustain: 0, release: 0.08 }
+  }).connect(outGain);
+
+  const ch = new Tone.MetalSynth({
+    frequency: is909 ? 350 : 300,
+    envelope: { attack: 0.001, decay: is909 ? 0.035 : 0.05, release: 0.01 },
+    harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5,
+    volume: is909 ? -14 : -16
+  }).connect(outGain);
+
+  const oh = new Tone.MetalSynth({
+    frequency: is909 ? 320 : 280,
+    envelope: { attack: 0.001, decay: is909 ? 0.28 : 0.35, release: 0.08 },
+    harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5,
+    volume: -12
+  }).connect(outGain);
+
+  const tom = new Tone.MembraneSynth({
+    pitchDecay: 0.04, octaves: is909 ? 3 : 2.5,
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.02 },
+    volume: -4
+  }).connect(outGain);
+
+  const rim = new Tone.MembraneSynth({
+    pitchDecay: 0.001, octaves: 0.5,
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.001, decay: 0.03, sustain: 0, release: 0.01 },
+    volume: is909 ? -6 : -8
+  }).connect(outGain);
+
+  return { kick, snareNoise, snareTone, clap, ch, oh, tom, rim, kit };
+}
+
+function triggerDrum(voice, time) {
+  if (!A || !A.drums || !layers.drums) return;
+  const d = A.drums;
+  const is909 = drumKit === '909';
+  const t = time;
+  switch (voice) {
+    case 'kick':
+      d.kick.triggerAttackRelease(is909 ? 'C1' : 'D1', '8n', t, 1);
+      break;
+    case 'snare':
+      d.snareNoise.triggerAttackRelease('16n', t, 0.85);
+      d.snareTone.triggerAttackRelease(is909 ? 'G2' : 'F2', '16n', t, is909 ? 0.5 : 0.35);
+      break;
+    case 'clap':
+      d.clap.triggerAttackRelease('32n', t, 0.75);
+      break;
+    case 'ch':
+      d.ch.triggerAttackRelease('32n', t, 0.6);
+      break;
+    case 'oh':
+      d.oh.triggerAttackRelease('16n', t, 0.55);
+      break;
+    case 'tom':
+      d.tom.triggerAttackRelease(is909 ? 'A2' : 'G2', '8n', t, 0.8);
+      break;
+    case 'rim':
+      d.rim.triggerAttackRelease(is909 ? 'G4' : 'F4', '32n', t, 0.7);
+      break;
+  }
+}
+
+function rebuildDrumKit() {
+  if (!A || !A.drumsGain) return;
+  disposeDrums(A.drums);
+  A.drums = buildDrumKit(drumKit, A.drumsGain);
+}
+
 // ============================================================
 // AUDIO INIT
 // ============================================================
@@ -1315,6 +1527,7 @@ async function initAudio() {
   const noiseGain  = new Tone.Volume(-15);
   const sampleGain = new Tone.Volume(-6);
   const bassGain   = new Tone.Volume(2);
+  const drumsGain  = new Tone.Volume(-4);
 
   // Per-layer analyser for waveform visualization
   const padAna   = new Tone.Waveform(1024);
@@ -1327,12 +1540,14 @@ async function initAudio() {
   noiseGain.connect(dubBus);  noiseGain.connect(noiseAna);
   sampleGain.connect(dubBus);
   bassGain.connect(master);   bassGain.connect(bassAna);
+  drumsGain.connect(master);
 
   const bassDist = new Tone.Distortion(0.20).connect(bassGain);
 
   const pad  = buildPadSynth();  pad.connect(padGain);
   const bass = buildBassSynth(); bass.connect(bassDist);
   const lead = buildLeadSynth(); lead.connect(leadGain);
+  const drums = buildDrumKit(drumKit, drumsGain);
 
   // Noise chain (rebuilt from synthParams.noise)
   const noiseNodes = buildNoiseChain();
@@ -1341,8 +1556,8 @@ async function initAudio() {
   A = {
     limiter, meter, master, recDest, recTap,
     reverb, dubDelay, dubFilter, dubBus,
-    padGain, leadGain, noiseGain, sampleGain, bassGain,
-    pad, bass, bassDist, lead,
+    padGain, leadGain, noiseGain, sampleGain, bassGain, drumsGain,
+    pad, bass, bassDist, lead, drums,
     noise: noiseNodes,
     padAna, bassAna, leadAna, noiseAna
   };
@@ -1654,6 +1869,7 @@ document.querySelectorAll('.layer').forEach(btn => {
       layer === 'pad'    ? A.padGain    :
       layer === 'bass'   ? A.bassGain   :
       layer === 'lead'   ? A.leadGain   :
+      layer === 'drums'  ? A.drumsGain  :
       layer === 'sample' ? A.sampleGain :
       A.noiseGain;
     node.mute = !layers[layer];
@@ -1680,6 +1896,7 @@ const mixApply = {
   padVol:    v => { if (A) A.padGain.volume.rampTo(v, 0.05); },
   bassVol:   v => { if (A) A.bassGain.volume.rampTo(v, 0.05); },
   leadVol:   v => { if (A) A.leadGain.volume.rampTo(v, 0.05); },
+  drumsVol:  v => { if (A) A.drumsGain.volume.rampTo(v, 0.05); },
   noiseVol:  v => { if (A) A.noiseGain.volume.rampTo(v, 0.05); },
   sampleVol: v => { if (A) A.sampleGain.volume.rampTo(v, 0.05); },
   bpm:       v => { restartTickerIfPlaying(); },
@@ -1698,6 +1915,7 @@ const mixApply = {
 const mixFmt = {
   master:v=>v.toFixed(1)+' dB', padVol:v=>v.toFixed(0)+' dB',
   bassVol:v=>v.toFixed(0)+' dB', leadVol:v=>v.toFixed(0)+' dB',
+  drumsVol:v=>v.toFixed(0)+' dB',
   noiseVol:v=>v.toFixed(0)+' dB', sampleVol:v=>v.toFixed(0)+' dB',
   bpm:v=>Math.round(v).toString(), dens:v=>v.toFixed(2), noiseAmt:v=>v.toFixed(2),
   fb:v=>v.toFixed(2), dwet:v=>v.toFixed(2),
@@ -1706,6 +1924,7 @@ const mixFmt = {
 };
 const mixLabel = {
   master:'masterVal', padVol:'padVolVal', bassVol:'bassVolVal', leadVol:'leadVolVal',
+  drumsVol:'drumsVolVal',
   noiseVol:'noiseVolVal', sampleVol:'sampleVolVal',
   bpm:'bpmVal', dens:'densVal', noiseAmt:'noiseAmtVal',
   fb:'fbVal', dwet:'dwetVal', fhz:'fhzVal', frate:'frateVal', foct:'foctVal',
@@ -2178,9 +2397,26 @@ $('patModeBtn').addEventListener('click', function () {
 
 $('patLegacyBtn').addEventListener('click', importLegacyPatterns);
 
+document.querySelectorAll('.drum-kit').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    drumKit = btn.dataset.kit;
+    syncDrumKitUI();
+    rebuildDrumKit();
+    persistPatterns();
+    renderPatternGrid();
+  });
+});
+
+$('patDrumPresetBtn').addEventListener('click', function () {
+  patterns.drums = defaultDrumPatterns(drumKit);
+  persistPatterns();
+  renderPatternGrid();
+});
+
 $('patClearBtn').addEventListener('click', function () {
   const layer = patternEditTarget;
-  patterns[layer] = layer === 'bass' || layer === 'lead'
+  if (layer === 'drums') patterns.drums[patternEditDrumVoice] = mkPatternRow(0);
+  else patterns[layer] = layer === 'bass' || layer === 'lead'
     ? mkPatternRow(null) : mkPatternRow(0);
   persistPatterns();
   renderPatternGrid();
@@ -2193,6 +2429,7 @@ $('patFillBtn').addEventListener('click', function () {
     if (layer === 'bass') patterns.bass[i] = 47;
     else if (layer === 'pad') patterns.pad[i] = 5;
     else if (layer === 'lead') patterns.lead[i] = 4;
+    else if (layer === 'drums') patterns.drums[patternEditDrumVoice][i] = 1;
     else patterns[layer][i] = 1;
   }
   persistPatterns();
@@ -2200,7 +2437,7 @@ $('patFillBtn').addEventListener('click', function () {
 });
 
 $('patCopyBtn').addEventListener('click', function () {
-  patternClipboard = patterns[patternEditTarget].slice();
+  patternClipboard = getPatternRow(patternEditTarget).slice();
 });
 
 document.addEventListener('keydown', function (e) {
@@ -2209,7 +2446,9 @@ document.addEventListener('keydown', function (e) {
   const panel = $('tab-pattern');
   if (!panel || !panel.classList.contains('active')) return;
   if (!patternClipboard) return;
-  patterns[patternEditTarget] = patternClipboard.slice();
+  const layer = patternEditTarget;
+  if (layer === 'drums') patterns.drums[patternEditDrumVoice] = patternClipboard.slice();
+  else patterns[layer] = patternClipboard.slice();
   persistPatterns();
   renderPatternGrid();
 });
