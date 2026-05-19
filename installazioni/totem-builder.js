@@ -142,7 +142,6 @@
       el.style.transform = 'translate(-50%, -50%) rotate(' + mag.rot + 'deg) scale(' + mag.scale + ')';
       el.innerHTML =
         '<div class="tm-magnet-inner">' + item.svg + '</div>' +
-        '<span class="tm-magnet-tag">' + escapeHtml(item.id) + '</span>' +
         '<button type="button" class="tm-rot-handle" title="ruota">↻</button>';
       el.addEventListener('pointerdown', onMagnetDown);
       el.querySelector('.tm-rot-handle').addEventListener('pointerdown', onRotDown);

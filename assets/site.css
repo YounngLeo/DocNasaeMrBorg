@@ -2616,66 +2616,56 @@ footer.site-foot a:hover { color: var(--acc); }
 }
 .tm-magnet {
   position: absolute;
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   cursor: grab;
   touch-action: none;
   z-index: 2;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.45));
 }
 .tm-magnet:active { cursor: grabbing; }
-.tm-magnet.selected { z-index: 10; }
+.tm-magnet.selected {
+  z-index: 10;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--tm-c, #5eff7e) 55%, transparent));
+}
 .tm-magnet-inner {
   width: 100%;
   height: 100%;
-  background: #0c0c0c;
-  border: 2px solid var(--tm-c, #5eff7e);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 0 12px color-mix(in srgb, var(--tm-c) 25%, transparent);
+  background: none;
+  border: none;
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  image-rendering: pixelated;
-}
-.tm-magnet.selected .tm-magnet-inner {
-  box-shadow:
-    inset 0 0 0 1px var(--tm-c),
-    0 0 16px color-mix(in srgb, var(--tm-c) 45%, transparent);
-}
-.tm-magnet-inner svg {
-  width: 56px;
-  height: 50px;
-  display: block;
-}
-.tm-magnet-tag {
-  position: absolute;
-  bottom: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 6px;
-  letter-spacing: 0.5px;
-  color: var(--tm-c, #5eff7e);
-  background: rgba(8, 8, 8, 0.9);
-  padding: 1px 4px;
-  border: 1px solid var(--line-h);
-  white-space: nowrap;
   pointer-events: none;
+}
+.tm-magnet.selected .tm-magnet-inner { box-shadow: none; }
+.tm-magnet-inner svg {
+  width: 72px;
+  height: 64px;
+  display: block;
 }
 .tm-rot-handle {
   position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 20px;
-  height: 20px;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
   border: 1px solid var(--tm-c, #5eff7e);
-  background: #111;
+  background: rgba(8, 8, 8, 0.75);
   color: var(--tm-c, #5eff7e);
-  font-size: 11px;
-  line-height: 18px;
+  font-size: 10px;
+  line-height: 16px;
   padding: 0;
   cursor: alias;
   font-family: var(--mono);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.tm-magnet.selected .tm-rot-handle {
+  opacity: 1;
+  pointer-events: auto;
 }
 .tm-tabs {
   display: grid;
