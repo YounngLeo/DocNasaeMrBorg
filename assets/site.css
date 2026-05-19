@@ -2791,3 +2791,125 @@ footer.site-foot a:hover { color: var(--acc); }
   .tm-stage { min-height: 380px; }
   .tm-catalog { max-height: 200px; }
 }
+
+/* ============================================================
+   INSTALLAZIONI — terrario bio-clima
+============================================================ */
+.tr-module::before {
+  content: '// GENERATORE TERRARIO · SENSORI · VALVOLE · LUCI ESTERNE';
+}
+.tr-module .wall-grid { margin-top: 26px; }
+.tr-grid { grid-template-columns: 1fr 280px; }
+.tr-stage {
+  position: relative;
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 55%, #0a120a 0%, #050505 70%);
+  overflow: hidden;
+}
+.tr-ext-lights {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tr-light {
+  position: absolute;
+  transition: background 0.35s, box-shadow 0.35s, opacity 0.35s;
+}
+.tr-light-n { top: 0; left: 15%; right: 15%; height: 28px; }
+.tr-light-s { bottom: 0; left: 15%; right: 15%; height: 28px; }
+.tr-light-e { top: 15%; right: 0; bottom: 15%; width: 22px; }
+.tr-light-w { top: 15%; left: 0; bottom: 15%; width: 22px; }
+.tr-svg {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 480px);
+  height: auto;
+}
+.tr-pipe {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: opacity 0.2s;
+}
+.tr-pipe-co2 { stroke: #ffb000; }
+.tr-pipe-o2 { stroke: #4af6ff; }
+.tr-pipe-label {
+  fill: var(--fg-fade);
+  font-family: Courier New, monospace;
+  font-size: 7px;
+  text-anchor: middle;
+  letter-spacing: 0.5px;
+}
+.tr-valve-body {
+  fill: #111;
+  stroke: var(--fg-dim);
+  stroke-width: 1;
+}
+.tr-valve-knob { stroke: var(--acc); stroke-width: 2; }
+.tr-valve-knob-dot { fill: var(--acc); stroke: none; }
+.tr-vessel {
+  fill: rgba(8, 12, 8, 0.55);
+  stroke: #4af6ff;
+  stroke-width: 1.2;
+  opacity: 0.9;
+}
+.tr-soil { fill: #3a2a18; stroke: #5a4030; stroke-width: 0.6; opacity: 0.85; }
+.tr-stem { stroke: #3aaa50; stroke-width: 2; fill: none; stroke-linecap: round; }
+.tr-leaf { stroke: #5eff7e; stroke-width: 1.2; fill: rgba(94, 255, 126, 0.12); stroke-linecap: round; }
+.tr-sensor-body { fill: #0a0a0a; stroke: var(--acc); stroke-width: 0.8; }
+.tr-sensor-lux { stroke: #ffb000; }
+.tr-sensor-bio { stroke: #c678ff; }
+.tr-sensor-tag {
+  fill: var(--fg-dim);
+  font-family: Courier New, monospace;
+  font-size: 6px;
+  text-anchor: middle;
+}
+.tr-bubble { opacity: 0.5; }
+.tr-bubble-co2 { fill: #ffb000; animation: tr-rise 3s ease-in-out infinite; }
+.tr-bubble-o2 { fill: #4af6ff; animation: tr-rise 2.5s ease-in-out infinite reverse; }
+@keyframes tr-rise {
+  0%, 100% { transform: translateY(0); opacity: 0.35; }
+  50% { transform: translateY(-6px); opacity: 0.7; }
+}
+.tr-readouts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  margin: 0;
+}
+.tr-readouts dt { color: var(--fg-fade); letter-spacing: 1px; }
+.tr-readouts dd {
+  margin: 0;
+  color: var(--acc);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tr-co2 { color: #ffb000 !important; }
+.tr-o2 { color: #4af6ff !important; }
+.tr-light-map {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  font-size: 7.5px;
+  letter-spacing: 0.5px;
+  color: var(--fg-dim);
+  font-family: var(--mono);
+}
+.tr-light-note {
+  font-size: 9px;
+  color: var(--fg-fade);
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+.tr-panel { max-height: 520px; overflow-y: auto; }
+.wp-btn.on { background: var(--acc); color: var(--bg); border-color: var(--acc); }
+@media (max-width: 900px) {
+  .tr-grid { grid-template-columns: 1fr; }
+  .tr-stage { min-height: 300px; }
+}

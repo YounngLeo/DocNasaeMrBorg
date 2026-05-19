@@ -146,6 +146,135 @@
     </div>
   </div>
 
+  <!-- ── TERRARIO BIO-CLIMA · SENSORI · VALVOLE · LUCI ───── -->
+  <div class="wall-module tr-module">
+    <div class="wall-grid tr-grid">
+      <div class="wall-stage tr-stage">
+        <div class="tr-ext-lights" id="tr-ext-lights" aria-hidden="true">
+          <div class="tr-light tr-light-n" data-side="n"></div>
+          <div class="tr-light tr-light-e" data-side="e"></div>
+          <div class="tr-light tr-light-s" data-side="s"></div>
+          <div class="tr-light tr-light-w" data-side="w"></div>
+        </div>
+        <svg id="tr-svg" class="tr-svg" viewBox="0 0 420 320" aria-label="Terrario con sensori e condotti gas">
+          <defs>
+            <linearGradient id="tr-glass" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4af6ff" stop-opacity="0.07"/>
+              <stop offset="100%" stop-color="#5eff7e" stop-opacity="0.03"/>
+            </linearGradient>
+            <filter id="tr-glow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <!-- condotto CO₂ -->
+          <path id="tr-pipe-co2" class="tr-pipe tr-pipe-co2" d="M8 160 H95" stroke-dasharray="6 4"/>
+          <g transform="translate(98 160)">
+            <circle r="14" class="tr-valve-body"/>
+            <g id="tr-valve-co2-knob"><line x1="-8" y1="0" x2="8" y2="0" class="tr-valve-knob"/><circle r="3" class="tr-valve-knob-dot"/></g>
+            <text y="28" class="tr-pipe-label">CO₂ IN</text>
+          </g>
+          <path class="tr-pipe tr-pipe-co2" d="M112 160 H148" stroke-dasharray="4 3"/>
+          <!-- condotto O₂ -->
+          <path id="tr-pipe-o2" class="tr-pipe tr-pipe-o2" d="M412 160 H325" stroke-dasharray="6 4"/>
+          <g transform="translate(322 160)">
+            <circle r="14" class="tr-valve-body"/>
+            <g id="tr-valve-o2-knob"><line x1="-8" y1="0" x2="8" y2="0" class="tr-valve-knob"/><circle r="3" class="tr-valve-knob-dot"/></g>
+            <text y="28" class="tr-pipe-label">O₂ IN</text>
+          </g>
+          <path class="tr-pipe tr-pipe-o2" d="M308 160 H272" stroke-dasharray="4 3"/>
+          <!-- vaso terrario -->
+          <rect x="148" y="72" width="124" height="176" rx="6" class="tr-vessel"/>
+          <rect x="152" y="76" width="116" height="168" rx="4" fill="url(#tr-glass)" stroke="none"/>
+          <!-- substrato -->
+          <path d="M156 210 Q210 198 264 210 L264 238 L156 238 Z" class="tr-soil"/>
+          <!-- pianta -->
+          <g filter="url(#tr-glow)">
+            <ellipse id="tr-plant-glow" cx="210" cy="175" rx="28" ry="38" fill="#5eff7e" opacity="0.35"/>
+            <path d="M210 210 L210 148" class="tr-stem"/>
+            <path d="M210 168 Q188 158 182 138 Q198 148 210 155" class="tr-leaf"/>
+            <path d="M210 158 Q232 148 238 128 Q222 138 210 145" class="tr-leaf"/>
+            <path d="M210 178 Q192 172 186 158 Q200 168 210 172" class="tr-leaf"/>
+            <path d="M210 172 Q228 166 234 152 Q220 162 210 168" class="tr-leaf"/>
+          </g>
+          <!-- sensori interni -->
+          <g class="tr-sensor" transform="translate(168 118)">
+            <rect x="-4" y="-6" width="8" height="12" rx="1" class="tr-sensor-body"/>
+            <text x="0" y="-12" class="tr-sensor-tag">pH</text>
+          </g>
+          <g class="tr-sensor" transform="translate(252 128)">
+            <circle r="5" class="tr-sensor-body"/>
+            <text x="0" y="-12" class="tr-sensor-tag">T°C</text>
+          </g>
+          <g class="tr-sensor" transform="translate(210 100)">
+            <circle r="5" class="tr-sensor-body tr-sensor-lux"/>
+            <text x="0" y="-12" class="tr-sensor-tag">LUX</text>
+          </g>
+          <g class="tr-sensor" transform="translate(178 188)">
+            <rect x="-5" y="-4" width="10" height="8" rx="1" class="tr-sensor-body tr-sensor-bio"/>
+            <text x="0" y="16" class="tr-sensor-tag">RΩ</text>
+          </g>
+          <!-- bolle gas -->
+          <circle cx="175" cy="200" r="2" class="tr-bubble tr-bubble-co2"/>
+          <circle cx="185" cy="192" r="1.5" class="tr-bubble tr-bubble-co2"/>
+          <circle cx="245" cy="196" r="2" class="tr-bubble tr-bubble-o2"/>
+          <circle cx="235" cy="188" r="1.2" class="tr-bubble tr-bubble-o2"/>
+        </svg>
+        <div class="ws-corner tl">[ TERRARIO ]</div>
+        <div class="ws-corner tr">[ LUCI ESTERNE ]</div>
+        <div class="ws-corner bl">[ VALVOLE CO₂ · O₂ ]</div>
+        <div class="ws-corner br">[ SIM LIVE ]</div>
+        <div class="ws-readout" id="tr-readout">TERRARIO · —</div>
+      </div>
+
+      <aside class="wall-panel tr-panel">
+        <div class="wp-block">
+          <div class="wp-title">// SENSORI · LIVE</div>
+          <dl class="tr-readouts">
+            <dt>pH</dt><dd id="tr-ph">—</dd>
+            <dt>TEMP</dt><dd id="tr-temp">—</dd>
+            <dt>LUX</dt><dd id="tr-lux">—</dd>
+            <dt>CO₂</dt><dd id="tr-co2">—</dd>
+            <dt>O₂</dt><dd id="tr-o2">—</dd>
+            <dt>BIO R</dt><dd id="tr-bio">—</dd>
+          </dl>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// VALVOLE · FLUSSO GAS</div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>CO₂</span><span class="vv tr-co2" id="tr-valve-co2-val">35%</span></div>
+            <input type="range" id="tr-valve-co2" min="0" max="100" step="1" value="35">
+          </div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>O₂</span><span class="vv tr-o2" id="tr-valve-o2-val">40%</span></div>
+            <input type="range" id="tr-valve-o2" min="0" max="100" step="1" value="40">
+          </div>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// LUCI ESTERNE</div>
+          <div class="tr-light-map">
+            <span>N · lux+bio</span><span>E · temp+O₂</span>
+            <span>S · pH+CO₂</span><span>W · inverso pH+lux</span>
+          </div>
+          <p class="tr-light-note">Intensità e colore modulati dai valori dei sensori simulati (pianta + ambiente).</p>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// SIMULAZIONE</div>
+          <div class="wp-btns">
+            <button type="button" class="wp-btn pri on" id="tr-sim-btn">SIM: ON</button>
+            <button type="button" class="wp-btn" id="tr-pulse-btn">⚡ DISTURBO</button>
+            <button type="button" class="wp-btn" id="tr-reset-btn">RESET</button>
+          </div>
+        </div>
+
+        <div class="wp-note">
+          I sensori simulano letture da <b>tessuto vegetale</b> e microclima. Le valvole regolano i condotti CO₂/O₂;
+          i valori pilotano le <b>4 luci esterne</b> attorno al terrario.
+        </div>
+      </aside>
+    </div>
+  </div>
+
   <div class="inventory">
     <div class="inv-card upload-slot">
       <div class="corner tl"></div><div class="corner tr"></div>
@@ -244,5 +373,6 @@
 
 <script src="../assets/site.js"></script>
 <script src="totem-builder.js"></script>
+<script src="terrarium-lab.js"></script>
 </body>
 </html>
