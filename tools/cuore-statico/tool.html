@@ -87,6 +87,62 @@
   .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
   .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
 
+  /* Pattern sequencer */
+  .pat-steps {
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    gap: 3px;
+    margin-top: 8px;
+  }
+  .pat-step {
+    aspect-ratio: 1;
+    min-height: 28px;
+    font-size: 8px;
+    letter-spacing: 0;
+    padding: 2px 0;
+    line-height: 1.1;
+    border: 1px solid var(--dim);
+    color: var(--fg);
+    opacity: 0.45;
+    word-break: break-all;
+  }
+  .pat-step.on { opacity: 1; background: rgba(0,255,65,0.12); border-color: var(--fg); }
+  .pat-step.playhead { box-shadow: inset 0 0 0 1px var(--amber); }
+  .pat-step.layer-bass.on   { border-color: var(--fg); color: var(--fg); }
+  .pat-step.layer-pad.on    { border-color: var(--blue); color: var(--blue); background: rgba(74,246,255,0.08); }
+  .pat-step.layer-lead.on   { border-color: var(--purple); color: var(--purple); background: rgba(198,120,255,0.08); }
+  .pat-step.layer-noise.on  { border-color: var(--amber); color: var(--amber); background: rgba(255,176,0,0.08); }
+  .pat-step.layer-sample.on { border-color: var(--blue); color: var(--blue); }
+  .pat-step-nums {
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    gap: 3px;
+    font-size: 7px;
+    opacity: 0.45;
+    letter-spacing: 0;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .pat-num { text-align: center; }
+  .pat-info {
+    font-size: 10px;
+    opacity: 0.6;
+    line-height: 1.55;
+    margin-top: 8px;
+  }
+  .pat-score {
+    font-size: 9px;
+    line-height: 1.45;
+    border: 1px solid var(--dim);
+    background: #000;
+    padding: 8px;
+    max-height: 120px;
+    overflow: auto;
+    white-space: pre-wrap;
+    margin-top: 8px;
+  }
+  button.pat-target.on { background: var(--fg); color: var(--bg); }
+
   .row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; line-height: 1.6; }
   .label { letter-spacing: 1.5px; opacity: 0.85; }
   .value { color: var(--fg); font-variant-numeric: tabular-nums; }
@@ -306,6 +362,7 @@
   <button class="tab active" data-tab="mix">MIX</button>
   <button class="tab"        data-tab="synth">SYNTH</button>
   <button class="tab"        data-tab="sampler">SAMPLER</button>
+  <button class="tab"        data-tab="pattern">PATTERN</button>
   <button class="tab"        data-tab="fx">FX</button>
   <button class="tab"        data-tab="rec">REC</button>
 </div>
@@ -603,6 +660,54 @@
   </section>
 </div>
 
+<!-- ============== TAB: PATTERN ============== -->
+<div class="tabpanel" id="tab-pattern">
+
+  <section class="section amber">
+    <div class="section-title">// SEQUENCER · 16 STEP (1 BAR)</div>
+    <div class="grid-2" style="margin-bottom: 8px">
+      <button id="patModeBtn" class="amber on">PATTERN: ON</button>
+      <button id="patLegacyBtn" class="small">↺ IMPORT LEGACY</button>
+    </div>
+    <div class="grid-5" style="margin-bottom: 8px">
+      <button class="pat-target on" data-player="bass">BASS</button>
+      <button class="pat-target"    data-player="pad">PAD</button>
+      <button class="pat-target"    data-player="lead">LEAD</button>
+      <button class="pat-target"    data-player="noise">NSE</button>
+      <button class="pat-target"    data-player="sample">SMP</button>
+    </div>
+    <div class="row">
+      <span class="label">EDITING</span>
+      <span class="value" id="patEditingVal">BASS</span>
+    </div>
+    <div class="pat-steps" id="patGrid"></div>
+    <div class="pat-step-nums" id="patNums"></div>
+    <div class="pat-info" id="patHint">BASS — click step: REST → note MIDI. Tieni premuto SHIFT per indietro.</div>
+    <div class="grid-3" style="margin-top: 10px">
+      <button id="patClearBtn" class="small">CLEAR ROW</button>
+      <button id="patFillBtn" class="small">FILL ALT</button>
+      <button id="patCopyBtn" class="small">COPY ROW</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// COMPOSIZIONE · GENERA TRACCIA</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">BARS_TO_RENDER</span><span class="value" id="patBarsVal">4</span></div>
+      <input type="range" id="patBars" min="1" max="16" step="1" value="4">
+    </div>
+    <div class="grid-2" style="margin-bottom: 8px">
+      <button id="patGenBtn" class="big amber">⬤ GENERA TRACCIA</button>
+      <button id="patPlayBtn" class="big">▶ PLAY PATTERN</button>
+    </div>
+    <div class="grid-2">
+      <button id="patExportBtn" class="small">⬇ EXPORT JSON</button>
+      <button id="patScoreBtn" class="small">VIEW SCORE</button>
+    </div>
+    <div class="pat-score" id="patScore" hidden></div>
+  </section>
+</div>
+
 <!-- ============== TAB: FX ============== -->
 <div class="tabpanel" id="tab-fx">
   <section class="section">
@@ -829,6 +934,329 @@ const BASS_PATTERN = [47, 47, null, 47, 47, 42, null, 45];
 const LEAD_SCALE = [0, 2, 3, 5, 7, 8, 10];
 const LEAD_BASE = 59 + 24;
 const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const PAT_LEN = 16;
+const BASS_CYCLE = [null, 40, 42, 43, 45, 47, 50, 52];
+const PAD_CYCLE  = [0, 1, 2, 3, 4, 5]; // 0=rest, 1-4=chord slot, 5=auto
+const LEAD_CYCLE = [null, 0, 1, 2, 3, 4, 5, 6, 100, 101, 102, 103, 104, 105, 106]; // 100+ = +12 oct
+
+function mkPatternRow(val) {
+  return Array(PAT_LEN).fill(val);
+}
+
+const defaultPatterns = {
+  bass:   [47, 47, null, 47, 47, 42, null, 45, null, null, null, null, null, null, null, null],
+  pad:    [5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0],
+  lead:   [null, null, null, null, 4, null, null, null, null, null, null, null, 7, null, null, null],
+  noise:  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+  sample: mkPatternRow(0)
+};
+
+let patterns = JSON.parse(JSON.stringify(defaultPatterns));
+let patternEditTarget = 'bass';
+let usePatternMode = true;
+let patternGenTimer = null;
+let patternClipboard = null;
+
+if (storedState.patterns) {
+  for (const k of Object.keys(defaultPatterns)) {
+    if (Array.isArray(storedState.patterns[k]) && storedState.patterns[k].length === PAT_LEN) {
+      patterns[k] = storedState.patterns[k].slice();
+    }
+  }
+}
+if (typeof storedState.usePatternMode === 'boolean') usePatternMode = storedState.usePatternMode;
+
+function persistPatterns() { saveState({ patterns, usePatternMode }); }
+
+function bassNoteLabel(n) {
+  if (n == null) return '·';
+  const nn = ((Math.round(n) % 12) + 12) % 12;
+  return NOTES[nn] + Math.floor(n / 12);
+}
+
+function padStepLabel(v) {
+  if (!v) return '·';
+  if (v === 5) return 'A';
+  return 'C' + v;
+}
+
+function leadStepLabel(v) {
+  if (v == null || v < 0) return '·';
+  const hi = v >= 100;
+  const deg = hi ? v - 100 : v;
+  return (hi ? '^' : '') + (LEAD_SCALE[deg] ?? deg);
+}
+
+function patternStepLabel(layer, v) {
+  if (layer === 'bass') return bassNoteLabel(v);
+  if (layer === 'pad') return padStepLabel(v);
+  if (layer === 'lead') return leadStepLabel(v);
+  return v ? 'X' : '·';
+}
+
+function patternStepActive(layer, v) {
+  if (layer === 'bass' || layer === 'lead') return v != null && v !== -1;
+  if (layer === 'pad') return v > 0;
+  return !!v;
+}
+
+function cyclePatternValue(layer, val, reverse) {
+  let cycle;
+  if (layer === 'bass') cycle = BASS_CYCLE;
+  else if (layer === 'pad') cycle = PAD_CYCLE;
+  else if (layer === 'lead') cycle = LEAD_CYCLE;
+  else cycle = [0, 1];
+  let idx = cycle.indexOf(val);
+  if (idx < 0) idx = 0;
+  idx = reverse ? (idx - 1 + cycle.length) % cycle.length : (idx + 1) % cycle.length;
+  return cycle[idx];
+}
+
+function renderPatternGrid() {
+  const grid = $('patGrid');
+  const nums = $('patNums');
+  if (!grid || !nums) return;
+  grid.innerHTML = '';
+  nums.innerHTML = '';
+  const layer = patternEditTarget;
+  const row = patterns[layer];
+  for (let i = 0; i < PAT_LEN; i++) {
+    const n = document.createElement('div');
+    n.className = 'pat-num';
+    n.textContent = (i + 1);
+    nums.appendChild(n);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pat-step layer-' + layer + (patternStepActive(layer, row[i]) ? ' on' : '');
+    if (isPlaying && (beat16 % PAT_LEN) === i) btn.classList.add('playhead');
+    btn.textContent = patternStepLabel(layer, row[i]);
+    btn.dataset.step = String(i);
+    btn.title = 'step ' + (i + 1);
+    btn.addEventListener('click', (e) => {
+      const reverse = e.shiftKey;
+      row[i] = cyclePatternValue(layer, row[i], reverse);
+      persistPatterns();
+      renderPatternGrid();
+    });
+    grid.appendChild(btn);
+  }
+  const hints = {
+    bass:   'BASS — click: REST → note. SHIFT+click indietro.',
+    pad:    'PAD — · rest · C1-C4 accordo · A auto-avanza progressione.',
+    lead:   'LEAD — gradi scala · ^ ottava alta (es. ^7).',
+    noise:  'NOISE — gate on/off per step.',
+    sample: 'SAMPLE — trigger on/off per step (richiede sample caricato).'
+  };
+  $('patHint').textContent = hints[layer] || '';
+  $('patEditingVal').textContent = layer.toUpperCase();
+}
+
+function updatePatternPlayhead() {
+  if (!$('patGrid')) return;
+  $('patGrid').querySelectorAll('.pat-step').forEach((el, i) => {
+    el.classList.toggle('playhead', isPlaying && (beat16 % PAT_LEN) === i);
+  });
+}
+
+function buildCompositionObject() {
+  return {
+    version: 1,
+    bpm: parseFloat($('bpm').value) || 76,
+    key: currentKey,
+    progression: currentProg,
+    steps: PAT_LEN,
+    patterns: JSON.parse(JSON.stringify(patterns)),
+    layers: Object.assign({}, layers),
+    synthParams: JSON.parse(JSON.stringify(synthParams)),
+    exportedAt: new Date().toISOString()
+  };
+}
+
+function compositionToScore(comp) {
+  const lines = [
+    'CUORE_STATICO · SCORE',
+    'BPM ' + comp.bpm + ' · KEY ' + comp.key + ' · PROG ' + comp.progression,
+    ''
+  ];
+  ['bass', 'pad', 'lead', 'noise', 'sample'].forEach(function (layer) {
+    const row = comp.patterns[layer].map(v => patternStepLabel(layer, v)).join(' ');
+    lines.push(layer.toUpperCase().padEnd(6) + row);
+  });
+  return lines.join('\n');
+}
+
+function importLegacyPatterns() {
+  patterns.bass = mkPatternRow(null);
+  BASS_PATTERN.forEach(function (n, i) {
+    if (i < PAT_LEN) patterns.bass[i * 2] = n;
+  });
+  patterns.pad = mkPatternRow(0);
+  patterns.pad[0] = 5;
+  patterns.pad[8] = 5;
+  patterns.lead = mkPatternRow(null);
+  patterns.noise = mkPatternRow(0);
+  for (let i = 0; i < PAT_LEN; i++) {
+    if (i % 6 === 5) patterns.noise[i] = 1;
+  }
+  patterns.sample = mkPatternRow(0);
+  persistPatterns();
+  renderPatternGrid();
+}
+
+function downloadText(filename, text, mime) {
+  const blob = new Blob([text], { type: mime || 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 500);
+}
+
+async function generateTrackFromPatterns() {
+  await initAudio();
+  const bars = parseInt($('patBars').value, 10) || 4;
+  const totalSteps = bars * PAT_LEN;
+  usePatternMode = true;
+  $('patModeBtn').textContent = 'PATTERN: ON';
+  $('patModeBtn').classList.add('on');
+  persistPatterns();
+
+  if (isPlaying) {
+    isPlaying = false;
+    stopTicker();
+  }
+  if (patternGenTimer) { clearInterval(patternGenTimer); patternGenTimer = null; }
+
+  beat16 = chordIdx = bassIdx = 0;
+  isPlaying = true;
+  $('stateVal').textContent = '⏺ RENDER ' + bars + ' BAR';
+
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    await new Promise(r => setTimeout(r, 300));
+  }
+  $('recStartBtn').click();
+
+  let stepsDone = 0;
+  const bpm = parseFloat($('bpm').value) || 76;
+  const sixteenthMs = (60 / bpm / 4) * 1000;
+
+  function finishGen() {
+    if (patternGenTimer) { clearInterval(patternGenTimer); patternGenTimer = null; }
+    isPlaying = false;
+    stopTicker();
+    $('recStopBtn').click();
+    $('stateVal').textContent = '◼ STBY';
+    const btn = $('playBtn');
+    btn.textContent = '▶ PLAY';
+    btn.classList.remove('playing');
+    updatePatternPlayhead();
+  }
+
+  tick();
+  stepsDone = 1;
+  updatePatternPlayhead();
+
+  patternGenTimer = setInterval(function () {
+    tick();
+    stepsDone++;
+    updatePatternPlayhead();
+    if (stepsDone >= totalSteps) finishGen();
+  }, sixteenthMs);
+  playInterval = patternGenTimer;
+}
+
+function tickLegacy() {
+  if (beat16 % 2 === 0) {
+    const note = BASS_PATTERN[bassIdx % BASS_PATTERN.length];
+    if (note !== null) {
+      try {
+        A.bass.triggerAttackRelease(midiToFreq(note + currentKey), '16n', Tone.now(), 0.95);
+      } catch (e) {}
+      const h = $('heart'); h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
+      bumpTrig();
+    }
+    bassIdx++;
+  }
+  if (beat16 % 32 === 0) {
+    const c = PROGS[currentProg][chordIdx % 4].map(n => n + currentKey);
+    try {
+      A.pad.triggerAttackRelease(c.map(midiToFreq), 6, Tone.now(), 0.65);
+    } catch (e) {}
+    $('chordVal').textContent = chordName(c);
+    chordIdx++; bumpTrig();
+  }
+  if (beat16 % 8 === 0 && Math.random() < density) {
+    const deg = LEAD_SCALE[Math.floor(Math.random() * LEAD_SCALE.length)];
+    const oct = Math.random() < 0.3 ? -12 : 0;
+    try {
+      A.lead.triggerAttackRelease(
+        midiToFreq(LEAD_BASE + deg + oct + currentKey),
+        Math.random() * 1.5 + 1, Tone.now(), Math.random() * 0.4 + 0.3
+      );
+    } catch (e) {}
+    bumpTrig();
+  }
+  if (Math.random() < 0.4 * noiseAmt) {
+    try { A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl, Tone.now()); } catch (e) {}
+  }
+  if (autoSample && sampleBuffer && beat16 % autoSampleRate === 0 && Math.random() < autoSampleProb) {
+    try { playSample(); } catch (e) {}
+  }
+}
+
+function tickPattern() {
+  const t = Tone.now();
+  const step = beat16 % PAT_LEN;
+
+  const bNote = patterns.bass[step];
+  if (bNote != null && layers.bass) {
+    try {
+      A.bass.triggerAttackRelease(midiToFreq(bNote + currentKey), '16n', t, 0.95);
+      const h = $('heart'); h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
+      bumpTrig();
+    } catch (e) {}
+  }
+
+  const pVal = patterns.pad[step];
+  if (pVal > 0 && layers.pad) {
+    let ci = chordIdx;
+    if (pVal >= 1 && pVal <= 4) ci = pVal - 1;
+    const c = PROGS[currentProg][ci % 4].map(n => n + currentKey);
+    try {
+      A.pad.triggerAttackRelease(c.map(midiToFreq), '2n', t, 0.65);
+      $('chordVal').textContent = chordName(c);
+      bumpTrig();
+    } catch (e) {}
+    if (pVal === 5) chordIdx = (chordIdx + 1) % 4;
+  }
+
+  const lVal = patterns.lead[step];
+  if (lVal != null && lVal >= 0 && layers.lead) {
+    const hi = lVal >= 100;
+    const deg = hi ? lVal - 100 : lVal;
+    const oct = hi ? 12 : 0;
+    if (LEAD_SCALE[deg] != null) {
+      try {
+        A.lead.triggerAttackRelease(
+          midiToFreq(LEAD_BASE + LEAD_SCALE[deg] + oct + currentKey),
+          '8n', t, 0.55
+        );
+        bumpTrig();
+      } catch (e) {}
+    }
+  }
+
+  if (patterns.noise[step] && layers.noise) {
+    try { A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl, t); } catch (e) {}
+  }
+
+  if (patterns.sample[step] && sampleBuffer && layers.sample) {
+    try { playSample(); bumpTrig(); } catch (e) {}
+  }
+}
 
 const $ = (id) => document.getElementById(id);
 function midiToFreq(m) { return Tone.Frequency(m, 'midi').toFrequency(); }
@@ -1086,47 +1514,11 @@ function tick() {
     return;
   }
   try {
-    const t = Tone.now();
+    if (usePatternMode) tickPattern();
+    else tickLegacy();
 
-    if (beat16 % 2 === 0) {
-      const note = BASS_PATTERN[bassIdx % BASS_PATTERN.length];
-      if (note !== null) {
-        try {
-          A.bass.triggerAttackRelease(midiToFreq(note + currentKey), '16n', t, 0.95);
-        } catch (e) {}
-        const h = $('heart'); h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
-        bumpTrig();
-      }
-      bassIdx++;
-    }
-    if (beat16 % 32 === 0) {
-      const c = PROGS[currentProg][chordIdx % 4].map(n => n + currentKey);
-      try {
-        A.pad.triggerAttackRelease(c.map(midiToFreq), 6, t, 0.65);
-      } catch (e) {}
-      $('chordVal').textContent = chordName(c);
-      chordIdx++; bumpTrig();
-    }
-    if (beat16 % 8 === 0 && Math.random() < density) {
-      const deg = LEAD_SCALE[Math.floor(Math.random() * LEAD_SCALE.length)];
-      const oct = Math.random() < 0.3 ? -12 : 0;
-      try {
-        A.lead.triggerAttackRelease(
-          midiToFreq(LEAD_BASE + deg + oct + currentKey),
-          Math.random() * 1.5 + 1, t, Math.random() * 0.4 + 0.3
-        );
-      } catch (e) {}
-      bumpTrig();
-    }
-    if (Math.random() < 0.4 * noiseAmt) {
-      try {
-        A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl, t);
-      } catch (e) {}
-    }
-    if (autoSample && sampleBuffer && beat16 % autoSampleRate === 0 && Math.random() < autoSampleProb) {
-      try { playSample(); } catch (e) {}
-    }
     beat16++;
+    updatePatternPlayhead();
   } catch (err) {
     console.warn('tick error', err);
     beat16++;
@@ -1140,7 +1532,10 @@ function startTicker() {
   tick();
   playInterval = setInterval(tick, sixteenthMs);
 }
-function stopTicker() { if (playInterval) { clearInterval(playInterval); playInterval = null; } }
+function stopTicker() {
+  if (playInterval) { clearInterval(playInterval); playInterval = null; }
+  if (patternGenTimer) { clearInterval(patternGenTimer); patternGenTimer = null; }
+}
 function restartTickerIfPlaying() { if (isPlaying) startTicker(); }
 
 // Watchdog: if playing but no triggers for >5s, restart ticker
@@ -1756,11 +2151,102 @@ $('resetBtn').addEventListener('click', () => {
 });
 
 // ============================================================
+// PATTERN SEQUENCER
+// ============================================================
+document.querySelectorAll('.pat-target').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    document.querySelectorAll('.pat-target').forEach(function (b) { b.classList.remove('on'); });
+    btn.classList.add('on');
+    patternEditTarget = btn.dataset.player;
+    renderPatternGrid();
+  });
+});
+
+function syncPatModeBtn() {
+  const btn = $('patModeBtn');
+  if (!btn) return;
+  btn.textContent = usePatternMode ? 'PATTERN: ON' : 'PATTERN: OFF';
+  btn.classList.toggle('on', usePatternMode);
+}
+syncPatModeBtn();
+
+$('patModeBtn').addEventListener('click', function () {
+  usePatternMode = !usePatternMode;
+  syncPatModeBtn();
+  persistPatterns();
+});
+
+$('patLegacyBtn').addEventListener('click', importLegacyPatterns);
+
+$('patClearBtn').addEventListener('click', function () {
+  const layer = patternEditTarget;
+  patterns[layer] = layer === 'bass' || layer === 'lead'
+    ? mkPatternRow(null) : mkPatternRow(0);
+  persistPatterns();
+  renderPatternGrid();
+});
+
+$('patFillBtn').addEventListener('click', function () {
+  const layer = patternEditTarget;
+  for (let i = 0; i < PAT_LEN; i++) {
+    if (i % 2 !== 1) continue;
+    if (layer === 'bass') patterns.bass[i] = 47;
+    else if (layer === 'pad') patterns.pad[i] = 5;
+    else if (layer === 'lead') patterns.lead[i] = 4;
+    else patterns[layer][i] = 1;
+  }
+  persistPatterns();
+  renderPatternGrid();
+});
+
+$('patCopyBtn').addEventListener('click', function () {
+  patternClipboard = patterns[patternEditTarget].slice();
+});
+
+document.addEventListener('keydown', function (e) {
+  if (!e.ctrlKey && !e.metaKey) return;
+  if (e.key !== 'v' && e.key !== 'V') return;
+  const panel = $('tab-pattern');
+  if (!panel || !panel.classList.contains('active')) return;
+  if (!patternClipboard) return;
+  patterns[patternEditTarget] = patternClipboard.slice();
+  persistPatterns();
+  renderPatternGrid();
+});
+
+$('patBars').addEventListener('input', function () {
+  $('patBarsVal').textContent = $('patBars').value;
+});
+
+$('patGenBtn').addEventListener('click', function () { generateTrackFromPatterns(); });
+
+$('patPlayBtn').addEventListener('click', async function () {
+  usePatternMode = true;
+  syncPatModeBtn();
+  persistPatterns();
+  await togglePlay();
+});
+
+$('patExportBtn').addEventListener('click', function () {
+  const comp = buildCompositionObject();
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  downloadText('cuore_composition_' + stamp + '.json', JSON.stringify(comp, null, 2), 'application/json');
+});
+
+$('patScoreBtn').addEventListener('click', function () {
+  const el = $('patScore');
+  const comp = buildCompositionObject();
+  el.textContent = compositionToScore(comp);
+  el.hidden = !el.hidden;
+});
+
+// ============================================================
 // INIT UI
 // ============================================================
 loadSynthParamsToUI();
 refreshPresetList();
 loadRecordings();
+renderPatternGrid();
 
 </script>
 </body>

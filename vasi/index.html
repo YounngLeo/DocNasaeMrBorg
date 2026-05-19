@@ -39,8 +39,67 @@
     <div class="crumb"><a href="../">home</a><span class="sep">/</span>vasi</div>
     <h1>VASI</h1>
     <div class="desc">stampa 3D parametrica · argilla · pla · resina</div>
-    <div class="count">// 17 ITEMS · 3 MATERIALI</div>
+    <div class="count">// 17 ITEMS · 3 MATERIALI · CONFIGURATORE BRACCIALETTO</div>
   </header>
+
+  <!-- ── CONFIGURATORE BRACCIALETTO ─────────────────────────── -->
+  <div class="wall-module br-module">
+    <div class="wall-grid">
+      <div class="wall-stage br-stage" id="br-stage">
+        <svg id="br-svg" viewBox="0 0 420 420" aria-label="Anteprima braccialetto a catena con vasi modulari">
+          <defs>
+            <filter id="br-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <g id="br-chain-layer"></g>
+          <g id="br-slot-layer"></g>
+          <g id="br-bead-layer"></g>
+        </svg>
+        <div class="ws-corner tl">[ CATENA ]</div>
+        <div class="ws-corner tr">[ DRAG · ROTAZIONE ]</div>
+        <div class="ws-corner bl">[ CLICK · SLOT ]</div>
+        <div class="ws-corner br">[ MODULARE ]</div>
+        <div class="ws-readout" id="br-readout">BRACCIALETTO · 0 VASI · CATENA VUOTA</div>
+      </div>
+
+      <aside class="wall-panel br-panel">
+        <div class="wp-block">
+          <div class="wp-title">// CATALOGO MODULI</div>
+          <div class="br-palette" id="br-palette" role="listbox" aria-label="Tipologie di vaso"></div>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// CATENA</div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// anelli disponibili</span><span class="vv" id="brv-slots">10</span></div>
+            <input type="range" id="br-slots" min="4" max="16" value="10" step="1">
+          </div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// diametro catena</span><span class="vv" id="brv-scale">1.00</span></div>
+            <input type="range" id="br-scale" min="0.75" max="1.35" value="1" step="0.05">
+          </div>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// AZIONI</div>
+          <div class="wp-btns">
+            <button class="wp-btn pri full" id="br-add" type="button">AGGIUNGI VASO</button>
+            <button class="wp-btn" id="br-remove" type="button">RIMUOVI ULTIMO</button>
+            <button class="wp-btn" id="br-clear" type="button">SVUOTA</button>
+            <button class="wp-btn" id="br-export" type="button">EXPORT LISTA</button>
+          </div>
+        </div>
+
+        <div class="wp-note">
+          Seleziona un modulo dal catalogo, poi <b>clicca uno slot vuoto</b> sulla catena o usa <b>AGGIUNGI VASO</b>.
+          Trascina l'anteprima per ruotare. Ogni vaso avvolge un anello come in un braccialetto modulare.
+        </div>
+        <div class="br-recipe" id="br-recipe" aria-live="polite">// ricetta: —</div>
+      </aside>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════════════════
        ARGILLA — produzione attiva
@@ -426,5 +485,6 @@
 </div>
 
 <script src="../assets/site.js"></script>
+<script src="bracelet.js"></script>
 </body>
 </html>
