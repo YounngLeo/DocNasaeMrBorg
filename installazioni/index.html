@@ -58,6 +58,59 @@
     </div>
   </div>
 
+  <!-- ── CONFIGURATORE TOTEM · LAVAGNETTA ERBARIO ─────────── -->
+  <div class="wall-module tm-module">
+    <div class="wall-grid tm-grid">
+      <div class="wall-stage tm-stage" id="tm-board">
+        <div class="tm-grid-bg" aria-hidden="true"></div>
+        <div class="ws-corner tl">[ LAVAGNETTA ]</div>
+        <div class="ws-corner tr">[ TRASCINA · RUOTA ]</div>
+        <div class="ws-corner bl">[ DOPPIO CLICK = RIMUOVI ]</div>
+        <div class="ws-corner br">[ ERBARIO ×92 ]</div>
+        <div class="ws-readout" id="tm-readout">TOTEM · 0 MAGNETI</div>
+      </div>
+
+      <aside class="wall-panel tm-panel">
+        <div class="wp-block">
+          <div class="wp-title">// CATALOGO · SEZIONI</div>
+          <div class="tm-tabs" id="tm-tabs"></div>
+          <div class="tm-catalog" id="tm-catalog"></div>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// MAGNETE SELEZIONATO</div>
+          <div class="tm-sel-label" id="tm-sel-label">—</div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// rotazione</span><span class="vv" id="tmv-rot">0</span></div>
+            <input type="range" id="tm-rot" min="-180" max="180" step="15" value="0" disabled>
+          </div>
+          <div class="wp-row">
+            <div class="wp-row-head"><span>// scala</span><span class="vv" id="tmv-scale">1.00</span></div>
+            <input type="range" id="tm-scale" min="0.5" max="1.8" step="0.05" value="1" disabled>
+          </div>
+          <div class="wp-btns">
+            <button class="wp-btn" id="tm-del" type="button">RIMUOVI</button>
+          </div>
+        </div>
+
+        <div class="wp-block">
+          <div class="wp-title">// COMPOSIZIONE</div>
+          <div class="wp-btns">
+            <button class="wp-btn pri full" id="tm-gen" type="button">⚡ GENERA TOTEM</button>
+            <button class="wp-btn" id="tm-clear" type="button">SVUOTA</button>
+            <button class="wp-btn" id="tm-export" type="button">EXPORT LISTA</button>
+          </div>
+        </div>
+
+        <div class="wp-note">
+          Trascina le icone dall'erbario sulla lavagnetta come <b>calamite</b>. Ruota con la maniglia ↻ o lo slider.
+          Catalogo in stile inventario — <b>foglie · fiori · frutti · busti</b> — colori tavola botanica Monti Berici.
+        </div>
+        <div class="tm-recipe" id="tm-recipe">// composizione: —</div>
+      </aside>
+    </div>
+  </div>
+
   <div class="inventory">
     <div class="inv-card upload-slot">
       <div class="corner tl"></div><div class="corner tr"></div>
@@ -190,5 +243,6 @@
 </div>
 
 <script src="../assets/site.js"></script>
+<script src="totem-builder.js"></script>
 </body>
 </html>
