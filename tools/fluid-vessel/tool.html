@@ -22,10 +22,10 @@ html,body{background:var(--bg-0);color:var(--fg-1);font-family:var(--mono);font-
 .head .meta{color:var(--fg-2);font-size:10px;text-align:right;letter-spacing:.08em}
 .head .meta b{color:var(--fg-1);font-weight:normal}
 .head a{color:var(--fg-2);text-decoration:none;border-bottom:1px dotted var(--fg-3)}
-main{display:grid;grid-template-columns:1fr 300px;min-height:0;flex:1}
-@media(max-width:900px){main{grid-template-columns:1fr;grid-template-rows:1fr auto}}
-.stage{position:relative;background:#000;min-height:0}
-#viewport{display:block;width:100%;height:100%;touch-action:none}
+main{display:grid;grid-template-columns:1fr 300px;min-height:0;overflow:hidden}
+@media(max-width:900px){main{grid-template-columns:1fr;grid-template-rows:minmax(280px,1fr) auto}}
+.stage{position:relative;background:#0a0a0a;min-height:280px;height:100%;overflow:hidden}
+#viewport{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
 .stage .corner{position:absolute;color:var(--fg-2);font-size:9px;letter-spacing:.08em;pointer-events:none}
 .stage .corner.tl{top:8px;left:10px}.stage .corner.tr{top:8px;right:10px}
 .stage .corner.bl{bottom:8px;left:10px}.stage .corner.br{bottom:8px;right:10px}
@@ -150,9 +150,28 @@ button.del{border-color:#ff5a5a;color:#ff5a5a}
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const canvas = document.getElementById('viewport');
 const toastEl = document.getElementById('toast');
+
+function showFatal(err) {
+  console.error(err);
+  const msg = 'ERRORE: ' + (err && err.message ? err.message : String(err));
+  if (toastEl) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('on');
+  }
+  const stage = canvas && canvas.parentElement;
+  if (stage) {
+    stage.insertAdjacentHTML('beforeend',
+      '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ff5a5a;font-size:10px;padding:20px;text-align:center;pointer-events:none;z-index:5">' +
+      'WebGL / Three.js non avviato — ricarica la pagina<br><span style="opacity:.7;margin-top:8px;display:block">' +
+      (err && err.message ? err.message : '') + '</span></div>');
+  }
+}
+
+try {
 
 const cfg = {
   rx: 1, ry: 1.6, rz: 0.85,
@@ -183,8 +202,13 @@ camera.position.set(2.8, 1.4, 3.2);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 1.15;
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+pmrem.dispose();
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
@@ -201,6 +225,10 @@ scene.add(rim);
 const fill = new THREE.PointLight(0x5eff7e, 0.3, 12);
 fill.position.set(0, -2, 2);
 scene.add(fill);
+
+const grid = new THREE.GridHelper(5, 24, 0x3a3520, 0x1a1810);
+grid.position.y = -1.4;
+scene.add(grid);
 
 const effGroup = new THREE.Group();
 scene.add(effGroup);
@@ -393,15 +421,17 @@ function rebuildBase() {
     color: 0xfff0a0,
     transparent: true,
     opacity: cfg.opacity,
-    roughness: 0.35,
-    metalness: 0.05,
-    transmission: 0.55,
-    thickness: 0.4,
-    ior: 1.35,
+    roughness: 0.28,
+    metalness: 0.02,
+    transmission: 0.42,
+    thickness: 0.55,
+    ior: 1.33,
     side: THREE.DoubleSide,
-    clearcoat: 0.2,
-    emissive: 0x332200,
-    emissiveIntensity: 0.08
+    clearcoat: 0.35,
+    clearcoatRoughness: 0.2,
+    emissive: 0x443300,
+    emissiveIntensity: 0.12,
+    envMapIntensity: 1.2
   });
   mesh = new THREE.Mesh(geometry, mat);
   scene.add(mesh);
@@ -662,30 +692,33 @@ canvas.addEventListener('wheel', e => {
   deformMesh();
 }, { passive: false });
 
-function bindRange(id, vid, key, fmt, rebuild) {
+function bindRange(id, vid, key, fmt, rebuild, runInitial) {
   const el = document.getElementById(id);
   const out = document.getElementById(vid);
   const upd = () => {
     const v = parseFloat(el.value);
     cfg[key] = v;
     out.textContent = fmt(v);
-    if (key === 'opacity' && mesh) mesh.material.opacity = v;
+    if (key === 'opacity' && mesh) {
+      mesh.material.opacity = v;
+      mesh.material.transmission = Math.min(0.5, v * 0.55);
+    }
     if (rebuild === 'base') rebuildBase();
     else if (rebuild === 'mesh') deformMesh();
   };
   el.addEventListener('input', upd);
-  upd();
+  if (runInitial !== false) upd();
 }
 
-bindRange('p_rx', 'v_rx', 'rx', v => v.toFixed(2), 'base');
-bindRange('p_ry', 'v_ry', 'ry', v => v.toFixed(2), 'base');
-bindRange('p_rz', 'v_rz', 'rz', v => v.toFixed(2), 'base');
-bindRange('p_org', 'v_org', 'organic', v => v.toFixed(2), 'base');
-bindRange('p_sub', 'v_sub', 'subdiv', v => String(v), 'base');
-bindRange('p_stiff', 'v_stiff', 'stiff', v => v.toFixed(2), 'mesh');
-bindRange('p_relax', 'v_relax', 'relax', v => String(v), 'mesh');
-bindRange('p_vol', 'v_vol', 'volPreserve', v => v.toFixed(2), 'mesh');
-bindRange('p_op', 'v_op', 'opacity', v => v.toFixed(2), 'mesh');
+bindRange('p_rx', 'v_rx', 'rx', v => v.toFixed(2), 'base', false);
+bindRange('p_ry', 'v_ry', 'ry', v => v.toFixed(2), 'base', false);
+bindRange('p_rz', 'v_rz', 'rz', v => v.toFixed(2), 'base', false);
+bindRange('p_org', 'v_org', 'organic', v => v.toFixed(2), 'base', false);
+bindRange('p_sub', 'v_sub', 'subdiv', v => String(v), 'base', false);
+bindRange('p_stiff', 'v_stiff', 'stiff', v => v.toFixed(2), 'mesh', false);
+bindRange('p_relax', 'v_relax', 'relax', v => String(v), 'mesh', false);
+bindRange('p_vol', 'v_vol', 'volPreserve', v => v.toFixed(2), 'mesh', false);
+bindRange('p_op', 'v_op', 'opacity', v => v.toFixed(2), 'mesh', false);
 
 document.getElementById('p_str').addEventListener('input', e => {
   const v = parseFloat(e.target.value);
@@ -738,12 +771,25 @@ function resize() {
   const stage = canvas.parentElement;
   const w = stage.clientWidth;
   const h = stage.clientHeight;
-  if (w < 10 || h < 10) return;
+  if (w < 10 || h < 10) return false;
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);
+  return true;
 }
-window.addEventListener('resize', resize);
+
+function ensureResize(retries) {
+  if (resize()) return;
+  if (retries <= 0) return;
+  requestAnimationFrame(() => ensureResize(retries - 1));
+}
+
+window.addEventListener('resize', () => resize());
+
+if (typeof ResizeObserver !== 'undefined') {
+  const ro = new ResizeObserver(() => resize());
+  ro.observe(canvas.parentElement);
+}
 
 function animate() {
   requestAnimationFrame(animate);
@@ -753,9 +799,16 @@ function animate() {
 
 rebuildBase();
 loadPreset();
-resize();
+ensureResize(30);
 document.getElementById('foot_readout').textContent = 'seed ' + cfg.seed;
+['p_rx','p_ry','p_rz','p_org','p_sub','p_stiff','p_relax','p_vol','p_op'].forEach(id => {
+  document.getElementById(id).dispatchEvent(new Event('input'));
+});
 animate();
+
+} catch (err) {
+  showFatal(err);
+}
 </script>
 </body>
 </html>
