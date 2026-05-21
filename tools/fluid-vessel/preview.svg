@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <rect width="320" height="200" fill="#050805"/>
+  <path d="M160 175 Q95 170 88 120 Q82 70 110 45 Q140 22 160 18 Q180 22 210 45 Q238 70 232 120 Q225 170 160 175 Z" stroke="#fff03a" stroke-width="1.2" opacity="0.85"/>
+  <path d="M120 42 L105 12 M160 28 L160 8 M200 42 L215 12" stroke="#d0d0d0" stroke-width="0.8"/>
+  <circle cx="105" cy="12" r="3" stroke="#d0d0d0" stroke-width="0.8"/>
+  <circle cx="160" cy="8" r="3" stroke="#d0d0d0" stroke-width="0.8"/>
+  <circle cx="215" cy="12" r="3" stroke="#d0d0d0" stroke-width="0.8"/>
+  <path d="M130 95 L118 78 M190 88 L202 72 M145 130 L132 118 M175 125 L188 112" stroke="#5eff7e" stroke-width="0.6" opacity="0.7"/>
+  <text x="160" y="192" fill="#4a8a5e" font-family="monospace" font-size="8" text-anchor="middle" letter-spacing="2">FLUID_VESSEL</text>
+</svg>

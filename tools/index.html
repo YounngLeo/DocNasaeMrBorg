@@ -139,6 +139,8 @@
   .nav-list a.amber-link:hover { background: rgba(255,176,0,0.06); }
   .nav-list a.blue-link  { color: var(--blue); }
   .nav-list a.blue-link:hover { background: rgba(74,246,255,0.06); }
+  .nav-list a.gold-link  { color: #fff03a; }
+  .nav-list a.gold-link:hover { background: rgba(255,240,58,0.06); }
 
   /* === SECTIONS === */
   .section {
@@ -206,6 +208,7 @@
   }
   .tool-header.amber { border-bottom-color: var(--amber); }
   .tool-header.blue  { border-bottom-color: var(--blue); }
+  .tool-header.gold  { border-bottom-color: #fff03a; }
 
   .tool-meta {
     display: flex;
@@ -237,6 +240,11 @@
   .tool-header.amber .right b { color: var(--amber); }
   .tool-header.blue  .name { color: var(--blue); }
   .tool-header.blue  .right b { color: var(--blue); }
+  .tool-header.gold  .name { color: #fff03a; }
+  .tool-header.gold  .right b { color: #fff03a; }
+  .section.gold .section-title { color: #fff03a; }
+  .launch-btn.gold { border-color: #fff03a; color: #fff03a; }
+  .launch-btn.gold:hover { background: #fff03a; color: var(--bg); }
 
   /* === LAUNCH BAR === */
   .launch-bar {
@@ -450,7 +458,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 02 active</div>
+    <div class="nav-progress" id="navProgress">// 03 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -461,6 +469,10 @@
       <span><span class="marker">▸</span>BARENE_FRAME</span>
       <span class="num">TOOL_02 · CASTING</span>
     </a>
+    <a href="#fluid-vessel" class="gold-link" data-nav="fluid-vessel">
+      <span><span class="marker">▸</span>FLUID_VESSEL</span>
+      <span class="num">TOOL_03 · MEMBRANE</span>
+    </a>
   </div>
 </nav>
 
@@ -469,7 +481,7 @@
 <!-- ============================ -->
 <section class="section">
   <div class="section-title">// SYSTEM_STATUS</div>
-  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">02 / 02</span></div>
+  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">03 / 03</span></div>
   <div class="row"><span class="label">STUDIO</span><span class="value">DOCTNASA&MRBORG</span></div>
   <div class="row"><span class="label">YEAR</span><span class="value">2026</span></div>
   <div class="row"><span class="label">ACCESS</span><span class="value">CLOUDFLARE.ACCESS</span></div>
@@ -685,6 +697,93 @@
 
 </div>
 
+<div class="divider">— — — — — — — —</div>
+
+<!-- ============================ -->
+<!-- TOOL_03 :: FLUID_VESSEL      -->
+<!-- ============================ -->
+<div class="tool-block" id="fluid-vessel" data-section="fluid-vessel">
+
+  <div class="tool-header gold">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_03 :: MEMBRANE</div>
+        <div class="name">FLUID_VESSEL</div>
+        <div class="sub">contenitore_acqua.biomorfo · deformazione_elastica · uncini · fili · spilli</div>
+      </div>
+      <div class="right">
+        <b>v0.1</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="fluid-vessel/preview.svg" alt="fluid_vessel preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="fluid-vessel/tool.html" class="launch-btn gold">▶ LAUNCH</a>
+    <a href="fluid-vessel/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section gold">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Generatore 3D di contenitori d'acqua a membrana biomorfa. Parte da un ellissoide organico e applica deformazioni elastiche tramite effettori trascinabili: uncini che tirano la parete verso l'esterno, spilli interni che spingono in tensione, fili di ancoraggio che mantengono la forma distorta — come nella reference di un sacchetto in latex teso da ganci metallici.</p>
+        <p>Il solver combina campi di influenza radiali con rilassamento laplaciano e preservazione parziale del volume. Materiale traslucido giallo-ambrato in viewport. Export mesh deformata in OBJ per stampa, silicone o rendering.</p>
+      </section>
+
+      <section class="section gold">
+        <div class="section-title">// CONTROLLI</div>
+        <ul>
+          <li><b>FORMA</b> — assi X/Y/Z, rumore organico, risoluzione icosfera</li>
+          <li><b>ELASTICITÀ</b> — rigidità, iterazioni di rilassamento, preservazione volume</li>
+          <li><b>UNCINO</b> — tira la membrana verso un punto esterno (gancio)</li>
+          <li><b>SPILLO</b> — spinge la parete dall'interno (asta/pin)</li>
+          <li><b>FILO</b> — ancoraggio doppio: punto sulla superficie + ancora lontana</li>
+          <li><b>PRESET REFERENCE</b> — configurazione ispirata alla reference visiva</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <div class="section-title">// KEYBOARD / MOUSE</div>
+        <div class="kbd">
+          <span><b>CLICK</b>aggiungi (modo +)</span>
+          <span><b>DRAG</b>sposta effettore</span>
+          <span><b>DEL</b>rimuovi</span>
+          <span><b>SCROLL</b>forza sel.</span>
+          <span><b>ORBIT</b>rotazione vista</span>
+        </div>
+      </section>
+    </div>
+
+    <div>
+      <section class="section gold">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>Three.js r160</dd>
+          <dt>OUTPUT</dt><dd>OBJ mesh chiusa</dd>
+          <dt>TOPOLOGIA</dt><dd>icosfera subdivisa</dd>
+          <dt>USO</dt><dd>design · silicone · 3D print</dd>
+        </dl>
+      </section>
+
+      <section class="section">
+        <div class="section-title">// PIPELINE</div>
+        <ul>
+          <li>Regola forma base ellissoide + organico</li>
+          <li>Carica preset o piazza effettori sulla membrana</li>
+          <li>Trascina uncini/fili per tensionare la forma</li>
+          <li>Export OBJ → Blender / slicer / simulazione fluidi</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
   <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.2</span>
   <span>END_OF_INDEX</span>
@@ -742,10 +841,11 @@
       var id = active.id;
       var label = id === 'cuore-statico' ? '// viewing CUORE_STATICO' :
                   id === 'barene-frame'  ? '// viewing BARENE_FRAME' :
-                  '// 02 active';
+                  id === 'fluid-vessel'  ? '// viewing FLUID_VESSEL' :
+                  '// 03 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 02 active';
+      navProgress.textContent = '// 03 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });

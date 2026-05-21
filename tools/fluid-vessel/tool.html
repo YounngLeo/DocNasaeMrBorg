@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>FLUID_VESSEL // MEMBRANE DEFORMER</title>
+<style>
+:root {
+  --bg-0:#050805;--bg-1:#0a0e0a;--bg-2:#121812;
+  --fg-0:#fff8d0;--fg-1:#e8d878;--fg-2:#8a7a3a;--fg-3:#3a3520;
+  --acc:#fff03a;--acc-2:#ffb000;--hook:#d0d0d0;--pin:#5eff7e;--wire:#4af6ff;
+  --mono:'Courier New','Courier',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg-0);color:var(--fg-1);font-family:var(--mono);font-size:12px;line-height:1.5;min-height:100vh;overflow:hidden}
+::selection{background:var(--acc);color:var(--bg-0)}
+.app{max-width:100%;height:100vh;display:grid;grid-template-rows:auto 1fr auto}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid var(--fg-3);padding:14px 18px 10px;flex-wrap:wrap}
+.head h1{font-size:13px;font-weight:normal;letter-spacing:.16em;color:var(--acc)}
+.head .sub{color:var(--fg-2);font-size:10px;letter-spacing:.1em;margin-top:3px}
+.head .meta{color:var(--fg-2);font-size:10px;text-align:right;letter-spacing:.08em}
+.head .meta b{color:var(--fg-1);font-weight:normal}
+.head a{color:var(--fg-2);text-decoration:none;border-bottom:1px dotted var(--fg-3)}
+main{display:grid;grid-template-columns:1fr 300px;min-height:0;flex:1}
+@media(max-width:900px){main{grid-template-columns:1fr;grid-template-rows:1fr auto}}
+.stage{position:relative;background:#000;min-height:0}
+#viewport{display:block;width:100%;height:100%;touch-action:none}
+.stage .corner{position:absolute;color:var(--fg-2);font-size:9px;letter-spacing:.08em;pointer-events:none}
+.stage .corner.tl{top:8px;left:10px}.stage .corner.tr{top:8px;right:10px}
+.stage .corner.bl{bottom:8px;left:10px}.stage .corner.br{bottom:8px;right:10px}
+.stage .modetag{position:absolute;top:8px;left:50%;transform:translateX(-50%);color:var(--acc);font-size:9px;letter-spacing:.14em;background:rgba(5,8,5,.75);padding:3px 10px;border:1px solid var(--fg-3);pointer-events:none}
+.panel{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding:12px;border-left:1px solid var(--fg-3);max-height:calc(100vh - 88px)}
+@media(max-width:900px){.panel{border-left:0;border-top:1px solid var(--fg-3);max-height:42vh}}
+.box{background:var(--bg-1);border:1px solid var(--fg-3);padding:10px;flex-shrink:0}
+.box.hook{border-left:2px solid var(--hook)}.box.pin{border-left:2px solid var(--pin)}.box.wire{border-left:2px solid var(--wire)}
+.box .lab{color:var(--fg-2);font-size:9px;letter-spacing:.14em;margin-bottom:8px;display:flex;justify-content:space-between}
+.box .lab .v{color:var(--acc)}
+.ctrl{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;flex-direction:column;gap:3px}
+.row label{display:flex;justify-content:space-between;font-size:10px;color:var(--fg-1)}
+.row label .vv{color:var(--fg-0)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:14px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--fg-3)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--acc);border:0;margin-top:-4.5px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+button{font-family:inherit;font-size:10px;letter-spacing:.08em;background:transparent;color:var(--fg-1);border:1px solid var(--fg-3);padding:7px 6px;cursor:pointer;text-transform:uppercase}
+button:hover{border-color:var(--acc);color:var(--acc)}
+button.on{background:var(--acc);color:var(--bg-0);border-color:var(--acc)}
+button.full{grid-column:1/-1}
+button.obj{border-color:var(--acc-2);color:var(--acc-2)}
+button.obj:hover{background:var(--acc-2);color:var(--bg-0)}
+button.del{border-color:#ff5a5a;color:#ff5a5a}
+.note{font-size:9px;color:var(--fg-2);letter-spacing:.06em;line-height:1.55;margin-top:4px}
+.foot{border-top:1px solid var(--fg-3);padding:8px 18px;color:var(--fg-2);font-size:9px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg-2);border:1px solid var(--acc);color:var(--acc);padding:7px 12px;font-size:10px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+.eff-list{display:flex;flex-direction:column;gap:4px;max-height:100px;overflow-y:auto;font-size:9px}
+.eff-item{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border:1px solid var(--fg-3);cursor:pointer}
+.eff-item.sel{border-color:var(--acc);color:var(--acc)}
+.eff-item .tag{padding:1px 4px;font-size:8px}
+.eff-item .tag.hook{background:rgba(208,208,208,.15);color:var(--hook)}
+.eff-item .tag.pin{background:rgba(94,255,126,.12);color:var(--pin)}
+.eff-item .tag.wire{background:rgba(74,246,255,.12);color:var(--wire)}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="head">
+  <div>
+    <div style="font-size:10px;color:var(--fg-2);margin-bottom:3px"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
+    <h1>[ FLUID_VESSEL :: MEMBRANE · ELASTIC DEFORM ]</h1>
+    <div class="sub">contenitore biomorfo · uncini · fili · spilli · export OBJ</div>
+  </div>
+  <div class="meta">
+    <b id="m_tris">— tris</b> · <b id="m_eff">0 eff</b><br>
+    <span id="m_mode">MOD: SPOSTA</span>
+  </div>
+</header>
+
+<main>
+  <div class="stage">
+    <canvas id="viewport"></canvas>
+    <div class="modetag" id="modetag">CLICK superficie · trascina effettori</div>
+    <div class="corner tl">[ membrane ]</div>
+    <div class="corner tr">[ effectors ]</div>
+    <div class="corner bl">[ elastic field ]</div>
+    <div class="corner br">[ OBJ export ]</div>
+  </div>
+
+  <aside class="panel">
+    <div class="box">
+      <div class="lab">FORMA BASE <span class="v">ellissoide</span></div>
+      <div class="ctrl">
+        <div class="row"><label><span>// larghezza X</span><span class="vv" id="v_rx">1.0</span></label><input type="range" id="p_rx" min="0.4" max="2" step="0.05" value="1"></div>
+        <div class="row"><label><span>// altezza Y</span><span class="vv" id="v_ry">1.6</span></label><input type="range" id="p_ry" min="0.5" max="3" step="0.05" value="1.6"></div>
+        <div class="row"><label><span>// profondità Z</span><span class="vv" id="v_rz">0.85</span></label><input type="range" id="p_rz" min="0.4" max="2" step="0.05" value="0.85"></div>
+        <div class="row"><label><span>// organico (rumore)</span><span class="vv" id="v_org">0.12</span></label><input type="range" id="p_org" min="0" max="0.35" step="0.01" value="0.12"></div>
+        <div class="row"><label><span>// risoluzione mesh</span><span class="vv" id="v_sub">4</span></label><input type="range" id="p_sub" min="2" max="6" step="1" value="4"></div>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="lab">ELASTICITÀ <span class="v">campo</span></div>
+      <div class="ctrl">
+        <div class="row"><label><span>// rigidità membrana</span><span class="vv" id="v_stiff">0.55</span></label><input type="range" id="p_stiff" min="0" max="1" step="0.05" value="0.55"></div>
+        <div class="row"><label><span>// rilassamento</span><span class="vv" id="v_relax">5</span></label><input type="range" id="p_relax" min="0" max="12" step="1" value="5"></div>
+        <div class="row"><label><span>// volume preserve</span><span class="vv" id="v_vol">0.35</span></label><input type="range" id="p_vol" min="0" max="0.8" step="0.05" value="0.35"></div>
+        <div class="row"><label><span>// opacità</span><span class="vv" id="v_op">0.72</span></label><input type="range" id="p_op" min="0.2" max="1" step="0.02" value="0.72"></div>
+      </div>
+    </div>
+
+    <div class="box hook">
+      <div class="lab">EFFETTORI <span class="v" id="eff_count">0</span></div>
+      <div class="btns" style="margin-bottom:8px">
+        <button type="button" id="mode_move" class="on">SPOSTA</button>
+        <button type="button" id="mode_add">+ AGGIUNGI</button>
+        <button type="button" id="type_hook" class="on">UNCINO</button>
+        <button type="button" id="type_pin">SPILLO</button>
+        <button type="button" id="type_wire">FILO</button>
+        <button type="button" id="btn_preset" class="full">↻ PRESET REFERENCE</button>
+        <button type="button" id="btn_clear" class="del">✕ RIMUOVI SELEZIONATO</button>
+      </div>
+      <div class="eff-list" id="eff_list"></div>
+      <div class="row" style="margin-top:8px"><label><span>// forza selezionato</span><span class="vv" id="v_str">1.0</span></label><input type="range" id="p_str" min="0.1" max="2.5" step="0.05" value="1"></div>
+      <div class="row"><label><span>// raggio influenza</span><span class="vv" id="v_rad">0.45</span></label><input type="range" id="p_rad" min="0.15" max="1.2" step="0.05" value="0.45"></div>
+      <p class="note">Click sulla membrana per piazzare (modo AGGIUNGI). Trascina per deformare. <b>Del</b> rimuove. Rotella regola forza.</p>
+    </div>
+
+    <div class="box">
+      <div class="lab">EXPORT</div>
+      <div class="btns">
+        <button type="button" id="btn_obj" class="obj full">↓ EXPORT OBJ</button>
+        <button type="button" id="btn_regen" class="full">↻ NUOVO SEED</button>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="foot">
+  <span>// deformazione elastica · Three.js · topologia sferica</span>
+  <span id="foot_readout">seed 0</span>
+</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const canvas = document.getElementById('viewport');
+const toastEl = document.getElementById('toast');
+
+const cfg = {
+  rx: 1, ry: 1.6, rz: 0.85,
+  organic: 0.12, subdiv: 4,
+  stiff: 0.55, relax: 5, volPreserve: 0.35, opacity: 0.72,
+  seed: Math.floor(Math.random() * 99999)
+};
+
+let mode = 'move';
+let addType = 'hook';
+let effectors = [];
+let selectedId = null;
+let dragId = null;
+let dragPart = 'surface';
+let neighbors = [];
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const hit = new THREE.Vector3();
+const normal = new THREE.Vector3();
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x030303);
+scene.fog = new THREE.Fog(0x030303, 6, 14);
+
+const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 50);
+camera.position.set(2.8, 1.4, 3.2);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.target.set(0, 0.2, 0);
+
+scene.add(new THREE.AmbientLight(0xfff0c0, 0.35));
+const key = new THREE.DirectionalLight(0xffffff, 1.1);
+key.position.set(3, 5, 4);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xfff03a, 0.45);
+rim.position.set(-4, 2, -3);
+scene.add(rim);
+const fill = new THREE.PointLight(0x5eff7e, 0.3, 12);
+fill.position.set(0, -2, 2);
+scene.add(fill);
+
+const effGroup = new THREE.Group();
+scene.add(effGroup);
+
+let geometry = null;
+let mesh = null;
+let basePositions = null;
+let restNormals = null;
+
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('on');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toastEl.classList.remove('on'), 2200);
+}
+
+function noise3(x, y, z, s) {
+  return Math.sin(x * 1.7 + s) * Math.cos(y * 2.1 - s * 0.7) * Math.sin(z * 1.9 + s * 1.3)
+    + 0.5 * Math.sin(x * 3.2 + s * 2) * Math.cos(z * 2.8 - s);
+}
+
+function baseAt(nx, ny, nz, i) {
+  const n = noise3(nx * 2.1, ny * 2.1, nz * 2.1, cfg.seed * 0.01 + i * 0.0003);
+  const bulge = 1 + cfg.organic * n;
+  return {
+    x: nx * cfg.rx * bulge,
+    y: ny * cfg.ry * bulge,
+    z: nz * cfg.rz * bulge
+  };
+}
+
+function buildNeighbors(geo) {
+  const idx = geo.index;
+  const n = geo.attributes.position.count;
+  const sets = Array.from({ length: n }, () => new Set());
+  for (let i = 0; i < idx.count; i += 3) {
+    const a = idx.getX(i), b = idx.getX(i + 1), c = idx.getX(i + 2);
+    sets[a].add(b); sets[a].add(c);
+    sets[b].add(a); sets[b].add(c);
+    sets[c].add(a); sets[c].add(b);
+  }
+  return sets.map(s => Array.from(s));
+}
+
+function influence(d, radius) {
+  if (d >= radius) return 0;
+  const t = 1 - d / radius;
+  return t * t * (3 - 2 * t);
+}
+
+function applyEffectors(pos, bx, by, bz, i) {
+  let x = bx, y = by, z = bz;
+  const cx = x, cy = y, cz = z;
+  const len0 = Math.sqrt(cx * cx + cy * cy + cz * cz) || 1;
+
+  for (let e = 0; e < effectors.length; e++) {
+    const ef = effectors[e];
+    const str = ef.strength * (1.1 - cfg.stiff * 0.5);
+    const R = ef.radius;
+
+    if (ef.type === 'hook') {
+      const dx = ef.ax - x, dy = ef.ay - y, dz = ef.az - z;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const w = influence(d, R) * str;
+      if (w <= 0) continue;
+      x += dx * w * 0.85;
+      y += dy * w * 0.85;
+      z += dz * w * 0.85;
+      const spike = w * str * 0.35;
+      x += (ef.ax - cx / len0 * cfg.ry) * spike * 0.02;
+      y += (ef.ay - cy / len0 * cfg.ry) * spike * 0.04;
+    } else if (ef.type === 'pin') {
+      const dx = x - ef.x, dy = y - ef.y, dz = z - ef.z;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.001;
+      const w = influence(d, R) * str;
+      x += (dx / d) * w * 0.55;
+      y += (dy / d) * w * 0.55;
+      z += (dz / d) * w * 0.55;
+    } else if (ef.type === 'wire') {
+      const dx = ef.ax - x, dy = ef.ay - y, dz = ef.az - z;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const w = influence(d, R * 1.2) * str * 0.7;
+      x += dx * w * 0.5;
+      y += dy * w * 0.5;
+      z += dz * w * 0.5;
+      const dx2 = ef.x - x, dy2 = ef.y - y, dz2 = ef.z - z;
+      const d2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2) || 0.001;
+      const w2 = influence(d2, R * 0.6) * str * 0.4;
+      x += (dx2 / d2) * w2 * 0.35;
+      y += (dy2 / d2) * w2 * 0.35;
+      z += (dz2 / d2) * w2 * 0.35;
+    }
+  }
+  return { x, y, z };
+}
+
+function deformMesh() {
+  if (!geometry || !basePositions) return;
+  const pos = geometry.attributes.position;
+  const tmp = new Float32Array(pos.count * 3);
+
+  for (let i = 0; i < pos.count; i++) {
+    const bx = basePositions[i * 3];
+    const by = basePositions[i * 3 + 1];
+    const bz = basePositions[i * 3 + 2];
+    const d = applyEffectors(i, bx, by, bz, i);
+    tmp[i * 3] = d.x;
+    tmp[i * 3 + 1] = d.y;
+    tmp[i * 3 + 2] = d.z;
+  }
+
+  const alpha = 0.42 - cfg.stiff * 0.22;
+  for (let pass = 0; pass < cfg.relax; pass++) {
+    const next = tmp.slice();
+    for (let i = 0; i < pos.count; i++) {
+      const nb = neighbors[i];
+      if (!nb.length) continue;
+      let ax = 0, ay = 0, az = 0;
+      for (let k = 0; k < nb.length; k++) {
+        const j = nb[k];
+        ax += tmp[j * 3]; ay += tmp[j * 3 + 1]; az += tmp[j * 3 + 2];
+      }
+      ax /= nb.length; ay /= nb.length; az /= nb.length;
+      next[i * 3] = tmp[i * 3] + (ax - tmp[i * 3]) * alpha;
+      next[i * 3 + 1] = tmp[i * 3 + 1] + (ay - tmp[i * 3 + 1]) * alpha;
+      next[i * 3 + 2] = tmp[i * 3 + 2] + (az - tmp[i * 3 + 2]) * alpha;
+    }
+    for (let i = 0; i < pos.count; i++) {
+      const bx = basePositions[i * 3];
+      const by = basePositions[i * 3 + 1];
+      const bz = basePositions[i * 3 + 2];
+      const t = applyEffectors(i, bx, by, bz, i);
+      const blend = 0.55 + cfg.stiff * 0.35;
+      next[i * 3] = next[i * 3] * (1 - blend) + t.x * blend;
+      next[i * 3 + 1] = next[i * 3 + 1] * (1 - blend) + t.y * blend;
+      next[i * 3 + 2] = next[i * 3 + 2] * (1 - blend) + t.z * blend;
+    }
+    tmp.set(next);
+  }
+
+  if (cfg.volPreserve > 0.01) {
+    for (let i = 0; i < pos.count; i++) {
+      const bx = basePositions[i * 3], by = basePositions[i * 3 + 1], bz = basePositions[i * 3 + 2];
+      const bl = Math.sqrt(bx * bx + by * by + bz * bz) || 1;
+      const x = tmp[i * 3], y = tmp[i * 3 + 1], z = tmp[i * 3 + 2];
+      const dl = Math.sqrt(x * x + y * y + z * z) || 1;
+      const scale = bl / dl;
+      const mix = cfg.volPreserve * 0.5;
+      tmp[i * 3] = x * (1 - mix + mix * scale);
+      tmp[i * 3 + 1] = y * (1 - mix + mix * scale);
+      tmp[i * 3 + 2] = z * (1 - mix + mix * scale);
+    }
+  }
+
+  for (let i = 0; i < pos.count; i++) {
+    pos.setXYZ(i, tmp[i * 3], tmp[i * 3 + 1], tmp[i * 3 + 2]);
+  }
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
+  document.getElementById('m_tris').textContent = (geometry.index.count / 3) + ' tris';
+}
+
+function rebuildBase() {
+  if (mesh) {
+    scene.remove(mesh);
+    geometry.dispose();
+    mesh.material.dispose();
+  }
+  geometry = new THREE.IcosahedronGeometry(1, cfg.subdiv);
+  basePositions = new Float32Array(geometry.attributes.position.count * 3);
+  restNormals = new Float32Array(geometry.attributes.position.count * 3);
+
+  const pos = geometry.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    const len = Math.sqrt(x * x + y * y + z * z) || 1;
+    const nx = x / len, ny = y / len, nz = z / len;
+    const b = baseAt(nx, ny, nz, i);
+    basePositions[i * 3] = b.x;
+    basePositions[i * 3 + 1] = b.y;
+    basePositions[i * 3 + 2] = b.z;
+    restNormals[i * 3] = nx;
+    restNormals[i * 3 + 1] = ny;
+    restNormals[i * 3 + 2] = nz;
+    pos.setXYZ(i, b.x, b.y, b.z);
+  }
+  neighbors = buildNeighbors(geometry);
+
+  const mat = new THREE.MeshPhysicalMaterial({
+    color: 0xfff0a0,
+    transparent: true,
+    opacity: cfg.opacity,
+    roughness: 0.35,
+    metalness: 0.05,
+    transmission: 0.55,
+    thickness: 0.4,
+    ior: 1.35,
+    side: THREE.DoubleSide,
+    clearcoat: 0.2,
+    emissive: 0x332200,
+    emissiveIntensity: 0.08
+  });
+  mesh = new THREE.Mesh(geometry, mat);
+  scene.add(mesh);
+  deformMesh();
+}
+
+function rebuildEffectorVisuals() {
+  while (effGroup.children.length) {
+    const c = effGroup.children[0];
+    c.geometry?.dispose();
+    c.material?.dispose();
+    effGroup.remove(c);
+  }
+
+  effectors.forEach(ef => {
+    const col = ef.type === 'hook' ? 0xcccccc : ef.type === 'pin' ? 0x5eff7e : 0x4af6ff;
+    const sel = ef.id === selectedId;
+
+    if (ef.type === 'hook' || ef.type === 'wire') {
+      const pts = [new THREE.Vector3(ef.x, ef.y, ef.z), new THREE.Vector3(ef.ax, ef.ay, ef.az)];
+      const lg = new THREE.BufferGeometry().setFromPoints(pts);
+      const ln = new THREE.Line(lg, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: sel ? 1 : 0.65 }));
+      effGroup.add(ln);
+      const hookGeo = new THREE.ConeGeometry(0.04, 0.12, 6);
+      const hook = new THREE.Mesh(hookGeo, new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8, roughness: 0.3 }));
+      hook.position.set(ef.ax, ef.ay, ef.az);
+      hook.lookAt(ef.x, ef.y, ef.z);
+      hook.rotateX(Math.PI / 2);
+      hook.userData.effId = ef.id;
+      hook.userData.effPart = 'anchor';
+      effGroup.add(hook);
+    }
+
+    const sgeo = new THREE.SphereGeometry(sel ? 0.07 : 0.05, 10, 10);
+    const smat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: sel ? 0.6 : 0.25 });
+    const sphere = new THREE.Mesh(sgeo, smat);
+    sphere.position.set(ef.x, ef.y, ef.z);
+    sphere.userData.effId = ef.id;
+    sphere.userData.effPart = 'surface';
+    effGroup.add(sphere);
+
+    if (ef.type === 'pin') {
+      const rod = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.015, 0.015, 0.25, 6),
+        new THREE.MeshStandardMaterial({ color: 0x5eff7e, metalness: 0.4, roughness: 0.5 })
+      );
+      rod.position.set(ef.x - ef.nx * 0.12, ef.y - ef.ny * 0.12, ef.z - ef.nz * 0.12);
+      rod.lookAt(ef.x + ef.nx, ef.y + ef.ny, ef.z + ef.nz);
+      rod.rotateX(Math.PI / 2);
+      effGroup.add(rod);
+    }
+  });
+
+  document.getElementById('m_eff').textContent = effectors.length + ' eff';
+  document.getElementById('eff_count').textContent = String(effectors.length);
+  renderEffList();
+}
+
+function renderEffList() {
+  const list = document.getElementById('eff_list');
+  list.innerHTML = '';
+  effectors.forEach(ef => {
+    const div = document.createElement('div');
+    div.className = 'eff-item' + (ef.id === selectedId ? ' sel' : '');
+    div.innerHTML = '<span>#' + ef.id + ' <span class="tag ' + ef.type + '">' + ef.type + '</span></span><span>s' + ef.strength.toFixed(1) + '</span>';
+    div.addEventListener('click', () => { selectedId = ef.id; syncSelectedSliders(); rebuildEffectorVisuals(); });
+    list.appendChild(div);
+  });
+}
+
+function addEffector(type, surfacePoint, surfNormal) {
+  const id = effectors.length ? Math.max(...effectors.map(e => e.id)) + 1 : 1;
+  const nx = surfNormal.x, ny = surfNormal.y, nz = surfNormal.z;
+  const ef = {
+    id, type,
+    x: surfacePoint.x, y: surfacePoint.y, z: surfacePoint.z,
+    nx, ny, nz,
+    ax: surfacePoint.x + nx * 0.8,
+    ay: surfacePoint.y + ny * 0.8,
+    az: surfacePoint.z + nz * 0.8,
+    strength: parseFloat(document.getElementById('p_str').value),
+    radius: parseFloat(document.getElementById('p_rad').value)
+  };
+  if (type === 'hook') {
+    ef.ax = surfacePoint.x + nx * 1.1;
+    ef.ay = surfacePoint.y + ny * 1.1 + 0.3;
+    ef.az = surfacePoint.z + nz * 1.1;
+  } else if (type === 'wire') {
+    ef.ax = surfacePoint.x + nx * 1.4;
+    ef.ay = surfacePoint.y + ny * 1.4 + 0.5;
+    ef.az = surfacePoint.z + nz * 1.4;
+  } else if (type === 'pin') {
+    ef.x = surfacePoint.x + nx * 0.08;
+    ef.y = surfacePoint.y + ny * 0.08;
+    ef.z = surfacePoint.z + nz * 0.08;
+  }
+  effectors.push(ef);
+  selectedId = id;
+  rebuildEffectorVisuals();
+  deformMesh();
+}
+
+function loadPreset() {
+  effectors = [];
+  const mk = (type, x, y, z, ax, ay, az, s, r) => ({
+    id: 0, type, x, y, z, nx: x, ny: y / 1.6, nz: z,
+    ax, ay, az, strength: s, radius: r
+  });
+  const hooks = [
+    mk('hook', -0.55, 1.35, 0.05, -0.5, 2.1, 0.1, 1.4, 0.55),
+    mk('hook', 0, 1.45, 0, 0, 2.3, 0, 1.5, 0.55),
+    mk('hook', 0.55, 1.35, -0.05, 0.5, 2.1, -0.1, 1.4, 0.55),
+    mk('pin', -0.7, 0.5, 0.35, 0, 0, 0, 1.1, 0.4),
+    mk('pin', 0.75, 0.35, -0.2, 0, 0, 0, 1.0, 0.38),
+    mk('pin', -0.35, -0.15, 0.65, 0, 0, 0, 0.95, 0.42),
+    mk('pin', 0.4, -0.25, -0.55, 0, 0, 0, 1.05, 0.4),
+    mk('pin', 0.15, 0.75, 0.7, 0, 0, 0, 0.9, 0.35),
+    mk('wire', -0.85, 0.95, 0.15, -1.2, 1.6, 0.4, 0.85, 0.5),
+    mk('wire', 0.9, 0.85, -0.15, 1.2, 1.5, -0.35, 0.85, 0.5)
+  ];
+  hooks.forEach((h, i) => { h.id = i + 1; effectors.push(h); });
+  selectedId = 1;
+  rebuildEffectorVisuals();
+  deformMesh();
+  toast('PRESET REFERENCE CARICATO');
+}
+
+function exportOBJ() {
+  if (!geometry) return;
+  deformMesh();
+  const pos = geometry.attributes.position;
+  const idx = geometry.index;
+  const lines = ['# FLUID_VESSEL export', '# seed ' + cfg.seed, 'o membrane'];
+  for (let i = 0; i < pos.count; i++) {
+    lines.push('v ' + pos.getX(i).toFixed(6) + ' ' + pos.getY(i).toFixed(6) + ' ' + pos.getZ(i).toFixed(6));
+  }
+  lines.push('g membrane');
+  for (let i = 0; i < idx.count; i += 3) {
+    lines.push('f ' + (idx.getX(i) + 1) + ' ' + (idx.getX(i + 1) + 1) + ' ' + (idx.getX(i + 2) + 1));
+  }
+  const blob = new Blob([lines.join('\n') + '\n'], { type: 'model/obj' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'fluid_vessel_' + cfg.seed + '.obj';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 300);
+  toast('OBJ EXPORT · ' + (idx.count / 3) + ' faces');
+}
+
+function syncSelectedSliders() {
+  const ef = effectors.find(e => e.id === selectedId);
+  if (!ef) return;
+  document.getElementById('p_str').value = ef.strength;
+  document.getElementById('v_str').textContent = ef.strength.toFixed(2);
+  document.getElementById('p_rad').value = ef.radius;
+  document.getElementById('v_rad').textContent = ef.radius.toFixed(2);
+}
+
+function pointerToRay(e) {
+  const r = canvas.getBoundingClientRect();
+  pointer.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  pointer.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+}
+
+function pickMesh() {
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObject(mesh);
+  return hits[0] || null;
+}
+
+function pickEffector() {
+  raycaster.setFromCamera(pointer, camera);
+  const meshes = effGroup.children.filter(c => c.userData.effId != null);
+  const hits = raycaster.intersectObjects(meshes);
+  if (!hits[0]) return null;
+  return { id: hits[0].object.userData.effId, part: hits[0].object.userData.effPart || 'surface' };
+}
+
+function onPointerDown(e) {
+  if (e.button !== 0) return;
+  pointerToRay(e);
+  if (mode === 'add') {
+    const h = pickMesh();
+    if (h) addEffector(addType, h.point, h.face.normal);
+    return;
+  }
+  dragId = pickEffector();
+  if (dragId != null) {
+    selectedId = dragId.id;
+    dragPart = dragId.part;
+    dragId = dragId.id;
+    syncSelectedSliders();
+    rebuildEffectorVisuals();
+    controls.enabled = false;
+  }
+}
+
+function onPointerMove(e) {
+  if (dragId == null) return;
+  pointerToRay(e);
+  const ef = effectors.find(x => x.id === dragId);
+  if (!ef) return;
+
+  if (dragPart === 'anchor') {
+    raycaster.setFromCamera(pointer, camera);
+    const plane = new THREE.Plane();
+    const camDir = new THREE.Vector3();
+    camera.getWorldDirection(camDir);
+    plane.setFromNormalAndCoplanarPoint(camDir, new THREE.Vector3(ef.ax, ef.ay, ef.az));
+    const pt = new THREE.Vector3();
+    if (!raycaster.ray.intersectPlane(plane, pt)) return;
+    ef.ax = pt.x; ef.ay = pt.y; ef.az = pt.z;
+  } else {
+    const h = pickMesh();
+    if (!h) return;
+    const odx = ef.ax - ef.x, ody = ef.ay - ef.y, odz = ef.az - ef.z;
+    ef.x = h.point.x; ef.y = h.point.y; ef.z = h.point.z;
+    ef.nx = h.face.normal.x; ef.ny = h.face.normal.y; ef.nz = h.face.normal.z;
+    if (ef.type === 'hook' || ef.type === 'wire') {
+      ef.ax = ef.x + odx;
+      ef.ay = ef.y + ody;
+      ef.az = ef.z + odz;
+    }
+  }
+  rebuildEffectorVisuals();
+  deformMesh();
+}
+
+function onPointerUp() {
+  dragId = null;
+  controls.enabled = true;
+}
+
+canvas.addEventListener('pointerdown', onPointerDown);
+window.addEventListener('pointermove', onPointerMove);
+window.addEventListener('pointerup', onPointerUp);
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (selectedId == null) return;
+    effectors = effectors.filter(x => x.id !== selectedId);
+    selectedId = effectors.length ? effectors[effectors.length - 1].id : null;
+    rebuildEffectorVisuals();
+    deformMesh();
+  }
+});
+
+canvas.addEventListener('wheel', e => {
+  if (selectedId == null) return;
+  const ef = effectors.find(x => x.id === selectedId);
+  if (!ef) return;
+  e.preventDefault();
+  ef.strength = Math.max(0.1, Math.min(2.5, ef.strength + (e.deltaY > 0 ? -0.05 : 0.05)));
+  syncSelectedSliders();
+  deformMesh();
+}, { passive: false });
+
+function bindRange(id, vid, key, fmt, rebuild) {
+  const el = document.getElementById(id);
+  const out = document.getElementById(vid);
+  const upd = () => {
+    const v = parseFloat(el.value);
+    cfg[key] = v;
+    out.textContent = fmt(v);
+    if (key === 'opacity' && mesh) mesh.material.opacity = v;
+    if (rebuild === 'base') rebuildBase();
+    else if (rebuild === 'mesh') deformMesh();
+  };
+  el.addEventListener('input', upd);
+  upd();
+}
+
+bindRange('p_rx', 'v_rx', 'rx', v => v.toFixed(2), 'base');
+bindRange('p_ry', 'v_ry', 'ry', v => v.toFixed(2), 'base');
+bindRange('p_rz', 'v_rz', 'rz', v => v.toFixed(2), 'base');
+bindRange('p_org', 'v_org', 'organic', v => v.toFixed(2), 'base');
+bindRange('p_sub', 'v_sub', 'subdiv', v => String(v), 'base');
+bindRange('p_stiff', 'v_stiff', 'stiff', v => v.toFixed(2), 'mesh');
+bindRange('p_relax', 'v_relax', 'relax', v => String(v), 'mesh');
+bindRange('p_vol', 'v_vol', 'volPreserve', v => v.toFixed(2), 'mesh');
+bindRange('p_op', 'v_op', 'opacity', v => v.toFixed(2), 'mesh');
+
+document.getElementById('p_str').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  document.getElementById('v_str').textContent = v.toFixed(2);
+  const ef = effectors.find(x => x.id === selectedId);
+  if (ef) { ef.strength = v; deformMesh(); }
+});
+document.getElementById('p_rad').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  document.getElementById('v_rad').textContent = v.toFixed(2);
+  const ef = effectors.find(x => x.id === selectedId);
+  if (ef) { ef.radius = v; deformMesh(); }
+});
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('mode_move').classList.toggle('on', m === 'move');
+  document.getElementById('mode_add').classList.toggle('on', m === 'add');
+  document.getElementById('m_mode').textContent = 'MOD: ' + (m === 'move' ? 'SPOSTA' : 'AGGIUNGI');
+}
+document.getElementById('mode_move').onclick = () => setMode('move');
+document.getElementById('mode_add').onclick = () => setMode('add');
+
+function setType(t) {
+  addType = t;
+  ['hook', 'pin', 'wire'].forEach(x => {
+    document.getElementById('type_' + x).classList.toggle('on', x === t);
+  });
+}
+document.getElementById('type_hook').onclick = () => setType('hook');
+document.getElementById('type_pin').onclick = () => setType('pin');
+document.getElementById('type_wire').onclick = () => setType('wire');
+
+document.getElementById('btn_preset').onclick = loadPreset;
+document.getElementById('btn_clear').onclick = () => {
+  if (selectedId == null) return;
+  effectors = effectors.filter(x => x.id !== selectedId);
+  selectedId = null;
+  rebuildEffectorVisuals();
+  deformMesh();
+};
+document.getElementById('btn_obj').onclick = exportOBJ;
+document.getElementById('btn_regen').onclick = () => {
+  cfg.seed = Math.floor(Math.random() * 99999);
+  document.getElementById('foot_readout').textContent = 'seed ' + cfg.seed;
+  rebuildBase();
+};
+
+function resize() {
+  const stage = canvas.parentElement;
+  const w = stage.clientWidth;
+  const h = stage.clientHeight;
+  if (w < 10 || h < 10) return;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+window.addEventListener('resize', resize);
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+rebuildBase();
+loadPreset();
+resize();
+document.getElementById('foot_readout').textContent = 'seed ' + cfg.seed;
+animate();
+</script>
+</body>
+</html>
