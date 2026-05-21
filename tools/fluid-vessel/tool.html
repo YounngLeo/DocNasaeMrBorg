@@ -151,6 +151,7 @@ button.del{border-color:#ff5a5a;color:#ff5a5a}
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const canvas = document.getElementById('viewport');
 const toastEl = document.getElementById('toast');
@@ -260,15 +261,33 @@ function baseAt(nx, ny, nz, i) {
   };
 }
 
+function triCount(geo) {
+  const idx = geo?.index;
+  const pos = geo?.attributes?.position;
+  if (idx) return Math.floor(idx.count / 3);
+  if (pos) return Math.floor(pos.count / 3);
+  return 0;
+}
+
 function buildNeighbors(geo) {
-  const idx = geo.index;
-  const n = geo.attributes.position.count;
+  const pos = geo.attributes.position;
+  if (!pos) return [];
+  const n = pos.count;
   const sets = Array.from({ length: n }, () => new Set());
-  for (let i = 0; i < idx.count; i += 3) {
-    const a = idx.getX(i), b = idx.getX(i + 1), c = idx.getX(i + 2);
+  const idx = geo.index;
+  const addTri = (a, b, c) => {
     sets[a].add(b); sets[a].add(c);
     sets[b].add(a); sets[b].add(c);
     sets[c].add(a); sets[c].add(b);
+  };
+  if (idx) {
+    for (let i = 0; i < idx.count; i += 3) {
+      addTri(idx.getX(i), idx.getX(i + 1), idx.getX(i + 2));
+    }
+  } else {
+    for (let i = 0; i < n; i += 3) {
+      addTri(i, i + 1, i + 2);
+    }
   }
   return sets.map(s => Array.from(s));
 }
@@ -328,6 +347,7 @@ function applyEffectors(pos, bx, by, bz, i) {
 function deformMesh() {
   if (!geometry || !basePositions) return;
   const pos = geometry.attributes.position;
+  if (!pos) return;
   const tmp = new Float32Array(pos.count * 3);
 
   for (let i = 0; i < pos.count; i++) {
@@ -388,16 +408,21 @@ function deformMesh() {
   }
   pos.needsUpdate = true;
   geometry.computeVertexNormals();
-  document.getElementById('m_tris').textContent = (geometry.index.count / 3) + ' tris';
+  document.getElementById('m_tris').textContent = triCount(geometry) + ' tris';
 }
 
 function rebuildBase() {
   if (mesh) {
     scene.remove(mesh);
-    geometry.dispose();
     mesh.material.dispose();
+    mesh = null;
   }
-  geometry = new THREE.IcosahedronGeometry(1, cfg.subdiv);
+  if (geometry) {
+    geometry.dispose();
+    geometry = null;
+  }
+  const detail = Math.max(0, Math.min(6, Math.round(cfg.subdiv)));
+  geometry = mergeVertices(new THREE.IcosahedronGeometry(1, detail));
   basePositions = new Float32Array(geometry.attributes.position.count * 3);
   restNormals = new Float32Array(geometry.attributes.position.count * 3);
 
@@ -569,8 +594,14 @@ function exportOBJ() {
     lines.push('v ' + pos.getX(i).toFixed(6) + ' ' + pos.getY(i).toFixed(6) + ' ' + pos.getZ(i).toFixed(6));
   }
   lines.push('g membrane');
-  for (let i = 0; i < idx.count; i += 3) {
-    lines.push('f ' + (idx.getX(i) + 1) + ' ' + (idx.getX(i + 1) + 1) + ' ' + (idx.getX(i + 2) + 1));
+  if (idx) {
+    for (let i = 0; i < idx.count; i += 3) {
+      lines.push('f ' + (idx.getX(i) + 1) + ' ' + (idx.getX(i + 1) + 1) + ' ' + (idx.getX(i + 2) + 1));
+    }
+  } else {
+    for (let i = 0; i < pos.count; i += 3) {
+      lines.push('f ' + (i + 1) + ' ' + (i + 2) + ' ' + (i + 3));
+    }
   }
   const blob = new Blob([lines.join('\n') + '\n'], { type: 'model/obj' });
   const url = URL.createObjectURL(blob);
@@ -581,7 +612,7 @@ function exportOBJ() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 300);
-  toast('OBJ EXPORT · ' + (idx.count / 3) + ' faces');
+  toast('OBJ EXPORT · ' + triCount(geometry) + ' faces');
 }
 
 function syncSelectedSliders() {
