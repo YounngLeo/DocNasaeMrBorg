@@ -118,7 +118,7 @@
     border-top: 0 solid var(--dim);
   }
   .nav.open .nav-list {
-    max-height: 240px;
+    max-height: 300px;
     border-top: 1px solid var(--dim);
   }
   .nav-list a {
@@ -709,10 +709,10 @@
       <div class="left">
         <div class="brand">// TOOL_03 :: MEMBRANE</div>
         <div class="name">FLUID_VESSEL</div>
-        <div class="sub">contenitore_acqua.biomorfo · deformazione_elastica · uncini · fili · spilli</div>
+        <div class="sub">contenitore_acqua.biomorfo · PBD · uncini · parete spessa · export OBJ</div>
       </div>
       <div class="right">
-        <b>v0.1</b> · 2026<br>
+        <b>v0.2</b> · 2026<br>
         STATUS <b>ACTIVE</b>
       </div>
     </div>
@@ -731,29 +731,27 @@
     <div>
       <section class="section gold">
         <div class="section-title">// OVERVIEW</div>
-        <p>Generatore 3D di contenitori d'acqua a membrana biomorfa. Parte da un ellissoide organico e applica deformazioni elastiche tramite effettori trascinabili: uncini che tirano la parete verso l'esterno, spilli interni che spingono in tensione, fili di ancoraggio che mantengono la forma distorta — come nella reference di un sacchetto in latex teso da ganci metallici.</p>
-        <p>Il solver combina campi di influenza radiali con rilassamento laplaciano e preservazione parziale del volume. Materiale traslucido giallo-ambrato in viewport. Export mesh deformata in OBJ per stampa, silicone o rendering.</p>
+        <p>Generatore 3D di contenitori d'acqua a membrana biomorfa. Simula un vaso in latex teso da uncini metallici con un solver Position-Based Dynamics: pressione interna, elasticità, tensione superficiale e preservazione del volume. La mesh di rendering include parete spessa e bordo chiuso, pronta per export OBJ.</p>
+        <p>Click sulla superficie per aggiungere uncini, trascina per deformare, Shift+click per rimuovere. Tre punti di sospensione iniziali sul bordo superiore. Materiale traslucido ambra in viewport.</p>
       </section>
 
       <section class="section gold">
         <div class="section-title">// CONTROLLI</div>
         <ul>
-          <li><b>FORMA</b> — assi X/Y/Z, rumore organico, risoluzione icosfera</li>
-          <li><b>ELASTICITÀ</b> — rigidità, iterazioni di rilassamento, preservazione volume</li>
-          <li><b>UNCINO</b> — tira la membrana verso un punto esterno (gancio)</li>
-          <li><b>SPILLO</b> — spinge la parete dall'interno (asta/pin)</li>
-          <li><b>FILO</b> — ancoraggio doppio: punto sulla superficie + ancora lontana</li>
-          <li><b>PRESET REFERENCE</b> — configurazione ispirata alla reference visiva</li>
+          <li><b>PBD</b> — pressione, elasticità, tensione, smorzamento</li>
+          <li><b>UNCINI</b> — pin su vertice, trascinabili con cavo di sospensione</li>
+          <li><b>VASO</b> — profilo biomorfo parametrico, bordo rigido</li>
+          <li><b>PARETE</b> — shell spessa per export watertight</li>
+          <li><b>EXPORT</b> — OBJ chiuso via OBJExporter</li>
         </ul>
       </section>
 
       <section class="section">
         <div class="section-title">// KEYBOARD / MOUSE</div>
         <div class="kbd">
-          <span><b>CLICK</b>aggiungi (modo +)</span>
-          <span><b>DRAG</b>sposta effettore</span>
-          <span><b>DEL</b>rimuovi</span>
-          <span><b>SCROLL</b>forza sel.</span>
+          <span><b>CLICK</b>aggiungi uncino</span>
+          <span><b>DRAG</b>deforma</span>
+          <span><b>SHIFT+CLICK</b>rimuovi</span>
           <span><b>ORBIT</b>rotazione vista</span>
         </div>
       </section>
@@ -763,9 +761,9 @@
       <section class="section gold">
         <div class="section-title">// METADATA</div>
         <dl class="meta-grid">
-          <dt>ENGINE</dt><dd>Three.js r160</dd>
-          <dt>OUTPUT</dt><dd>OBJ mesh chiusa</dd>
-          <dt>TOPOLOGIA</dt><dd>icosfera subdivisa</dd>
+          <dt>ENGINE</dt><dd>Three.js r160 · PBD</dd>
+          <dt>OUTPUT</dt><dd>OBJ shell chiusa</dd>
+          <dt>TOPOLOGIA</dt><dd>vaso parametrico</dd>
           <dt>USO</dt><dd>design · silicone · 3D print</dd>
         </dl>
       </section>
@@ -773,10 +771,10 @@
       <section class="section">
         <div class="section-title">// PIPELINE</div>
         <ul>
-          <li>Regola forma base ellissoide + organico</li>
-          <li>Carica preset o piazza effettori sulla membrana</li>
-          <li>Trascina uncini/fili per tensionare la forma</li>
-          <li>Export OBJ → Blender / slicer / simulazione fluidi</li>
+          <li>Regola pressione, elasticità e spessore parete</li>
+          <li>Click sulla membrana per piazzare uncini</li>
+          <li>Trascina uncini per tensionare la forma</li>
+          <li>Export OBJ → Blender / slicer / silicone</li>
         </ul>
       </section>
     </div>

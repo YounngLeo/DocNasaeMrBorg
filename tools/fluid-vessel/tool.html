@@ -2,844 +2,1061 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>FLUID_VESSEL // MEMBRANE DEFORMER</title>
+<title>FLUID_VESSEL // MEMBRANA</title>
 <style>
-:root {
-  --bg-0:#050805;--bg-1:#0a0e0a;--bg-2:#121812;
-  --fg-0:#fff8d0;--fg-1:#e8d878;--fg-2:#8a7a3a;--fg-3:#3a3520;
-  --acc:#fff03a;--acc-2:#ffb000;--hook:#d0d0d0;--pin:#5eff7e;--wire:#4af6ff;
-  --mono:'Courier New','Courier',monospace;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg-0);color:var(--fg-1);font-family:var(--mono);font-size:12px;line-height:1.5;min-height:100vh;overflow:hidden}
-::selection{background:var(--acc);color:var(--bg-0)}
-.app{max-width:100%;height:100vh;display:grid;grid-template-rows:auto 1fr auto}
-.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid var(--fg-3);padding:14px 18px 10px;flex-wrap:wrap}
-.head h1{font-size:13px;font-weight:normal;letter-spacing:.16em;color:var(--acc)}
-.head .sub{color:var(--fg-2);font-size:10px;letter-spacing:.1em;margin-top:3px}
-.head .meta{color:var(--fg-2);font-size:10px;text-align:right;letter-spacing:.08em}
-.head .meta b{color:var(--fg-1);font-weight:normal}
-.head a{color:var(--fg-2);text-decoration:none;border-bottom:1px dotted var(--fg-3)}
-main{display:grid;grid-template-columns:1fr 300px;min-height:0;overflow:hidden}
-@media(max-width:900px){main{grid-template-columns:1fr;grid-template-rows:minmax(280px,1fr) auto}}
-.stage{position:relative;background:#0a0a0a;min-height:280px;height:100%;overflow:hidden}
-#viewport{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
-.stage .corner{position:absolute;color:var(--fg-2);font-size:9px;letter-spacing:.08em;pointer-events:none}
-.stage .corner.tl{top:8px;left:10px}.stage .corner.tr{top:8px;right:10px}
-.stage .corner.bl{bottom:8px;left:10px}.stage .corner.br{bottom:8px;right:10px}
-.stage .modetag{position:absolute;top:8px;left:50%;transform:translateX(-50%);color:var(--acc);font-size:9px;letter-spacing:.14em;background:rgba(5,8,5,.75);padding:3px 10px;border:1px solid var(--fg-3);pointer-events:none}
-.panel{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding:12px;border-left:1px solid var(--fg-3);max-height:calc(100vh - 88px)}
-@media(max-width:900px){.panel{border-left:0;border-top:1px solid var(--fg-3);max-height:42vh}}
-.box{background:var(--bg-1);border:1px solid var(--fg-3);padding:10px;flex-shrink:0}
-.box.hook{border-left:2px solid var(--hook)}.box.pin{border-left:2px solid var(--pin)}.box.wire{border-left:2px solid var(--wire)}
-.box .lab{color:var(--fg-2);font-size:9px;letter-spacing:.14em;margin-bottom:8px;display:flex;justify-content:space-between}
-.box .lab .v{color:var(--acc)}
-.ctrl{display:flex;flex-direction:column;gap:8px}
-.row{display:flex;flex-direction:column;gap:3px}
-.row label{display:flex;justify-content:space-between;font-size:10px;color:var(--fg-1)}
-.row label .vv{color:var(--fg-0)}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:14px;background:transparent;cursor:pointer}
-input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--fg-3)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--acc);border:0;margin-top:-4.5px}
-.btns{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-button{font-family:inherit;font-size:10px;letter-spacing:.08em;background:transparent;color:var(--fg-1);border:1px solid var(--fg-3);padding:7px 6px;cursor:pointer;text-transform:uppercase}
-button:hover{border-color:var(--acc);color:var(--acc)}
-button.on{background:var(--acc);color:var(--bg-0);border-color:var(--acc)}
-button.full{grid-column:1/-1}
-button.obj{border-color:var(--acc-2);color:var(--acc-2)}
-button.obj:hover{background:var(--acc-2);color:var(--bg-0)}
-button.del{border-color:#ff5a5a;color:#ff5a5a}
-.note{font-size:9px;color:var(--fg-2);letter-spacing:.06em;line-height:1.55;margin-top:4px}
-.foot{border-top:1px solid var(--fg-3);padding:8px 18px;color:var(--fg-2);font-size:9px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg-2);border:1px solid var(--acc);color:var(--acc);padding:7px 12px;font-size:10px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
-.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
-.eff-list{display:flex;flex-direction:column;gap:4px;max-height:100px;overflow-y:auto;font-size:9px}
-.eff-item{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border:1px solid var(--fg-3);cursor:pointer}
-.eff-item.sel{border-color:var(--acc);color:var(--acc)}
-.eff-item .tag{padding:1px 4px;font-size:8px}
-.eff-item .tag.hook{background:rgba(208,208,208,.15);color:var(--hook)}
-.eff-item .tag.pin{background:rgba(94,255,126,.12);color:var(--pin)}
-.eff-item .tag.wire{background:rgba(74,246,255,.12);color:var(--wire)}
+  :root {
+    --bg-0: #050805;
+    --bg-1: #0a0e0a;
+    --fg-0: #fff8d0;
+    --fg-1: #e8d878;
+    --fg-2: #8a7a3a;
+    --fg-3: #3a3520;
+    --acc: #fff03a;
+    --acc-2: #ffb000;
+    --hook: #c8ccd0;
+    --mono: 'Courier New', 'Courier', monospace;
+    --hairline: rgba(232, 220, 192, 0.18);
+    --hairline-bright: rgba(255, 240, 58, 0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: var(--bg-0); color: var(--fg-1);
+    font-family: var(--mono); font-size: 12px; line-height: 1.5;
+  }
+  ::selection { background: var(--acc); color: var(--bg-0); }
+  canvas { display: block; cursor: crosshair; touch-action: none; }
+
+  .title {
+    position: fixed; top: 24px; left: 28px; z-index: 10;
+    pointer-events: none; user-select: none;
+  }
+  .title .back {
+    font-size: 10px; letter-spacing: 0.12em; color: var(--fg-2);
+    margin-bottom: 6px; pointer-events: auto;
+  }
+  .title .back a { color: var(--fg-2); text-decoration: none; border-bottom: 1px dotted var(--fg-3); }
+  .title .back a:hover { color: var(--acc); }
+  .title h1 {
+    font-family: var(--mono);
+    font-size: 14px; font-weight: normal;
+    letter-spacing: 0.18em; color: var(--acc);
+    text-transform: uppercase;
+  }
+  .title .sub {
+    margin-top: 8px; font-size: 10px; letter-spacing: 0.14em;
+    color: var(--fg-2); text-transform: uppercase;
+  }
+  .title .ver {
+    margin-top: 4px; font-size: 9px; color: var(--fg-3); letter-spacing: 0.12em;
+  }
+
+  .hint {
+    position: fixed; bottom: 28px; left: 28px; z-index: 10;
+    font-size: 10px; color: var(--fg-2); letter-spacing: 0.08em;
+    pointer-events: none; user-select: none; max-width: 340px; line-height: 1.7;
+  }
+  .hint .key {
+    color: var(--fg-0); border: 1px solid var(--fg-3);
+    padding: 1px 5px; margin-right: 2px; font-size: 9px;
+  }
+
+  .actions {
+    position: fixed; top: 24px; right: 28px; z-index: 10;
+    display: flex; flex-direction: column; gap: 0;
+    background: rgba(5, 8, 5, 0.82);
+    border: 1px solid var(--fg-3);
+  }
+  .actions button {
+    background: transparent; color: var(--fg-1);
+    border: none; border-bottom: 1px solid var(--fg-3);
+    padding: 10px 16px; font-family: inherit; font-size: 10px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    cursor: pointer; text-align: left; transition: background 0.12s, color 0.12s;
+    min-width: 190px;
+  }
+  .actions button:last-child { border-bottom: none; }
+  .actions button:hover { background: var(--acc); color: var(--bg-0); }
+  .actions button.danger:hover { background: #a04545; color: var(--fg-0); }
+  .actions button.export { color: var(--acc-2); }
+  .actions button.export:hover { background: var(--acc-2); color: var(--bg-0); }
+
+  .controls {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 10;
+    display: flex; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 56px);
+    background: rgba(5, 8, 5, 0.82); border: 1px solid var(--fg-3);
+  }
+  .control {
+    padding: 12px 18px; border-right: 1px solid var(--fg-3); min-width: 140px;
+  }
+  .control:last-child { border-right: none; }
+  .control label {
+    display: block; font-size: 9px; letter-spacing: 0.18em;
+    color: var(--fg-2); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .control .row { display: flex; align-items: center; gap: 10px; }
+  .control input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 88px; height: 14px; background: transparent; outline: none; margin: 0;
+  }
+  .control input[type="range"]::-webkit-slider-runnable-track { height: 1px; background: var(--fg-3); }
+  .control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 10px; height: 10px; background: var(--acc); cursor: pointer; border: 0; margin-top: -4.5px;
+  }
+  .control input[type="range"]::-moz-range-track { height: 1px; background: var(--fg-3); }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 10px; height: 10px; background: var(--acc); cursor: pointer; border: 0; border-radius: 0;
+  }
+  .control .val {
+    font-size: 10px; color: var(--fg-0); min-width: 36px;
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+
+  .status {
+    position: fixed; bottom: 28px; right: 28px; z-index: 10;
+    font-size: 9px; color: var(--fg-2); letter-spacing: 0.14em;
+    text-align: right; line-height: 1.8; text-transform: uppercase;
+    pointer-events: none; font-variant-numeric: tabular-nums;
+  }
+  .status span { color: var(--acc); }
+
+  .corner {
+    position: fixed; width: 14px; height: 14px; z-index: 9;
+    border-color: var(--hairline-bright); pointer-events: none;
+  }
+  .corner.tl { top: 12px; left: 12px; border-top: 1px solid; border-left: 1px solid; }
+  .corner.tr { top: 12px; right: 12px; border-top: 1px solid; border-right: 1px solid; }
+  .corner.bl { bottom: 12px; left: 12px; border-bottom: 1px solid; border-left: 1px solid; }
+  .corner.br { bottom: 12px; right: 12px; border-bottom: 1px solid; border-right: 1px solid; }
+
+  .grain {
+    position: fixed; inset: 0; pointer-events: none; z-index: 100; opacity: 0.028;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @media (max-width: 900px) {
+    .controls { bottom: auto; top: auto; position: fixed; left: 28px; right: 28px; transform: none; top: 120px; max-height: 38vh; overflow-y: auto; }
+    .hint { display: none; }
+  }
 </style>
 </head>
 <body>
-<div class="app">
-<header class="head">
-  <div>
-    <div style="font-size:10px;color:var(--fg-2);margin-bottom:3px"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
-    <h1>[ FLUID_VESSEL :: MEMBRANE · ELASTIC DEFORM ]</h1>
-    <div class="sub">contenitore biomorfo · uncini · fili · spilli · export OBJ</div>
-  </div>
-  <div class="meta">
-    <b id="m_tris">— tris</b> · <b id="m_eff">0 eff</b><br>
-    <span id="m_mode">MOD: SPOSTA</span>
-  </div>
-</header>
 
-<main>
-  <div class="stage">
-    <canvas id="viewport"></canvas>
-    <div class="modetag" id="modetag">CLICK superficie · trascina effettori</div>
-    <div class="corner tl">[ membrane ]</div>
-    <div class="corner tr">[ effectors ]</div>
-    <div class="corner bl">[ elastic field ]</div>
-    <div class="corner br">[ OBJ export ]</div>
-  </div>
+<canvas id="scene"></canvas>
 
-  <aside class="panel">
-    <div class="box">
-      <div class="lab">FORMA BASE <span class="v">ellissoide</span></div>
-      <div class="ctrl">
-        <div class="row"><label><span>// larghezza X</span><span class="vv" id="v_rx">1.0</span></label><input type="range" id="p_rx" min="0.4" max="2" step="0.05" value="1"></div>
-        <div class="row"><label><span>// altezza Y</span><span class="vv" id="v_ry">1.6</span></label><input type="range" id="p_ry" min="0.5" max="3" step="0.05" value="1.6"></div>
-        <div class="row"><label><span>// profondità Z</span><span class="vv" id="v_rz">0.85</span></label><input type="range" id="p_rz" min="0.4" max="2" step="0.05" value="0.85"></div>
-        <div class="row"><label><span>// organico (rumore)</span><span class="vv" id="v_org">0.12</span></label><input type="range" id="p_org" min="0" max="0.35" step="0.01" value="0.12"></div>
-        <div class="row"><label><span>// risoluzione mesh</span><span class="vv" id="v_sub">4</span></label><input type="range" id="p_sub" min="2" max="6" step="1" value="4"></div>
-      </div>
-    </div>
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
 
-    <div class="box">
-      <div class="lab">ELASTICITÀ <span class="v">campo</span></div>
-      <div class="ctrl">
-        <div class="row"><label><span>// rigidità membrana</span><span class="vv" id="v_stiff">0.55</span></label><input type="range" id="p_stiff" min="0" max="1" step="0.05" value="0.55"></div>
-        <div class="row"><label><span>// rilassamento</span><span class="vv" id="v_relax">5</span></label><input type="range" id="p_relax" min="0" max="12" step="1" value="5"></div>
-        <div class="row"><label><span>// volume preserve</span><span class="vv" id="v_vol">0.35</span></label><input type="range" id="p_vol" min="0" max="0.8" step="0.05" value="0.35"></div>
-        <div class="row"><label><span>// opacità</span><span class="vv" id="v_op">0.72</span></label><input type="range" id="p_op" min="0.2" max="1" step="0.02" value="0.72"></div>
-      </div>
-    </div>
-
-    <div class="box hook">
-      <div class="lab">EFFETTORI <span class="v" id="eff_count">0</span></div>
-      <div class="btns" style="margin-bottom:8px">
-        <button type="button" id="mode_move" class="on">SPOSTA</button>
-        <button type="button" id="mode_add">+ AGGIUNGI</button>
-        <button type="button" id="type_hook" class="on">UNCINO</button>
-        <button type="button" id="type_pin">SPILLO</button>
-        <button type="button" id="type_wire">FILO</button>
-        <button type="button" id="btn_preset" class="full">↻ PRESET REFERENCE</button>
-        <button type="button" id="btn_clear" class="del">✕ RIMUOVI SELEZIONATO</button>
-      </div>
-      <div class="eff-list" id="eff_list"></div>
-      <div class="row" style="margin-top:8px"><label><span>// forza selezionato</span><span class="vv" id="v_str">1.0</span></label><input type="range" id="p_str" min="0.1" max="2.5" step="0.05" value="1"></div>
-      <div class="row"><label><span>// raggio influenza</span><span class="vv" id="v_rad">0.45</span></label><input type="range" id="p_rad" min="0.15" max="1.2" step="0.05" value="0.45"></div>
-      <p class="note">Click sulla membrana per piazzare (modo AGGIUNGI). Trascina per deformare. <b>Del</b> rimuove. Rotella regola forza.</p>
-    </div>
-
-    <div class="box">
-      <div class="lab">EXPORT</div>
-      <div class="btns">
-        <button type="button" id="btn_obj" class="obj full">↓ EXPORT OBJ</button>
-        <button type="button" id="btn_regen" class="full">↻ NUOVO SEED</button>
-      </div>
-    </div>
-  </aside>
-</main>
-
-<footer class="foot">
-  <span>// deformazione elastica · Three.js · topologia sferica</span>
-  <span id="foot_readout">seed 0</span>
-</footer>
+<div class="title">
+  <div class="back"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
+  <h1>[ FLUID_VESSEL :: MEMBRANA ]</h1>
+  <div class="sub">generatore contenitori biomorfi · PBD · uncini</div>
+  <div class="ver">v.01 — studio distorsioni elastiche</div>
 </div>
-<div class="toast" id="toast"></div>
+
+<div class="actions">
+  <button type="button" id="btn-add-mode">⊕ Aggiungi uncini</button>
+  <button type="button" id="btn-reset">↺ Reset forma</button>
+  <button type="button" id="btn-clear" class="danger">Rimuovi tutti gli uncini</button>
+  <button type="button" id="btn-export" class="export">↓ Esporta .obj</button>
+</div>
+
+<div class="controls">
+  <div class="control">
+    <label>Pressione interna</label>
+    <div class="row">
+      <input type="range" id="s-pressure" min="0.4" max="1.6" step="0.01" value="1.0">
+      <div class="val" id="v-pressure">1.00</div>
+    </div>
+  </div>
+  <div class="control">
+    <label>Elasticità</label>
+    <div class="row">
+      <input type="range" id="s-stiffness" min="0.2" max="1.0" step="0.01" value="0.85">
+      <div class="val" id="v-stiffness">0.85</div>
+    </div>
+  </div>
+  <div class="control">
+    <label>Tensione superficiale</label>
+    <div class="row">
+      <input type="range" id="s-tension" min="0.0" max="0.4" step="0.01" value="0.05">
+      <div class="val" id="v-tension">0.05</div>
+    </div>
+  </div>
+  <div class="control">
+    <label>Smorzamento</label>
+    <div class="row">
+      <input type="range" id="s-damping" min="0.85" max="0.99" step="0.001" value="0.94">
+      <div class="val" id="v-damping">0.940</div>
+    </div>
+  </div>
+  <div class="control">
+    <label>Spessore parete</label>
+    <div class="row">
+      <input type="range" id="s-thickness" min="0.02" max="0.14" step="0.005" value="0.06">
+      <div class="val" id="v-thickness">0.06</div>
+    </div>
+  </div>
+  <div class="control">
+    <label>Risoluzione</label>
+    <div class="row">
+      <input type="range" id="s-detail" min="3" max="5" step="1" value="5">
+      <div class="val" id="v-detail">5</div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">
+  <span class="key">CLICK</span> sulla membrana per inserire un uncino<br>
+  <span class="key">DRAG</span> uncino per deformare ·
+  <span class="key">SHIFT+CLICK</span> uncino per rimuoverlo<br>
+  <span class="key">DRAG</span> sfondo per ruotare la vista
+</div>
+
+<div class="status">
+  uncini: <span id="st-hooks">0</span><br>
+  vertici: <span id="st-verts">0</span><br>
+  volume: <span id="st-vol">1.00</span>
+</div>
+
+<div class="grain"></div>
 
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
 </script>
+
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
 
-const canvas = document.getElementById('viewport');
-const toastEl = document.getElementById('toast');
+const canvas = document.getElementById('scene');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050805);
 
-function showFatal(err) {
-  console.error(err);
-  const msg = 'ERRORE: ' + (err && err.message ? err.message : String(err));
-  if (toastEl) {
-    toastEl.textContent = msg;
-    toastEl.classList.add('on');
+const camera = new THREE.PerspectiveCamera(32, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 1.6, 7.0);
+camera.lookAt(0, 0.2, 0);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.enablePan = false;
+controls.target.set(0, 0.2, 0);
+controls.minDistance = 3;
+controls.maxDistance = 14;
+controls.update();
+
+const key = new THREE.DirectionalLight(0xfff2dc, 2.2);
+key.position.set(2.5, 5, 4);
+scene.add(key);
+
+const rim = new THREE.DirectionalLight(0x8aa0b8, 1.4);
+rim.position.set(-4, 1.5, -3);
+scene.add(rim);
+
+const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+fill.position.set(0, -3, 4);
+scene.add(fill);
+
+const hemi = new THREE.HemisphereLight(0xfff0d8, 0x101015, 0.5);
+scene.add(hemi);
+
+scene.add(new THREE.AmbientLight(0x1a1814, 0.6));
+
+const material = new THREE.MeshPhysicalMaterial({
+  color: 0xfff0a0,
+  roughness: 0.78,
+  metalness: 0,
+  transmission: 0.18,
+  thickness: 0.45,
+  ior: 1.42,
+  clearcoat: 0.04,
+  clearcoatRoughness: 0.9,
+  sheen: 0.35,
+  sheenColor: 0xfff0d0,
+  sheenRoughness: 0.7,
+  side: THREE.DoubleSide,
+  attenuationColor: 0xc8a878,
+  attenuationDistance: 0.55,
+  flatShading: false,
+});
+
+const hookMat = new THREE.MeshStandardMaterial({
+  color: 0xc8ccd0, metalness: 0.95, roughness: 0.28,
+});
+const hookHoverMat = new THREE.MeshStandardMaterial({
+  color: 0xe6e8ea, metalness: 0.95, roughness: 0.2,
+});
+const cableMat = new THREE.LineBasicMaterial({ color: 0xaab0b8, transparent: true, opacity: 0.85 });
+
+class SoftBody {
+  constructor(geometry) {
+    this.geometry = geometry;
+    this.posAttr = geometry.attributes.position;
+    const arr = this.posAttr.array;
+    this.numVertices = arr.length / 3;
+
+    this.x = new Float32Array(arr);
+    this.p = new Float32Array(arr);
+    this.v = new Float32Array(arr.length);
+    this.invMass = new Float32Array(this.numVertices).fill(1);
+    this.rest = new Float32Array(arr);
+    this.pinTarget = new Array(this.numVertices).fill(null);
+    this.rimIndices = null;
+
+    const idx = geometry.index.array;
+    const edgeSet = new Set();
+    const edges = [];
+    for (let i = 0; i < idx.length; i += 3) {
+      const a = idx[i], b = idx[i + 1], c = idx[i + 2];
+      this._addEdge(edges, edgeSet, a, b);
+      this._addEdge(edges, edgeSet, b, c);
+      this._addEdge(edges, edgeSet, c, a);
+    }
+    this.edges = edges;
+    this.edgeStiffMult = new Float32Array(edges.length).fill(1.0);
+    this.restLengths = new Float32Array(edges.length);
+    for (let e = 0; e < edges.length; e++) {
+      this.restLengths[e] = this._dist(this.x, edges[e][0], edges[e][1]);
+    }
+
+    this.faces = [];
+    for (let i = 0; i < idx.length; i += 3) this.faces.push([idx[i], idx[i + 1], idx[i + 2]]);
+    this.restVolume = Math.abs(this._computeVolume(this.x));
+    this.gradScratch = new Float32Array(arr.length);
+    this.params = {
+      pressure: 1.0,
+      stiffness: 1.0,
+      tension: 0.4,
+      damping: 0.94,
+      iterations: 14,
+      volumeStiffness: 0.0,
+    };
   }
-  const stage = canvas && canvas.parentElement;
-  if (stage) {
-    stage.insertAdjacentHTML('beforeend',
-      '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ff5a5a;font-size:10px;padding:20px;text-align:center;pointer-events:none;z-index:5">' +
-      'WebGL / Three.js non avviato — ricarica la pagina<br><span style="opacity:.7;margin-top:8px;display:block">' +
-      (err && err.message ? err.message : '') + '</span></div>');
+
+  _addEdge(edges, set, a, b) {
+    const k = a < b ? `${a}_${b}` : `${b}_${a}`;
+    if (!set.has(k)) { set.add(k); edges.push([a, b]); }
+  }
+  _dist(arr, a, b) {
+    const dx = arr[b * 3] - arr[a * 3];
+    const dy = arr[b * 3 + 1] - arr[a * 3 + 1];
+    const dz = arr[b * 3 + 2] - arr[a * 3 + 2];
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+  }
+  _computeVolume(arr) {
+    let v = 0;
+    for (let f = 0; f < this.faces.length; f++) {
+      const [a, b, c] = this.faces[f];
+      const ax = arr[a * 3], ay = arr[a * 3 + 1], az = arr[a * 3 + 2];
+      const bx = arr[b * 3], by = arr[b * 3 + 1], bz = arr[b * 3 + 2];
+      const cx = arr[c * 3], cy = arr[c * 3 + 1], cz = arr[c * 3 + 2];
+      v += (ax * (by * cz - bz * cy) + ay * (bz * cx - bx * cz) + az * (bx * cy - by * cx)) / 6;
+    }
+    if (this.rimIndices && this.rimIndices.length > 2) {
+      const R = this.rimIndices.length;
+      let cxR = 0, cyR = 0, czR = 0;
+      for (let i = 0; i < R; i++) {
+        const idx = this.rimIndices[i];
+        cxR += arr[idx * 3]; cyR += arr[idx * 3 + 1]; czR += arr[idx * 3 + 2];
+      }
+      cxR /= R; cyR /= R; czR /= R;
+      for (let i = 0; i < R; i++) {
+        const a = this.rimIndices[i];
+        const b = this.rimIndices[(i + 1) % R];
+        const ax = arr[a * 3], ay = arr[a * 3 + 1], az = arr[a * 3 + 2];
+        const bx = arr[b * 3], by = arr[b * 3 + 1], bz = arr[b * 3 + 2];
+        v += (cxR * (ay * bz - az * by) + cyR * (az * bx - ax * bz) + czR * (ax * by - ay * bx)) / 6;
+      }
+    }
+    return v;
+  }
+
+  pin(idx, target) {
+    this.pinTarget[idx] = target.clone();
+    this.invMass[idx] = 0;
+    this.x[idx * 3] = target.x; this.x[idx * 3 + 1] = target.y; this.x[idx * 3 + 2] = target.z;
+    this.v[idx * 3] = 0; this.v[idx * 3 + 1] = 0; this.v[idx * 3 + 2] = 0;
+  }
+  unpin(idx) {
+    this.pinTarget[idx] = null;
+    this.invMass[idx] = 1;
+  }
+  setPinTarget(idx, target) {
+    if (this.pinTarget[idx]) this.pinTarget[idx].copy(target);
+  }
+  getVertex(idx, out) {
+    out.set(this.x[idx * 3], this.x[idx * 3 + 1], this.x[idx * 3 + 2]);
+    return out;
+  }
+
+  step(dt) {
+    dt = Math.min(dt, 1 / 60);
+    const { stiffness, tension, damping, iterations, pressure, volumeStiffness } = this.params;
+    const MAX_V = 6;
+    const MAX_DIST = 25;
+
+    for (let i = 0; i < this.numVertices; i++) {
+      if (this.invMass[i] === 0) {
+        const t = this.pinTarget[i];
+        this.p[i * 3] = t.x; this.p[i * 3 + 1] = t.y; this.p[i * 3 + 2] = t.z;
+        continue;
+      }
+      let vx = this.v[i * 3], vy = this.v[i * 3 + 1], vz = this.v[i * 3 + 2];
+      const vs = vx * vx + vy * vy + vz * vz;
+      if (vs > MAX_V * MAX_V) {
+        const k = MAX_V / Math.sqrt(vs);
+        vx *= k; vy *= k; vz *= k;
+        this.v[i * 3] = vx; this.v[i * 3 + 1] = vy; this.v[i * 3 + 2] = vz;
+      }
+      this.p[i * 3] = this.x[i * 3] + vx * dt;
+      this.p[i * 3 + 1] = this.x[i * 3 + 1] + vy * dt;
+      this.p[i * 3 + 2] = this.x[i * 3 + 2] + vz * dt;
+    }
+
+    for (let it = 0; it < iterations; it++) {
+      for (let e = 0; e < this.edges.length; e++) {
+        const [a, b] = this.edges[e];
+        const r = this.restLengths[e];
+        const dx = this.p[b * 3] - this.p[a * 3];
+        const dy = this.p[b * 3 + 1] - this.p[a * 3 + 1];
+        const dz = this.p[b * 3 + 2] - this.p[a * 3 + 2];
+        const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1e-6;
+        const wa = this.invMass[a], wb = this.invMass[b];
+        const wSum = wa + wb;
+        if (wSum === 0) continue;
+        const k = Math.min(1, stiffness * this.edgeStiffMult[e]);
+        const corr = (d - r) / d * k;
+        const cx = dx * corr / wSum;
+        const cy = dy * corr / wSum;
+        const cz = dz * corr / wSum;
+        this.p[a * 3] += cx * wa;
+        this.p[a * 3 + 1] += cy * wa;
+        this.p[a * 3 + 2] += cz * wa;
+        this.p[b * 3] -= cx * wb;
+        this.p[b * 3 + 1] -= cy * wb;
+        this.p[b * 3 + 2] -= cz * wb;
+      }
+
+      this._solveVolume(pressure, volumeStiffness);
+
+      if (tension > 0) {
+        for (let i = 0; i < this.numVertices; i++) {
+          if (this.invMass[i] === 0) continue;
+          const k = tension * 0.04;
+          this.p[i * 3] += (this.rest[i * 3] - this.p[i * 3]) * k;
+          this.p[i * 3 + 1] += (this.rest[i * 3 + 1] - this.p[i * 3 + 1]) * k;
+          this.p[i * 3 + 2] += (this.rest[i * 3 + 2] - this.p[i * 3 + 2]) * k;
+        }
+      }
+    }
+
+    for (let i = 0; i < this.numVertices; i++) {
+      if (this.invMass[i] === 0) {
+        this.x[i * 3] = this.p[i * 3];
+        this.x[i * 3 + 1] = this.p[i * 3 + 1];
+        this.x[i * 3 + 2] = this.p[i * 3 + 2];
+        continue;
+      }
+      this.v[i * 3] = (this.p[i * 3] - this.x[i * 3]) / dt * damping;
+      this.v[i * 3 + 1] = (this.p[i * 3 + 1] - this.x[i * 3 + 1]) / dt * damping;
+      this.v[i * 3 + 2] = (this.p[i * 3 + 2] - this.x[i * 3 + 2]) / dt * damping;
+      this.x[i * 3] = this.p[i * 3];
+      this.x[i * 3 + 1] = this.p[i * 3 + 1];
+      this.x[i * 3 + 2] = this.p[i * 3 + 2];
+    }
+
+    for (let i = 0; i < this.numVertices; i++) {
+      const x = this.x[i * 3], y = this.x[i * 3 + 1], z = this.x[i * 3 + 2];
+      const bad = !isFinite(x) || !isFinite(y) || !isFinite(z) ||
+        (x * x + y * y + z * z) > MAX_DIST * MAX_DIST;
+      if (bad && this.invMass[i] !== 0) {
+        this.x[i * 3] = this.rest[i * 3];
+        this.x[i * 3 + 1] = this.rest[i * 3 + 1];
+        this.x[i * 3 + 2] = this.rest[i * 3 + 2];
+        this.v[i * 3] = 0; this.v[i * 3 + 1] = 0; this.v[i * 3 + 2] = 0;
+      }
+    }
+
+    this.posAttr.array.set(this.x);
+    this.posAttr.needsUpdate = true;
+    this.geometry.computeVertexNormals();
+  }
+
+  _solveVolume(pressureMult, vStiffness) {
+    const target = this.restVolume * pressureMult;
+    const g = this.gradScratch;
+    g.fill(0);
+
+    let vol = 0;
+    for (let f = 0; f < this.faces.length; f++) {
+      const [a, b, c] = this.faces[f];
+      const ax = this.p[a * 3], ay = this.p[a * 3 + 1], az = this.p[a * 3 + 2];
+      const bx = this.p[b * 3], by = this.p[b * 3 + 1], bz = this.p[b * 3 + 2];
+      const cx = this.p[c * 3], cy = this.p[c * 3 + 1], cz = this.p[c * 3 + 2];
+      vol += (ax * (by * cz - bz * cy) + ay * (bz * cx - bx * cz) + az * (bx * cy - by * cx)) / 6;
+      g[a * 3] += (by * cz - bz * cy) / 6;
+      g[a * 3 + 1] += (bz * cx - bx * cz) / 6;
+      g[a * 3 + 2] += (bx * cy - by * cx) / 6;
+      g[b * 3] += (cy * az - cz * ay) / 6;
+      g[b * 3 + 1] += (cz * ax - cx * az) / 6;
+      g[b * 3 + 2] += (cx * ay - cy * ax) / 6;
+      g[c * 3] += (ay * bz - az * by) / 6;
+      g[c * 3 + 1] += (az * bx - ax * bz) / 6;
+      g[c * 3 + 2] += (ax * by - ay * bx) / 6;
+    }
+    if (this.rimIndices && this.rimIndices.length > 2) {
+      const R = this.rimIndices.length;
+      let cxR = 0, cyR = 0, czR = 0;
+      for (let i = 0; i < R; i++) {
+        const idx = this.rimIndices[i];
+        cxR += this.p[idx * 3]; cyR += this.p[idx * 3 + 1]; czR += this.p[idx * 3 + 2];
+      }
+      cxR /= R; cyR /= R; czR /= R;
+      for (let i = 0; i < R; i++) {
+        const a = this.rimIndices[i];
+        const b = this.rimIndices[(i + 1) % R];
+        const ax = this.p[a * 3], ay = this.p[a * 3 + 1], az = this.p[a * 3 + 2];
+        const bx = this.p[b * 3], by = this.p[b * 3 + 1], bz = this.p[b * 3 + 2];
+        vol += (cxR * (ay * bz - az * by) + cyR * (az * bx - ax * bz) + czR * (ax * by - ay * bx)) / 6;
+        g[a * 3] += (cyR * bz - czR * by) / 6;
+        g[a * 3 + 1] += (czR * bx - cxR * bz) / 6;
+        g[a * 3 + 2] += (cxR * by - cyR * bx) / 6;
+        g[b * 3] += (czR * ay - cyR * az) / 6;
+        g[b * 3 + 1] += (cxR * az - czR * ax) / 6;
+        g[b * 3 + 2] += (cyR * ax - cxR * ay) / 6;
+      }
+    }
+    const C = vol - target;
+    let denom = 0;
+    for (let i = 0; i < this.numVertices; i++) {
+      const w = this.invMass[i];
+      if (w === 0) continue;
+      const gx = g[i * 3], gy = g[i * 3 + 1], gz = g[i * 3 + 2];
+      denom += w * (gx * gx + gy * gy + gz * gz);
+    }
+    if (denom < 1e-8) return;
+    let lambda = -C / denom * vStiffness;
+    const LAMBDA_CAP = 0.5;
+    if (lambda > LAMBDA_CAP) lambda = LAMBDA_CAP;
+    else if (lambda < -LAMBDA_CAP) lambda = -LAMBDA_CAP;
+    for (let i = 0; i < this.numVertices; i++) {
+      const w = this.invMass[i];
+      if (w === 0) continue;
+      this.p[i * 3] += lambda * w * g[i * 3];
+      this.p[i * 3 + 1] += lambda * w * g[i * 3 + 1];
+      this.p[i * 3 + 2] += lambda * w * g[i * 3 + 2];
+    }
+  }
+
+  currentVolume() { return Math.abs(this._computeVolume(this.x)); }
+}
+
+let simGeo, renderGeo, renderMesh;
+let softBody;
+let rimVertexIndices = [];
+let rimVertexSet = new Set();
+let currentThickness = 0.06;
+
+function buildVaseOuter(detail) {
+  const lat = [0, 0, 16, 24, 32][detail] || 24;
+  const lon = [0, 0, 32, 40, 52][detail] || 40;
+  const yMin = -1.0;
+  const yMax = 1.4;
+
+  function radius(t) {
+    const apexRise = Math.min(1, Math.pow(t / 0.30, 0.6));
+    const belly = 0.95 * apexRise;
+    const neck = 1 - 0.14 * Math.exp(-Math.pow((t - 0.80) / 0.10, 2));
+    const rimBoost = 1 + 0.15 * Math.pow(Math.max(0, t - 0.85) / 0.15, 1.2);
+    return belly * neck * rimBoost;
+  }
+
+  const positions = [];
+  const indices = [];
+  positions.push(0, yMin, 0);
+  const APEX = 0;
+
+  for (let i = 1; i <= lat; i++) {
+    const t = i / lat;
+    const y = yMin + (yMax - yMin) * t;
+    const r = radius(t);
+    for (let j = 0; j < lon; j++) {
+      const theta = (j / lon) * Math.PI * 2;
+      positions.push(r * Math.cos(theta), y, r * Math.sin(theta));
+    }
+  }
+
+  const v = (i, j) => 1 + (i - 1) * lon + ((j + lon) % lon);
+
+  for (let j = 0; j < lon; j++) indices.push(APEX, v(1, j + 1), v(1, j));
+  for (let i = 1; i < lat; i++) {
+    for (let j = 0; j < lon; j++) {
+      const a = v(i, j), b = v(i, j + 1), c = v(i + 1, j + 1), d = v(i + 1, j);
+      indices.push(a, b, c);
+      indices.push(a, c, d);
+    }
+  }
+
+  const rimIdx = [];
+  for (let j = 0; j < lon; j++) rimIdx.push(v(lat, j));
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return { geo, rimIdx };
+}
+
+function buildRenderShell(outerGeo, rimIdx, thickness) {
+  const outerPos = outerGeo.attributes.position.array;
+  const outerNorm = outerGeo.attributes.normal.array;
+  const outerIdx = outerGeo.index.array;
+  const N = outerPos.length / 3;
+  const rimSet = new Set(rimIdx);
+  const positions = new Float32Array(N * 6);
+  const indices = [];
+
+  for (let i = 0; i < N; i++) {
+    positions[i * 3] = outerPos[i * 3];
+    positions[i * 3 + 1] = outerPos[i * 3 + 1];
+    positions[i * 3 + 2] = outerPos[i * 3 + 2];
+  }
+  for (let i = 0; i < N; i++) {
+    let nx = outerNorm[i * 3], ny = outerNorm[i * 3 + 1], nz = outerNorm[i * 3 + 2];
+    if (rimSet.has(i)) {
+      ny = 0;
+      const l = Math.sqrt(nx * nx + nz * nz) || 1;
+      nx /= l; nz /= l;
+    }
+    positions[(N + i) * 3] = outerPos[i * 3] - nx * thickness;
+    positions[(N + i) * 3 + 1] = outerPos[i * 3 + 1] - ny * thickness;
+    positions[(N + i) * 3 + 2] = outerPos[i * 3 + 2] - nz * thickness;
+  }
+
+  for (let i = 0; i < outerIdx.length; i++) indices.push(outerIdx[i]);
+  for (let i = 0; i < outerIdx.length; i += 3) {
+    indices.push(outerIdx[i] + N, outerIdx[i + 2] + N, outerIdx[i + 1] + N);
+  }
+  const R = rimIdx.length;
+  for (let k = 0; k < R; k++) {
+    const aO = rimIdx[k], bO = rimIdx[(k + 1) % R];
+    const aI = aO + N, bI = bO + N;
+    indices.push(aO, aI, bO);
+    indices.push(bO, aI, bI);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function updateRenderShell() {
+  const outerPos = simGeo.attributes.position.array;
+  const outerNorm = simGeo.attributes.normal.array;
+  const N = softBody.numVertices;
+  const renderPos = renderGeo.attributes.position.array;
+  const t = currentThickness;
+
+  for (let i = 0; i < N; i++) {
+    renderPos[i * 3] = outerPos[i * 3];
+    renderPos[i * 3 + 1] = outerPos[i * 3 + 1];
+    renderPos[i * 3 + 2] = outerPos[i * 3 + 2];
+
+    let nx = outerNorm[i * 3], ny = outerNorm[i * 3 + 1], nz = outerNorm[i * 3 + 2];
+    if (rimVertexSet.has(i)) {
+      ny = 0;
+      const l = Math.sqrt(nx * nx + nz * nz) || 1;
+      nx /= l; nz /= l;
+    }
+    renderPos[(N + i) * 3] = outerPos[i * 3] - nx * t;
+    renderPos[(N + i) * 3 + 1] = outerPos[i * 3 + 1] - ny * t;
+    renderPos[(N + i) * 3 + 2] = outerPos[i * 3 + 2] - nz * t;
+  }
+  renderGeo.attributes.position.needsUpdate = true;
+  renderGeo.computeVertexNormals();
+}
+
+function stiffenRim(soft, rimIdx) {
+  const rimSet = new Set(rimIdx);
+  for (let e = 0; e < soft.edges.length; e++) {
+    const [a, b] = soft.edges[e];
+    if (rimSet.has(a) && rimSet.has(b)) soft.edgeStiffMult[e] = 3.0;
+    else if (rimSet.has(a) || rimSet.has(b)) soft.edgeStiffMult[e] = 1.6;
+  }
+  const newEdges = [], newStiff = [], newRest = [];
+  const R = rimIdx.length;
+  for (const k of [2, 4]) {
+    for (let i = 0; i < R; i++) {
+      const a = rimIdx[i], b = rimIdx[(i + k) % R];
+      newEdges.push([a, b]);
+      newStiff.push(2.5);
+      newRest.push(soft._dist(soft.x, a, b));
+    }
+  }
+  const oldEdges = soft.edges;
+  const oldStiff = soft.edgeStiffMult;
+  const oldRest = soft.restLengths;
+  soft.edges = oldEdges.concat(newEdges);
+  const totalE = soft.edges.length;
+  const stiffArr = new Float32Array(totalE);
+  const restArr = new Float32Array(totalE);
+  stiffArr.set(oldStiff, 0);
+  restArr.set(oldRest, 0);
+  for (let i = 0; i < newEdges.length; i++) {
+    stiffArr[oldEdges.length + i] = newStiff[i];
+    restArr[oldEdges.length + i] = newRest[i];
+  }
+  soft.edgeStiffMult = stiffArr;
+  soft.restLengths = restArr;
+}
+
+function createMesh(detail) {
+  if (renderMesh) {
+    scene.remove(renderMesh);
+    if (simGeo) simGeo.dispose();
+    if (renderGeo) renderGeo.dispose();
+  }
+  const { geo, rimIdx } = buildVaseOuter(detail);
+  simGeo = geo;
+  rimVertexIndices = rimIdx;
+  rimVertexSet = new Set(rimIdx);
+  renderGeo = buildRenderShell(simGeo, rimIdx, currentThickness);
+  renderMesh = new THREE.Mesh(renderGeo, material);
+  scene.add(renderMesh);
+  softBody = new SoftBody(simGeo);
+  softBody.rimIndices = rimIdx;
+  softBody.restVolume = Math.abs(softBody._computeVolume(softBody.x));
+  stiffenRim(softBody, rimIdx);
+  document.getElementById('st-verts').textContent = softBody.numVertices;
+}
+
+createMesh(5);
+
+const hooks = [];
+const cableTopY = 8;
+
+function createHookMesh() {
+  const S = 2.2;
+  const curvePts = [
+    new THREE.Vector3(0, 0.22 * S, 0),
+    new THREE.Vector3(0, 0.05 * S, 0),
+    new THREE.Vector3(0.005 * S, -0.04 * S, 0.005 * S),
+    new THREE.Vector3(0.05 * S, -0.10 * S, 0),
+    new THREE.Vector3(0.03 * S, -0.13 * S, -0.04 * S),
+    new THREE.Vector3(-0.02 * S, -0.10 * S, -0.05 * S),
+    new THREE.Vector3(-0.06 * S, -0.05 * S, -0.02 * S),
+  ];
+  const curve = new THREE.CatmullRomCurve3(curvePts);
+  const tube = new THREE.TubeGeometry(curve, 40, 0.012 * S, 8, false);
+  const hookM = new THREE.Mesh(tube, hookMat);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.012 * S, 8, 8), hookMat);
+  tip.position.copy(curvePts[curvePts.length - 1]);
+  hookM.add(tip);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.02 * S, 0.005 * S, 6, 14), hookMat);
+  ring.position.set(0, 0.225 * S, 0);
+  ring.rotation.x = Math.PI / 2;
+  hookM.add(ring);
+  return hookM;
+}
+
+function createCable(from) {
+  const geo = new THREE.BufferGeometry().setFromPoints([
+    from.clone(),
+    new THREE.Vector3(from.x, cableTopY, from.z),
+  ]);
+  return new THREE.Line(geo, cableMat);
+}
+
+function updateCable(hook) {
+  const v = softBody.getVertex(hook.vertexIdx, new THREE.Vector3());
+  const positions = hook.cable.geometry.attributes.position;
+  positions.setXYZ(0, v.x, v.y, v.z);
+  positions.setXYZ(1, v.x, cableTopY, v.z);
+  positions.needsUpdate = true;
+  hook.cable.geometry.computeBoundingSphere();
+}
+
+function addHook(vertexIdx, worldPos) {
+  if (hooks.some(h => h.vertexIdx === vertexIdx)) return;
+  const hookMesh = createHookMesh();
+  hookMesh.position.copy(worldPos);
+  hookMesh.userData.isHook = true;
+  scene.add(hookMesh);
+  const cable = createCable(worldPos);
+  scene.add(cable);
+  softBody.pin(vertexIdx, worldPos);
+  hooks.push({ vertexIdx, hookMesh, cable });
+  updateStatus();
+}
+
+function removeHook(i) {
+  const h = hooks[i];
+  scene.remove(h.hookMesh);
+  scene.remove(h.cable);
+  h.hookMesh.geometry.dispose();
+  h.cable.geometry.dispose();
+  softBody.unpin(h.vertexIdx);
+  hooks.splice(i, 1);
+  updateStatus();
+}
+
+function clearHooks() {
+  while (hooks.length) removeHook(hooks.length - 1);
+}
+
+function placeInitialHooks() {
+  const R = rimVertexIndices.length;
+  const hookPicks = new Set([0, Math.floor(R / 3), Math.floor(2 * R / 3)]);
+  for (let k = 0; k < R; k++) {
+    const i = rimVertexIndices[k];
+    const v = new THREE.Vector3();
+    softBody.getVertex(i, v);
+    if (hookPicks.has(k)) addHook(i, v.clone());
+    else softBody.pin(i, v.clone());
   }
 }
 
-try {
-
-const cfg = {
-  rx: 1, ry: 1.6, rz: 0.85,
-  organic: 0.12, subdiv: 4,
-  stiff: 0.55, relax: 5, volPreserve: 0.35, opacity: 0.72,
-  seed: Math.floor(Math.random() * 99999)
-};
-
-let mode = 'move';
-let addType = 'hook';
-let effectors = [];
-let selectedId = null;
-let dragId = null;
-let dragPart = 'surface';
-let neighbors = [];
+placeInitialHooks();
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
-const hit = new THREE.Vector3();
-const normal = new THREE.Vector3();
+let draggedHook = null;
+const dragPlane = new THREE.Plane();
+const dragOffset = new THREE.Vector3();
+const tmpV = new THREE.Vector3();
+let hoveredHook = null;
+let downPos = null;
+let downTime = 0;
+let pendingMeshHit = null;
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x030303);
-scene.fog = new THREE.Fog(0x030303, 6, 14);
-
-const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 50);
-camera.position.set(2.8, 1.4, 3.2);
-
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
-
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-pmrem.dispose();
-
-const controls = new OrbitControls(camera, canvas);
-controls.enableDamping = true;
-controls.dampingFactor = 0.06;
-controls.target.set(0, 0.2, 0);
-
-scene.add(new THREE.AmbientLight(0xfff0c0, 0.35));
-const key = new THREE.DirectionalLight(0xffffff, 1.1);
-key.position.set(3, 5, 4);
-scene.add(key);
-const rim = new THREE.DirectionalLight(0xfff03a, 0.45);
-rim.position.set(-4, 2, -3);
-scene.add(rim);
-const fill = new THREE.PointLight(0x5eff7e, 0.3, 12);
-fill.position.set(0, -2, 2);
-scene.add(fill);
-
-const grid = new THREE.GridHelper(5, 24, 0x3a3520, 0x1a1810);
-grid.position.y = -1.4;
-scene.add(grid);
-
-const effGroup = new THREE.Group();
-scene.add(effGroup);
-
-let geometry = null;
-let mesh = null;
-let basePositions = null;
-let restNormals = null;
-
-function toast(msg) {
-  toastEl.textContent = msg;
-  toastEl.classList.add('on');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => toastEl.classList.remove('on'), 2200);
+function setPointer(ev) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
 }
 
-function noise3(x, y, z, s) {
-  return Math.sin(x * 1.7 + s) * Math.cos(y * 2.1 - s * 0.7) * Math.sin(z * 1.9 + s * 1.3)
-    + 0.5 * Math.sin(x * 3.2 + s * 2) * Math.cos(z * 2.8 - s);
-}
-
-function baseAt(nx, ny, nz, i) {
-  const n = noise3(nx * 2.1, ny * 2.1, nz * 2.1, cfg.seed * 0.01 + i * 0.0003);
-  const bulge = 1 + cfg.organic * n;
-  return {
-    x: nx * cfg.rx * bulge,
-    y: ny * cfg.ry * bulge,
-    z: nz * cfg.rz * bulge
-  };
-}
-
-function triCount(geo) {
-  const idx = geo?.index;
-  const pos = geo?.attributes?.position;
-  if (idx) return Math.floor(idx.count / 3);
-  if (pos) return Math.floor(pos.count / 3);
-  return 0;
-}
-
-function buildNeighbors(geo) {
-  const pos = geo.attributes.position;
-  if (!pos) return [];
-  const n = pos.count;
-  const sets = Array.from({ length: n }, () => new Set());
-  const idx = geo.index;
-  const addTri = (a, b, c) => {
-    sets[a].add(b); sets[a].add(c);
-    sets[b].add(a); sets[b].add(c);
-    sets[c].add(a); sets[c].add(b);
-  };
-  if (idx) {
-    for (let i = 0; i < idx.count; i += 3) {
-      addTri(idx.getX(i), idx.getX(i + 1), idx.getX(i + 2));
-    }
-  } else {
-    for (let i = 0; i < n; i += 3) {
-      addTri(i, i + 1, i + 2);
-    }
+function findNearestVertex(point) {
+  let min = Infinity, idx = -1;
+  for (let i = 0; i < softBody.numVertices; i++) {
+    const dx = point.x - softBody.x[i * 3];
+    const dy = point.y - softBody.x[i * 3 + 1];
+    const dz = point.z - softBody.x[i * 3 + 2];
+    const d2 = dx * dx + dy * dy + dz * dz;
+    if (d2 < min) { min = d2; idx = i; }
   }
-  return sets.map(s => Array.from(s));
+  return idx;
 }
 
-function influence(d, radius) {
-  if (d >= radius) return 0;
-  const t = 1 - d / radius;
-  return t * t * (3 - 2 * t);
-}
+renderer.domElement.addEventListener('pointerdown', (ev) => {
+  setPointer(ev);
+  raycaster.setFromCamera(pointer, camera);
+  const hookObjs = hooks.map(h => h.hookMesh);
+  const hitHook = raycaster.intersectObjects(hookObjs, true);
+  if (hitHook.length > 0) {
+    let target = hitHook[0].object;
+    while (target.parent && !target.userData.isHook) target = target.parent;
+    const idx = hookObjs.indexOf(target);
+    if (idx < 0) return;
+    if (ev.shiftKey) { removeHook(idx); return; }
+    draggedHook = hooks[idx];
+    const camDir = new THREE.Vector3();
+    camera.getWorldDirection(camDir);
+    dragPlane.setFromNormalAndCoplanarPoint(camDir.negate(), draggedHook.hookMesh.position);
+    dragOffset.copy(draggedHook.hookMesh.position).sub(hitHook[0].point);
+    controls.enabled = false;
+    return;
+  }
+  const hitMesh = raycaster.intersectObject(renderMesh);
+  downPos = { x: ev.clientX, y: ev.clientY };
+  downTime = performance.now();
+  pendingMeshHit = hitMesh.length > 0 ? { point: hitMesh[0].point.clone() } : null;
+});
 
-function applyEffectors(pos, bx, by, bz, i) {
-  let x = bx, y = by, z = bz;
-  const cx = x, cy = y, cz = z;
-  const len0 = Math.sqrt(cx * cx + cy * cy + cz * cz) || 1;
+renderer.domElement.addEventListener('pointermove', (ev) => {
+  setPointer(ev);
+  if (draggedHook) {
+    raycaster.setFromCamera(pointer, camera);
+    if (raycaster.ray.intersectPlane(dragPlane, tmpV)) {
+      tmpV.add(dragOffset);
+      draggedHook.hookMesh.position.copy(tmpV);
+      softBody.setPinTarget(draggedHook.vertexIdx, tmpV);
+    }
+    return;
+  }
+  raycaster.setFromCamera(pointer, camera);
+  const hookObjs = hooks.map(h => h.hookMesh);
+  const hit = raycaster.intersectObjects(hookObjs, true);
+  let newHover = null;
+  if (hit.length > 0) {
+    let target = hit[0].object;
+    while (target.parent && !target.userData.isHook) target = target.parent;
+    newHover = target;
+  }
+  if (newHover !== hoveredHook) {
+    if (hoveredHook) hoveredHook.traverse(o => { if (o.isMesh) o.material = hookMat; });
+    if (newHover) {
+      newHover.traverse(o => { if (o.isMesh) o.material = hookHoverMat; });
+      renderer.domElement.style.cursor = 'grab';
+    } else {
+      renderer.domElement.style.cursor = 'crosshair';
+    }
+    hoveredHook = newHover;
+  }
+});
 
-  for (let e = 0; e < effectors.length; e++) {
-    const ef = effectors[e];
-    const str = ef.strength * (1.1 - cfg.stiff * 0.5);
-    const R = ef.radius;
-
-    if (ef.type === 'hook') {
-      const dx = ef.ax - x, dy = ef.ay - y, dz = ef.az - z;
-      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      const w = influence(d, R) * str;
-      if (w <= 0) continue;
-      x += dx * w * 0.85;
-      y += dy * w * 0.85;
-      z += dz * w * 0.85;
-      const spike = w * str * 0.35;
-      x += (ef.ax - cx / len0 * cfg.ry) * spike * 0.02;
-      y += (ef.ay - cy / len0 * cfg.ry) * spike * 0.04;
-    } else if (ef.type === 'pin') {
-      const dx = x - ef.x, dy = y - ef.y, dz = z - ef.z;
-      const d = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.001;
-      const w = influence(d, R) * str;
-      x += (dx / d) * w * 0.55;
-      y += (dy / d) * w * 0.55;
-      z += (dz / d) * w * 0.55;
-    } else if (ef.type === 'wire') {
-      const dx = ef.ax - x, dy = ef.ay - y, dz = ef.az - z;
-      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      const w = influence(d, R * 1.2) * str * 0.7;
-      x += dx * w * 0.5;
-      y += dy * w * 0.5;
-      z += dz * w * 0.5;
-      const dx2 = ef.x - x, dy2 = ef.y - y, dz2 = ef.z - z;
-      const d2 = Math.sqrt(dx2 * dx2 + dy2 * dy2 + dz2 * dz2) || 0.001;
-      const w2 = influence(d2, R * 0.6) * str * 0.4;
-      x += (dx2 / d2) * w2 * 0.35;
-      y += (dy2 / d2) * w2 * 0.35;
-      z += (dz2 / d2) * w2 * 0.35;
+renderer.domElement.addEventListener('pointerup', (ev) => {
+  if (draggedHook) {
+    draggedHook = null;
+    controls.enabled = true;
+    return;
+  }
+  if (downPos && pendingMeshHit) {
+    const dx = ev.clientX - downPos.x;
+    const dy = ev.clientY - downPos.y;
+    const moved = Math.sqrt(dx * dx + dy * dy);
+    const elapsed = performance.now() - downTime;
+    if (moved < 5 && elapsed < 350) {
+      const vIdx = findNearestVertex(pendingMeshHit.point);
+      const v = new THREE.Vector3();
+      softBody.getVertex(vIdx, v);
+      addHook(vIdx, v);
     }
   }
-  return { x, y, z };
-}
+  downPos = null;
+  pendingMeshHit = null;
+});
 
-function deformMesh() {
-  if (!geometry || !basePositions) return;
-  const pos = geometry.attributes.position;
-  if (!pos) return;
-  const tmp = new Float32Array(pos.count * 3);
-
-  for (let i = 0; i < pos.count; i++) {
-    const bx = basePositions[i * 3];
-    const by = basePositions[i * 3 + 1];
-    const bz = basePositions[i * 3 + 2];
-    const d = applyEffectors(i, bx, by, bz, i);
-    tmp[i * 3] = d.x;
-    tmp[i * 3 + 1] = d.y;
-    tmp[i * 3 + 2] = d.z;
+renderer.domElement.addEventListener('pointerleave', () => {
+  if (draggedHook) {
+    draggedHook = null;
+    controls.enabled = true;
   }
+  downPos = null;
+  pendingMeshHit = null;
+});
 
-  const alpha = 0.42 - cfg.stiff * 0.22;
-  for (let pass = 0; pass < cfg.relax; pass++) {
-    const next = tmp.slice();
-    for (let i = 0; i < pos.count; i++) {
-      const nb = neighbors[i];
-      if (!nb.length) continue;
-      let ax = 0, ay = 0, az = 0;
-      for (let k = 0; k < nb.length; k++) {
-        const j = nb[k];
-        ax += tmp[j * 3]; ay += tmp[j * 3 + 1]; az += tmp[j * 3 + 2];
-      }
-      ax /= nb.length; ay /= nb.length; az /= nb.length;
-      next[i * 3] = tmp[i * 3] + (ax - tmp[i * 3]) * alpha;
-      next[i * 3 + 1] = tmp[i * 3 + 1] + (ay - tmp[i * 3 + 1]) * alpha;
-      next[i * 3 + 2] = tmp[i * 3 + 2] + (az - tmp[i * 3 + 2]) * alpha;
-    }
-    for (let i = 0; i < pos.count; i++) {
-      const bx = basePositions[i * 3];
-      const by = basePositions[i * 3 + 1];
-      const bz = basePositions[i * 3 + 2];
-      const t = applyEffectors(i, bx, by, bz, i);
-      const blend = 0.55 + cfg.stiff * 0.35;
-      next[i * 3] = next[i * 3] * (1 - blend) + t.x * blend;
-      next[i * 3 + 1] = next[i * 3 + 1] * (1 - blend) + t.y * blend;
-      next[i * 3 + 2] = next[i * 3 + 2] * (1 - blend) + t.z * blend;
-    }
-    tmp.set(next);
-  }
-
-  if (cfg.volPreserve > 0.01) {
-    for (let i = 0; i < pos.count; i++) {
-      const bx = basePositions[i * 3], by = basePositions[i * 3 + 1], bz = basePositions[i * 3 + 2];
-      const bl = Math.sqrt(bx * bx + by * by + bz * bz) || 1;
-      const x = tmp[i * 3], y = tmp[i * 3 + 1], z = tmp[i * 3 + 2];
-      const dl = Math.sqrt(x * x + y * y + z * z) || 1;
-      const scale = bl / dl;
-      const mix = cfg.volPreserve * 0.5;
-      tmp[i * 3] = x * (1 - mix + mix * scale);
-      tmp[i * 3 + 1] = y * (1 - mix + mix * scale);
-      tmp[i * 3 + 2] = z * (1 - mix + mix * scale);
-    }
-  }
-
-  for (let i = 0; i < pos.count; i++) {
-    pos.setXYZ(i, tmp[i * 3], tmp[i * 3 + 1], tmp[i * 3 + 2]);
-  }
-  pos.needsUpdate = true;
-  geometry.computeVertexNormals();
-  document.getElementById('m_tris').textContent = triCount(geometry) + ' tris';
-}
-
-function rebuildBase() {
-  if (mesh) {
-    scene.remove(mesh);
-    mesh.material.dispose();
-    mesh = null;
-  }
-  if (geometry) {
-    geometry.dispose();
-    geometry = null;
-  }
-  const detail = Math.max(0, Math.min(6, Math.round(cfg.subdiv)));
-  geometry = mergeVertices(new THREE.IcosahedronGeometry(1, detail));
-  basePositions = new Float32Array(geometry.attributes.position.count * 3);
-  restNormals = new Float32Array(geometry.attributes.position.count * 3);
-
-  const pos = geometry.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-    const len = Math.sqrt(x * x + y * y + z * z) || 1;
-    const nx = x / len, ny = y / len, nz = z / len;
-    const b = baseAt(nx, ny, nz, i);
-    basePositions[i * 3] = b.x;
-    basePositions[i * 3 + 1] = b.y;
-    basePositions[i * 3 + 2] = b.z;
-    restNormals[i * 3] = nx;
-    restNormals[i * 3 + 1] = ny;
-    restNormals[i * 3 + 2] = nz;
-    pos.setXYZ(i, b.x, b.y, b.z);
-  }
-  neighbors = buildNeighbors(geometry);
-
-  const mat = new THREE.MeshPhysicalMaterial({
-    color: 0xfff0a0,
-    transparent: true,
-    opacity: cfg.opacity,
-    roughness: 0.28,
-    metalness: 0.02,
-    transmission: 0.42,
-    thickness: 0.55,
-    ior: 1.33,
-    side: THREE.DoubleSide,
-    clearcoat: 0.35,
-    clearcoatRoughness: 0.2,
-    emissive: 0x443300,
-    emissiveIntensity: 0.12,
-    envMapIntensity: 1.2
-  });
-  mesh = new THREE.Mesh(geometry, mat);
-  scene.add(mesh);
-  deformMesh();
-}
-
-function rebuildEffectorVisuals() {
-  while (effGroup.children.length) {
-    const c = effGroup.children[0];
-    c.geometry?.dispose();
-    c.material?.dispose();
-    effGroup.remove(c);
-  }
-
-  effectors.forEach(ef => {
-    const col = ef.type === 'hook' ? 0xcccccc : ef.type === 'pin' ? 0x5eff7e : 0x4af6ff;
-    const sel = ef.id === selectedId;
-
-    if (ef.type === 'hook' || ef.type === 'wire') {
-      const pts = [new THREE.Vector3(ef.x, ef.y, ef.z), new THREE.Vector3(ef.ax, ef.ay, ef.az)];
-      const lg = new THREE.BufferGeometry().setFromPoints(pts);
-      const ln = new THREE.Line(lg, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: sel ? 1 : 0.65 }));
-      effGroup.add(ln);
-      const hookGeo = new THREE.ConeGeometry(0.04, 0.12, 6);
-      const hook = new THREE.Mesh(hookGeo, new THREE.MeshStandardMaterial({ color: 0xaaaaaa, metalness: 0.8, roughness: 0.3 }));
-      hook.position.set(ef.ax, ef.ay, ef.az);
-      hook.lookAt(ef.x, ef.y, ef.z);
-      hook.rotateX(Math.PI / 2);
-      hook.userData.effId = ef.id;
-      hook.userData.effPart = 'anchor';
-      effGroup.add(hook);
-    }
-
-    const sgeo = new THREE.SphereGeometry(sel ? 0.07 : 0.05, 10, 10);
-    const smat = new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: sel ? 0.6 : 0.25 });
-    const sphere = new THREE.Mesh(sgeo, smat);
-    sphere.position.set(ef.x, ef.y, ef.z);
-    sphere.userData.effId = ef.id;
-    sphere.userData.effPart = 'surface';
-    effGroup.add(sphere);
-
-    if (ef.type === 'pin') {
-      const rod = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.015, 0.015, 0.25, 6),
-        new THREE.MeshStandardMaterial({ color: 0x5eff7e, metalness: 0.4, roughness: 0.5 })
-      );
-      rod.position.set(ef.x - ef.nx * 0.12, ef.y - ef.ny * 0.12, ef.z - ef.nz * 0.12);
-      rod.lookAt(ef.x + ef.nx, ef.y + ef.ny, ef.z + ef.nz);
-      rod.rotateX(Math.PI / 2);
-      effGroup.add(rod);
-    }
-  });
-
-  document.getElementById('m_eff').textContent = effectors.length + ' eff';
-  document.getElementById('eff_count').textContent = String(effectors.length);
-  renderEffList();
-}
-
-function renderEffList() {
-  const list = document.getElementById('eff_list');
-  list.innerHTML = '';
-  effectors.forEach(ef => {
-    const div = document.createElement('div');
-    div.className = 'eff-item' + (ef.id === selectedId ? ' sel' : '');
-    div.innerHTML = '<span>#' + ef.id + ' <span class="tag ' + ef.type + '">' + ef.type + '</span></span><span>s' + ef.strength.toFixed(1) + '</span>';
-    div.addEventListener('click', () => { selectedId = ef.id; syncSelectedSliders(); rebuildEffectorVisuals(); });
-    list.appendChild(div);
+function bindSlider(id, valId, prop, fmt = v => v.toFixed(2)) {
+  const s = document.getElementById(id);
+  const v = document.getElementById(valId);
+  v.textContent = fmt(parseFloat(s.value));
+  s.addEventListener('input', () => {
+    const val = parseFloat(s.value);
+    softBody.params[prop] = val;
+    v.textContent = fmt(val);
   });
 }
+bindSlider('s-pressure', 'v-pressure', 'pressure');
+bindSlider('s-stiffness', 'v-stiffness', 'stiffness');
+bindSlider('s-tension', 'v-tension', 'tension');
+bindSlider('s-damping', 'v-damping', 'damping', v => v.toFixed(3));
 
-function addEffector(type, surfacePoint, surfNormal) {
-  const id = effectors.length ? Math.max(...effectors.map(e => e.id)) + 1 : 1;
-  const nx = surfNormal.x, ny = surfNormal.y, nz = surfNormal.z;
-  const ef = {
-    id, type,
-    x: surfacePoint.x, y: surfacePoint.y, z: surfacePoint.z,
-    nx, ny, nz,
-    ax: surfacePoint.x + nx * 0.8,
-    ay: surfacePoint.y + ny * 0.8,
-    az: surfacePoint.z + nz * 0.8,
-    strength: parseFloat(document.getElementById('p_str').value),
-    radius: parseFloat(document.getElementById('p_rad').value)
-  };
-  if (type === 'hook') {
-    ef.ax = surfacePoint.x + nx * 1.1;
-    ef.ay = surfacePoint.y + ny * 1.1 + 0.3;
-    ef.az = surfacePoint.z + nz * 1.1;
-  } else if (type === 'wire') {
-    ef.ax = surfacePoint.x + nx * 1.4;
-    ef.ay = surfacePoint.y + ny * 1.4 + 0.5;
-    ef.az = surfacePoint.z + nz * 1.4;
-  } else if (type === 'pin') {
-    ef.x = surfacePoint.x + nx * 0.08;
-    ef.y = surfacePoint.y + ny * 0.08;
-    ef.z = surfacePoint.z + nz * 0.08;
-  }
-  effectors.push(ef);
-  selectedId = id;
-  rebuildEffectorVisuals();
-  deformMesh();
-}
+document.getElementById('s-thickness').addEventListener('input', (e) => {
+  currentThickness = parseFloat(e.target.value);
+  document.getElementById('v-thickness').textContent = currentThickness.toFixed(3);
+});
 
-function loadPreset() {
-  effectors = [];
-  const mk = (type, x, y, z, ax, ay, az, s, r) => ({
-    id: 0, type, x, y, z, nx: x, ny: y / 1.6, nz: z,
-    ax, ay, az, strength: s, radius: r
-  });
-  const hooks = [
-    mk('hook', -0.55, 1.35, 0.05, -0.5, 2.1, 0.1, 1.4, 0.55),
-    mk('hook', 0, 1.45, 0, 0, 2.3, 0, 1.5, 0.55),
-    mk('hook', 0.55, 1.35, -0.05, 0.5, 2.1, -0.1, 1.4, 0.55),
-    mk('pin', -0.7, 0.5, 0.35, 0, 0, 0, 1.1, 0.4),
-    mk('pin', 0.75, 0.35, -0.2, 0, 0, 0, 1.0, 0.38),
-    mk('pin', -0.35, -0.15, 0.65, 0, 0, 0, 0.95, 0.42),
-    mk('pin', 0.4, -0.25, -0.55, 0, 0, 0, 1.05, 0.4),
-    mk('pin', 0.15, 0.75, 0.7, 0, 0, 0, 0.9, 0.35),
-    mk('wire', -0.85, 0.95, 0.15, -1.2, 1.6, 0.4, 0.85, 0.5),
-    mk('wire', 0.9, 0.85, -0.15, 1.2, 1.5, -0.35, 0.85, 0.5)
-  ];
-  hooks.forEach((h, i) => { h.id = i + 1; effectors.push(h); });
-  selectedId = 1;
-  rebuildEffectorVisuals();
-  deformMesh();
-  toast('PRESET REFERENCE CARICATO');
-}
+document.getElementById('s-detail').addEventListener('input', (e) => {
+  const d = parseInt(e.target.value, 10);
+  document.getElementById('v-detail').textContent = d;
+  clearHooks();
+  const p = { ...softBody.params };
+  createMesh(d);
+  Object.assign(softBody.params, p);
+  placeInitialHooks();
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  const d = parseInt(document.getElementById('s-detail').value, 10);
+  clearHooks();
+  const p = { ...softBody.params };
+  createMesh(d);
+  Object.assign(softBody.params, p);
+  placeInitialHooks();
+});
+
+document.getElementById('btn-clear').addEventListener('click', clearHooks);
+
+document.getElementById('btn-add-mode').addEventListener('click', () => {
+  const hint = document.querySelector('.hint');
+  hint.style.color = 'var(--acc)';
+  setTimeout(() => { hint.style.color = ''; }, 1200);
+});
+
+document.getElementById('btn-export').addEventListener('click', exportOBJ);
 
 function exportOBJ() {
-  if (!geometry) return;
-  deformMesh();
-  const pos = geometry.attributes.position;
-  const idx = geometry.index;
-  const lines = ['# FLUID_VESSEL export', '# seed ' + cfg.seed, 'o membrane'];
-  for (let i = 0; i < pos.count; i++) {
-    lines.push('v ' + pos.getX(i).toFixed(6) + ' ' + pos.getY(i).toFixed(6) + ' ' + pos.getZ(i).toFixed(6));
-  }
-  lines.push('g membrane');
-  if (idx) {
-    for (let i = 0; i < idx.count; i += 3) {
-      lines.push('f ' + (idx.getX(i) + 1) + ' ' + (idx.getX(i + 1) + 1) + ' ' + (idx.getX(i + 2) + 1));
-    }
-  } else {
-    for (let i = 0; i < pos.count; i += 3) {
-      lines.push('f ' + (i + 1) + ' ' + (i + 2) + ' ' + (i + 3));
-    }
-  }
-  const blob = new Blob([lines.join('\n') + '\n'], { type: 'model/obj' });
+  const exporter = new OBJExporter();
+  renderMesh.name = 'membrana';
+  const text = exporter.parse(renderMesh);
+  const blob = new Blob([text], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
+  const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   a.href = url;
-  a.download = 'fluid_vessel_' + cfg.seed + '.obj';
+  a.download = `fluid_vessel_${ts}.obj`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 300);
-  toast('OBJ EXPORT · ' + triCount(geometry) + ' faces');
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function syncSelectedSliders() {
-  const ef = effectors.find(e => e.id === selectedId);
-  if (!ef) return;
-  document.getElementById('p_str').value = ef.strength;
-  document.getElementById('v_str').textContent = ef.strength.toFixed(2);
-  document.getElementById('p_rad').value = ef.radius;
-  document.getElementById('v_rad').textContent = ef.radius.toFixed(2);
+function updateStatus() {
+  document.getElementById('st-hooks').textContent = hooks.length;
+  document.getElementById('st-verts').textContent = softBody.numVertices;
 }
 
-function pointerToRay(e) {
-  const r = canvas.getBoundingClientRect();
-  pointer.x = ((e.clientX - r.left) / r.width) * 2 - 1;
-  pointer.y = -((e.clientY - r.top) / r.height) * 2 + 1;
-}
-
-function pickMesh() {
-  raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObject(mesh);
-  return hits[0] || null;
-}
-
-function pickEffector() {
-  raycaster.setFromCamera(pointer, camera);
-  const meshes = effGroup.children.filter(c => c.userData.effId != null);
-  const hits = raycaster.intersectObjects(meshes);
-  if (!hits[0]) return null;
-  return { id: hits[0].object.userData.effId, part: hits[0].object.userData.effPart || 'surface' };
-}
-
-function onPointerDown(e) {
-  if (e.button !== 0) return;
-  pointerToRay(e);
-  if (mode === 'add') {
-    const h = pickMesh();
-    if (h) addEffector(addType, h.point, h.face.normal);
-    return;
-  }
-  dragId = pickEffector();
-  if (dragId != null) {
-    selectedId = dragId.id;
-    dragPart = dragId.part;
-    dragId = dragId.id;
-    syncSelectedSliders();
-    rebuildEffectorVisuals();
-    controls.enabled = false;
-  }
-}
-
-function onPointerMove(e) {
-  if (dragId == null) return;
-  pointerToRay(e);
-  const ef = effectors.find(x => x.id === dragId);
-  if (!ef) return;
-
-  if (dragPart === 'anchor') {
-    raycaster.setFromCamera(pointer, camera);
-    const plane = new THREE.Plane();
-    const camDir = new THREE.Vector3();
-    camera.getWorldDirection(camDir);
-    plane.setFromNormalAndCoplanarPoint(camDir, new THREE.Vector3(ef.ax, ef.ay, ef.az));
-    const pt = new THREE.Vector3();
-    if (!raycaster.ray.intersectPlane(plane, pt)) return;
-    ef.ax = pt.x; ef.ay = pt.y; ef.az = pt.z;
-  } else {
-    const h = pickMesh();
-    if (!h) return;
-    const odx = ef.ax - ef.x, ody = ef.ay - ef.y, odz = ef.az - ef.z;
-    ef.x = h.point.x; ef.y = h.point.y; ef.z = h.point.z;
-    ef.nx = h.face.normal.x; ef.ny = h.face.normal.y; ef.nz = h.face.normal.z;
-    if (ef.type === 'hook' || ef.type === 'wire') {
-      ef.ax = ef.x + odx;
-      ef.ay = ef.y + ody;
-      ef.az = ef.z + odz;
-    }
-  }
-  rebuildEffectorVisuals();
-  deformMesh();
-}
-
-function onPointerUp() {
-  dragId = null;
-  controls.enabled = true;
-}
-
-canvas.addEventListener('pointerdown', onPointerDown);
-window.addEventListener('pointermove', onPointerMove);
-window.addEventListener('pointerup', onPointerUp);
-
-window.addEventListener('keydown', e => {
-  if (e.key === 'Delete' || e.key === 'Backspace') {
-    if (selectedId == null) return;
-    effectors = effectors.filter(x => x.id !== selectedId);
-    selectedId = effectors.length ? effectors[effectors.length - 1].id : null;
-    rebuildEffectorVisuals();
-    deformMesh();
-  }
-});
-
-canvas.addEventListener('wheel', e => {
-  if (selectedId == null) return;
-  const ef = effectors.find(x => x.id === selectedId);
-  if (!ef) return;
-  e.preventDefault();
-  ef.strength = Math.max(0.1, Math.min(2.5, ef.strength + (e.deltaY > 0 ? -0.05 : 0.05)));
-  syncSelectedSliders();
-  deformMesh();
-}, { passive: false });
-
-function bindRange(id, vid, key, fmt, rebuild, runInitial) {
-  const el = document.getElementById(id);
-  const out = document.getElementById(vid);
-  const upd = () => {
-    const v = parseFloat(el.value);
-    cfg[key] = v;
-    out.textContent = fmt(v);
-    if (key === 'opacity' && mesh) {
-      mesh.material.opacity = v;
-      mesh.material.transmission = Math.min(0.5, v * 0.55);
-    }
-    if (rebuild === 'base') rebuildBase();
-    else if (rebuild === 'mesh') deformMesh();
-  };
-  el.addEventListener('input', upd);
-  if (runInitial !== false) upd();
-}
-
-bindRange('p_rx', 'v_rx', 'rx', v => v.toFixed(2), 'base', false);
-bindRange('p_ry', 'v_ry', 'ry', v => v.toFixed(2), 'base', false);
-bindRange('p_rz', 'v_rz', 'rz', v => v.toFixed(2), 'base', false);
-bindRange('p_org', 'v_org', 'organic', v => v.toFixed(2), 'base', false);
-bindRange('p_sub', 'v_sub', 'subdiv', v => String(v), 'base', false);
-bindRange('p_stiff', 'v_stiff', 'stiff', v => v.toFixed(2), 'mesh', false);
-bindRange('p_relax', 'v_relax', 'relax', v => String(v), 'mesh', false);
-bindRange('p_vol', 'v_vol', 'volPreserve', v => v.toFixed(2), 'mesh', false);
-bindRange('p_op', 'v_op', 'opacity', v => v.toFixed(2), 'mesh', false);
-
-document.getElementById('p_str').addEventListener('input', e => {
-  const v = parseFloat(e.target.value);
-  document.getElementById('v_str').textContent = v.toFixed(2);
-  const ef = effectors.find(x => x.id === selectedId);
-  if (ef) { ef.strength = v; deformMesh(); }
-});
-document.getElementById('p_rad').addEventListener('input', e => {
-  const v = parseFloat(e.target.value);
-  document.getElementById('v_rad').textContent = v.toFixed(2);
-  const ef = effectors.find(x => x.id === selectedId);
-  if (ef) { ef.radius = v; deformMesh(); }
-});
-
-function setMode(m) {
-  mode = m;
-  document.getElementById('mode_move').classList.toggle('on', m === 'move');
-  document.getElementById('mode_add').classList.toggle('on', m === 'add');
-  document.getElementById('m_mode').textContent = 'MOD: ' + (m === 'move' ? 'SPOSTA' : 'AGGIUNGI');
-}
-document.getElementById('mode_move').onclick = () => setMode('move');
-document.getElementById('mode_add').onclick = () => setMode('add');
-
-function setType(t) {
-  addType = t;
-  ['hook', 'pin', 'wire'].forEach(x => {
-    document.getElementById('type_' + x).classList.toggle('on', x === t);
-  });
-}
-document.getElementById('type_hook').onclick = () => setType('hook');
-document.getElementById('type_pin').onclick = () => setType('pin');
-document.getElementById('type_wire').onclick = () => setType('wire');
-
-document.getElementById('btn_preset').onclick = loadPreset;
-document.getElementById('btn_clear').onclick = () => {
-  if (selectedId == null) return;
-  effectors = effectors.filter(x => x.id !== selectedId);
-  selectedId = null;
-  rebuildEffectorVisuals();
-  deformMesh();
-};
-document.getElementById('btn_obj').onclick = exportOBJ;
-document.getElementById('btn_regen').onclick = () => {
-  cfg.seed = Math.floor(Math.random() * 99999);
-  document.getElementById('foot_readout').textContent = 'seed ' + cfg.seed;
-  rebuildBase();
-};
-
-function resize() {
-  const stage = canvas.parentElement;
-  const w = stage.clientWidth;
-  const h = stage.clientHeight;
-  if (w < 10 || h < 10) return false;
-  camera.aspect = w / h;
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(w, h, false);
-  return true;
-}
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
-function ensureResize(retries) {
-  if (resize()) return;
-  if (retries <= 0) return;
-  requestAnimationFrame(() => ensureResize(retries - 1));
-}
+let lastTime = performance.now();
+let volUpdateAcc = 0;
 
-window.addEventListener('resize', () => resize());
-
-if (typeof ResizeObserver !== 'undefined') {
-  const ro = new ResizeObserver(() => resize());
-  ro.observe(canvas.parentElement);
-}
-
-function animate() {
-  requestAnimationFrame(animate);
+function animate(time) {
+  const dt = (time - lastTime) / 1000;
+  lastTime = time;
+  const subDt = 1 / 180;
+  let acc = Math.min(dt, 1 / 20);
+  while (acc > 0) {
+    const step = Math.min(subDt, acc);
+    softBody.step(step);
+    acc -= step;
+  }
+  updateRenderShell();
+  for (const h of hooks) updateCable(h);
+  volUpdateAcc += dt;
+  if (volUpdateAcc > 0.25) {
+    volUpdateAcc = 0;
+    document.getElementById('st-vol').textContent =
+      (softBody.currentVolume() / softBody.restVolume).toFixed(2);
+  }
   controls.update();
   renderer.render(scene, camera);
+  requestAnimationFrame(animate);
 }
-
-rebuildBase();
-loadPreset();
-ensureResize(30);
-document.getElementById('foot_readout').textContent = 'seed ' + cfg.seed;
-['p_rx','p_ry','p_rz','p_org','p_sub','p_stiff','p_relax','p_vol','p_op'].forEach(id => {
-  document.getElementById(id).dispatchEvent(new Event('input'));
-});
-animate();
-
-} catch (err) {
-  showFatal(err);
-}
+requestAnimationFrame(animate);
 </script>
 </body>
 </html>
