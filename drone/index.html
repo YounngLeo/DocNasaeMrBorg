@@ -43,6 +43,13 @@
     <div class="count">// 44 SHOTS · 4 LOCATION</div>
   </header>
 
+  <div class="drone-cta-wrap">
+    <button type="button" class="drone-cta-btn" id="open-drone-commission" aria-haspopup="dialog">
+      Ti serve una foto dall&apos;alto?
+    </button>
+    <span class="drone-cta-hint">Foto · video · fotogrammetria · invio richiesta via mail</span>
+  </div>
+
   <nav class="drone-jump" id="drone-jump" aria-label="Luoghi · drone view">
     <a href="#loc-laguna">LAGUNA DI VENEZIA</a>
     <a href="#loc-cerro">CERRO VERONESE</a>
@@ -335,6 +342,49 @@
     <span><a href="../">← back to home</a></span>
   </footer>
 
+</div>
+
+<div id="drone-commission-overlay" class="home-modal-overlay" aria-hidden="true">
+  <div class="home-modal-scrim" data-drone-commission-close tabindex="-1" aria-label="Chiudi"></div>
+  <div id="drone-commission-panel" class="home-modal-panel drone-commission-panel" role="dialog" aria-modal="true" aria-labelledby="drone-commission-title" hidden>
+    <div class="home-modal-head">
+      <h2 id="drone-commission-title">RICHIESTA · FOTO DALL&apos;ALTO</h2>
+      <button type="button" class="home-modal-close" data-drone-commission-close>CHIUDI</button>
+    </div>
+    <form class="home-modal-body" id="form-drone-commission" novalidate>
+      <div class="hm-row">
+        <label class="hm-lab" for="dr-servizio">1 · COSA TI SERVE</label>
+        <select id="dr-servizio" name="servizio" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="Foto aerea">Foto aerea</option>
+          <option value="Video">Video</option>
+          <option value="Fotogrammetria">Fotogrammetria</option>
+          <option value="Combinazione (specifica nelle note)">Combinazione (specifica nelle note)</option>
+        </select>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="dr-sito">2 · GRANDEZZA SITO E INDIRIZZO</label>
+        <textarea id="dr-sito" name="sito" rows="3" required placeholder="Superficie approssimativa (m² / ettari), indirizzo o coordinate, accessi…"></textarea>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="dr-budget">3 · BUDGET</label>
+        <select id="dr-budget" name="budget" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="Fino a 200 €">Fino a 200 €</option>
+          <option value="200 – 500 €">200 – 500 €</option>
+          <option value="500 – 1.000 €">500 – 1.000 €</option>
+          <option value="Oltre 1.000 € (da concordare)">Oltre 1.000 € (da concordare)</option>
+          <option value="Preferisco parlarne">Preferisco parlarne</option>
+        </select>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="dr-notes">NOTE (opzionale)</label>
+        <textarea id="dr-notes" name="notes" rows="2" placeholder="Date, vincoli di volo, deliverable…"></textarea>
+      </div>
+      <button type="submit" class="home-modal-submit">INVIA RICHIESTA VIA MAIL</button>
+      <p class="hm-hint">Si apre il client di posta con messaggio bozza; verifica e invia.</p>
+    </form>
+  </div>
 </div>
 
 <script src="../assets/site.js"></script>

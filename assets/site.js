@@ -262,6 +262,67 @@
       });
     }
 
+    /* — DRONE: richiesta foto dall'alto (modale + mailto) — */
+    var drOverlay = document.getElementById('drone-commission-overlay');
+    var drPanel = document.getElementById('drone-commission-panel');
+    var drOpenBtn = document.getElementById('open-drone-commission');
+    var studioMailDrone = 'fornasaleonardo@gmail.com';
+
+    function closeDroneCommission() {
+      if (!drOverlay) return;
+      drOverlay.classList.remove('open');
+      drOverlay.setAttribute('aria-hidden', 'true');
+      if (drPanel) drPanel.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function openDroneCommission() {
+      if (!drOverlay || !drPanel) return;
+      drPanel.hidden = false;
+      drOverlay.classList.add('open');
+      drOverlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    if (drOverlay && drPanel) {
+      if (drOpenBtn) drOpenBtn.addEventListener('click', openDroneCommission);
+      drOverlay.querySelectorAll('[data-drone-commission-close]').forEach(function(el){
+        el.addEventListener('click', function(e){
+          if (e.target === el) closeDroneCommission();
+        });
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape' && drOverlay.classList.contains('open')) closeDroneCommission();
+      });
+    }
+
+    var formDr = document.getElementById('form-drone-commission');
+    if (formDr) {
+      formDr.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var servizio = document.getElementById('dr-servizio');
+        var sito = document.getElementById('dr-sito');
+        var budget = document.getElementById('dr-budget');
+        var notes = document.getElementById('dr-notes');
+        if (!servizio || !servizio.value) { servizio && servizio.focus(); return; }
+        if (!sito || !sito.value.trim()) { sito && sito.focus(); return; }
+        if (!budget || !budget.value) { budget && budget.focus(); return; }
+
+        var body =
+          'Richiesta da sito DoctNasa&MrBorg — DRONE / FOTO DALL\'ALTO\r\n\r\n' +
+          '1 · SERVIZIO: ' + servizio.value + '\r\n\r\n' +
+          '2 · GRANDEZZA SITO E INDIRIZZO:\r\n' + sito.value.trim() + '\r\n\r\n' +
+          '3 · BUDGET: ' + budget.value + '\r\n\r\n' +
+          'NOTE:\r\n' + (notes && notes.value.trim() ? notes.value.trim() : '—') + '\r\n';
+
+        var subj = 'Richiesta drone — ' + servizio.value;
+        window.location.href = 'mailto:' + studioMailDrone +
+          '?subject=' + encodeURIComponent(subj) +
+          '&body=' + encodeURIComponent(body);
+        closeDroneCommission();
+      });
+    }
+
     /* — DRONE: jump nav + scroll spy — */
     var droneJump = document.getElementById('drone-jump');
     if (droneJump) {

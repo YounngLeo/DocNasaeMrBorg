@@ -471,6 +471,44 @@ button.section-card {
   max-width: 460px;
 }
 
+/* Drone: CTA richiesta foto dall'alto */
+.drone-cta-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dotted var(--line-h);
+}
+.drone-cta-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: none;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.drone-cta-btn:hover {
+  background: var(--blue);
+  color: var(--bg);
+}
+.drone-cta-hint {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--fg-fade);
+  max-width: 420px;
+  line-height: 1.45;
+}
+.drone-commission-panel.home-modal-panel {
+  max-width: 480px;
+}
+
 .section-card.nft   { border-left: 2px solid var(--amber); }
 .section-card.nft .icon { color: var(--amber); }
 .section-card.nft:hover { border-color: var(--amber); }
