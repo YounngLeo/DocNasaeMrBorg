@@ -43,6 +43,13 @@
     <div class="count">// 5 CATEGORIE · GIÀ PROIETTATE · uploading</div>
   </header>
 
+  <div class="luci-cta-wrap">
+    <button type="button" class="luci-cta-btn" id="open-luci-commission" aria-haspopup="dialog">
+      Ti servono luci per un evento?
+    </button>
+    <span class="luci-cta-hint">Proiezioni · laser · CRT · patch luci · richiesta via mail</span>
+  </div>
+
   <!-- ── 1 · CRT + monitor ─────────────────────────────────── -->
   <div class="coll-header">
     <span class="coll-name">Proiezioni con TV a tubo catodico e monitor</span>
@@ -440,6 +447,50 @@
     <span><a href="../">← back to home</a></span>
   </footer>
 
+</div>
+
+<div id="luci-commission-overlay" class="home-modal-overlay" aria-hidden="true">
+  <div class="home-modal-scrim" data-luci-commission-close tabindex="-1" aria-label="Chiudi"></div>
+  <div id="luci-commission-panel" class="home-modal-panel luci-commission-panel" role="dialog" aria-modal="true" aria-labelledby="luci-commission-title" hidden>
+    <div class="home-modal-head">
+      <h2 id="luci-commission-title">RICHIESTA · LUCI / PROIEZIONI</h2>
+      <button type="button" class="home-modal-close" data-luci-commission-close>CHIUDI</button>
+    </div>
+    <form class="home-modal-body" id="form-luci-commission" novalidate>
+      <div class="hm-row">
+        <label class="hm-lab" for="lu-servizio">1 · COSA TI SERVE</label>
+        <select id="lu-servizio" name="servizio" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="Proiezioni normali">Proiezioni normali</option>
+          <option value="Proiezioni su tubo catodico (CRT)">Proiezioni su tubo catodico (CRT)</option>
+          <option value="Proiezione con laser">Proiezione con laser</option>
+          <option value="Patch interattiva / gestione luci">Patch interattiva / gestione luci</option>
+          <option value="Combinazione (specifica nelle note)">Combinazione (specifica nelle note)</option>
+        </select>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="lu-evento">2 · NOME, DATA E LUOGO EVENTO</label>
+        <textarea id="lu-evento" name="evento" rows="3" required placeholder="Nome evento, data, venue, città, orari…"></textarea>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="lu-budget">3 · BUDGET</label>
+        <select id="lu-budget" name="budget" required>
+          <option value="" disabled selected>— scegli —</option>
+          <option value="Fino a 300 €">Fino a 300 €</option>
+          <option value="300 – 800 €">300 – 800 €</option>
+          <option value="800 – 2.000 €">800 – 2.000 €</option>
+          <option value="Oltre 2.000 € (da concordare)">Oltre 2.000 € (da concordare)</option>
+          <option value="Preferisco parlarne">Preferisco parlarne</option>
+        </select>
+      </div>
+      <div class="hm-row">
+        <label class="hm-lab" for="lu-notes">NOTE (opzionale)</label>
+        <textarea id="lu-notes" name="notes" rows="2" placeholder="Setup, pubblico, vincoli tecnici…"></textarea>
+      </div>
+      <button type="submit" class="home-modal-submit">INVIA RICHIESTA VIA MAIL</button>
+      <p class="hm-hint">Si apre il client di posta con messaggio bozza; verifica e invia.</p>
+    </form>
+  </div>
 </div>
 
 <script src="../assets/site.js"></script>

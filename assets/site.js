@@ -323,6 +323,66 @@
       });
     }
 
+    /* — LUCI: richiesta evento (modale + mailto) — */
+    var luOverlay = document.getElementById('luci-commission-overlay');
+    var luPanel = document.getElementById('luci-commission-panel');
+    var luOpenBtn = document.getElementById('open-luci-commission');
+
+    function closeLuciCommission() {
+      if (!luOverlay) return;
+      luOverlay.classList.remove('open');
+      luOverlay.setAttribute('aria-hidden', 'true');
+      if (luPanel) luPanel.hidden = true;
+      document.body.style.overflow = '';
+    }
+
+    function openLuciCommission() {
+      if (!luOverlay || !luPanel) return;
+      luPanel.hidden = false;
+      luOverlay.classList.add('open');
+      luOverlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    if (luOverlay && luPanel) {
+      if (luOpenBtn) luOpenBtn.addEventListener('click', openLuciCommission);
+      luOverlay.querySelectorAll('[data-luci-commission-close]').forEach(function(el){
+        el.addEventListener('click', function(e){
+          if (e.target === el) closeLuciCommission();
+        });
+      });
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape' && luOverlay.classList.contains('open')) closeLuciCommission();
+      });
+    }
+
+    var formLu = document.getElementById('form-luci-commission');
+    if (formLu) {
+      formLu.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var servizio = document.getElementById('lu-servizio');
+        var evento = document.getElementById('lu-evento');
+        var budget = document.getElementById('lu-budget');
+        var notes = document.getElementById('lu-notes');
+        if (!servizio || !servizio.value) { servizio && servizio.focus(); return; }
+        if (!evento || !evento.value.trim()) { evento && evento.focus(); return; }
+        if (!budget || !budget.value) { budget && budget.focus(); return; }
+
+        var body =
+          'Richiesta da sito DoctNasa&MrBorg — LUCI / PROIEZIONI EVENTO\r\n\r\n' +
+          '1 · SERVIZIO: ' + servizio.value + '\r\n\r\n' +
+          '2 · NOME, DATA E LUOGO EVENTO:\r\n' + evento.value.trim() + '\r\n\r\n' +
+          '3 · BUDGET: ' + budget.value + '\r\n\r\n' +
+          'NOTE:\r\n' + (notes && notes.value.trim() ? notes.value.trim() : '—') + '\r\n';
+
+        var subj = 'Richiesta luci evento — ' + servizio.value;
+        window.location.href = 'mailto:' + studioMailDrone +
+          '?subject=' + encodeURIComponent(subj) +
+          '&body=' + encodeURIComponent(body);
+        closeLuciCommission();
+      });
+    }
+
     /* — DRONE: jump nav + scroll spy — */
     var droneJump = document.getElementById('drone-jump');
     if (droneJump) {
