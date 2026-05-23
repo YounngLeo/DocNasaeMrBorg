@@ -1221,11 +1221,50 @@ footer.site-foot a:hover { color: var(--acc); }
 /* ============================================================
    DRONE VIEW — full-bleed aerial photography layout
 ============================================================ */
+.drone-jump {
+  position: sticky;
+  top: 52px;
+  z-index: 25;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 22px;
+  padding: 10px 0;
+  background: rgba(8, 8, 8, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+}
+.drone-jump a {
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
+  padding: 7px 11px;
+  border: 1px solid var(--line-h);
+  color: var(--fg-dim);
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.drone-jump a:hover {
+  color: var(--acc);
+  border-color: var(--acc-dim);
+}
+.drone-jump a.on {
+  color: var(--acc);
+  border-color: var(--acc);
+  background: rgba(94, 255, 126, 0.06);
+}
+.drone-loc-credit {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--fg-dim);
+  font-weight: normal;
+  margin-left: 12px;
+}
 .drone-feed {
-  margin-top: 28px;
+  margin-top: 8px;
 }
 .drone-loc {
   margin-bottom: 56px;
+  scroll-margin-top: 100px;
 }
 .drone-loc-head {
   font-size: 18px;
@@ -1244,6 +1283,26 @@ footer.site-foot a:hover { color: var(--acc); }
   letter-spacing: 2px;
   color: var(--fg-dim);
   font-weight: normal;
+}
+.drone-loc-head > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px 12px;
+}
+@media (max-width: 640px) {
+  .drone-loc-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .drone-loc-head > span {
+    justify-content: flex-start;
+  }
+  .drone-loc-credit {
+    margin-left: 0;
+  }
 }
 
 /* Break out of the .wrap container for full-width photos */
