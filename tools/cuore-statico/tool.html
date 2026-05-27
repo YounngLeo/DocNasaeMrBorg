@@ -108,6 +108,25 @@
   .fx-mini-head { opacity:0.6; font-size:9px; letter-spacing:0.08em; text-align:center; }
   .fx-mini-cell input[type="range"] { width:100%; margin:0; }
 
+  .stress-panel {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid #4a1a1a;
+    background: rgba(80, 0, 0, 0.15);
+    font-size: 10px;
+    line-height: 1.45;
+  }
+  .stress-panel[hidden] { display: none; }
+  .stress-log {
+    max-height: 88px;
+    overflow: auto;
+    opacity: 0.85;
+    margin-top: 6px;
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 9px;
+  }
+
   /* Pattern sequencer */
   .pat-steps {
     display: grid;
@@ -388,10 +407,19 @@
 </section>
 
 <button id="playBtn" class="big">▶ PLAY</button>
-<div class="grid-3" style="margin-bottom: 14px">
+<div class="grid-3" style="margin-bottom: 8px">
   <button id="beepBtn" class="amber small">🔔 BEEP</button>
   <button id="strikeBtn" class="red small">⚡ STRIKE</button>
   <button id="panicBtn" class="red small">⛔ PANIC</button>
+</div>
+<button id="stressBtn" type="button" class="small full" style="margin-bottom: 14px">⚙ STRESS TEST (3 MIN)</button>
+<div id="stressPanel" class="stress-panel" hidden>
+  <div class="row"><span class="label">STRESS</span><span class="value" id="stressState">IDLE</span></div>
+  <div class="row"><span class="label">TICKS</span><span class="value" id="stressTicks">0</span></div>
+  <div class="row"><span class="label">ERRORS</span><span class="value" id="stressErrors">0</span></div>
+  <div class="row"><span class="label">CTX</span><span class="value" id="stressCtx">--</span></div>
+  <div class="row"><span class="label">TICK_LAG</span><span class="value" id="stressLag">0 ms</span></div>
+  <div class="stress-log" id="stressLog"></div>
 </div>
 
 <div class="tabs">
@@ -743,6 +771,21 @@
       <button id="patClearBtn" class="small">CLEAR ROW</button>
       <button id="patFillBtn" class="small">FILL ALT</button>
       <button id="patCopyBtn" class="small">COPY ROW</button>
+    </div>
+  </section>
+
+  <section class="section amber">
+    <div class="section-title">// RANDOM MELODY</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">MELODY_DENSITY</span><span class="value" id="patRandDensVal">0.55</span></div>
+      <input type="range" id="patRandDens" min="0.15" max="0.95" step="0.01" value="0.55">
+    </div>
+    <div class="grid-2" style="margin-bottom: 8px">
+      <button id="patRandAllBtn" class="big amber">⌬ RANDOM TUTTO</button>
+      <button id="patRandRowBtn" class="big">⌬ RANDOM RIGA</button>
+    </div>
+    <div style="font-size:10px; opacity:0.65; line-height:1.5">
+      Genera basso, pad, lead, drums e gate con densità regolabile. Ideale per sketch melodici rapidi.
     </div>
   </section>
 
@@ -1359,6 +1402,123 @@ function importLegacyPatterns() {
   for (let i = 0; i < PAT_LEN; i++) if (i % 6 === 5) patterns.noise[i] = 1;
   patterns.sample = mkPatternRow(0);
   patterns.drums = defaultDrumPatterns(drumKit);
+  persistPatterns();
+  renderPatternGrid();
+}
+
+function patRandChance(p) { return Math.random() < p; }
+
+function getPatRandDensity() {
+  const el = $('patRandDens');
+  return el ? Math.max(0.15, Math.min(0.95, parseFloat(el.value) || 0.55)) : 0.55;
+}
+
+function randomizeDrumPatterns(density) {
+  const d = patterns.drums;
+  DRUM_VOICES.forEach(function (v) { d[v] = mkPatternRow(0); });
+  for (let i = 0; i < PAT_LEN; i++) {
+    const beat = i % 16;
+    if (beat % 4 === 0) d.kick[i] = patRandChance(0.9) ? 1 : 0;
+    if (beat === 4 || beat === 12) d.snare[i] = patRandChance(0.65 + density * 0.25) ? 1 : 0;
+    if (beat % 2 === 1) d.ch[i] = patRandChance(0.25 + density * 0.45) ? 1 : 0;
+    if (beat === 6 || beat === 14) d.oh[i] = patRandChance(0.35 + density * 0.25) ? 1 : 0;
+    if (patRandChance(density * 0.14)) d.clap[i] = 1;
+    if (patRandChance(density * 0.1)) d.rim[i] = 1;
+    if (patRandChance(density * 0.08)) d.tom[i] = 1;
+  }
+}
+
+function randomizeBassPattern(density) {
+  const palette = [40, 42, 43, 45, 47, 50, 52];
+  patterns.bass = mkPatternRow(null);
+  for (let i = 0; i < PAT_LEN; i++) {
+    const beat = i % 16;
+    let p = density * 0.55;
+    if (beat === 0) p = Math.min(1, p + 0.38);
+    else if (beat === 8) p = Math.min(1, p + 0.22);
+    else if (beat % 4 === 0) p += 0.12;
+    patterns.bass[i] = patRandChance(p) ? palette[Math.floor(Math.random() * palette.length)] : null;
+  }
+  for (let bar = 0; bar < PAT_LEN; bar += 16) {
+    if (!patRandChance(0.55)) continue;
+    let idx = Math.floor(Math.random() * palette.length);
+    for (let j = 0; j < 6; j++) {
+      const step = bar + j * 2;
+      if (step >= PAT_LEN) break;
+      if (patRandChance(0.72)) {
+        patterns.bass[step] = palette[idx];
+        idx = Math.max(0, Math.min(palette.length - 1, idx + (Math.random() < 0.5 ? -1 : 1)));
+      }
+    }
+  }
+}
+
+function randomizePadPattern(density) {
+  patterns.pad = mkPatternRow(0);
+  let chordSlot = Math.floor(Math.random() * 4);
+  for (let i = 0; i < PAT_LEN; i++) {
+    const beat = i % 16;
+    if (beat === 0) {
+      if (patRandChance(0.88)) {
+        chordSlot = Math.floor(Math.random() * 4);
+        patterns.pad[i] = chordSlot + 1;
+      } else patterns.pad[i] = patRandChance(0.35) ? 5 : 0;
+    } else if (beat === 8 && patRandChance(density * 0.45)) {
+      patterns.pad[i] = chordSlot + 1;
+    } else if (patRandChance(density * 0.07)) {
+      patterns.pad[i] = patRandChance(0.5) ? 5 : (chordSlot + 1);
+    }
+  }
+}
+
+function randomizeLeadPattern(density) {
+  patterns.lead = mkPatternRow(null);
+  let prevDeg = null;
+  for (let i = 0; i < PAT_LEN; i++) {
+    let p = density * 0.42;
+    if (i % 16 === 0) p += 0.12;
+    if (prevDeg != null && patRandChance(0.38)) p += 0.18;
+    if (!patRandChance(p)) { prevDeg = null; continue; }
+    let degIdx = Math.floor(Math.random() * LEAD_SCALE.length);
+    if (prevDeg != null && patRandChance(0.65)) {
+      const cur = LEAD_SCALE.indexOf(prevDeg);
+      degIdx = Math.max(0, Math.min(LEAD_SCALE.length - 1, cur + (Math.random() < 0.5 ? -1 : 1)));
+    }
+    const deg = LEAD_SCALE[degIdx];
+    prevDeg = deg;
+    patterns.lead[i] = patRandChance(0.22) ? (100 + degIdx) : degIdx;
+  }
+}
+
+function randomizeGatePattern(layer, density) {
+  patterns[layer] = mkPatternRow(0);
+  const p = layer === 'noise' ? density * 0.14 : density * 0.1;
+  for (let i = 0; i < PAT_LEN; i++) {
+    if (patRandChance(p)) patterns[layer][i] = 1;
+    else if (i % 16 === 15 && patRandChance(density * 0.25)) patterns[layer][i] = 1;
+  }
+}
+
+function randomizePatterns(opts) {
+  const density = opts && Number.isFinite(opts.density) ? opts.density : getPatRandDensity();
+  const includeDrums = !opts || opts.drums !== false;
+  randomizeBassPattern(density);
+  randomizePadPattern(density);
+  randomizeLeadPattern(density);
+  randomizeGatePattern('noise', density);
+  randomizeGatePattern('sample', density);
+  if (includeDrums) randomizeDrumPatterns(density);
+  persistPatterns();
+  renderPatternGrid();
+}
+
+function randomizePatternRow(layer) {
+  const density = getPatRandDensity();
+  if (layer === 'bass') randomizeBassPattern(density);
+  else if (layer === 'pad') randomizePadPattern(density);
+  else if (layer === 'lead') randomizeLeadPattern(density);
+  else if (layer === 'noise' || layer === 'sample') randomizeGatePattern(layer, density);
+  else if (layer === 'drums') randomizeDrumPatterns(density);
   persistPatterns();
   renderPatternGrid();
 }
@@ -2045,11 +2205,99 @@ $('panicBtn').addEventListener('click', async () => {
         applyFxTrackSendsAll();
       } catch(e) {}
       $('stateVal').textContent = '◼ STBY';
-    }, 600);
+    }, 280);
   } catch (err) {
     if (A && A.master) A.master.mute = false;
     console.warn('panic err', err);
   }
+});
+
+// ============================================================
+// STRESS TEST (debug stability)
+// ============================================================
+let stressRun = false;
+let stressInterval = null;
+let stressLastBurst = 0;
+
+function stressLog(msg) {
+  const el = $('stressLog');
+  if (!el) return;
+  const line = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  el.textContent = (line + '\n' + (el.textContent || '')).slice(0, 2800);
+}
+
+function stopStressTest() {
+  stressRun = false;
+  if (stressInterval) { clearInterval(stressInterval); stressInterval = null; }
+  const btn = $('stressBtn');
+  if (btn) btn.textContent = '⚙ STRESS TEST (3 MIN)';
+  if ($('stressState')) $('stressState').textContent = 'IDLE';
+  stressLog('Stress test fermato.');
+}
+
+async function startStressTest() {
+  if (stressRun) { stopStressTest(); return; }
+  await initAudio();
+  stressRun = true;
+  let bursts = 0;
+  let errors = 0;
+  $('stressBtn').textContent = '■ STOP STRESS';
+  $('stressPanel').hidden = false;
+  $('stressState').textContent = 'RUNNING';
+  $('stressTicks').textContent = '0';
+  $('stressErrors').textContent = '0';
+  $('stressLag').textContent = '0 ms';
+  $('stressLog').textContent = '';
+  stressLog('Avvio 3 min · burst audio + pattern + panic periodici');
+
+  usePatternMode = true;
+  syncPatModeBtn();
+  if (!isPlaying) await togglePlay();
+
+  const endAt = Date.now() + 180000;
+  let lastPanicAt = Date.now();
+
+  stressInterval = setInterval(async function () {
+    if (!stressRun) return;
+    const now = Date.now();
+    if (now >= endAt) {
+      stressLog('Completato.');
+      stopStressTest();
+      return;
+    }
+    try {
+      if (Tone.context.state !== 'running') await Tone.context.resume();
+      bursts++;
+      $('stressTicks').textContent = String(bursts);
+      $('stressCtx').textContent = Tone.context.state;
+      if (stressLastBurst) $('stressLag').textContent = (now - stressLastBurst) + ' ms';
+      stressLastBurst = now;
+
+      const t = Tone.now() + 0.01;
+      if (layers.bass && A) A.bass.triggerAttackRelease(midiToFreq(45 + currentKey + bassOctave * 12), '32n', t, 0.4);
+      if (layers.lead && A && patRandChance(0.45)) {
+        const d = LEAD_SCALE[Math.floor(Math.random() * LEAD_SCALE.length)];
+        A.lead.triggerAttackRelease(midiToFreq(LEAD_BASE + d + currentKey), '32n', t, 0.35);
+      }
+      if (layers.drums && A && patRandChance(0.5)) triggerDrum('kick', t);
+      if (sampleBuffer && patRandChance(0.25)) playSampleAtTime(t, 0.5);
+
+      if (now - lastPanicAt > 50000 && patRandChance(0.03)) {
+        lastPanicAt = now;
+        stressLog('PANIC');
+        $('panicBtn').click();
+      }
+    } catch (e) {
+      errors++;
+      $('stressErrors').textContent = String(errors);
+      stressLog('ERR ' + (e && e.message ? e.message : e));
+    }
+  }, 140);
+}
+
+$('stressBtn').addEventListener('click', function () {
+  if (stressRun) stopStressTest();
+  else startStressTest();
 });
 
 // ============================================================
@@ -2710,20 +2958,31 @@ function setSlider(id, val) { const el = $(id); el.value = val; el.dispatchEvent
 $('randomBtn').addEventListener('click', () => {
   const rnd = (a,b) => a + Math.random() * (b-a);
   setSlider('fb',   rnd(0.55, 0.92).toFixed(2));
-  setSlider('dwet', rnd(0.4,  0.95).toFixed(2));
   setSlider('fhz',  Math.round(rnd(200, 3500)));
   setSlider('frate',rnd(0.03, 0.6).toFixed(2));
-  setSlider('rev',  rnd(0.2,  0.85).toFixed(2));
+  setSlider('room', rnd(0.5,  0.98).toFixed(2));
   setSlider('dens', rnd(0.25, 0.85).toFixed(2));
   setSlider('noiseAmt', rnd(0.2, 0.9).toFixed(2));
-  setSlider('dist', rnd(0,    0.45).toFixed(2));
+  TRACKS.forEach(function (t) {
+    fxSends[t].dly = rnd(0.1, 0.85);
+    fxSends[t].flt = rnd(0.1, 0.75);
+    fxSends[t].rev = rnd(0.05, 0.65);
+    fxSends[t].drv = rnd(0, 0.55);
+  });
+  persistFxStateDebounced();
+  if (A) applyFxTrackSendsAll();
+  loadFxTrackToUI();
 });
 $('resetBtn').addEventListener('click', () => {
   setSlider('master', 0); setSlider('bpm', 76);
-  setSlider('fb', 0.65); setSlider('dwet', 0.50);
+  setSlider('fb', 0.65);
   setSlider('fhz', 800); setSlider('frate', 0.05); setSlider('foct', 3);
-  setSlider('rev', 0.40); setSlider('room', 0.92);
-  setSlider('dens', 0.50); setSlider('noiseAmt', 0.50); setSlider('dist', 0.20);
+  setSlider('room', 0.92);
+  setSlider('dens', 0.50); setSlider('noiseAmt', 0.50);
+  fxSends = mkFxSends();
+  persistFxStateDebounced();
+  if (A) applyFxTrackSendsAll();
+  loadFxTrackToUI();
 });
 
 // ============================================================
@@ -2795,6 +3054,18 @@ $('patFillBtn').addEventListener('click', function () {
 
 $('patCopyBtn').addEventListener('click', function () {
   patternClipboard = getPatternRow(patternEditTarget).slice();
+});
+
+$('patRandDens').addEventListener('input', function () {
+  $('patRandDensVal').textContent = parseFloat($('patRandDens').value).toFixed(2);
+});
+
+$('patRandAllBtn').addEventListener('click', function () {
+  randomizePatterns({ density: getPatRandDensity(), drums: true });
+});
+
+$('patRandRowBtn').addEventListener('click', function () {
+  randomizePatternRow(patternEditTarget);
 });
 
 document.addEventListener('keydown', function (e) {
