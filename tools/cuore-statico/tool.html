@@ -111,6 +111,7 @@
   }
   .pat-step.on { opacity: 1; background: rgba(0,255,65,0.12); border-color: var(--fg); }
   .pat-step.playhead { box-shadow: inset 0 0 0 1px var(--amber); }
+  .pat-step.bar-start { border-left-width: 2px; }
   .pat-step.layer-bass.on   { border-color: var(--fg); color: var(--fg); }
   .pat-step.layer-pad.on    { border-color: var(--blue); color: var(--blue); background: rgba(74,246,255,0.08); }
   .pat-step.layer-lead.on   { border-color: var(--purple); color: var(--purple); background: rgba(198,120,255,0.08); }
@@ -119,6 +120,17 @@
   .pat-step.layer-drums.on  { border-color: var(--red); color: var(--red); background: rgba(255,68,68,0.08); }
   button.drum-kit.on, button.pat-drum-voice.on { background: var(--fg); color: var(--bg); }
   button.drum-kit, button.pat-drum-voice { font-size: 9px; letter-spacing: 0.5px; }
+  .drum-voice-controls { margin-top: 8px; border-top: 1px dotted var(--mid); padding-top: 8px; }
+  .drum-voice-controls .row-mini {
+    display: grid;
+    grid-template-columns: 46px 1fr 34px 54px;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .drum-voice-controls .row-mini .mini-lab { font-size: 9px; opacity: 0.8; letter-spacing: 0.5px; }
+  .drum-voice-controls .row-mini .mini-val { font-size: 9px; text-align: right; opacity: 0.9; }
+  .drum-voice-controls .row-mini select { padding: 4px 6px; font-size: 9px; }
   .pat-step-nums {
     display: grid;
     grid-template-columns: repeat(16, 1fr);
@@ -454,6 +466,10 @@
       <div class="row"><span class="label">NOISE_AMOUNT</span><span class="value" id="noiseAmtVal">0.50</span></div>
       <input type="range" id="noiseAmt" min="0" max="1" step="0.01" value="0.50">
     </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">BASS_OCTAVE</span><span class="value" id="bassOctVal">-1</span></div>
+      <input type="range" id="bassOct" min="-2" max="1" step="1" value="-1">
+    </div>
   </section>
 </div>
 
@@ -675,7 +691,7 @@
 <div class="tabpanel" id="tab-pattern">
 
   <section class="section amber">
-    <div class="section-title">// SEQUENCER · 16 STEP (1 BAR)</div>
+    <div class="section-title">// SEQUENCER · 64 STEP (4 BAR)</div>
     <div class="grid-2" style="margin-bottom: 8px">
       <button id="patModeBtn" class="amber on">PATTERN: ON</button>
       <button id="patLegacyBtn" class="small">↺ IMPORT LEGACY</button>
@@ -696,6 +712,7 @@
       </div>
       <button type="button" id="patDrumPresetBtn" class="small full" style="margin-bottom: 6px">↺ LOAD KIT PATTERN</button>
       <div class="grid-4" id="patDrumVoices"></div>
+      <div class="drum-voice-controls" id="patDrumVoiceControls"></div>
     </div>
     <div class="row">
       <span class="label">EDITING</span>
@@ -955,30 +972,51 @@ const BASS_PATTERN = [47, 47, null, 47, 47, 42, null, 45];
 const LEAD_SCALE = [0, 2, 3, 5, 7, 8, 10];
 const LEAD_BASE = 59 + 24;
 const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const PAT_LEN = 16;
+const PAT_LEN = 64;
 const BASS_CYCLE = [null, 40, 42, 43, 45, 47, 50, 52];
 const PAD_CYCLE  = [0, 1, 2, 3, 4, 5]; // 0=rest, 1-4=chord slot, 5=auto
 const LEAD_CYCLE = [null, 0, 1, 2, 3, 4, 5, 6, 100, 101, 102, 103, 104, 105, 106]; // 100+ = +12 oct
 const DRUM_VOICES = ['kick', 'snare', 'clap', 'ch', 'oh', 'tom', 'rim'];
 const DRUM_VOICE_LABELS = { kick: 'KICK', snare: 'SNR', clap: 'CLP', ch: 'CH', oh: 'OH', tom: 'TOM', rim: 'RIM' };
+const DRUM_SOURCE_LABELS = { synth: 'SYN', sample: 'SMP' };
+const DRUM_DEFAULT_VOLS = { kick: 0, snare: -2, clap: -4, ch: 2, oh: -2, tom: -3, rim: -5 };
+
+function mkDrumVoiceConfig() {
+  const cfg = {};
+  DRUM_VOICES.forEach(function (v) { cfg[v] = { vol: DRUM_DEFAULT_VOLS[v] ?? 0, src: 'synth' }; });
+  return cfg;
+}
+
+function repeatToLen(row16) {
+  const out = [];
+  while (out.length < PAT_LEN) out.push.apply(out, row16);
+  return out.slice(0, PAT_LEN);
+}
+
+function normalizePatternRow(arr, fillVal) {
+  if (!Array.isArray(arr)) return mkPatternRow(fillVal);
+  const out = mkPatternRow(fillVal);
+  for (let i = 0; i < Math.min(arr.length, PAT_LEN); i++) out[i] = arr[i];
+  return out;
+}
 
 function defaultDrumPatterns(kit) {
   const p = {};
   DRUM_VOICES.forEach(function (v) { p[v] = mkPatternRow(0); });
   if (kit === '909') {
-    p.kick  = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
-    p.snare = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
-    p.clap  = [0,0,0,0, 1,0,0,1, 0,0,0,0, 1,0,0,1];
-    p.ch    = [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0];
-    p.oh    = [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0];
-    p.tom   = [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,1,0,0];
-    p.rim   = [0,0,1,0, 0,1,0,0, 0,0,1,0, 0,1,0,0];
+    p.kick  = repeatToLen([1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0]);
+    p.snare = repeatToLen([0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0]);
+    p.clap  = repeatToLen([0,0,0,0, 1,0,0,1, 0,0,0,0, 1,0,0,1]);
+    p.ch    = repeatToLen([1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0]);
+    p.oh    = repeatToLen([0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0]);
+    p.tom   = repeatToLen([0,0,0,0, 0,0,1,0, 0,0,0,0, 0,1,0,0]);
+    p.rim   = repeatToLen([0,0,1,0, 0,1,0,0, 0,0,1,0, 0,1,0,0]);
   } else {
-    p.kick  = [1,0,0,0, 0,0,1,0, 0,1,0,0, 1,0,0,0];
-    p.snare = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
-    p.ch    = [1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1];
-    p.oh    = [0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0];
-    p.tom   = [0,0,0,1, 0,0,0,0, 0,0,1,0, 0,0,0,0];
+    p.kick  = repeatToLen([1,0,0,0, 0,0,1,0, 0,1,0,0, 1,0,0,0]);
+    p.snare = repeatToLen([0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0]);
+    p.ch    = repeatToLen([1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1]);
+    p.oh    = repeatToLen([0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,1,0]);
+    p.tom   = repeatToLen([0,0,0,1, 0,0,0,0, 0,0,1,0, 0,0,0,0]);
   }
   return p;
 }
@@ -988,10 +1026,10 @@ function mkPatternRow(val) {
 }
 
 const defaultPatterns = {
-  bass:   [47, 47, null, 47, 47, 42, null, 45, null, null, null, null, null, null, null, null],
-  pad:    [5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0],
-  lead:   [null, null, null, null, 4, null, null, null, null, null, null, null, 7, null, null, null],
-  noise:  [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+  bass:   normalizePatternRow([47, 47, null, 47, 47, 42, null, 45, null, null, null, null, null, null, null, null], null),
+  pad:    normalizePatternRow([5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0], 0),
+  lead:   normalizePatternRow([null, null, null, null, 4, null, null, null, null, null, null, null, 7, null, null, null], null),
+  noise:  normalizePatternRow([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], 0),
   sample: mkPatternRow(0),
   drums:  defaultDrumPatterns('808')
 };
@@ -1000,29 +1038,37 @@ let patterns = JSON.parse(JSON.stringify(defaultPatterns));
 let patternEditTarget = 'bass';
 let patternEditDrumVoice = 'kick';
 let drumKit = '808';
+let bassOctave = -1;
+let drumVoiceConfig = mkDrumVoiceConfig();
 let usePatternMode = true;
 let patternGenTimer = null;
 let patternClipboard = null;
 
 if (storedState.patterns) {
   for (const k of ['bass', 'pad', 'lead', 'noise', 'sample']) {
-    if (Array.isArray(storedState.patterns[k]) && storedState.patterns[k].length === PAT_LEN) {
-      patterns[k] = storedState.patterns[k].slice();
-    }
+    const fill = (k === 'bass' || k === 'lead') ? null : 0;
+    if (Array.isArray(storedState.patterns[k])) patterns[k] = normalizePatternRow(storedState.patterns[k], fill);
   }
   if (storedState.patterns.drums && typeof storedState.patterns.drums === 'object') {
     patterns.drums = defaultDrumPatterns('808');
     DRUM_VOICES.forEach(function (v) {
-      if (Array.isArray(storedState.patterns.drums[v]) && storedState.patterns.drums[v].length === PAT_LEN) {
-        patterns.drums[v] = storedState.patterns.drums[v].slice();
-      }
+      if (Array.isArray(storedState.patterns.drums[v])) patterns.drums[v] = normalizePatternRow(storedState.patterns.drums[v], 0);
     });
   }
 }
 if (storedState.drumKit === '808' || storedState.drumKit === '909') drumKit = storedState.drumKit;
 if (typeof storedState.usePatternMode === 'boolean') usePatternMode = storedState.usePatternMode;
+if (Number.isFinite(storedState.bassOctave)) bassOctave = Math.max(-2, Math.min(1, Math.round(storedState.bassOctave)));
+if (storedState.drumVoiceConfig && typeof storedState.drumVoiceConfig === 'object') {
+  DRUM_VOICES.forEach(function (v) {
+    const c = storedState.drumVoiceConfig[v];
+    if (!c) return;
+    if (Number.isFinite(c.vol)) drumVoiceConfig[v].vol = Math.max(-24, Math.min(12, c.vol));
+    if (c.src === 'synth' || c.src === 'sample') drumVoiceConfig[v].src = c.src;
+  });
+}
 
-function persistPatterns() { saveState({ patterns, usePatternMode, drumKit }); }
+function persistPatterns() { saveState({ patterns, usePatternMode, drumKit, bassOctave, drumVoiceConfig }); }
 
 function bassNoteLabel(n) {
   if (n == null) return '·';
@@ -1100,6 +1146,41 @@ function renderDrumVoiceButtons() {
   });
 }
 
+function renderDrumVoiceControls() {
+  const wrap = $('patDrumVoiceControls');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  DRUM_VOICES.forEach(function (v) {
+    const cfg = drumVoiceConfig[v];
+    const row = document.createElement('div');
+    row.className = 'row-mini';
+    row.innerHTML =
+      '<span class="mini-lab">' + DRUM_VOICE_LABELS[v] + '</span>' +
+      '<input type="range" min="-24" max="12" step="0.5" value="' + cfg.vol + '" data-v="' + v + '">' +
+      '<span class="mini-val" id="dv_' + v + '_val">' + cfg.vol.toFixed(1) + '</span>' +
+      '<select data-src="' + v + '"><option value="synth">SYN</option><option value="sample">SMP</option></select>';
+    wrap.appendChild(row);
+
+    const sl = row.querySelector('input[type="range"]');
+    const vl = row.querySelector('#dv_' + v + '_val');
+    const sel = row.querySelector('select');
+    sel.value = cfg.src;
+    sl.addEventListener('input', function () {
+      const val = parseFloat(sl.value);
+      cfg.vol = val;
+      vl.textContent = val.toFixed(1);
+      if (A && A.drums && A.drums.voiceGains && A.drums.voiceGains[v]) {
+        A.drums.voiceGains[v].volume.rampTo(val, 0.03);
+      }
+      persistPatterns();
+    });
+    sel.addEventListener('change', function () {
+      cfg.src = sel.value;
+      persistPatterns();
+    });
+  });
+}
+
 function renderPatternGrid() {
   const grid = $('patGrid');
   const nums = $('patNums');
@@ -1113,6 +1194,7 @@ function renderPatternGrid() {
   if (layer === 'drums') {
     syncDrumKitUI();
     renderDrumVoiceButtons();
+    renderDrumVoiceControls();
   }
   for (let i = 0; i < PAT_LEN; i++) {
     const n = document.createElement('div');
@@ -1123,6 +1205,7 @@ function renderPatternGrid() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'pat-step layer-' + layer + (patternStepActive(layer, row[i]) ? ' on' : '');
+    if (i % 16 === 0) btn.classList.add('bar-start');
     if (isPlaying && (beat16 % PAT_LEN) === i) btn.classList.add('playhead');
     btn.textContent = patternStepLabel(layer, row[i]);
     btn.dataset.step = String(i);
@@ -1139,7 +1222,7 @@ function renderPatternGrid() {
     bass:   'BASS — click: REST → note. SHIFT+click indietro.',
     pad:    'PAD — · rest · C1-C4 accordo · A auto-avanza progressione.',
     lead:   'LEAD — gradi scala · ^ ottava alta (es. ^7).',
-    drums:  'DRUMS — TR-808 / TR-909 · seleziona voce · click step on/off.',
+    drums:  'DRUMS — TR-808 / TR-909 · voce, volume e sorgente SYN/SMP per ogni canale.',
     noise:  'NOISE — gate on/off per step.',
     sample: 'SAMPLE — trigger on/off per step (richiede sample caricato).'
   };
@@ -1191,18 +1274,12 @@ function compositionToScore(comp) {
 }
 
 function importLegacyPatterns() {
-  patterns.bass = mkPatternRow(null);
-  BASS_PATTERN.forEach(function (n, i) {
-    if (i < PAT_LEN) patterns.bass[i * 2] = n;
-  });
-  patterns.pad = mkPatternRow(0);
-  patterns.pad[0] = 5;
-  patterns.pad[8] = 5;
-  patterns.lead = mkPatternRow(null);
+  const barBass = [47, null, 47, null, null, null, 42, null, 47, null, null, null, 45, null, null, null];
+  patterns.bass = repeatToLen(barBass);
+  patterns.pad = repeatToLen([5,0,0,0, 0,0,0,0, 5,0,0,0, 0,0,0,0]);
+  patterns.lead = repeatToLen([null,null,null,null, 4,null,null,null, null,null,null,null, 7,null,null,null]);
   patterns.noise = mkPatternRow(0);
-  for (let i = 0; i < PAT_LEN; i++) {
-    if (i % 6 === 5) patterns.noise[i] = 1;
-  }
+  for (let i = 0; i < PAT_LEN; i++) if (i % 6 === 5) patterns.noise[i] = 1;
   patterns.sample = mkPatternRow(0);
   patterns.drums = defaultDrumPatterns(drumKit);
   persistPatterns();
@@ -1278,7 +1355,7 @@ function tickLegacy() {
     const note = BASS_PATTERN[bassIdx % BASS_PATTERN.length];
     if (note !== null) {
       try {
-        A.bass.triggerAttackRelease(midiToFreq(note + currentKey), '16n', Tone.now(), 0.95);
+        A.bass.triggerAttackRelease(midiToFreq(note + currentKey + bassOctave * 12), '16n', Tone.now(), 0.95);
       } catch (e) {}
       const h = $('heart'); h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
       bumpTrig();
@@ -1327,7 +1404,7 @@ function tickPattern() {
   const bNote = patterns.bass[step];
   if (bNote != null && layers.bass) {
     try {
-      A.bass.triggerAttackRelease(midiToFreq(bNote + currentKey), '16n', t, 0.95);
+      A.bass.triggerAttackRelease(midiToFreq(bNote + currentKey + bassOctave * 12), '16n', t, 0.95);
       const h = $('heart'); h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
       bumpTrig();
     } catch (e) {}
@@ -1392,67 +1469,80 @@ function disposeDrums(d) {
   ['kick', 'snareNoise', 'snareTone', 'clap', 'ch', 'oh', 'tom', 'rim'].forEach(function (k) {
     try { if (d[k] && d[k].dispose) d[k].dispose(); } catch (e) {}
   });
+  if (d.voiceGains) {
+    Object.keys(d.voiceGains).forEach(function (k) {
+      try { d.voiceGains[k].dispose(); } catch (e) {}
+    });
+  }
 }
 
 function buildDrumKit(kit, outGain) {
   const is909 = kit === '909';
+  const voiceGains = {};
+  DRUM_VOICES.forEach(function (v) {
+    voiceGains[v] = new Tone.Volume(drumVoiceConfig[v].vol).connect(outGain);
+  });
   const kick = new Tone.MembraneSynth({
     pitchDecay: is909 ? 0.008 : 0.016,
     octaves: is909 ? 7 : 4.5,
     oscillator: { type: 'sine' },
     envelope: { attack: 0.001, decay: is909 ? 0.28 : 0.45, sustain: 0, release: 0.01 }
-  }).connect(outGain);
+  }).connect(voiceGains.kick);
 
   const snareNoise = new Tone.NoiseSynth({
     noise: { type: 'white' },
     envelope: { attack: 0.001, decay: is909 ? 0.12 : 0.22, sustain: 0, release: 0.04 }
-  }).connect(outGain);
+  }).connect(voiceGains.snare);
 
   const snareTone = new Tone.MembraneSynth({
     pitchDecay: 0.008, octaves: 2,
     oscillator: { type: 'triangle' },
     envelope: { attack: 0.001, decay: 0.08, sustain: 0, release: 0.01 },
     volume: is909 ? -8 : -12
-  }).connect(outGain);
+  }).connect(voiceGains.snare);
 
   const clap = new Tone.NoiseSynth({
     noise: { type: 'pink' },
     envelope: { attack: 0.001, decay: is909 ? 0.18 : 0.25, sustain: 0, release: 0.08 }
-  }).connect(outGain);
+  }).connect(voiceGains.clap);
 
   const ch = new Tone.MetalSynth({
     frequency: is909 ? 350 : 300,
-    envelope: { attack: 0.001, decay: is909 ? 0.035 : 0.05, release: 0.01 },
+    envelope: { attack: 0.001, decay: is909 ? 0.09 : 0.11, release: 0.02 },
     harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5,
-    volume: is909 ? -14 : -16
-  }).connect(outGain);
+    volume: is909 ? -9 : -10
+  }).connect(voiceGains.ch);
 
   const oh = new Tone.MetalSynth({
     frequency: is909 ? 320 : 280,
     envelope: { attack: 0.001, decay: is909 ? 0.28 : 0.35, release: 0.08 },
     harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5,
     volume: -12
-  }).connect(outGain);
+  }).connect(voiceGains.oh);
 
   const tom = new Tone.MembraneSynth({
     pitchDecay: 0.04, octaves: is909 ? 3 : 2.5,
     oscillator: { type: 'sine' },
     envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.02 },
     volume: -4
-  }).connect(outGain);
+  }).connect(voiceGains.tom);
 
   const rim = new Tone.MembraneSynth({
     pitchDecay: 0.001, octaves: 0.5,
     oscillator: { type: 'sine' },
     envelope: { attack: 0.001, decay: 0.03, sustain: 0, release: 0.01 },
     volume: is909 ? -6 : -8
-  }).connect(outGain);
+  }).connect(voiceGains.rim);
 
-  return { kick, snareNoise, snareTone, clap, ch, oh, tom, rim, kit };
+  return { kick, snareNoise, snareTone, clap, ch, oh, tom, rim, voiceGains, kit };
 }
 
 function triggerDrum(voice, time) {
   if (!A || !A.drums || !layers.drums) return;
+  if (drumVoiceConfig[voice] && drumVoiceConfig[voice].src === 'sample') {
+    playSampleAtTime(time, 0.7);
+    return;
+  }
   const d = A.drums;
   const is909 = drumKit === '909';
   const t = time;
@@ -1468,7 +1558,7 @@ function triggerDrum(voice, time) {
       d.clap.triggerAttackRelease('32n', t, 0.75);
       break;
     case 'ch':
-      d.ch.triggerAttackRelease('32n', t, 0.6);
+      d.ch.triggerAttackRelease('16n', t, 0.95);
       break;
     case 'oh':
       d.oh.triggerAttackRelease('16n', t, 0.55);
@@ -1536,13 +1626,15 @@ async function initAudio() {
   const bassAna  = new Tone.Waveform(1024);
   const leadAna  = new Tone.Waveform(1024);
   const noiseAna = new Tone.Waveform(1024);
+  const bassFxSend  = new Tone.Gain(0.55).connect(dubBus);
+  const drumsFxSend = new Tone.Gain(0.65).connect(dubBus);
 
   padGain.connect(dubBus);    padGain.connect(padAna);
   leadGain.connect(dubBus);   leadGain.connect(leadAna);
   noiseGain.connect(dubBus);  noiseGain.connect(noiseAna);
   sampleGain.connect(dubBus);
-  bassGain.connect(master);   bassGain.connect(bassAna);
-  drumsGain.connect(master);
+  bassGain.connect(master);   bassGain.connect(bassAna); bassGain.connect(bassFxSend);
+  drumsGain.connect(master);  drumsGain.connect(drumsFxSend);
 
   const bassDist = new Tone.Distortion(0.20).connect(bassGain);
 
@@ -1558,6 +1650,7 @@ async function initAudio() {
   A = {
     limiter, meter, master, recDest, recTap,
     reverb, dubDelay, dubFilter, dubBus,
+    bassFxSend, drumsFxSend,
     padGain, leadGain, noiseGain, sampleGain, bassGain, drumsGain,
     pad, bass, bassDist, lead, drums,
     noise: noiseNodes,
@@ -1913,6 +2006,7 @@ const mixApply = {
   room:      v => { if (A) A.reverb.roomSize.value = v; },
   dist:      v => { if (A) A.bassDist.distortion = v; },
   autoProb:  v => { autoSampleProb = v; },
+  bassOct:   v => { bassOctave = Math.round(v); saveState({ bassOctave }); },
 };
 const mixFmt = {
   master:v=>v.toFixed(1)+' dB', padVol:v=>v.toFixed(0)+' dB',
@@ -1923,6 +2017,7 @@ const mixFmt = {
   fb:v=>v.toFixed(2), dwet:v=>v.toFixed(2),
   fhz:v=>Math.round(v).toString(), frate:v=>v.toFixed(2), foct:v=>v.toFixed(1),
   rev:v=>v.toFixed(2), room:v=>v.toFixed(2), dist:v=>v.toFixed(2), autoProb:v=>v.toFixed(2)
+  ,bassOct:v=>Math.round(v).toString()
 };
 const mixLabel = {
   master:'masterVal', padVol:'padVolVal', bassVol:'bassVolVal', leadVol:'leadVolVal',
@@ -1931,6 +2026,7 @@ const mixLabel = {
   bpm:'bpmVal', dens:'densVal', noiseAmt:'noiseAmtVal',
   fb:'fbVal', dwet:'dwetVal', fhz:'fhzVal', frate:'frateVal', foct:'foctVal',
   rev:'revVal', room:'roomVal', dist:'distVal', autoProb:'autoProbVal'
+  ,bassOct:'bassOctVal'
 };
 function bindMix(id) {
   const el = $(id);
@@ -1942,6 +2038,7 @@ function bindMix(id) {
   el.addEventListener('input', update);
   update();
 }
+if ($('bassOct')) $('bassOct').value = String(bassOctave);
 Object.keys(mixApply).forEach(bindMix);
 function applyAllSliders() { Object.keys(mixApply).forEach(id => mixApply[id](parseFloat($(id).value))); }
 
@@ -2205,7 +2302,7 @@ function drawWaveform(buf) {
   ctx.beginPath(); ctx.moveTo(0, h/2); ctx.lineTo(w, h/2); ctx.stroke();
 }
 
-function playSample() {
+function playSampleAtTime(atTime, velocity) {
   if (!sampleBuffer || !A) return;
   try {
     const dur = sampleBuffer.duration;
@@ -2215,18 +2312,21 @@ function playSample() {
       url: sampleBuffer, loop: sampleLoop,
       loopStart: offset, loopEnd: offset + length,
       fadeIn: sampleFade, fadeOut: sampleFade,
-      playbackRate: Math.pow(2, samplePitch / 12)
+      playbackRate: Math.pow(2, samplePitch / 12),
+      volume: Tone.gainToDb(Math.max(0.001, velocity == null ? 1 : velocity))
     }).connect(A.sampleGain);
-    player.start(undefined, offset, sampleLoop ? undefined : length);
+    player.start(atTime, offset, sampleLoop ? undefined : length);
     if (!sampleLoop) {
       setTimeout(() => { try { player.dispose(); } catch(e){} }, (length / Math.pow(2, samplePitch/12)) * 1000 + 500);
     } else {
       if (currentSamplePlayer) { try { currentSamplePlayer.stop(); currentSamplePlayer.dispose(); } catch(e){} }
       currentSamplePlayer = player;
     }
-    bumpTrig();
+    if (!atTime || atTime <= Tone.now() + 0.02) bumpTrig();
   } catch (err) { console.error(err); }
 }
+
+function playSample() { playSampleAtTime(undefined, 1); }
 
 $('sampleTriggerBtn').addEventListener('click', async () => { await initAudio(); playSample(); });
 $('sampleLoopBtn').addEventListener('click', () => {
