@@ -89,6 +89,24 @@
   .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; }
   .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
   .grid-6 { display: grid; grid-template-columns: repeat(6,1fr); gap: 4px; }
+  .fx-mini-grid { display:grid; gap:8px; margin-top:8px; }
+  .fx-mini-row {
+    display:grid;
+    grid-template-columns: 58px repeat(4, minmax(0,1fr));
+    gap:6px;
+    align-items:center;
+    font-size:10px;
+  }
+  .fx-mini-row .trk {
+    opacity:0.9;
+    border:1px solid #1d4f1f;
+    padding:4px 3px;
+    text-align:center;
+    cursor:pointer;
+  }
+  .fx-mini-row .trk.on { border-color: var(--amber); color: var(--amber); }
+  .fx-mini-head { opacity:0.6; font-size:9px; letter-spacing:0.08em; text-align:center; }
+  .fx-mini-cell input[type="range"] { width:100%; margin:0; }
 
   /* Pattern sequencer */
   .pat-steps {
@@ -749,14 +767,47 @@
 <!-- ============== TAB: FX ============== -->
 <div class="tabpanel" id="tab-fx">
   <section class="section">
+    <div class="section-title">// FX TARGET (PER TRACK)</div>
+    <div class="grid-6" style="margin-bottom:8px" id="fxTargetGrid">
+      <button type="button" class="fx-target on" data-fx-target="bass">BASS</button>
+      <button type="button" class="fx-target" data-fx-target="pad">PAD</button>
+      <button type="button" class="fx-target" data-fx-target="lead">LEAD</button>
+      <button type="button" class="fx-target" data-fx-target="drums">DRUMS</button>
+      <button type="button" class="fx-target" data-fx-target="noise">NSE</button>
+      <button type="button" class="fx-target" data-fx-target="sample">SMP</button>
+    </div>
+    <div class="row"><span class="label">EDITING TRACK</span><span class="value" id="fxTargetVal">BASS</span></div>
+  </section>
+
+  <section class="section">
+    <div class="section-title">// DRY/WET SENDS (PER TRACK)</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">DELAY_SEND</span><span class="value" id="dwetVal">0.35</span></div>
+      <input type="range" id="dwet" min="0" max="1" step="0.01" value="0.35">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">FILTER_SEND</span><span class="value" id="fwetVal">0.25</span></div>
+      <input type="range" id="fwet" min="0" max="1" step="0.01" value="0.25">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">REVERB_SEND</span><span class="value" id="revVal">0.20</span></div>
+      <input type="range" id="rev" min="0" max="1" step="0.01" value="0.20">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">DRIVE_SEND</span><span class="value" id="distVal">0.15</span></div>
+      <input type="range" id="dist" min="0" max="1" step="0.01" value="0.15">
+    </div>
+  </section>
+  <section class="section">
+    <div class="section-title">// MINI VISTA FX (ALL TRACKS)</div>
+    <div class="fx-mini-grid" id="fxMiniGrid"></div>
+  </section>
+
+  <section class="section">
     <div class="section-title">// DUB DELAY</div>
     <div class="slider-block">
       <div class="row"><span class="label">FEEDBACK</span><span class="value" id="fbVal">0.65</span></div>
       <input type="range" id="fb" min="0.30" max="0.92" step="0.01" value="0.65">
-    </div>
-    <div class="slider-block">
-      <div class="row"><span class="label">WET</span><span class="value" id="dwetVal">0.50</span></div>
-      <input type="range" id="dwet" min="0" max="1" step="0.01" value="0.50">
     </div>
     <div class="slider-block">
       <div class="row"><span class="label">TIME</span><span class="value" id="dtimeVal">8n.</span></div>
@@ -788,18 +839,10 @@
   </section>
 
   <section class="section">
-    <div class="section-title">// REVERB & DRIVE</div>
-    <div class="slider-block">
-      <div class="row"><span class="label">REVERB_WET</span><span class="value" id="revVal">0.40</span></div>
-      <input type="range" id="rev" min="0" max="1" step="0.01" value="0.40">
-    </div>
+    <div class="section-title">// REVERB</div>
     <div class="slider-block">
       <div class="row"><span class="label">REVERB_ROOM</span><span class="value" id="roomVal">0.92</span></div>
       <input type="range" id="room" min="0.1" max="0.99" step="0.01" value="0.92">
-    </div>
-    <div class="slider-block">
-      <div class="row"><span class="label">BASS_DRIVE</span><span class="value" id="distVal">0.20</span></div>
-      <input type="range" id="dist" min="0" max="0.6" step="0.01" value="0.20">
     </div>
   </section>
 
@@ -954,6 +997,9 @@ let sampleLoop = false;
 let samplePitch = 0, sampleStart = 0, sampleEnd = 1, sampleFade = 0.02;
 let autoSample = false, autoSampleRate = 32, autoSampleProb = 0.5;
 let currentSamplePlayer = null;
+let sampleVoiceCursor = 0;
+const SAMPLE_VOICE_COUNT = 10;
+const sampleOneShotVoices = [];
 
 // Recorder
 let mediaRecorder = null;
@@ -1040,6 +1086,20 @@ let patternEditDrumVoice = 'kick';
 let drumKit = '808';
 let bassOctave = -1;
 let drumVoiceConfig = mkDrumVoiceConfig();
+let fxTargetTrack = 'bass';
+const TRACKS = ['bass', 'pad', 'lead', 'drums', 'noise', 'sample'];
+function mkFxSends() {
+  const s = {};
+  TRACKS.forEach(function (t) { s[t] = { dly: 0.35, flt: 0.25, rev: 0.20, drv: 0.15 }; });
+  s.bass = { dly: 0.20, flt: 0.15, rev: 0.10, drv: 0.35 };
+  s.pad = { dly: 0.45, flt: 0.35, rev: 0.30, drv: 0.10 };
+  s.lead = { dly: 0.40, flt: 0.30, rev: 0.22, drv: 0.18 };
+  s.drums = { dly: 0.18, flt: 0.22, rev: 0.08, drv: 0.25 };
+  s.noise = { dly: 0.25, flt: 0.45, rev: 0.15, drv: 0.10 };
+  s.sample = { dly: 0.35, flt: 0.28, rev: 0.20, drv: 0.15 };
+  return s;
+}
+let fxSends = mkFxSends();
 let usePatternMode = true;
 let patternGenTimer = null;
 let patternClipboard = null;
@@ -1059,6 +1119,7 @@ if (storedState.patterns) {
 if (storedState.drumKit === '808' || storedState.drumKit === '909') drumKit = storedState.drumKit;
 if (typeof storedState.usePatternMode === 'boolean') usePatternMode = storedState.usePatternMode;
 if (Number.isFinite(storedState.bassOctave)) bassOctave = Math.max(-2, Math.min(1, Math.round(storedState.bassOctave)));
+if (storedState.fxTargetTrack && TRACKS.includes(storedState.fxTargetTrack)) fxTargetTrack = storedState.fxTargetTrack;
 if (storedState.drumVoiceConfig && typeof storedState.drumVoiceConfig === 'object') {
   DRUM_VOICES.forEach(function (v) {
     const c = storedState.drumVoiceConfig[v];
@@ -1067,8 +1128,24 @@ if (storedState.drumVoiceConfig && typeof storedState.drumVoiceConfig === 'objec
     if (c.src === 'synth' || c.src === 'sample') drumVoiceConfig[v].src = c.src;
   });
 }
+if (storedState.fxSends && typeof storedState.fxSends === 'object') {
+  TRACKS.forEach(function (t) {
+    if (!storedState.fxSends[t]) return;
+    ['dly', 'flt', 'rev', 'drv'].forEach(function (k) {
+      const v = storedState.fxSends[t][k];
+      if (Number.isFinite(v)) fxSends[t][k] = Math.max(0, Math.min(1, v));
+    });
+  });
+}
 
-function persistPatterns() { saveState({ patterns, usePatternMode, drumKit, bassOctave, drumVoiceConfig }); }
+function persistPatterns() { saveState({ patterns, usePatternMode, drumKit, bassOctave, drumVoiceConfig, fxSends, fxTargetTrack }); }
+let fxPersistTimer = null;
+function persistFxStateDebounced() {
+  if (fxPersistTimer) clearTimeout(fxPersistTimer);
+  fxPersistTimer = setTimeout(function () {
+    saveState({ fxSends, fxTargetTrack });
+  }, 120);
+}
 
 function bassNoteLabel(n) {
   if (n == null) return '·';
@@ -1607,12 +1684,14 @@ async function initAudio() {
   master.connect(recTap);
   recTap.connect(recDest);
 
-  const reverb = new Tone.Freeverb({ roomSize: 0.92, dampening: 3000, wet: 0.40 }).connect(master);
-  const dubDelay = new Tone.FeedbackDelay({ delayTime: '8n.', feedback: 0.65, wet: 0.50 }).connect(reverb);
+  const reverb = new Tone.Freeverb({ roomSize: 0.92, dampening: 3000, wet: 1 }).connect(master);
+  const dubDelay = new Tone.FeedbackDelay({ delayTime: '8n.', feedback: 0.65, wet: 1 }).connect(master);
   const dubFilter = new Tone.AutoFilter({
     frequency: 0.05, baseFrequency: 800, octaves: 3, type: 'sine', wet: 1
-  }).connect(dubDelay).start();
-  const dubBus = new Tone.Gain(0.9).connect(dubFilter);
+  }).connect(master).start();
+  const delayIn = new Tone.Gain(1).connect(dubDelay);
+  const filterIn = new Tone.Gain(1).connect(dubFilter);
+  const reverbIn = new Tone.Gain(1).connect(reverb);
 
   const padGain    = new Tone.Volume(-10);
   const leadGain   = new Tone.Volume(-12);
@@ -1626,15 +1705,34 @@ async function initAudio() {
   const bassAna  = new Tone.Waveform(1024);
   const leadAna  = new Tone.Waveform(1024);
   const noiseAna = new Tone.Waveform(1024);
-  const bassFxSend  = new Tone.Gain(0.55).connect(dubBus);
-  const drumsFxSend = new Tone.Gain(0.65).connect(dubBus);
+  const fxTrackSends = {};
+  function mkTrackFx(trackGain, key) {
+    const dly = new Tone.Gain(0).connect(delayIn);
+    const flt = new Tone.Gain(0).connect(filterIn);
+    const rev = new Tone.Gain(0).connect(reverbIn);
+    const drvDist = new Tone.Distortion(0.28);
+    const drv = new Tone.Gain(0).connect(master);
+    trackGain.connect(dly);
+    trackGain.connect(flt);
+    trackGain.connect(rev);
+    trackGain.connect(drvDist);
+    drvDist.connect(drv);
+    fxTrackSends[key] = { dly, flt, rev, drv, drvDist };
+  }
 
-  padGain.connect(dubBus);    padGain.connect(padAna);
-  leadGain.connect(dubBus);   leadGain.connect(leadAna);
-  noiseGain.connect(dubBus);  noiseGain.connect(noiseAna);
-  sampleGain.connect(dubBus);
-  bassGain.connect(master);   bassGain.connect(bassAna); bassGain.connect(bassFxSend);
-  drumsGain.connect(master);  drumsGain.connect(drumsFxSend);
+  padGain.connect(master);    padGain.connect(padAna);
+  leadGain.connect(master);   leadGain.connect(leadAna);
+  noiseGain.connect(master);  noiseGain.connect(noiseAna);
+  sampleGain.connect(master);
+  bassGain.connect(master);   bassGain.connect(bassAna);
+  drumsGain.connect(master);
+
+  mkTrackFx(padGain, 'pad');
+  mkTrackFx(leadGain, 'lead');
+  mkTrackFx(noiseGain, 'noise');
+  mkTrackFx(sampleGain, 'sample');
+  mkTrackFx(bassGain, 'bass');
+  mkTrackFx(drumsGain, 'drums');
 
   const bassDist = new Tone.Distortion(0.20).connect(bassGain);
 
@@ -1649,14 +1747,16 @@ async function initAudio() {
 
   A = {
     limiter, meter, master, recDest, recTap,
-    reverb, dubDelay, dubFilter, dubBus,
-    bassFxSend, drumsFxSend,
+    reverb, dubDelay, dubFilter, delayIn, filterIn, reverbIn,
+    fxTrackSends,
     padGain, leadGain, noiseGain, sampleGain, bassGain, drumsGain,
     pad, bass, bassDist, lead, drums,
     noise: noiseNodes,
     padAna, bassAna, leadAna, noiseAna
   };
+  ensureSampleVoicePool();
   applyAllSliders();
+  applyFxTrackSendsAll();
 }
 
 function buildPadSynth() {
@@ -1696,6 +1796,13 @@ function buildNoiseChain() {
   const auto = new Tone.AutoFilter({ frequency: p.sweepRate, baseFrequency: p.filtHz, octaves: p.sweepOct }).start();
   src.connect(filt); filt.connect(gate); gate.connect(auto);
   return { src, filt, gate, auto, last: auto };
+}
+function ensureSampleVoicePool() {
+  if (!A || sampleOneShotVoices.length) return;
+  for (let i = 0; i < SAMPLE_VOICE_COUNT; i++) {
+    const p = new Tone.Player().connect(A.sampleGain);
+    sampleOneShotVoices.push(p);
+  }
 }
 
 function rebuildSynth(layer) {
@@ -1912,16 +2019,19 @@ $('panicBtn').addEventListener('click', async () => {
   $('chordVal').textContent = '---';
   if (!A) return;
   try {
+    A.master.mute = true;
     // Release any held notes
     if (A.pad.releaseAll)  A.pad.releaseAll(Tone.now());
     if (A.lead.triggerRelease) A.lead.triggerRelease(Tone.now());
-    // Briefly cut delay feedback and reverb to clear loops
-    const oldFb  = A.dubDelay.feedback.value;
-    const oldWet = A.dubDelay.wet.value;
-    const oldRev = A.reverb.wet.value;
+    // Briefly cut delay feedback and FX sends to clear tails
     A.dubDelay.feedback.value = 0;
-    A.dubDelay.wet.value = 0;
-    A.reverb.wet.value = 0;
+    TRACKS.forEach(function (t) {
+      if (!A.fxTrackSends || !A.fxTrackSends[t]) return;
+      A.fxTrackSends[t].dly.gain.value = 0;
+      A.fxTrackSends[t].flt.gain.value = 0;
+      A.fxTrackSends[t].rev.gain.value = 0;
+      A.fxTrackSends[t].drv.gain.value = 0;
+    });
     // Stop any looping sample
     if (currentSamplePlayer) {
       try { currentSamplePlayer.stop(); currentSamplePlayer.dispose(); } catch(e) {}
@@ -1930,13 +2040,16 @@ $('panicBtn').addEventListener('click', async () => {
     setTimeout(() => {
       // Restore from current slider values
       try {
+        A.master.mute = false;
         A.dubDelay.feedback.value = parseFloat($('fb').value);
-        A.dubDelay.wet.value      = parseFloat($('dwet').value);
-        A.reverb.wet.value        = parseFloat($('rev').value);
+        applyFxTrackSendsAll();
       } catch(e) {}
       $('stateVal').textContent = '◼ STBY';
     }, 600);
-  } catch (err) { console.warn('panic err', err); }
+  } catch (err) {
+    if (A && A.master) A.master.mute = false;
+    console.warn('panic err', err);
+  }
 });
 
 // ============================================================
@@ -1998,13 +2111,34 @@ const mixApply = {
   dens:      v => { density = v; },
   noiseAmt:  v => { noiseAmt = v; },
   fb:        v => { if (A) A.dubDelay.feedback.rampTo(v, 0.05); },
-  dwet:      v => { if (A) A.dubDelay.wet.rampTo(v, 0.05); },
+  dwet:      v => {
+    fxSends[fxTargetTrack].dly = v;
+    persistFxStateDebounced();
+    applyFxTrackSend(fxTargetTrack, 'dly');
+    syncFxMiniMatrixUI();
+  },
+  fwet:      v => {
+    fxSends[fxTargetTrack].flt = v;
+    persistFxStateDebounced();
+    applyFxTrackSend(fxTargetTrack, 'flt');
+    syncFxMiniMatrixUI();
+  },
   fhz:       v => { if (A) A.dubFilter.baseFrequency = v; },
   frate:     v => { if (A) A.dubFilter.frequency.rampTo(v, 0.1); },
   foct:      v => { if (A) A.dubFilter.octaves = v; },
-  rev:       v => { if (A) A.reverb.wet.rampTo(v, 0.05); },
+  rev:       v => {
+    fxSends[fxTargetTrack].rev = v;
+    persistFxStateDebounced();
+    applyFxTrackSend(fxTargetTrack, 'rev');
+    syncFxMiniMatrixUI();
+  },
   room:      v => { if (A) A.reverb.roomSize.value = v; },
-  dist:      v => { if (A) A.bassDist.distortion = v; },
+  dist:      v => {
+    fxSends[fxTargetTrack].drv = v;
+    persistFxStateDebounced();
+    applyFxTrackSend(fxTargetTrack, 'drv');
+    syncFxMiniMatrixUI();
+  },
   autoProb:  v => { autoSampleProb = v; },
   bassOct:   v => { bassOctave = Math.round(v); saveState({ bassOctave }); },
 };
@@ -2014,7 +2148,7 @@ const mixFmt = {
   drumsVol:v=>v.toFixed(0)+' dB',
   noiseVol:v=>v.toFixed(0)+' dB', sampleVol:v=>v.toFixed(0)+' dB',
   bpm:v=>Math.round(v).toString(), dens:v=>v.toFixed(2), noiseAmt:v=>v.toFixed(2),
-  fb:v=>v.toFixed(2), dwet:v=>v.toFixed(2),
+  fb:v=>v.toFixed(2), dwet:v=>v.toFixed(2), fwet:v=>v.toFixed(2),
   fhz:v=>Math.round(v).toString(), frate:v=>v.toFixed(2), foct:v=>v.toFixed(1),
   rev:v=>v.toFixed(2), room:v=>v.toFixed(2), dist:v=>v.toFixed(2), autoProb:v=>v.toFixed(2)
   ,bassOct:v=>Math.round(v).toString()
@@ -2024,7 +2158,7 @@ const mixLabel = {
   drumsVol:'drumsVolVal',
   noiseVol:'noiseVolVal', sampleVol:'sampleVolVal',
   bpm:'bpmVal', dens:'densVal', noiseAmt:'noiseAmtVal',
-  fb:'fbVal', dwet:'dwetVal', fhz:'fhzVal', frate:'frateVal', foct:'foctVal',
+  fb:'fbVal', dwet:'dwetVal', fwet:'fwetVal', fhz:'fhzVal', frate:'frateVal', foct:'foctVal',
   rev:'revVal', room:'roomVal', dist:'distVal', autoProb:'autoProbVal'
   ,bassOct:'bassOctVal'
 };
@@ -2041,6 +2175,114 @@ function bindMix(id) {
 if ($('bassOct')) $('bassOct').value = String(bassOctave);
 Object.keys(mixApply).forEach(bindMix);
 function applyAllSliders() { Object.keys(mixApply).forEach(id => mixApply[id](parseFloat($(id).value))); }
+
+function applyFxTrackSend(track, key) {
+  if (!A || !A.fxTrackSends || !A.fxTrackSends[track]) return;
+  const v = fxSends[track][key];
+  const node = A.fxTrackSends[track][key];
+  if (node && node.gain) node.gain.rampTo(v, 0.05);
+}
+function applyFxTrackSendsAll() {
+  TRACKS.forEach(function (t) {
+    applyFxTrackSend(t, 'dly');
+    applyFxTrackSend(t, 'flt');
+    applyFxTrackSend(t, 'rev');
+    applyFxTrackSend(t, 'drv');
+  });
+}
+function loadFxTrackToUI() {
+  const fx = fxSends[fxTargetTrack];
+  $('fxTargetVal').textContent = fxTargetTrack.toUpperCase();
+  document.querySelectorAll('.fx-target').forEach(function (btn) {
+    btn.classList.toggle('on', btn.dataset.fxTarget === fxTargetTrack);
+  });
+  $('dwet').value = String(fx.dly);
+  $('fwet').value = String(fx.flt);
+  $('rev').value = String(fx.rev);
+  $('dist').value = String(fx.drv);
+  $('dwetVal').textContent = mixFmt.dwet(fx.dly);
+  $('fwetVal').textContent = mixFmt.fwet(fx.flt);
+  $('revVal').textContent = mixFmt.rev(fx.rev);
+  $('distVal').textContent = mixFmt.dist(fx.drv);
+  syncFxMiniMatrixUI();
+}
+function syncFxMiniMatrixUI() {
+  const host = $('fxMiniGrid');
+  if (!host || !host.children.length) return;
+  host.querySelectorAll('.trk').forEach(function (btn) {
+    const trk = btn.dataset.trk;
+    btn.classList.toggle('on', trk === fxTargetTrack);
+  });
+  host.querySelectorAll('input[type="range"]').forEach(function (sl) {
+    const trk = sl.dataset.trk;
+    const key = sl.dataset.k;
+    if (!trk || !key || !fxSends[trk]) return;
+    const v = fxSends[trk][key];
+    if (Math.abs(parseFloat(sl.value) - v) > 0.0005) sl.value = String(v);
+  });
+}
+function renderFxMiniMatrix() {
+  const host = $('fxMiniGrid');
+  if (!host) return;
+  host.innerHTML = '';
+  const head = document.createElement('div');
+  head.className = 'fx-mini-row';
+  head.innerHTML = `
+    <div class="fx-mini-head">TRACK</div>
+    <div class="fx-mini-head">DLY</div>
+    <div class="fx-mini-head">FLT</div>
+    <div class="fx-mini-head">REV</div>
+    <div class="fx-mini-head">DRV</div>`;
+  host.appendChild(head);
+  TRACKS.forEach(function (t) {
+    const row = document.createElement('div');
+    row.className = 'fx-mini-row';
+    row.innerHTML = `
+      <button type="button" class="trk ${t === fxTargetTrack ? 'on' : ''}" data-trk="${t}">${t.toUpperCase()}</button>
+      <div class="fx-mini-cell"><input type="range" min="0" max="1" step="0.01" value="${fxSends[t].dly}" data-trk="${t}" data-k="dly"></div>
+      <div class="fx-mini-cell"><input type="range" min="0" max="1" step="0.01" value="${fxSends[t].flt}" data-trk="${t}" data-k="flt"></div>
+      <div class="fx-mini-cell"><input type="range" min="0" max="1" step="0.01" value="${fxSends[t].rev}" data-trk="${t}" data-k="rev"></div>
+      <div class="fx-mini-cell"><input type="range" min="0" max="1" step="0.01" value="${fxSends[t].drv}" data-trk="${t}" data-k="drv"></div>`;
+    host.appendChild(row);
+  });
+  host.querySelectorAll('.trk').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      fxTargetTrack = btn.dataset.trk;
+      persistFxStateDebounced();
+      loadFxTrackToUI();
+    });
+  });
+  host.querySelectorAll('input[type="range"]').forEach(function (sl) {
+    sl.addEventListener('input', function () {
+      const trk = sl.dataset.trk;
+      const key = sl.dataset.k;
+      const val = parseFloat(sl.value);
+      fxSends[trk][key] = val;
+      persistFxStateDebounced();
+      applyFxTrackSend(trk, key);
+      if (trk === fxTargetTrack) {
+        $('dwet').value = String(fxSends[trk].dly);
+        $('fwet').value = String(fxSends[trk].flt);
+        $('rev').value = String(fxSends[trk].rev);
+        $('dist').value = String(fxSends[trk].drv);
+        $('dwetVal').textContent = mixFmt.dwet(fxSends[trk].dly);
+        $('fwetVal').textContent = mixFmt.fwet(fxSends[trk].flt);
+        $('revVal').textContent = mixFmt.rev(fxSends[trk].rev);
+        $('distVal').textContent = mixFmt.dist(fxSends[trk].drv);
+      }
+      syncFxMiniMatrixUI();
+    });
+  });
+}
+document.querySelectorAll('.fx-target').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    fxTargetTrack = btn.dataset.fxTarget;
+    persistFxStateDebounced();
+    loadFxTrackToUI();
+  });
+});
+renderFxMiniMatrix();
+loadFxTrackToUI();
 
 $('dtime').addEventListener('change', e => {
   $('dtimeVal').textContent = e.target.value;
@@ -2305,22 +2547,35 @@ function drawWaveform(buf) {
 function playSampleAtTime(atTime, velocity) {
   if (!sampleBuffer || !A) return;
   try {
+    ensureSampleVoicePool();
     const dur = sampleBuffer.duration;
     const offset = sampleStart * dur;
     const length = Math.max(0.01, (sampleEnd - sampleStart) * dur);
-    const player = new Tone.Player({
-      url: sampleBuffer, loop: sampleLoop,
-      loopStart: offset, loopEnd: offset + length,
-      fadeIn: sampleFade, fadeOut: sampleFade,
-      playbackRate: Math.pow(2, samplePitch / 12),
-      volume: Tone.gainToDb(Math.max(0.001, velocity == null ? 1 : velocity))
-    }).connect(A.sampleGain);
-    player.start(atTime, offset, sampleLoop ? undefined : length);
+    const rate = Math.pow(2, samplePitch / 12);
+    const volDb = Tone.gainToDb(Math.max(0.001, velocity == null ? 1 : velocity));
     if (!sampleLoop) {
-      setTimeout(() => { try { player.dispose(); } catch(e){} }, (length / Math.pow(2, samplePitch/12)) * 1000 + 500);
+      const player = sampleOneShotVoices[sampleVoiceCursor % sampleOneShotVoices.length];
+      sampleVoiceCursor++;
+      try { player.stop(); } catch (e) {}
+      player.loop = false;
+      player.fadeIn = sampleFade;
+      player.fadeOut = sampleFade;
+      player.playbackRate = rate;
+      player.volume.value = volDb;
+      player.buffer = sampleBuffer;
+      player.start(atTime, offset, length);
     } else {
-      if (currentSamplePlayer) { try { currentSamplePlayer.stop(); currentSamplePlayer.dispose(); } catch(e){} }
-      currentSamplePlayer = player;
+      if (!currentSamplePlayer) currentSamplePlayer = new Tone.Player().connect(A.sampleGain);
+      try { currentSamplePlayer.stop(); } catch (e) {}
+      currentSamplePlayer.loop = true;
+      currentSamplePlayer.loopStart = offset;
+      currentSamplePlayer.loopEnd = offset + length;
+      currentSamplePlayer.fadeIn = sampleFade;
+      currentSamplePlayer.fadeOut = sampleFade;
+      currentSamplePlayer.playbackRate = rate;
+      currentSamplePlayer.volume.value = volDb;
+      currentSamplePlayer.buffer = sampleBuffer;
+      currentSamplePlayer.start(atTime, offset);
     }
     if (!atTime || atTime <= Tone.now() + 0.02) bumpTrig();
   } catch (err) { console.error(err); }
