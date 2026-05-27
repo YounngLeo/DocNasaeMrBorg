@@ -157,7 +157,7 @@
   <div class="back"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
   <h1>[ FLUID_VESSEL :: MEMBRANA ]</h1>
   <div class="sub">generatore contenitori biomorfi · PBD · uncini</div>
-  <div class="ver">v.01 — studio distorsioni elastiche</div>
+  <div class="ver">v.02 — membrana vetro · alta risoluzione</div>
 </div>
 
 <div class="actions">
@@ -206,8 +206,8 @@
   <div class="control">
     <label>Risoluzione</label>
     <div class="row">
-      <input type="range" id="s-detail" min="3" max="5" step="1" value="5">
-      <div class="val" id="v-detail">5</div>
+      <input type="range" id="s-detail" min="3" max="8" step="1" value="6">
+      <div class="val" id="v-detail">6</div>
     </div>
   </div>
 </div>
@@ -240,6 +240,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const canvas = document.getElementById('scene');
 const scene = new THREE.Scene();
@@ -253,8 +254,14 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.12;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+const roomEnv = new RoomEnvironment();
+const envRT = pmrem.fromScene(roomEnv, 0.04);
+scene.environment = envRT.texture;
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -283,20 +290,24 @@ scene.add(hemi);
 scene.add(new THREE.AmbientLight(0x1a1814, 0.6));
 
 const material = new THREE.MeshPhysicalMaterial({
-  color: 0xfff0a0,
-  roughness: 0.78,
+  color: 0xf4faff,
   metalness: 0,
-  transmission: 0.18,
-  thickness: 0.45,
-  ior: 1.42,
-  clearcoat: 0.04,
-  clearcoatRoughness: 0.9,
-  sheen: 0.35,
-  sheenColor: 0xfff0d0,
-  sheenRoughness: 0.7,
+  roughness: 0.03,
+  transmission: 1.0,
+  thickness: 1.15,
+  ior: 1.52,
+  transparent: true,
+  opacity: 1,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.02,
+  reflectivity: 0.92,
+  envMapIntensity: 1.4,
+  specularIntensity: 1.0,
+  specularColor: 0xffffff,
   side: THREE.DoubleSide,
-  attenuationColor: 0xc8a878,
-  attenuationDistance: 0.55,
+  attenuationColor: new THREE.Color(0xb8d8ec),
+  attenuationDistance: 4.2,
+  depthWrite: false,
   flatShading: false,
 });
 
@@ -578,8 +589,8 @@ let rimVertexSet = new Set();
 let currentThickness = 0.06;
 
 function buildVaseOuter(detail) {
-  const lat = [0, 0, 16, 24, 32][detail] || 24;
-  const lon = [0, 0, 32, 40, 52][detail] || 40;
+  const lat = [0, 0, 20, 28, 36, 44, 52, 60, 72][detail] || 44;
+  const lon = [0, 0, 40, 52, 64, 76, 88, 100, 120][detail] || 76;
   const yMin = -1.0;
   const yMax = 1.4;
 
@@ -744,6 +755,7 @@ function createMesh(detail) {
   rimVertexSet = new Set(rimIdx);
   renderGeo = buildRenderShell(simGeo, rimIdx, currentThickness);
   renderMesh = new THREE.Mesh(renderGeo, material);
+  renderMesh.renderOrder = 1;
   scene.add(renderMesh);
   softBody = new SoftBody(simGeo);
   softBody.rimIndices = rimIdx;
@@ -752,7 +764,7 @@ function createMesh(detail) {
   document.getElementById('st-verts').textContent = softBody.numVertices;
 }
 
-createMesh(5);
+createMesh(6);
 
 const hooks = [];
 const cableTopY = 8;
