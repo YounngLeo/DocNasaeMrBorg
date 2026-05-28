@@ -211,15 +211,15 @@
   <div class="control">
     <label>Iridescenza</label>
     <div class="row">
-      <input type="range" id="s-irid" min="0" max="2.5" step="0.05" value="1.0">
-      <div class="val" id="v-irid">1.00</div>
+      <input type="range" id="s-irid" min="0" max="1.5" step="0.05" value="0.4">
+      <div class="val" id="v-irid">0.40</div>
     </div>
   </div>
   <div class="control">
     <label>Fresnel / vetro</label>
     <div class="row">
-      <input type="range" id="s-fresnel" min="1.5" max="9" step="0.1" value="4.2">
-      <div class="val" id="v-fresnel">4.2</div>
+      <input type="range" id="s-fresnel" min="1.5" max="9" step="0.1" value="3.2">
+      <div class="val" id="v-fresnel">3.2</div>
     </div>
   </div>
   <div class="control">
@@ -312,63 +312,74 @@ scene.add(new THREE.AmbientLight(0x14140f, 0.5));
 const membraneUniforms = {
   uTime: { value: 0 },
   uStretchGain: { value: 1.55 },
-  uFresnelPow: { value: 4.2 },
-  uStressTint: { value: new THREE.Color(0x7fd6ff) },
-  uDeepTint: { value: new THREE.Color(0x2f6f9e) },
+  uFresnelPow: { value: 3.2 },
+  uTopTint: { value: new THREE.Color(0xdbf6ec) },
+  uMidTint: { value: new THREE.Color(0x6fd6c2) },
+  uDeepTint: { value: new THREE.Color(0x2a7d86) },
+  uRimGlow: { value: new THREE.Color(0xbdf2e4) },
+  uStressTint: { value: new THREE.Color(0x9af0d4) },
 };
 
 const material = new THREE.MeshPhysicalMaterial({
-  color: 0xeef7ff,
+  color: 0xbfe9dc,
   metalness: 0,
-  roughness: 0.06,
-  transmission: 1.0,
-  thickness: 1.2,
-  ior: 1.45,
+  roughness: 0.42,
+  transmission: 0,
   transparent: true,
-  opacity: 1,
-  clearcoat: 1.0,
-  clearcoatRoughness: 0.06,
-  reflectivity: 0.6,
-  envMapIntensity: 1.35,
-  specularIntensity: 1.0,
-  specularColor: 0xffffff,
+  opacity: 0.93,
+  clearcoat: 0.6,
+  clearcoatRoughness: 0.22,
+  reflectivity: 0.4,
+  envMapIntensity: 0.9,
+  specularIntensity: 0.6,
+  specularColor: 0xeafff8,
   side: THREE.DoubleSide,
-  iridescence: 1.0,
-  iridescenceIOR: 1.32,
-  iridescenceThicknessRange: [120, 420],
-  attenuationColor: new THREE.Color(0x9fd0ec),
-  attenuationDistance: 4.0,
-  depthWrite: false,
+  sheen: 1.0,
+  sheenRoughness: 0.55,
+  sheenColor: new THREE.Color(0xa8ecdc),
+  iridescence: 0.35,
+  iridescenceIOR: 1.25,
+  iridescenceThicknessRange: [180, 360],
+  depthWrite: true,
   flatShading: false,
 });
 
-material.customProgramCacheKey = () => 'fluid_vessel_membrane_v05';
+material.customProgramCacheKey = () => 'fluid_vessel_veiled_v06';
 
 material.onBeforeCompile = (shader) => {
   shader.uniforms.uTime = membraneUniforms.uTime;
   shader.uniforms.uStretchGain = membraneUniforms.uStretchGain;
   shader.uniforms.uFresnelPow = membraneUniforms.uFresnelPow;
-  shader.uniforms.uStressTint = membraneUniforms.uStressTint;
+  shader.uniforms.uTopTint = membraneUniforms.uTopTint;
+  shader.uniforms.uMidTint = membraneUniforms.uMidTint;
   shader.uniforms.uDeepTint = membraneUniforms.uDeepTint;
+  shader.uniforms.uRimGlow = membraneUniforms.uRimGlow;
+  shader.uniforms.uStressTint = membraneUniforms.uStressTint;
 
   shader.vertexShader = `
     attribute float aStretch;
     varying float vStretch;
+    varying float vFvHeight;
   ` + shader.vertexShader;
 
   shader.vertexShader = shader.vertexShader.replace(
     '#include <begin_vertex>',
     `#include <begin_vertex>
-    vStretch = aStretch;`
+    vStretch = aStretch;
+    vFvHeight = clamp(((modelMatrix * vec4(transformed, 1.0)).y + 1.0) / 2.4, 0.0, 1.0);`
   );
 
   shader.fragmentShader = `
     uniform float uTime;
     uniform float uStretchGain;
     uniform float uFresnelPow;
-    uniform vec3 uStressTint;
+    uniform vec3 uTopTint;
+    uniform vec3 uMidTint;
     uniform vec3 uDeepTint;
+    uniform vec3 uRimGlow;
+    uniform vec3 uStressTint;
     varying float vStretch;
+    varying float vFvHeight;
   ` + shader.fragmentShader;
 
   shader.fragmentShader = shader.fragmentShader.replace(
@@ -378,14 +389,16 @@ material.onBeforeCompile = (shader) => {
     vec3 Nd = normalize(vNormal);
     float NdotV = clamp(dot(Nd, Vd), 0.0, 1.0);
     float fres = pow(1.0 - NdotV, uFresnelPow);
-    float stress = smoothstep(0.04, 0.7, vStretch * uStretchGain);
-    #ifdef USE_TRANSMISSION
-      float bodyH = clamp((vWorldPosition.y + 1.0) / 2.4, 0.0, 1.0);
-      vec3 depthTint = mix(uDeepTint, vec3(1.0), bodyH);
-      outgoingLight *= mix(depthTint, vec3(1.0), 0.55);
-    #endif
-    outgoingLight += uStressTint * stress * 0.22;
-    outgoingLight = mix(outgoingLight, outgoingLight + vec3(0.06, 0.09, 0.12), fres * 0.5);
+    float stress = smoothstep(0.05, 0.72, vStretch * uStretchGain);
+    float h = vFvHeight;
+    vec3 grad = mix(uDeepTint, uMidTint, smoothstep(0.0, 0.55, h));
+    grad = mix(grad, uTopTint, smoothstep(0.5, 1.0, h));
+    // veiled plastic: soft inner glow + subtle vertical light banding
+    float veil = 0.55 + 0.45 * smoothstep(0.1, 0.9, h);
+    outgoingLight = mix(outgoingLight, outgoingLight * grad * 1.15, 0.6);
+    outgoingLight += grad * veil * 0.12;
+    outgoingLight = mix(outgoingLight, uRimGlow, fres * 0.45);
+    outgoingLight += uStressTint * stress * 0.18;
     #include <dithering_fragment>`
   );
 
@@ -599,9 +612,9 @@ class SoftBody {
         for (let i = 0; i < this.numVertices; i++) {
           if (this.invMass[i] === 0) continue;
           const h = this.vertexHeight[i];
-          const baseHold = 0.7 * Math.exp(-(h / 0.08) * (h / 0.08));
+          const baseHold = 1.05 * Math.exp(-(h / 0.13) * (h / 0.13));
           const hFalloff = 0.3 + 0.55 * h * h + baseHold;
-          const k = tension * 0.055 * hFalloff;
+          const k = tension * 0.06 * hFalloff;
           this.p[i * 3] += (this.rest[i * 3] - this.p[i * 3]) * k;
           this.p[i * 3 + 1] += (this.rest[i * 3 + 1] - this.p[i * 3 + 1]) * k;
           this.p[i * 3 + 2] += (this.rest[i * 3 + 2] - this.p[i * 3 + 2]) * k;
@@ -801,9 +814,9 @@ function buildVaseOuter(detail) {
   const yMax = 1.4;
 
   function radius(t) {
-    const rise = Math.pow(smoothstep01(-0.02, 0.34, t), 0.6);
-    const belly = 0.78 + 0.22 * Math.exp(-Math.pow((t - 0.46) / 0.42, 2));
-    const rimTaper = 1.0 - 0.10 * smoothstep01(0.7, 1.0, t);
+    const rise = Math.pow(smoothstep01(-0.02, 0.30, t), 0.62);
+    const belly = 0.56 + 0.16 * Math.exp(-Math.pow((t - 0.40) / 0.40, 2));
+    const rimTaper = 1.0 - 0.14 * smoothstep01(0.66, 1.0, t);
     return rise * belly * rimTaper;
   }
 
@@ -1168,7 +1181,7 @@ function createMesh(detail) {
   softBody = new SoftBody(simGeo);
   softBody.rimIndices = rimIdx;
   softBody.restVolume = Math.abs(softBody._computeVolume(softBody.x));
-  softBody.params.iterations = 12 + Math.floor(detail * 2);
+  softBody.params.iterations = 8 + detail;
   computeVertexHeights(softBody);
   applyMaterialProfile(softBody, rimIdx);
   buildTopCollar();
@@ -1502,20 +1515,18 @@ function animate(time) {
     }
     const dt = Math.min((time - lastTime) / 1000, 1 / 30);
     lastTime = time;
-    const subDt = 1 / 120;
-    let acc = Math.min(dt, 1 / 24);
-    updateRimPinTargets();
+    const subDt = 1 / 90;
+    let acc = Math.min(dt, 1 / 30);
     let steps = 0;
-    while (acc > 0 && steps < 8) {
+    while (acc > 0 && steps < 3) {
       const step = Math.min(subDt, acc);
       softBody.step(step);
       acc -= step;
       steps++;
-      if (softBody.isUnstable()) {
-        softBody.resetToRest();
-        updateRimPinTargets();
-        break;
-      }
+    }
+    if (softBody.isUnstable()) {
+      softBody.resetToRest();
+      updateRimPinTargets();
     }
     updateRenderShell();
     updateTopCollarFromRim();
