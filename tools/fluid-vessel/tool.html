@@ -155,7 +155,7 @@
   <div class="back"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
   <h1>[ FLUID_VESSEL :: MEMBRANA ]</h1>
   <div class="sub">generatore contenitori biomorfi · PBD · uncini</div>
-  <div class="ver">v.04.1 — anello integrato · fix viewport</div>
+  <div class="ver">v.05 — vetro iridescente · forma stabile</div>
 </div>
 
 <div class="actions">
@@ -169,22 +169,22 @@
   <div class="control">
     <label>Pressione interna</label>
     <div class="row">
-      <input type="range" id="s-pressure" min="0.15" max="3.2" step="0.01" value="1.15">
-      <div class="val" id="v-pressure">1.15</div>
+      <input type="range" id="s-pressure" min="0.15" max="3.2" step="0.01" value="1.0">
+      <div class="val" id="v-pressure">1.00</div>
     </div>
   </div>
   <div class="control">
     <label>Elasticità</label>
     <div class="row">
-      <input type="range" id="s-stiffness" min="0.02" max="1.15" step="0.01" value="0.32">
-      <div class="val" id="v-stiffness">0.32</div>
+      <input type="range" id="s-stiffness" min="0.02" max="1.15" step="0.01" value="0.45">
+      <div class="val" id="v-stiffness">0.45</div>
     </div>
   </div>
   <div class="control">
     <label>Tensione superficiale</label>
     <div class="row">
-      <input type="range" id="s-tension" min="0.0" max="0.55" step="0.005" value="0.015">
-      <div class="val" id="v-tension">0.015</div>
+      <input type="range" id="s-tension" min="0.0" max="0.55" step="0.005" value="0.09">
+      <div class="val" id="v-tension">0.09</div>
     </div>
   </div>
   <div class="control">
@@ -280,7 +280,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 const pmrem = new THREE.PMREMGenerator(renderer);
 pmrem.compileEquirectangularShader();
 const roomEnv = new RoomEnvironment();
-const envRT = pmrem.fromScene(roomEnv, 0.04);
+const envRT = pmrem.fromScene(roomEnv, 0.02);
 scene.environment = envRT.texture;
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -292,68 +292,68 @@ controls.minDistance = 3;
 controls.maxDistance = 14;
 controls.update();
 
-const key = new THREE.DirectionalLight(0xfff2dc, 2.2);
+const key = new THREE.DirectionalLight(0xfff2dc, 1.25);
 key.position.set(2.5, 5, 4);
 scene.add(key);
 
-const rim = new THREE.DirectionalLight(0x8aa0b8, 1.4);
+const rim = new THREE.DirectionalLight(0x9ab4d0, 1.05);
 rim.position.set(-4, 1.5, -3);
 scene.add(rim);
 
-const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+const fill = new THREE.DirectionalLight(0xffffff, 0.28);
 fill.position.set(0, -3, 4);
 scene.add(fill);
 
-const hemi = new THREE.HemisphereLight(0xfff0d8, 0x101015, 0.5);
+const hemi = new THREE.HemisphereLight(0xfff0d8, 0x0c0e12, 0.65);
 scene.add(hemi);
 
-scene.add(new THREE.AmbientLight(0x1a1814, 0.6));
+scene.add(new THREE.AmbientLight(0x14140f, 0.5));
 
 const membraneUniforms = {
   uTime: { value: 0 },
-  uStretchGain: { value: 1.65 },
+  uStretchGain: { value: 1.55 },
   uFresnelPow: { value: 4.2 },
-  uIridescence: { value: 1.0 },
-  uLiquidTint: { value: new THREE.Color(0xc8e8ff) },
-  uStressTint: { value: new THREE.Color(0x88b8e8) },
+  uStressTint: { value: new THREE.Color(0x7fd6ff) },
+  uDeepTint: { value: new THREE.Color(0x2f6f9e) },
 };
 
 const material = new THREE.MeshPhysicalMaterial({
-  color: 0xf4faff,
+  color: 0xeef7ff,
   metalness: 0,
-  roughness: 0.025,
+  roughness: 0.06,
   transmission: 1.0,
-  thickness: 1.65,
-  ior: 1.52,
+  thickness: 1.2,
+  ior: 1.45,
   transparent: true,
   opacity: 1,
   clearcoat: 1.0,
-  clearcoatRoughness: 0.015,
-  reflectivity: 0.95,
-  envMapIntensity: 1.55,
+  clearcoatRoughness: 0.06,
+  reflectivity: 0.6,
+  envMapIntensity: 1.35,
   specularIntensity: 1.0,
   specularColor: 0xffffff,
   side: THREE.DoubleSide,
-  attenuationColor: new THREE.Color(0xa8d4f0),
-  attenuationDistance: 5.5,
+  iridescence: 1.0,
+  iridescenceIOR: 1.32,
+  iridescenceThicknessRange: [120, 420],
+  attenuationColor: new THREE.Color(0x9fd0ec),
+  attenuationDistance: 4.0,
   depthWrite: false,
   flatShading: false,
 });
 
-material.customProgramCacheKey = () => 'fluid_vessel_membrane_v041';
+material.customProgramCacheKey = () => 'fluid_vessel_membrane_v05';
 
 material.onBeforeCompile = (shader) => {
   shader.uniforms.uTime = membraneUniforms.uTime;
   shader.uniforms.uStretchGain = membraneUniforms.uStretchGain;
   shader.uniforms.uFresnelPow = membraneUniforms.uFresnelPow;
-  shader.uniforms.uIridescence = membraneUniforms.uIridescence;
-  shader.uniforms.uLiquidTint = membraneUniforms.uLiquidTint;
   shader.uniforms.uStressTint = membraneUniforms.uStressTint;
+  shader.uniforms.uDeepTint = membraneUniforms.uDeepTint;
 
   shader.vertexShader = `
     attribute float aStretch;
     varying float vStretch;
-    varying vec3 vWorldNormal;
   ` + shader.vertexShader;
 
   shader.vertexShader = shader.vertexShader.replace(
@@ -362,42 +362,30 @@ material.onBeforeCompile = (shader) => {
     vStretch = aStretch;`
   );
 
-  shader.vertexShader = shader.vertexShader.replace(
-    '#include <worldpos_vertex>',
-    `#include <worldpos_vertex>
-    vWorldNormal = normalize(mat3(modelMatrix) * objectNormal);`
-  );
-
   shader.fragmentShader = `
     uniform float uTime;
     uniform float uStretchGain;
     uniform float uFresnelPow;
-    uniform float uIridescence;
-    uniform vec3 uLiquidTint;
     uniform vec3 uStressTint;
+    uniform vec3 uDeepTint;
     varying float vStretch;
-    varying vec3 vWorldNormal;
   ` + shader.fragmentShader;
 
   shader.fragmentShader = shader.fragmentShader.replace(
     '#include <dithering_fragment>',
     `
-    vec3 V = normalize(vViewPosition);
-    vec3 N = normalize(vNormal);
-    float NdotV = max(dot(N, normalize(-V)), 0.0);
+    vec3 Vd = normalize(vViewPosition);
+    vec3 Nd = normalize(vNormal);
+    float NdotV = clamp(dot(Nd, Vd), 0.0, 1.0);
     float fres = pow(1.0 - NdotV, uFresnelPow);
-    float stress = smoothstep(0.03, 0.65, vStretch * uStretchGain);
-    float weave = 0.5 + 0.5 * sin(dot(vWorldNormal.xz, vec2(48.0, 31.0)) + uTime * 0.35);
-    vec3 liquidRim = mix(uLiquidTint, vec3(1.0), fres);
-    vec3 irid = 0.5 + 0.5 * cos(vec3(0.0, 2.1, 4.2) + fres * (5.5 + uIridescence) + stress * 2.5);
-    outgoingLight = mix(outgoingLight, liquidRim, fres * 0.48);
-    outgoingLight += uStressTint * stress * 0.26;
-    outgoingLight += irid * fres * stress * (0.10 + uIridescence * 0.06);
+    float stress = smoothstep(0.04, 0.7, vStretch * uStretchGain);
     #ifdef USE_TRANSMISSION
       float bodyH = clamp((vWorldPosition.y + 1.0) / 2.4, 0.0, 1.0);
-      outgoingLight *= mix(1.0, 0.68, pow(bodyH, 1.35));
+      vec3 depthTint = mix(uDeepTint, vec3(1.0), bodyH);
+      outgoingLight *= mix(depthTint, vec3(1.0), 0.55);
     #endif
-    outgoingLight *= 0.98 + weave * stress * 0.05;
+    outgoingLight += uStressTint * stress * 0.22;
+    outgoingLight = mix(outgoingLight, outgoingLight + vec3(0.06, 0.09, 0.12), fres * 0.5);
     #include <dithering_fragment>`
   );
 
@@ -611,8 +599,9 @@ class SoftBody {
         for (let i = 0; i < this.numVertices; i++) {
           if (this.invMass[i] === 0) continue;
           const h = this.vertexHeight[i];
-          const hFalloff = 0.04 + 0.96 * h * h;
-          const k = tension * 0.045 * hFalloff;
+          const baseHold = 0.7 * Math.exp(-(h / 0.08) * (h / 0.08));
+          const hFalloff = 0.3 + 0.55 * h * h + baseHold;
+          const k = tension * 0.055 * hFalloff;
           this.p[i * 3] += (this.rest[i * 3] - this.p[i * 3]) * k;
           this.p[i * 3 + 1] += (this.rest[i * 3 + 1] - this.p[i * 3 + 1]) * k;
           this.p[i * 3 + 2] += (this.rest[i * 3 + 2] - this.p[i * 3 + 2]) * k;
@@ -767,7 +756,7 @@ class SoftBody {
   }
 
   _solveBend(stiffness) {
-    const bendBase = Math.max(0.02, 0.38 - stiffness * 0.32);
+    const bendBase = Math.max(0.18, 0.62 - stiffness * 0.3);
     for (let f = 0; f < this.faces.length; f++) {
       const [a, b, c] = this.faces[f];
       const midX = (this.p[a * 3] + this.p[b * 3] + this.p[c * 3]) / 3;
@@ -779,8 +768,8 @@ class SoftBody {
         if (this.invMass[i] === 0) continue;
         const h = this.vertexHeight[i];
         const hCurve = h * h * (3 - 2 * h);
-        const bendK = bendBase * (0.25 + 1.85 * hCurve);
-        const w = this.invMass[i] * bendK * 0.14;
+        const bendK = bendBase * (0.7 + 0.9 * hCurve);
+        const w = this.invMass[i] * bendK * 0.2;
         this.p[i * 3] += (midX - this.p[i * 3]) * w;
         this.p[i * 3 + 1] += (midY - this.p[i * 3 + 1]) * w;
         this.p[i * 3 + 2] += (midZ - this.p[i * 3 + 2]) * w;
@@ -800,18 +789,22 @@ let rimVertexSet = new Set();
 let currentThickness = 0.06;
 let topCollarGroup = null;
 
+function smoothstep01(a, b, x) {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+}
+
 function buildVaseOuter(detail) {
-  const lat = [0, 0, 20, 28, 36, 44, 52, 60, 72][detail] || 44;
-  const lon = [0, 0, 40, 52, 64, 76, 88, 100, 120][detail] || 76;
+  const lat = [0, 0, 20, 28, 36, 44, 52, 64, 80][detail] || 44;
+  const lon = [0, 0, 40, 52, 64, 76, 88, 104, 128][detail] || 76;
   const yMin = -1.0;
   const yMax = 1.4;
 
   function radius(t) {
-    const apexRise = Math.min(1, Math.pow(t / 0.30, 0.6));
-    const belly = 0.95 * apexRise;
-    const neck = 1 - 0.14 * Math.exp(-Math.pow((t - 0.80) / 0.10, 2));
-    const rimBoost = 1 + 0.15 * Math.pow(Math.max(0, t - 0.85) / 0.15, 1.2);
-    return belly * neck * rimBoost;
+    const rise = Math.pow(smoothstep01(-0.02, 0.34, t), 0.6);
+    const belly = 0.78 + 0.22 * Math.exp(-Math.pow((t - 0.46) / 0.42, 2));
+    const rimTaper = 1.0 - 0.10 * smoothstep01(0.7, 1.0, t);
+    return rise * belly * rimTaper;
   }
 
   const positions = [];
@@ -965,7 +958,7 @@ function applyMaterialProfile(soft, rimIdx) {
     const [a, b] = soft.edges[e];
     const h = (soft.vertexHeight[a] + soft.vertexHeight[b]) * 0.5;
     const hCurve = h * h * (3 - 2 * h);
-    let mult = 0.28 + 1.55 * hCurve;
+    let mult = 0.62 + 1.05 * hCurve;
     if (rimSet.has(a) && rimSet.has(b)) mult *= 2.1;
     else if (rimSet.has(a) || rimSet.has(b)) mult *= 1.45;
     soft.edgeStiffMult[e] = mult;
@@ -1190,10 +1183,10 @@ function syncSimParamsFromUI() {
   softBody.params.stiffness = parseFloat(document.getElementById('s-stiffness').value);
   softBody.params.tension = parseFloat(document.getElementById('s-tension').value);
   softBody.params.damping = parseFloat(document.getElementById('s-damping').value);
-  softBody.params.volumeStiffness = 0.22 + softBody.params.pressure * 0.38;
+  softBody.params.volumeStiffness = 0.38 + softBody.params.pressure * 0.4;
   softBody.params.rimTension = parseFloat(document.getElementById('s-rim').value);
   membraneUniforms.uFresnelPow.value = parseFloat(document.getElementById('s-fresnel').value);
-  membraneUniforms.uIridescence.value = parseFloat(document.getElementById('s-irid').value);
+  material.iridescence = Math.min(1, parseFloat(document.getElementById('s-irid').value));
 }
 
 createMesh(6);
@@ -1279,7 +1272,6 @@ function placeInitialHooks() {
     softBody.getVertex(i, v);
     if (hookPicks.has(k)) addHook(i, v.clone());
   }
-  softBody.pin(0, new THREE.Vector3(0, -1.0, 0), 1);
   updateRimPinTargets();
 }
 
@@ -1411,7 +1403,7 @@ function bindSlider(id, valId, prop, fmt = v => v.toFixed(2)) {
     if (!softBody) return;
     softBody.params[prop] = val;
     if (prop === 'pressure') {
-      softBody.params.volumeStiffness = 0.22 + val * 0.38;
+      softBody.params.volumeStiffness = 0.38 + val * 0.4;
     }
     if (prop === 'rimTension') {
       updateRimPinTargets();
@@ -1427,7 +1419,9 @@ bindSlider('s-rim', 'v-rim', 'rimTension');
 
 document.getElementById('s-irid').addEventListener('input', (e) => {
   const val = parseFloat(e.target.value);
-  membraneUniforms.uIridescence.value = val;
+  material.iridescence = Math.min(1, val);
+  material.iridescenceThicknessRange = [120, 280 + val * 220];
+  material.needsUpdate = false;
   document.getElementById('v-irid').textContent = val.toFixed(2);
 });
 document.getElementById('s-fresnel').addEventListener('input', (e) => {
