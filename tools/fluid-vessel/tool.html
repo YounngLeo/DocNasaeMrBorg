@@ -381,6 +381,16 @@ const hookHoverMat = new THREE.MeshStandardMaterial({
   color: 0xe6e8ea, metalness: 0.95, roughness: 0.2,
 });
 const cableMat = new THREE.LineBasicMaterial({ color: 0xaab0b8, transparent: true, opacity: 0.85 });
+const collarMat = new THREE.MeshStandardMaterial({
+  color: 0x9ea5ad,
+  metalness: 0.92,
+  roughness: 0.22,
+});
+const collarHoleMat = new THREE.MeshStandardMaterial({
+  color: 0x1a1e22,
+  metalness: 0.35,
+  roughness: 0.6,
+});
 
 class SoftBody {
   constructor(geometry) {
@@ -688,6 +698,7 @@ let softBody;
 let rimVertexIndices = [];
 let rimVertexSet = new Set();
 let currentThickness = 0.06;
+let topCollarGroup = null;
 
 function buildVaseOuter(detail) {
   const lat = [0, 0, 20, 28, 36, 44, 52, 60, 72][detail] || 44;
@@ -867,6 +878,81 @@ function stiffenRim(soft, rimIdx) {
   soft.restLengths = restArr;
 }
 
+function disposeGroup(g) {
+  g.traverse((o) => {
+    if (o.geometry) o.geometry.dispose();
+  });
+}
+
+function getRimProfile() {
+  if (!softBody || !rimVertexIndices.length) return null;
+  let cx = 0, cy = 0, cz = 0;
+  const R = rimVertexIndices.length;
+  for (let i = 0; i < R; i++) {
+    const idx = rimVertexIndices[i];
+    cx += softBody.rest[idx * 3];
+    cy += softBody.rest[idx * 3 + 1];
+    cz += softBody.rest[idx * 3 + 2];
+  }
+  cx /= R; cy /= R; cz /= R;
+  let radius = 0;
+  for (let i = 0; i < R; i++) {
+    const idx = rimVertexIndices[i];
+    const dx = softBody.rest[idx * 3] - cx;
+    const dz = softBody.rest[idx * 3 + 2] - cz;
+    radius += Math.sqrt(dx * dx + dz * dz);
+  }
+  radius /= R;
+  return { center: new THREE.Vector3(cx, cy, cz), radius };
+}
+
+function buildTopCollar() {
+  if (topCollarGroup) {
+    scene.remove(topCollarGroup);
+    disposeGroup(topCollarGroup);
+    topCollarGroup = null;
+  }
+  const rim = getRimProfile();
+  if (!rim) return;
+  const { center, radius } = rim;
+  const group = new THREE.Group();
+  const ringR = radius * 1.01;
+
+  const band = new THREE.Mesh(
+    new THREE.TorusGeometry(ringR, 0.04, 24, 120),
+    collarMat
+  );
+  band.rotation.x = Math.PI / 2;
+  band.position.set(center.x, center.y + 0.015, center.z);
+  group.add(band);
+
+  const picks = [0, Math.floor(rimVertexIndices.length / 3), Math.floor(2 * rimVertexIndices.length / 3)];
+  picks.forEach((k) => {
+    const idx = rimVertexIndices[k];
+    const x = softBody.rest[idx * 3];
+    const y = softBody.rest[idx * 3 + 1] + 0.018;
+    const z = softBody.rest[idx * 3 + 2];
+
+    const eyelet = new THREE.Mesh(
+      new THREE.TorusGeometry(0.026, 0.006, 10, 22),
+      collarMat
+    );
+    eyelet.position.set(x, y, z);
+    eyelet.rotation.x = Math.PI / 2;
+    group.add(eyelet);
+
+    const hole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.008, 0.008, 0.05, 10),
+      collarHoleMat
+    );
+    hole.position.set(x, y, z);
+    group.add(hole);
+  });
+
+  topCollarGroup = group;
+  scene.add(topCollarGroup);
+}
+
 function createMesh(detail) {
   if (renderMesh) {
     scene.remove(renderMesh);
@@ -887,6 +973,7 @@ function createMesh(detail) {
   softBody.restVolume = Math.abs(softBody._computeVolume(softBody.x));
   softBody.params.iterations = 12 + Math.floor(detail * 2.2);
   stiffenRim(softBody, rimIdx);
+  buildTopCollar();
   updateStretchAttribute();
   syncSimParamsFromUI();
   document.getElementById('st-verts').textContent = softBody.numVertices;
@@ -978,13 +1065,12 @@ function clearHooks() {
 function placeInitialHooks() {
   const R = rimVertexIndices.length;
   const hookPicks = new Set([0, Math.floor(R / 3), Math.floor(2 * R / 3)]);
-  const pinStride = Math.max(6, Math.floor(R / 10));
   for (let k = 0; k < R; k++) {
     const i = rimVertexIndices[k];
     const v = new THREE.Vector3();
     softBody.getVertex(i, v);
     if (hookPicks.has(k)) addHook(i, v.clone());
-    else if (k % pinStride === 0) softBody.pin(i, v.clone());
+    else softBody.pin(i, v.clone());
   }
   softBody.pin(0, new THREE.Vector3(0, -1.0, 0));
 }
