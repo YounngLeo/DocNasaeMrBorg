@@ -793,6 +793,8 @@ class SoftBody {
 
 let simGeo, renderGeo, renderMesh;
 let softBody;
+const hooks = [];
+const cableTopY = 8;
 let rimVertexIndices = [];
 let rimVertexSet = new Set();
 let currentThickness = 0.06;
@@ -1133,7 +1135,7 @@ function updateTopCollarFromRim() {
   collarBand.scale.setScalar(scale);
   if (collarLip) collarLip.scale.setScalar(scale);
 
-  const hookMap = new Map(hooks.map(h => [h.vertexIdx, h.hookMesh.position]));
+  const hookMap = new Map(hooks.map((h) => [h.vertexIdx, h.hookMesh.position]));
 
   collarEyelets.forEach(({ mesh, rimK }) => {
     const idx = rimVertexIndices[rimK];
@@ -1195,9 +1197,6 @@ function syncSimParamsFromUI() {
 }
 
 createMesh(6);
-
-const hooks = [];
-const cableTopY = 8;
 
 function createHookMesh() {
   const S = 2.2;
