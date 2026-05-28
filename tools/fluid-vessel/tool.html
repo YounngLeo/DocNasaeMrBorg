@@ -155,7 +155,7 @@
   <div class="back"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
   <h1>[ FLUID_VESSEL :: MEMBRANA ]</h1>
   <div class="sub">generatore contenitori biomorfi · PBD · uncini</div>
-  <div class="ver">v.06 — plastica velata · anti-flicker</div>
+  <div class="ver">v.07 — plastica velata · pressione stabile</div>
 </div>
 
 <div class="actions">
@@ -169,7 +169,7 @@
   <div class="control">
     <label>Pressione interna</label>
     <div class="row">
-      <input type="range" id="s-pressure" min="0.15" max="3.2" step="0.01" value="1.0">
+      <input type="range" id="s-pressure" min="0.5" max="2.0" step="0.01" value="1.0">
       <div class="val" id="v-pressure">1.00</div>
     </div>
   </div>
@@ -241,7 +241,7 @@
 <div class="status">
   uncini: <span id="st-hooks">0</span><br>
   vertici: <span id="st-verts">0</span><br>
-  volume: <span id="st-vol">1.00</span>
+  press.: <span id="st-vol">1.00</span>
 </div>
 
 <div class="grain"></div>
@@ -309,104 +309,29 @@ scene.add(hemi);
 
 scene.add(new THREE.AmbientLight(0x14140f, 0.5));
 
-const membraneUniforms = {
-  uTime: { value: 0 },
-  uStretchGain: { value: 1.55 },
-  uFresnelPow: { value: 3.2 },
-  uTopTint: { value: new THREE.Color(0xdbf6ec) },
-  uMidTint: { value: new THREE.Color(0x6fd6c2) },
-  uDeepTint: { value: new THREE.Color(0x2a7d86) },
-  uRimGlow: { value: new THREE.Color(0xbdf2e4) },
-  uStressTint: { value: new THREE.Color(0x9af0d4) },
-};
-
 const material = new THREE.MeshPhysicalMaterial({
-  color: 0xbfe9dc,
+  color: 0xc8ebe2,
   metalness: 0,
-  roughness: 0.42,
+  roughness: 0.5,
   transmission: 0,
   transparent: false,
   opacity: 1,
-  clearcoat: 0.6,
-  clearcoatRoughness: 0.22,
-  reflectivity: 0.4,
-  envMapIntensity: 0.9,
-  specularIntensity: 0.6,
-  specularColor: 0xeafff8,
+  clearcoat: 0.45,
+  clearcoatRoughness: 0.28,
+  reflectivity: 0.35,
+  envMapIntensity: 0.72,
+  specularIntensity: 0.55,
+  specularColor: 0xe8fff6,
   side: THREE.FrontSide,
-  sheen: 1.0,
-  sheenRoughness: 0.55,
-  sheenColor: new THREE.Color(0xa8ecdc),
-  iridescence: 0.35,
-  iridescenceIOR: 1.25,
-  iridescenceThicknessRange: [180, 360],
+  sheen: 0.9,
+  sheenRoughness: 0.62,
+  sheenColor: new THREE.Color(0x9ce8d6),
+  iridescence: 0.22,
+  iridescenceIOR: 1.22,
+  iridescenceThicknessRange: [200, 380],
   depthWrite: true,
-  polygonOffset: true,
-  polygonOffsetFactor: 1,
-  polygonOffsetUnits: 1,
   flatShading: false,
 });
-
-material.customProgramCacheKey = () => 'fluid_vessel_veiled_v06';
-
-material.onBeforeCompile = (shader) => {
-  shader.uniforms.uTime = membraneUniforms.uTime;
-  shader.uniforms.uStretchGain = membraneUniforms.uStretchGain;
-  shader.uniforms.uFresnelPow = membraneUniforms.uFresnelPow;
-  shader.uniforms.uTopTint = membraneUniforms.uTopTint;
-  shader.uniforms.uMidTint = membraneUniforms.uMidTint;
-  shader.uniforms.uDeepTint = membraneUniforms.uDeepTint;
-  shader.uniforms.uRimGlow = membraneUniforms.uRimGlow;
-  shader.uniforms.uStressTint = membraneUniforms.uStressTint;
-
-  shader.vertexShader = `
-    attribute float aStretch;
-    varying float vStretch;
-    varying float vFvHeight;
-  ` + shader.vertexShader;
-
-  shader.vertexShader = shader.vertexShader.replace(
-    '#include <begin_vertex>',
-    `#include <begin_vertex>
-    vStretch = aStretch;
-    vFvHeight = clamp(((modelMatrix * vec4(transformed, 1.0)).y + 1.0) / 2.4, 0.0, 1.0);`
-  );
-
-  shader.fragmentShader = `
-    uniform float uTime;
-    uniform float uStretchGain;
-    uniform float uFresnelPow;
-    uniform vec3 uTopTint;
-    uniform vec3 uMidTint;
-    uniform vec3 uDeepTint;
-    uniform vec3 uRimGlow;
-    uniform vec3 uStressTint;
-    varying float vStretch;
-    varying float vFvHeight;
-  ` + shader.fragmentShader;
-
-  shader.fragmentShader = shader.fragmentShader.replace(
-    '#include <dithering_fragment>',
-    `
-    vec3 Vd = normalize(vViewPosition);
-    vec3 Nd = normalize(vNormal);
-    float NdotV = clamp(dot(Nd, Vd), 0.0, 1.0);
-    float fres = pow(1.0 - NdotV, uFresnelPow);
-    float stress = smoothstep(0.05, 0.72, vStretch * uStretchGain);
-    float h = vFvHeight;
-    vec3 grad = mix(uDeepTint, uMidTint, smoothstep(0.0, 0.55, h));
-    grad = mix(grad, uTopTint, smoothstep(0.5, 1.0, h));
-    // veiled plastic: soft inner glow + subtle vertical light banding
-    float veil = 0.55 + 0.45 * smoothstep(0.1, 0.9, h);
-    outgoingLight = mix(outgoingLight, outgoingLight * grad * 1.15, 0.6);
-    outgoingLight += grad * veil * 0.12;
-    outgoingLight = mix(outgoingLight, uRimGlow, fres * 0.45);
-    outgoingLight += uStressTint * stress * 0.18;
-    #include <dithering_fragment>`
-  );
-
-  material.userData.shader = shader;
-};
 
 const hookMat = new THREE.MeshStandardMaterial({
   color: 0xc8ccd0, metalness: 0.95, roughness: 0.28,
@@ -442,6 +367,8 @@ class SoftBody {
     this.pinStrength = new Float32Array(this.numVertices);
     this.vertexHeight = new Float32Array(this.numVertices);
     this.rimIndices = null;
+    this.rimVertexSet = null;
+    this.normalTick = 0;
 
     const idx = geometry.index.array;
     const edgeSet = new Set();
@@ -557,12 +484,30 @@ class SoftBody {
     return out;
   }
 
+  _applyInflation(pressure) {
+    const k = (pressure - 1.0) * 0.014;
+    if (Math.abs(k) < 1e-5) return;
+    const rimSet = this.rimVertexSet;
+    for (let i = 0; i < this.numVertices; i++) {
+      if (this.invMass[i] === 0) continue;
+      if (rimSet && rimSet.has(i)) continue;
+      const h = this.vertexHeight[i];
+      if (h > 0.9) continue;
+      const px = this.p[i * 3];
+      const pz = this.p[i * 3 + 2];
+      const len = Math.sqrt(px * px + pz * pz) || 1e-5;
+      const belly = 0.2 + 0.8 * (1 - h) * (1 - h);
+      this.p[i * 3] += (px / len) * k * belly;
+      this.p[i * 3 + 1] += k * belly * 0.25;
+      this.p[i * 3 + 2] += (pz / len) * k * belly;
+    }
+  }
+
   step(dt) {
     dt = Math.min(dt, 1 / 60);
-    const { stiffness, tension, damping, iterations, pressure, volumeStiffness, rimTension } = this.params;
+    const { stiffness, tension, damping, iterations, pressure, rimTension } = this.params;
     const MAX_V = 9;
     const MAX_DIST = 28;
-    const volStiff = volumeStiffness * (0.65 + pressure * 0.35);
 
     for (let i = 0; i < this.numVertices; i++) {
       if (this.invMass[i] === 0) {
@@ -607,7 +552,7 @@ class SoftBody {
         this.p[b * 3 + 2] -= cz * wb;
       }
 
-      this._solveVolume(pressure, volStiff);
+      this._applyInflation(pressure);
       this._solveBend(stiffness);
       this._applyAttachmentConstraints(rimTension);
 
@@ -660,7 +605,8 @@ class SoftBody {
 
     this.posAttr.array.set(this.x);
     this.posAttr.needsUpdate = true;
-    this.geometry.computeVertexNormals();
+    this.normalTick++;
+    if (this.normalTick % 3 === 0) this.geometry.computeVertexNormals();
   }
 
   _solveVolume(pressureMult, vStiffness) {
@@ -856,76 +802,6 @@ function buildVaseOuter(detail) {
   return { geo, rimIdx };
 }
 
-function buildRenderShell(outerGeo, rimIdx, thickness) {
-  const outerPos = outerGeo.attributes.position.array;
-  const outerNorm = outerGeo.attributes.normal.array;
-  const outerIdx = outerGeo.index.array;
-  const N = outerPos.length / 3;
-  const rimSet = new Set(rimIdx);
-  const positions = new Float32Array(N * 6);
-  const indices = [];
-
-  for (let i = 0; i < N; i++) {
-    positions[i * 3] = outerPos[i * 3];
-    positions[i * 3 + 1] = outerPos[i * 3 + 1];
-    positions[i * 3 + 2] = outerPos[i * 3 + 2];
-  }
-  for (let i = 0; i < N; i++) {
-    let nx = outerNorm[i * 3], ny = outerNorm[i * 3 + 1], nz = outerNorm[i * 3 + 2];
-    if (rimSet.has(i)) {
-      ny = 0;
-      const l = Math.sqrt(nx * nx + nz * nz) || 1;
-      nx /= l; nz /= l;
-    }
-    positions[(N + i) * 3] = outerPos[i * 3] - nx * thickness;
-    positions[(N + i) * 3 + 1] = outerPos[i * 3 + 1] - ny * thickness;
-    positions[(N + i) * 3 + 2] = outerPos[i * 3 + 2] - nz * thickness;
-  }
-
-  for (let i = 0; i < outerIdx.length; i++) indices.push(outerIdx[i]);
-  for (let i = 0; i < outerIdx.length; i += 3) {
-    indices.push(outerIdx[i] + N, outerIdx[i + 2] + N, outerIdx[i + 1] + N);
-  }
-  const R = rimIdx.length;
-  for (let k = 0; k < R; k++) {
-    const aO = rimIdx[k], bO = rimIdx[(k + 1) % R];
-    const aI = aO + N, bI = bO + N;
-    indices.push(aO, aI, bO);
-    indices.push(bO, aI, bI);
-  }
-
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geo.setAttribute('aStretch', new THREE.BufferAttribute(new Float32Array(N * 2), 1));
-  geo.setIndex(indices);
-  geo.computeVertexNormals();
-  return geo;
-}
-
-let stretchAttr = null;
-
-function updateStretchAttribute() {
-  if (!softBody || !simGeo) return;
-  const N = softBody.numVertices;
-  const rest = softBody.rest;
-  const x = softBody.x;
-  if (!stretchAttr || stretchAttr.length !== N) {
-    stretchAttr = new Float32Array(N);
-    simGeo.setAttribute('aStretch', new THREE.BufferAttribute(stretchAttr, 1));
-  }
-  for (let i = 0; i < N; i++) {
-    const dx = x[i * 3] - rest[i * 3];
-    const dy = x[i * 3 + 1] - rest[i * 3 + 1];
-    const dz = x[i * 3 + 2] - rest[i * 3 + 2];
-    stretchAttr[i] = Math.min(2.2, Math.sqrt(dx * dx + dy * dy + dz * dz) * 4.8);
-  }
-  simGeo.attributes.aStretch.needsUpdate = true;
-}
-
-function updateRenderShell() {
-  updateStretchAttribute();
-}
-
 function computeVertexHeights(soft) {
   const arr = soft.rest;
   let yMin = Infinity, yMax = -Infinity;
@@ -1011,36 +887,18 @@ function getRimProfile(useLive = false) {
 
 const hookVertexSet = () => new Set(hooks.map(h => h.vertexIdx));
 
-function updateRimPinTargets() {
+function setupRimPinsFromRest() {
   if (!softBody) return;
-  const live = getRimProfile(true);
-  if (!live) return;
-  const R = rimRestRadius || live.radius;
   const hooked = hookVertexSet();
-  const rimT = parseFloat(document.getElementById('s-rim').value);
-  const softRim = rimT < 0.98;
   for (let k = 0; k < rimVertexIndices.length; k++) {
     const i = rimVertexIndices[k];
     if (hooked.has(i)) continue;
-    const x = softBody.x[i * 3];
-    const z = softBody.x[i * 3 + 2];
-    const dx = x - live.center.x;
-    const dz = z - live.center.z;
-    const len = Math.sqrt(dx * dx + dz * dz) || 1e-6;
-    const tx = live.center.x + (dx / len) * R;
-    const ty = live.center.y;
-    const tz = live.center.z + (dz / len) * R;
-    const target = new THREE.Vector3(tx, ty, tz);
-    if (softRim) {
-      if (!softBody.pinTarget[i]) softBody.attachToRing(i, target, rimT);
-      else {
-        softBody.pinTarget[i].copy(target);
-        softBody.pinStrength[i] = rimT;
-        softBody.invMass[i] = 1;
-      }
-    } else {
-      softBody.pin(i, target, 1);
-    }
+    const target = new THREE.Vector3(
+      softBody.rest[i * 3],
+      softBody.rest[i * 3 + 1],
+      softBody.rest[i * 3 + 2]
+    );
+    softBody.pin(i, target, 1);
   }
 }
 
@@ -1143,7 +1001,6 @@ function createMesh(detail) {
     scene.remove(renderMesh);
     if (simGeo) simGeo.dispose();
   }
-  stretchAttr = null;
   const { geo, rimIdx } = buildVaseOuter(detail);
   simGeo = geo;
   rimVertexIndices = rimIdx;
@@ -1153,12 +1010,12 @@ function createMesh(detail) {
   scene.add(renderMesh);
   softBody = new SoftBody(simGeo);
   softBody.rimIndices = rimIdx;
+  softBody.rimVertexSet = rimVertexSet;
   softBody.restVolume = Math.abs(softBody._computeVolume(softBody.x));
   softBody.params.iterations = 8 + detail;
   computeVertexHeights(softBody);
   applyMaterialProfile(softBody, rimIdx);
   buildTopCollar();
-  updateStretchAttribute();
   syncSimParamsFromUI();
   document.getElementById('st-verts').textContent = softBody.numVertices;
 }
@@ -1169,9 +1026,7 @@ function syncSimParamsFromUI() {
   softBody.params.stiffness = parseFloat(document.getElementById('s-stiffness').value);
   softBody.params.tension = parseFloat(document.getElementById('s-tension').value);
   softBody.params.damping = parseFloat(document.getElementById('s-damping').value);
-  softBody.params.volumeStiffness = 0.38 + softBody.params.pressure * 0.4;
   softBody.params.rimTension = parseFloat(document.getElementById('s-rim').value);
-  membraneUniforms.uFresnelPow.value = parseFloat(document.getElementById('s-fresnel').value);
   material.iridescence = Math.min(1, parseFloat(document.getElementById('s-irid').value));
 }
 
@@ -1228,7 +1083,7 @@ function addHook(vertexIdx, worldPos) {
   scene.add(cable);
   softBody.pin(vertexIdx, worldPos, 1);
   hooks.push({ vertexIdx, hookMesh, cable });
-  updateRimPinTargets();
+  setupRimPinsFromRest();
   updateStatus();
 }
 
@@ -1241,7 +1096,7 @@ function removeHook(i) {
   h.cable.geometry.dispose();
   softBody.unpin(idx);
   hooks.splice(i, 1);
-  updateRimPinTargets();
+  setupRimPinsFromRest();
   updateStatus();
 }
 
@@ -1258,7 +1113,7 @@ function placeInitialHooks() {
     softBody.getVertex(i, v);
     if (hookPicks.has(k)) addHook(i, v.clone());
   }
-  updateRimPinTargets();
+  setupRimPinsFromRest();
 }
 
 placeInitialHooks();
@@ -1388,11 +1243,8 @@ function bindSlider(id, valId, prop, fmt = v => v.toFixed(2)) {
     const val = parseFloat(s.value);
     if (!softBody) return;
     softBody.params[prop] = val;
-    if (prop === 'pressure') {
-      softBody.params.volumeStiffness = 0.38 + val * 0.4;
-    }
     if (prop === 'rimTension') {
-      updateRimPinTargets();
+      setupRimPinsFromRest();
     }
     v.textContent = fmt(val);
   });
@@ -1412,7 +1264,7 @@ document.getElementById('s-irid').addEventListener('input', (e) => {
 });
 document.getElementById('s-fresnel').addEventListener('input', (e) => {
   const val = parseFloat(e.target.value);
-  membraneUniforms.uFresnelPow.value = val;
+  material.clearcoat = 0.2 + (val / 9) * 0.5;
   document.getElementById('v-fresnel').textContent = val.toFixed(1);
 });
 
@@ -1502,10 +1354,9 @@ function animate(time) {
     }
     if (resetCooldown <= 0 && softBody.isUnstable()) {
       softBody.resetToRest();
-      updateRimPinTargets();
+      setupRimPinsFromRest();
       resetCooldown = 2.0;
     }
-    updateRenderShell();
     collarTick++;
     if (collarTick % 2 === 0) updateTopCollarFromRim();
     for (const h of hooks) updateCable(h);
@@ -1513,10 +1364,9 @@ function animate(time) {
     if (volUpdateAcc > 0.25) {
       volUpdateAcc = 0;
       document.getElementById('st-vol').textContent =
-        (softBody.currentVolume() / softBody.restVolume).toFixed(2);
+        softBody.params.pressure.toFixed(2);
     }
     controls.update();
-    membraneUniforms.uTime.value = time * 0.001;
     renderer.render(scene, camera);
   } catch (err) {
     console.error('[FLUID_VESSEL]', err);
