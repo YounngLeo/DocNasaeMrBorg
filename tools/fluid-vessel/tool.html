@@ -155,7 +155,7 @@
   <div class="back"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
   <h1>[ FLUID_VESSEL :: MEMBRANA ]</h1>
   <div class="sub">generatore contenitori biomorfi · PBD · uncini</div>
-  <div class="ver">v.05 — vetro iridescente · forma stabile</div>
+  <div class="ver">v.06 — plastica velata · anti-flicker</div>
 </div>
 
 <div class="actions">
@@ -325,15 +325,15 @@ const material = new THREE.MeshPhysicalMaterial({
   metalness: 0,
   roughness: 0.42,
   transmission: 0,
-  transparent: true,
-  opacity: 0.93,
+  transparent: false,
+  opacity: 1,
   clearcoat: 0.6,
   clearcoatRoughness: 0.22,
   reflectivity: 0.4,
   envMapIntensity: 0.9,
   specularIntensity: 0.6,
   specularColor: 0xeafff8,
-  side: THREE.DoubleSide,
+  side: THREE.FrontSide,
   sheen: 1.0,
   sheenRoughness: 0.55,
   sheenColor: new THREE.Color(0xa8ecdc),
@@ -341,6 +341,9 @@ const material = new THREE.MeshPhysicalMaterial({
   iridescenceIOR: 1.25,
   iridescenceThicknessRange: [180, 360],
   depthWrite: true,
+  polygonOffset: true,
+  polygonOffsetFactor: 1,
+  polygonOffsetUnits: 1,
   flatShading: false,
 });
 
@@ -736,15 +739,12 @@ class SoftBody {
   }
 
   isUnstable() {
-    let bad = 0;
     for (let i = 0; i < this.numVertices; i++) {
       const x = this.x[i * 3], y = this.x[i * 3 + 1], z = this.x[i * 3 + 2];
-      if (!isFinite(x) || !isFinite(y) || !isFinite(z) || (x * x + y * y + z * z) > 400) bad++;
+      if (!isFinite(x) || !isFinite(y) || !isFinite(z)) return true;
+      if (x * x + y * y + z * z > 900) return true;
     }
-    if (bad > this.numVertices * 0.02) return true;
-    const vol = Math.abs(this._computeVolume(this.x));
-    const ratio = vol / (Math.abs(this.restVolume) || 1);
-    return ratio < 0.15 || ratio > 4.5;
+    return false;
   }
 
   _applyAttachmentConstraints(rimTension) {
@@ -793,7 +793,7 @@ class SoftBody {
   currentVolume() { return Math.abs(this._computeVolume(this.x)); }
 }
 
-let simGeo, renderGeo, renderMesh;
+let simGeo, renderMesh;
 let softBody;
 const hooks = [];
 const cableTopY = 8;
@@ -905,49 +905,24 @@ function buildRenderShell(outerGeo, rimIdx, thickness) {
 let stretchAttr = null;
 
 function updateStretchAttribute() {
-  if (!softBody || !renderGeo) return;
+  if (!softBody || !simGeo) return;
   const N = softBody.numVertices;
   const rest = softBody.rest;
   const x = softBody.x;
-  if (!stretchAttr || stretchAttr.length !== N * 2) {
-    stretchAttr = new Float32Array(N * 2);
-    renderGeo.setAttribute('aStretch', new THREE.BufferAttribute(stretchAttr, 1));
+  if (!stretchAttr || stretchAttr.length !== N) {
+    stretchAttr = new Float32Array(N);
+    simGeo.setAttribute('aStretch', new THREE.BufferAttribute(stretchAttr, 1));
   }
   for (let i = 0; i < N; i++) {
     const dx = x[i * 3] - rest[i * 3];
     const dy = x[i * 3 + 1] - rest[i * 3 + 1];
     const dz = x[i * 3 + 2] - rest[i * 3 + 2];
-    const s = Math.min(2.2, Math.sqrt(dx * dx + dy * dy + dz * dz) * 4.8);
-    stretchAttr[i] = s;
-    stretchAttr[N + i] = s;
+    stretchAttr[i] = Math.min(2.2, Math.sqrt(dx * dx + dy * dy + dz * dz) * 4.8);
   }
-  renderGeo.attributes.aStretch.needsUpdate = true;
+  simGeo.attributes.aStretch.needsUpdate = true;
 }
 
 function updateRenderShell() {
-  const outerPos = simGeo.attributes.position.array;
-  const outerNorm = simGeo.attributes.normal.array;
-  const N = softBody.numVertices;
-  const renderPos = renderGeo.attributes.position.array;
-  const t = currentThickness;
-
-  for (let i = 0; i < N; i++) {
-    renderPos[i * 3] = outerPos[i * 3];
-    renderPos[i * 3 + 1] = outerPos[i * 3 + 1];
-    renderPos[i * 3 + 2] = outerPos[i * 3 + 2];
-
-    let nx = outerNorm[i * 3], ny = outerNorm[i * 3 + 1], nz = outerNorm[i * 3 + 2];
-    if (rimVertexSet.has(i)) {
-      ny = 0;
-      const l = Math.sqrt(nx * nx + nz * nz) || 1;
-      nx /= l; nz /= l;
-    }
-    renderPos[(N + i) * 3] = outerPos[i * 3] - nx * t;
-    renderPos[(N + i) * 3 + 1] = outerPos[i * 3 + 1] - ny * t;
-    renderPos[(N + i) * 3 + 2] = outerPos[i * 3 + 2] - nz * t;
-  }
-  renderGeo.attributes.position.needsUpdate = true;
-  renderGeo.computeVertexNormals();
   updateStretchAttribute();
 }
 
@@ -1167,16 +1142,14 @@ function createMesh(detail) {
   if (renderMesh) {
     scene.remove(renderMesh);
     if (simGeo) simGeo.dispose();
-    if (renderGeo) renderGeo.dispose();
   }
   stretchAttr = null;
   const { geo, rimIdx } = buildVaseOuter(detail);
   simGeo = geo;
   rimVertexIndices = rimIdx;
   rimVertexSet = new Set(rimIdx);
-  renderGeo = buildRenderShell(simGeo, rimIdx, currentThickness);
-  renderMesh = new THREE.Mesh(renderGeo, material);
-  renderMesh.renderOrder = 1;
+  renderMesh = new THREE.Mesh(simGeo, material);
+  renderMesh.frustumCulled = false;
   scene.add(renderMesh);
   softBody = new SoftBody(simGeo);
   softBody.rimIndices = rimIdx;
@@ -1506,6 +1479,8 @@ window.addEventListener('resize', () => {
 
 let lastTime = performance.now();
 let volUpdateAcc = 0;
+let resetCooldown = 0;
+let collarTick = 0;
 
 function animate(time) {
   try {
@@ -1515,6 +1490,7 @@ function animate(time) {
     }
     const dt = Math.min((time - lastTime) / 1000, 1 / 30);
     lastTime = time;
+    resetCooldown = Math.max(0, resetCooldown - dt);
     const subDt = 1 / 90;
     let acc = Math.min(dt, 1 / 30);
     let steps = 0;
@@ -1524,12 +1500,14 @@ function animate(time) {
       acc -= step;
       steps++;
     }
-    if (softBody.isUnstable()) {
+    if (resetCooldown <= 0 && softBody.isUnstable()) {
       softBody.resetToRest();
       updateRimPinTargets();
+      resetCooldown = 2.0;
     }
     updateRenderShell();
-    updateTopCollarFromRim();
+    collarTick++;
+    if (collarTick % 2 === 0) updateTopCollarFromRim();
     for (const h of hooks) updateCable(h);
     volUpdateAcc += dt;
     if (volUpdateAcc > 0.25) {
