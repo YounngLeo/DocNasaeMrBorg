@@ -157,7 +157,7 @@
   <div class="back"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
   <h1>[ FLUID_VESSEL :: MEMBRANA ]</h1>
   <div class="sub">generatore contenitori biomorfi · PBD · uncini</div>
-  <div class="ver">v.03.1 — membrana stabile · vetro</div>
+  <div class="ver">v.03 — membrana elastica · shader liquido</div>
 </div>
 
 <div class="actions">
@@ -335,8 +335,7 @@ material.onBeforeCompile = (shader) => {
   shader.vertexShader = shader.vertexShader.replace(
     '#include <begin_vertex>',
     `#include <begin_vertex>
-    vStretch = aStretch;
-    if (vStretch < 0.0) vStretch = 0.0;`
+    vStretch = aStretch;`
   );
 
   shader.vertexShader = shader.vertexShader.replace(
@@ -466,21 +465,10 @@ class SoftBody {
     return v;
   }
 
-  _enforcePins() {
-    for (let i = 0; i < this.numVertices; i++) {
-      if (this.invMass[i] !== 0 || !this.pinTarget[i]) continue;
-      const t = this.pinTarget[i];
-      this.p[i * 3] = t.x;
-      this.p[i * 3 + 1] = t.y;
-      this.p[i * 3 + 2] = t.z;
-    }
-  }
-
   pin(idx, target) {
     this.pinTarget[idx] = target.clone();
     this.invMass[idx] = 0;
     this.x[idx * 3] = target.x; this.x[idx * 3 + 1] = target.y; this.x[idx * 3 + 2] = target.z;
-    this.p[idx * 3] = target.x; this.p[idx * 3 + 1] = target.y; this.p[idx * 3 + 2] = target.z;
     this.v[idx * 3] = 0; this.v[idx * 3 + 1] = 0; this.v[idx * 3 + 2] = 0;
   }
   unpin(idx) {
@@ -490,21 +478,10 @@ class SoftBody {
   setPinTarget(idx, target) {
     if (!this.pinTarget[idx]) return;
     const old = this.pinTarget[idx];
-    const rx = this.rest[idx * 3], ry = this.rest[idx * 3 + 1], rz = this.rest[idx * 3 + 2];
-    let tx = target.x, ty = target.y, tz = target.z;
-    const ddx = tx - rx, ddy = ty - ry, ddz = tz - rz;
-    const maxDrag = 1.65;
-    const dlen = Math.sqrt(ddx * ddx + ddy * ddy + ddz * ddz);
-    if (dlen > maxDrag) {
-      const s = maxDrag / dlen;
-      tx = rx + ddx * s;
-      ty = ry + ddy * s;
-      tz = rz + ddz * s;
-    }
-    const vx = (tx - old.x) * 8;
-    const vy = (ty - old.y) * 8;
-    const vz = (tz - old.z) * 8;
-    old.set(tx, ty, tz);
+    const vx = (target.x - old.x) * 14;
+    const vy = (target.y - old.y) * 14;
+    const vz = (target.z - old.z) * 14;
+    old.copy(target);
     for (let e = 0; e < this.edges.length; e++) {
       const [a, b] = this.edges[e];
       let other = -1;
@@ -512,16 +489,9 @@ class SoftBody {
       else if (b === idx) other = a;
       else continue;
       if (this.invMass[other] === 0) continue;
-      this.v[other * 3] += vx * 0.07;
-      this.v[other * 3 + 1] += vy * 0.07;
-      this.v[other * 3 + 2] += vz * 0.07;
-      const vs = this.v[other * 3] ** 2 + this.v[other * 3 + 1] ** 2 + this.v[other * 3 + 2] ** 2;
-      if (vs > 36) {
-        const k = 6 / Math.sqrt(vs);
-        this.v[other * 3] *= k;
-        this.v[other * 3 + 1] *= k;
-        this.v[other * 3 + 2] *= k;
-      }
+      this.v[other * 3] += vx * 0.18;
+      this.v[other * 3 + 1] += vy * 0.18;
+      this.v[other * 3 + 2] += vz * 0.18;
     }
   }
   getVertex(idx, out) {
@@ -532,15 +502,13 @@ class SoftBody {
   step(dt) {
     dt = Math.min(dt, 1 / 60);
     const { stiffness, tension, damping, iterations, pressure, volumeStiffness } = this.params;
-    const MAX_V = 7;
-    const MAX_DIST = 24;
-    const MAX_EDGE_CORR = 0.32;
-    const volStiff = volumeStiffness * (0.55 + pressure * 0.28);
+    const MAX_V = 9;
+    const MAX_DIST = 28;
+    const volStiff = volumeStiffness * (0.65 + pressure * 0.35);
 
     for (let i = 0; i < this.numVertices; i++) {
       if (this.invMass[i] === 0) {
         const t = this.pinTarget[i];
-        if (!t) continue;
         this.p[i * 3] = t.x; this.p[i * 3 + 1] = t.y; this.p[i * 3 + 2] = t.z;
         continue;
       }
@@ -568,9 +536,7 @@ class SoftBody {
         const wSum = wa + wb;
         if (wSum === 0) continue;
         const k = Math.min(1, stiffness * this.edgeStiffMult[e]);
-        let corr = (d - r) / d * k;
-        if (corr > MAX_EDGE_CORR) corr = MAX_EDGE_CORR;
-        else if (corr < -MAX_EDGE_CORR) corr = -MAX_EDGE_CORR;
+        const corr = (d - r) / d * k;
         const cx = dx * corr / wSum;
         const cy = dy * corr / wSum;
         const cz = dz * corr / wSum;
@@ -583,34 +549,24 @@ class SoftBody {
       }
 
       this._solveVolume(pressure, volStiff);
+      this._solveBend(stiffness);
 
       if (tension > 0) {
         for (let i = 0; i < this.numVertices; i++) {
           if (this.invMass[i] === 0) continue;
-          const k = tension * 0.02;
+          const k = tension * 0.025;
           this.p[i * 3] += (this.rest[i * 3] - this.p[i * 3]) * k;
           this.p[i * 3 + 1] += (this.rest[i * 3 + 1] - this.p[i * 3 + 1]) * k;
           this.p[i * 3 + 2] += (this.rest[i * 3 + 2] - this.p[i * 3 + 2]) * k;
         }
       }
-      this._enforcePins();
     }
-
-    this._enforcePins();
 
     for (let i = 0; i < this.numVertices; i++) {
       if (this.invMass[i] === 0) {
-        const t = this.pinTarget[i];
-        if (t) {
-          this.x[i * 3] = t.x;
-          this.x[i * 3 + 1] = t.y;
-          this.x[i * 3 + 2] = t.z;
-        } else {
-          this.x[i * 3] = this.p[i * 3];
-          this.x[i * 3 + 1] = this.p[i * 3 + 1];
-          this.x[i * 3 + 2] = this.p[i * 3 + 2];
-        }
-        this.v[i * 3] = 0; this.v[i * 3 + 1] = 0; this.v[i * 3 + 2] = 0;
+        this.x[i * 3] = this.p[i * 3];
+        this.x[i * 3 + 1] = this.p[i * 3 + 1];
+        this.x[i * 3 + 2] = this.p[i * 3 + 2];
         continue;
       }
       this.v[i * 3] = (this.p[i * 3] - this.x[i * 3]) / dt * damping;
@@ -635,39 +591,7 @@ class SoftBody {
 
     this.posAttr.array.set(this.x);
     this.posAttr.needsUpdate = true;
-  }
-
-  resetToRest() {
-    for (let i = 0; i < this.numVertices; i++) {
-      this.x[i * 3] = this.rest[i * 3];
-      this.x[i * 3 + 1] = this.rest[i * 3 + 1];
-      this.x[i * 3 + 2] = this.rest[i * 3 + 2];
-      this.p[i * 3] = this.rest[i * 3];
-      this.p[i * 3 + 1] = this.rest[i * 3 + 1];
-      this.p[i * 3 + 2] = this.rest[i * 3 + 2];
-      this.v[i * 3] = 0;
-      this.v[i * 3 + 1] = 0;
-      this.v[i * 3 + 2] = 0;
-      if (this.pinTarget[i]) {
-        this.pinTarget[i].set(this.rest[i * 3], this.rest[i * 3 + 1], this.rest[i * 3 + 2]);
-      }
-    }
-    this.posAttr.array.set(this.x);
-    this.posAttr.needsUpdate = true;
     this.geometry.computeVertexNormals();
-  }
-
-  isStable() {
-    const vol = Math.abs(this._computeVolume(this.x));
-    const ratio = vol / (this.restVolume || 1);
-    if (!isFinite(ratio) || ratio < 0.35 || ratio > 2.2) return false;
-    for (let i = 0; i < this.numVertices; i++) {
-      if (this.invMass[i] === 0) continue;
-      const x = this.x[i * 3], y = this.x[i * 3 + 1], z = this.x[i * 3 + 2];
-      if (!isFinite(x) || !isFinite(y) || !isFinite(z)) return false;
-      if (x * x + y * y + z * z > 24 * 24) return false;
-    }
-    return true;
   }
 
   _solveVolume(pressureMult, vStiffness) {
@@ -724,7 +648,7 @@ class SoftBody {
     }
     if (denom < 1e-8) return;
     let lambda = -C / denom * vStiffness;
-    const LAMBDA_CAP = 0.72;
+    const LAMBDA_CAP = 1.15;
     if (lambda > LAMBDA_CAP) lambda = LAMBDA_CAP;
     else if (lambda < -LAMBDA_CAP) lambda = -LAMBDA_CAP;
     for (let i = 0; i < this.numVertices; i++) {
@@ -733,6 +657,26 @@ class SoftBody {
       this.p[i * 3] += lambda * w * g[i * 3];
       this.p[i * 3 + 1] += lambda * w * g[i * 3 + 1];
       this.p[i * 3 + 2] += lambda * w * g[i * 3 + 2];
+    }
+  }
+
+  _solveBend(stiffness) {
+    const bendK = Math.max(0, 0.22 - stiffness * 0.28);
+    if (bendK < 0.01) return;
+    for (let f = 0; f < this.faces.length; f++) {
+      const [a, b, c] = this.faces[f];
+      const midX = (this.p[a * 3] + this.p[b * 3] + this.p[c * 3]) / 3;
+      const midY = (this.p[a * 3 + 1] + this.p[b * 3 + 1] + this.p[c * 3 + 1]) / 3;
+      const midZ = (this.p[a * 3 + 2] + this.p[b * 3 + 2] + this.p[c * 3 + 2]) / 3;
+      const verts = [a, b, c];
+      for (let k = 0; k < 3; k++) {
+        const i = verts[k];
+        if (this.invMass[i] === 0) continue;
+        const w = this.invMass[i] * bendK * 0.12;
+        this.p[i * 3] += (midX - this.p[i * 3]) * w;
+        this.p[i * 3 + 1] += (midY - this.p[i * 3 + 1]) * w;
+        this.p[i * 3 + 2] += (midZ - this.p[i * 3 + 2]) * w;
+      }
     }
   }
 
@@ -835,14 +779,12 @@ function buildRenderShell(outerGeo, rimIdx, thickness) {
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geo.setAttribute('aStretch', new THREE.BufferAttribute(new Float32Array(N * 2), 1));
   geo.setIndex(indices);
   geo.computeVertexNormals();
   return geo;
 }
 
 let stretchAttr = null;
-let renderNormFrame = 0;
 
 function updateStretchAttribute() {
   if (!softBody || !renderGeo) return;
@@ -864,8 +806,7 @@ function updateStretchAttribute() {
   renderGeo.attributes.aStretch.needsUpdate = true;
 }
 
-function updateRenderShell(recomputeNormals) {
-  if (!softBody || !simGeo || !renderGeo) return;
+function updateRenderShell() {
   const outerPos = simGeo.attributes.position.array;
   const outerNorm = simGeo.attributes.normal.array;
   const N = softBody.numVertices;
@@ -888,7 +829,7 @@ function updateRenderShell(recomputeNormals) {
     renderPos[(N + i) * 3 + 2] = outerPos[i * 3 + 2] - nz * t;
   }
   renderGeo.attributes.position.needsUpdate = true;
-  if (recomputeNormals !== false) renderGeo.computeVertexNormals();
+  renderGeo.computeVertexNormals();
   updateStretchAttribute();
 }
 
@@ -944,11 +885,10 @@ function createMesh(detail) {
   softBody = new SoftBody(simGeo);
   softBody.rimIndices = rimIdx;
   softBody.restVolume = Math.abs(softBody._computeVolume(softBody.x));
-  softBody.params.iterations = Math.min(20, 10 + Math.floor(detail * 1.8));
+  softBody.params.iterations = 12 + Math.floor(detail * 2.2);
   stiffenRim(softBody, rimIdx);
   updateStretchAttribute();
   syncSimParamsFromUI();
-  refreshSimSubsteps();
   document.getElementById('st-verts').textContent = softBody.numVertices;
 }
 
@@ -1020,17 +960,11 @@ function addHook(vertexIdx, worldPos) {
   updateStatus();
 }
 
-function disposeHookMesh(mesh) {
-  mesh.traverse((o) => {
-    if (o.geometry) o.geometry.dispose();
-  });
-}
-
 function removeHook(i) {
   const h = hooks[i];
   scene.remove(h.hookMesh);
   scene.remove(h.cable);
-  disposeHookMesh(h.hookMesh);
+  h.hookMesh.geometry.dispose();
   h.cable.geometry.dispose();
   softBody.unpin(h.vertexIdx);
   hooks.splice(i, 1);
@@ -1052,9 +986,7 @@ function placeInitialHooks() {
     if (hookPicks.has(k)) addHook(i, v.clone());
     else if (k % pinStride === 0) softBody.pin(i, v.clone());
   }
-  const apex = new THREE.Vector3();
-  softBody.getVertex(0, apex);
-  softBody.pin(0, apex);
+  softBody.pin(0, new THREE.Vector3(0, -1.0, 0));
 }
 
 placeInitialHooks();
@@ -1121,7 +1053,6 @@ renderer.domElement.addEventListener('pointermove', (ev) => {
       tmpV.add(dragOffset);
       draggedHook.hookMesh.position.copy(tmpV);
       softBody.setPinTarget(draggedHook.vertexIdx, tmpV);
-      draggedHook.hookMesh.position.copy(softBody.pinTarget[draggedHook.vertexIdx]);
     }
     return;
   }
@@ -1259,35 +1190,18 @@ window.addEventListener('resize', () => {
 
 let lastTime = performance.now();
 let volUpdateAcc = 0;
-let simSubsteps = 150;
-
-function refreshSimSubsteps() {
-  if (!softBody) return;
-  const n = softBody.numVertices;
-  simSubsteps = n > 4500 ? 110 : n > 2800 ? 130 : 150;
-}
 
 function animate(time) {
   const dt = (time - lastTime) / 1000;
   lastTime = time;
-  const subDt = 1 / simSubsteps;
-  let acc = Math.min(dt, 1 / 30);
+  const subDt = 1 / 180;
+  let acc = Math.min(dt, 1 / 20);
   while (acc > 0) {
     const step = Math.min(subDt, acc);
     softBody.step(step);
     acc -= step;
   }
-  if (!softBody.isStable()) {
-    softBody.resetToRest();
-    for (const h of hooks) {
-      const t = softBody.pinTarget[h.vertexIdx];
-      if (t) h.hookMesh.position.copy(t);
-    }
-  }
-  simGeo.computeVertexNormals();
-  renderNormFrame++;
-  const heavy = softBody.numVertices > 3200;
-  updateRenderShell(!heavy || (renderNormFrame % 2 === 0));
+  updateRenderShell();
   for (const h of hooks) updateCable(h);
   volUpdateAcc += dt;
   if (volUpdateAcc > 0.25) {
