@@ -9,7 +9,7 @@
   var MAX_PART = 3200;
 
   var cfg = {
-    steam: 55,
+    steam: 10,
     running: true,
     brush: 'remove',
     brushR: 14,
@@ -27,6 +27,7 @@
   var emitter = { x: 0, y: 0, mouth: [] };
   var raf = null;
   var sculpting = false;
+  var time0 = performance.now();
 
   var gl = null;
   var progSplat = null;
@@ -59,9 +60,10 @@
   function $(id) { return document.getElementById(id); }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
-  /** 0.35 … 2.2 — mappa slider pressione vapore */
+  /** Slider 1–15 → potenza ~0.22 … 0.54 (≈ vecchio valore 10 su scala 10–100) */
   function steamPower() {
-    return 0.35 + (cfg.steam / 100) * 1.85;
+    var t = clamp((cfg.steam - 1) / 14, 0, 1);
+    return 0.22 + t * 0.315;
   }
 
   function gridIdx(gx, gy) {
@@ -262,7 +264,7 @@
 
   function step() {
     if (cfg.running) {
-      var rate = Math.round(cfg.steam * 0.52 + 12 * steamPower());
+      var rate = Math.round(2 + 9 * (steamPower() / 0.535));
       for (var s = 0; s < rate; s++) spawnParticle();
     }
     stats.inside = 0;
@@ -399,11 +401,19 @@
       'void main(){',
       '  vec2 p = (gl_PointCoord - 0.5) * 2.0;',
       '  float r2 = dot(p, p);',
-      '  float d = exp(-r2 * 2.8);',
-      '  float a = d * vDens * 0.055;',
-      '  if (a < 0.002) discard;',
-      '  float h = 0.35 + vHeat * 0.65;',
-      '  outColor = vec4(h, h, h + 0.06, a);',
+      '  float core = exp(-r2 * 2.2);',
+      '  float halo = exp(-r2 * 0.85) * 0.35;',
+      '  float wisp = exp(-pow(max(r2 - 0.12, 0.0), 0.55) * 4.0);',
+      '  float m = core * 0.55 + halo + wisp * 0.45;',
+      '  float a = m * vDens * 0.042;',
+      '  if (a < 0.0015) discard;',
+      '  vec3 cyan = vec3(0.42, 0.72, 0.95);',
+      '  vec3 violet = vec3(0.68, 0.48, 0.92);',
+      '  vec3 mint = vec3(0.48, 0.88, 0.78);',
+      '  vec3 col = mix(cyan, violet, vHeat);',
+      '  col = mix(col, mint, wisp * 0.4);',
+      '  col *= 0.75 + core * 0.35;',
+      '  outColor = vec4(col, a);',
       '}'
     ].join('\n'));
 
@@ -436,16 +446,32 @@
       'in vec2 vUv;',
       'uniform sampler2D uSmoke;',
       'uniform float uPower;',
+      'uniform float uTime;',
       'out vec4 outColor;',
+      'float hash(vec2 p){',
+      '  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);',
+      '}',
       'void main(){',
-      '  float dens = texture(uSmoke, vUv).a;',
-      '  dens = smoothstep(0.015, 0.72, dens * (0.85 + uPower * 0.35));',
-      '  vec3 cool = vec3(0.32, 0.42, 0.50);',
-      '  vec3 mid = vec3(0.58, 0.68, 0.76);',
-      '  vec3 warm = vec3(0.88, 0.92, 0.96);',
-      '  vec3 col = mix(cool, mid, clamp(dens * 1.4, 0.0, 1.0));',
-      '  col = mix(col, warm, pow(dens, 1.6) * 0.55);',
-      '  float a = dens * (0.55 + uPower * 0.25);',
+      '  vec4 s = texture(uSmoke, vUv);',
+      '  float dens = s.a;',
+      '  float shimmer = sin(vUv.x * 48.0 + uTime * 0.9) * sin(vUv.y * 41.0 - uTime * 0.7);',
+      '  shimmer = shimmer * 0.5 + 0.5;',
+      '  float grain = hash(vUv * 120.0 + uTime * 0.15) * 0.12;',
+      '  dens = smoothstep(0.01, 0.52, dens * (0.72 + uPower * 0.2));',
+      '  vec3 tint = normalize(s.rgb + vec3(0.08));',
+      '  vec3 spectA = vec3(0.32, 0.55, 0.92);',
+      '  vec3 spectB = vec3(0.58, 0.38, 0.82);',
+      '  vec3 spectC = vec3(0.42, 0.78, 0.68);',
+      '  vec3 base = mix(spectA, spectB, shimmer);',
+      '  base = mix(base, spectC, tint.g * 0.6 + tint.b * 0.25);',
+      '  base = mix(base, tint, 0.35);',
+      '  float veil = pow(dens, 1.35);',
+      '  vec3 col = base * (0.35 + veil * 1.15);',
+      '  col += spectA * pow(dens, 2.4) * 0.22 * (0.6 + shimmer * 0.4);',
+      '  col += vec3(0.55, 0.75, 0.95) * smoothstep(0.45, 0.02, dens) * 0.18 * shimmer;',
+      '  col *= 0.9 + 0.1 * sin(uTime * 1.1 + vUv.x * 14.0 + vUv.y * 11.0);',
+      '  col += grain * veil;',
+      '  float a = veil * (0.38 + uPower * 0.14) * (0.82 + shimmer * 0.16);',
       '  outColor = vec4(col, a);',
       '}'
     ].join('\n'));
@@ -489,7 +515,8 @@
     };
     uComposite = {
       smoke: gl.getUniformLocation(progComposite, 'uSmoke'),
-      power: gl.getUniformLocation(progComposite, 'uPower')
+      power: gl.getUniformLocation(progComposite, 'uPower'),
+      time: gl.getUniformLocation(progComposite, 'uTime')
     };
     useWebGL = true;
     return true;
@@ -578,6 +605,7 @@
     gl.bindTexture(gl.TEXTURE_2D, smoke.tex[write]);
     gl.uniform1i(uComposite.smoke, 0);
     gl.uniform1f(uComposite.power, steamPower());
+    gl.uniform1f(uComposite.time, (performance.now() - time0) * 0.001);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
@@ -606,11 +634,12 @@
 
   function splatSmoke2d(p) {
     var g = smoke2dCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.splat);
-    var a = p.dens * p.life * 0.14;
-    g.addColorStop(0, 'rgba(235, 245, 255, ' + a + ')');
-    g.addColorStop(0.25, 'rgba(190, 215, 235, ' + (a * 0.45) + ')');
-    g.addColorStop(0.65, 'rgba(140, 170, 190, ' + (a * 0.12) + ')');
-    g.addColorStop(1, 'rgba(100, 130, 150, 0)');
+    var a = p.dens * p.life * 0.11;
+    var h = p.heat;
+    g.addColorStop(0, 'rgba(' + Math.round(120 + h * 80) + ',' + Math.round(180 + h * 40) + ',255,' + a + ')');
+    g.addColorStop(0.3, 'rgba(150,120,220,' + (a * 0.4) + ')');
+    g.addColorStop(0.6, 'rgba(100,200,180,' + (a * 0.15) + ')');
+    g.addColorStop(1, 'rgba(80,100,140,0)');
     smoke2dCtx.fillStyle = g;
     smoke2dCtx.beginPath();
     smoke2dCtx.arc(p.x, p.y, p.splat, 0, Math.PI * 2);
@@ -770,7 +799,7 @@
     var steam = $('fl-steam');
     if (steam) {
       steam.addEventListener('input', function (e) {
-        cfg.steam = parseInt(e.target.value, 10);
+        cfg.steam = clamp(parseInt(e.target.value, 10), 1, 15);
         var v = $('fl-steam-val');
         if (v) v.textContent = String(cfg.steam);
       });
