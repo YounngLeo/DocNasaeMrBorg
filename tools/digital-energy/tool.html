@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">cursed energy · fondo scuro · glow anime</div>
-  <div class="ver">v2.5 — ghiaccio schegge 50% · sangue tendril</div>
+  <div class="ver">v2.5b — ghiaccio schegge nitide · sangue cupo</div>
 </div>
 
 <div class="actions">
@@ -388,9 +388,9 @@
     'vec3 traceColor(int ty){',
     '  if (ty == 0) return vec3(1.0, 0.95, 0.78);',
     '  if (ty == 1) return vec3(0.14, 0.19, 0.26);',
-    '  if (ty == 2) return vec3(0.72, 0.92, 1.0);',
+    '  if (ty == 2) return vec3(0.5, 0.68, 0.82);',
     '  if (ty == 3) return vec3(0.6, 0.82, 1.0);',
-    '  if (ty == 4) return vec3(1.0, 0.32, 0.34);',
+    '  if (ty == 4) return vec3(0.42, 0.06, 0.08);',
     '  if (ty == 5) return vec3(1.0, 0.72, 0.28);',
     '  if (ty == 6) return vec3(0.78, 0.4, 1.0);',
     '  return vec3(0.68, 0.9, 1.0);',
@@ -488,19 +488,20 @@
     '      float fi = float(i);',
     '      float shAng = hash1(seed + fi) * 6.28;',
     '      float len = 0.26 + hash1(seed + fi * 1.3) * 0.42;',
-    '      float shW = mix(5.5, 11.0, vSharp) / sqrt(tvar);',
+    '      float shW = mix(8.0, 16.0, vSharp) / sqrt(tvar);',
     '      float sh = iceShard(fq - vec2((hash1(seed + fi * 2.0) - 0.5) * 0.08, fi * 0.015), shAng, len, shW);',
     '      shards = max(shards, sh);',
     '    }',
     '    shards *= shardMask * along;',
-    '    float shardEdge = smoothstep(0.2, 0.55, shards) * (1.0 - smoothstep(0.55, 0.88, shards));',
+    '    float shardEdge = smoothstep(0.15, 0.42, shards) * (1.0 - smoothstep(0.42, 0.75, shards));',
     '    float edgeFr = smoothstep(0.36, 0.28, r) * (1.0 - smoothstep(0.38, 0.48, r));',
-    '    m = (shards * 1.2 + shardEdge * 0.35 + edgeFr * 0.22) * vAlpha;',
-    '    vec3 deep = vec3(0.28, 0.52, 0.76);',
-    '    vec3 mid = vec3(0.48, 0.72, 0.9);',
-    '    col = mix(deep, mid, cel(shards, 4.0));',
-    '    col += vec3(0.88, 0.95, 1.0) * shardEdge * 0.4;',
-    '    col = mix(col, vec3(0.62, 0.82, 0.95), edgeFr * 0.45);',
+    '    m = (shards * 1.45 + shardEdge * 0.28 + edgeFr * 0.12) * vAlpha;',
+    '    vec3 deep = vec3(0.18, 0.38, 0.58);',
+    '    vec3 mid = vec3(0.32, 0.55, 0.72);',
+    '    col = mix(deep, mid, cel(shards, 5.0));',
+    '    col += vec3(0.72, 0.82, 0.9) * shardEdge * 0.22;',
+    '    col = mix(col, vec3(0.45, 0.62, 0.78), edgeFr * 0.25);',
+    '    col *= 0.78;',
     '  } else if (mode == 3) {',
     '    float bolt = lightning(q, seed, uTime);',
     '    float core = exp(-r2 * mix(60.0, 120.0, vSharp));',
@@ -527,11 +528,11 @@
     '    float c1 = exp(-abs(yy + 0.14 * tvar) * cW) * along;',
     '    float c2 = exp(-abs(yy - 0.05 + (nf - 0.5) * 0.16) * cW * 0.9) * along;',
     '    float crest = max(c1, c2 * 0.85);',
-    '    m = (strands * 0.95 + core * 0.65 + crest * 0.55) * vAlpha;',
-    '    vec3 deep = vec3(0.55, 0.02, 0.06);',
-    '    vec3 blood = vec3(0.92, 0.08, 0.12);',
-    '    col = mix(deep, blood, clamp(strands * 1.1, 0.0, 1.0));',
-    '    col += vec3(1.0, 0.42, 0.38) * (core * 0.7 + crest * 0.55);',
+    '    m = (strands * 1.0 + core * 0.4 + crest * 0.32) * vAlpha;',
+    '    vec3 deep = vec3(0.12, 0.01, 0.025);',
+    '    vec3 blood = vec3(0.38, 0.03, 0.05);',
+    '    col = mix(deep, blood, clamp(strands * 1.05, 0.0, 1.0));',
+    '    col += vec3(0.48, 0.08, 0.07) * (core * 0.35 + crest * 0.22);',
     '  } else if (mode == 5) {',
     // fire (Zuko): tapered licking tongues rising, orange->yellow->white + multiple hot crests
     '    float nf = fbm(nUv * 1.1 + vec2(0.0, -uTime * 0.75));',
