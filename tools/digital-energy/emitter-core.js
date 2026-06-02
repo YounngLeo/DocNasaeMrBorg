@@ -1,4 +1,4 @@
-/* Digital Energy — per-type motion, fluid box, vortex attractors (v0.8) */
+/* Digital Energy — per-type motion, fluid box, chaos/entropy currents, technical trace (v1.6) */
 (function (global) {
   'use strict';
 
@@ -19,6 +19,84 @@
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function smoothNoise1(t, ph) {
     return Math.sin(t * 0.9 + ph) * 0.4 + Math.sin(t * 1.7 + ph * 1.3) * 0.25 + Math.sin(t * 2.9 + ph * 0.7) * 0.15;
+  }
+
+  // --- Environment currents: procedural "wind" field (chaos / entropy) ---
+  // Replaces manual attractors with a global divergence-free flow built from a
+  // scalar potential (curl noise) plus drifting random mathematical vortices.
+  var wind = { chaos: 0.4, current: 0.55, scale: 0.5, seed: Math.random() * 1000, centers: [] };
+
+  function regenWind() {
+    wind.seed = Math.random() * 1000;
+    wind.centers = [];
+    var n = 3 + Math.round(wind.chaos * 7);
+    for (var i = 0; i < n; i++) {
+      wind.centers.push({
+        x: Math.random(),
+        y: Math.random(),
+        spin: (Math.random() < 0.5 ? -1 : 1) * (0.55 + Math.random() * 0.9),
+        r: 0.1 + Math.random() * 0.28,
+        ph: Math.random() * 6.2832
+      });
+    }
+  }
+  regenWind();
+
+  function configureWind(opts) {
+    if (!opts) return;
+    if (opts.chaos !== undefined) wind.chaos = clamp(opts.chaos, 0, 1);
+    if (opts.current !== undefined) wind.current = Math.max(0, opts.current);
+    if (opts.scale !== undefined) wind.scale = clamp(opts.scale, 0, 1);
+    if (opts.regen) regenWind();
+  }
+
+  function windPotential(nx, ny, t) {
+    var f = 1.4 + wind.scale * 4.2;
+    var s = wind.seed;
+    var p = Math.sin(nx * f + s + t * 0.2) * Math.cos(ny * f * 0.92 - s * 0.7 + t * 0.15);
+    p += 0.5 * Math.sin(nx * f * 1.9 - t * 0.1 + s * 1.3) * Math.cos(ny * f * 1.7 + t * 0.12);
+    if (wind.chaos > 0.01) {
+      var hf = f * (2.6 + wind.chaos * 5.0);
+      p += wind.chaos * 0.6 * Math.sin(nx * hf + t * 0.6 + s) * Math.cos(ny * hf * 1.1 - t * 0.5);
+      p += wind.chaos * 0.32 * Math.sin((nx + ny) * hf * 1.7 + t * 0.9 + s * 0.5);
+    }
+    return p;
+  }
+
+  function sampleWind(x, y, t) {
+    if (wind.current <= 0.001) return { vx: 0, vy: 0 };
+    var W = sim ? sim.W : 1280;
+    var H = sim ? sim.H : 720;
+    var nx = x / W;
+    var ny = y / H;
+    var e = 0.0045;
+    var vx = (windPotential(nx, ny + e, t) - windPotential(nx, ny - e, t)) / (2 * e) * 0.02;
+    var vy = -(windPotential(nx + e, ny, t) - windPotential(nx - e, ny, t)) / (2 * e) * 0.02;
+    var i, c, cx, cy, dx, dy, fall;
+    for (i = 0; i < wind.centers.length; i++) {
+      c = wind.centers[i];
+      cx = c.x + Math.sin(t * 0.13 + c.ph) * 0.06;
+      cy = c.y + Math.cos(t * 0.11 + c.ph * 1.3) * 0.06;
+      dx = nx - cx;
+      dy = ny - cy;
+      fall = Math.exp(-(dx * dx + dy * dy) / (c.r * c.r));
+      vx += -dy * c.spin * fall * 1.7;
+      vy += dx * c.spin * fall * 1.7;
+    }
+    return { vx: vx * wind.current, vy: vy * wind.current };
+  }
+
+  function windAngle(px, py, ang, t) {
+    if (wind.current <= 0.001) return ang;
+    var w = sampleWind(px, py, t);
+    var mag = Math.sqrt(w.vx * w.vx + w.vy * w.vy);
+    if (mag < 0.03) return ang;
+    var tang = Math.atan2(w.vy, w.vx);
+    var mix = clamp(mag * 0.9, 0, 0.6);
+    var d = tang - ang;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    return ang + d * mix;
   }
 
   function initSim(W, H) {
@@ -107,101 +185,15 @@
     t = sim.sd; sim.sd = sim.tsd; sim.tsd = t;
   }
 
-  function vortexPowFromSlider(v) {
-    return 0.25 + ((v - 1) / 14) * 2.35;
-  }
-
-  function sampleVortex(x, y, attractors, strengthMul) {
-    var ax = 0;
-    var ay = 0;
-    var swirl = 0;
-    var pow = strengthMul || 1;
-    var i, at, dx, dy, r2, R, r, fall, spin, pull;
-    for (i = 0; i < attractors.length; i++) {
-      at = attractors[i];
-      dx = x - at.x;
-      dy = y - at.y;
-      r2 = dx * dx + dy * dy;
-      R = at.radius || 80;
-      r = Math.sqrt(r2) || 0.001;
-      fall = Math.exp(-r2 / (R * R * 0.42));
-      spin = (at.spinSign || 1) * (at.strength || 1) * pow * fall;
-      pull = pow * fall * 0.42;
-      ax += (-dy / r) * spin * 2.4;
-      ay += (dx / r) * spin * 2.4;
-      ax -= (dx / r) * pull;
-      ay -= (dy / r) * pull;
-      if (fall > swirl) swirl = fall;
-    }
-    return { ax: ax, ay: ay, swirl: swirl };
-  }
-
-  function applyAttractorsToSim(attractors, vortexPow, speedMul) {
-    if (!sim || !attractors || !attractors.length) return;
-    var gw = sim.gw;
-    var gh = sim.gh;
-    var sm = speedMul || 1;
-    var pow = vortexPow || 1;
-    var ai, at, g, cellR, dj, di, i, j, wx, wy, vf, k, str;
-    for (ai = 0; ai < attractors.length; ai++) {
-      at = attractors[ai];
-      g = worldToGrid(at.x, at.y);
-      cellR = Math.max(4, Math.floor((at.radius / sim.W) * gw * 0.55));
-      for (dj = -cellR; dj <= cellR; dj++) {
-        for (di = -cellR; di <= cellR; di++) {
-          i = g.i + di;
-          j = g.j + dj;
-          if (i < 1 || i >= gw - 1 || j < 1 || j >= gh - 1) continue;
-          wx = ((i + 0.5) / gw) * sim.W;
-          wy = ((j + 0.5) / gh) * sim.H;
-          vf = sampleVortex(wx, wy, [at], pow);
-          k = idx(i, j);
-          str = vf.swirl;
-          sim.vx[k] += vf.ax * 0.11 * sm;
-          sim.vy[k] += vf.ay * 0.11 * sm;
-          if (str > 0.12) sim.vd[k] += str * 0.018 * sm;
-        }
-      }
-    }
-  }
-
-  function emitAttractorSwirl(splatBuf, attractors, t, pow, maxN) {
-    if (!attractors || !attractors.length) return;
-    var ai, at, arms, R, k, ang, ripple, r, px, py, tang;
-    for (ai = 0; ai < attractors.length; ai++) {
-      at = attractors[ai];
-      at.phase = (at.phase || 0) + 0.028 * (at.spinSign || 1);
-      arms = 12;
-      R = at.radius || 80;
-      for (k = 0; k < arms; k++) {
-        if (splatBuf.length >= maxN) return;
-        ang = at.phase + (k / arms) * Math.PI * 2;
-        ripple = 0.5 + 0.5 * Math.sin(t * 1.6 + k * 0.65);
-        r = R * ripple * (0.38 + 0.12 * Math.sin(t * 2.2 + k * 0.4));
-        px = at.x + Math.cos(ang) * r;
-        py = at.y + Math.sin(ang) * r;
-        tang = ang + Math.PI * 0.5 * (at.spinSign || 1);
-        pushSplat(splatBuf, {
-          x: px, y: py,
-          size: 7 + pow * 5,
-          alpha: 0.055 + pow * 0.075,
-          ang: tang,
-          mode: 6,
-          sharp: 0.48,
-          seed: t * 12 + k + ai * 17,
-          kind: 2
-        });
-      }
-    }
-  }
-
-  function stepSimBox(agents, dt, speedMul, attractors, vortexPow) {
+  function stepSimBox(agents, dt, speedMul) {
     if (!sim) return;
     var gw = sim.gw;
     var gh = sim.gh;
     var n = gw * gh;
     var sm = speedMul || 1;
+    var wt = performance.now() * 0.001;
     var river = Math.sin(performance.now() * 0.00035 * sm) * 0.4 + 0.6;
+    var windOn = wind.current > 0.001;
     for (var j = 1; j < gh - 1; j++) {
       for (var i = 1; i < gw - 1; i++) {
         var k = idx(i, j);
@@ -214,6 +206,12 @@
         sim.vx[k] += curl + (i / gw - 0.5) * 0.01 * sm;
         sim.sd[k] += 0.003 * sm;
         sim.vy[k] -= 0.03 * sm;
+        // macro currents (sampled sparsely for performance)
+        if (windOn && (i % 3 === 0) && (j % 3 === 0)) {
+          var wf = sampleWind((i / gw) * sim.W, (j / gh) * sim.H, wt);
+          sim.vx[k] += wf.vx * 0.6 * sm;
+          sim.vy[k] += wf.vy * 0.6 * sm;
+        }
       }
     }
     agents.forEach(function (a) {
@@ -225,7 +223,6 @@
         injectFluid(a.x, a.y, a.vx * 0.06, 0.12 * sm + 0.08, 0.2, false);
       }
     });
-    applyAttractorsToSim(attractors, vortexPow, sm);
     advect(sim.vd, sim.vx, sim.vy, sim.tvd, 0.993);
     advect(sim.vx, sim.vx, sim.vy, sim.tvx, 0.975);
     advect(sim.vy, sim.vx, sim.vy, sim.tvy, 0.975);
@@ -283,38 +280,26 @@
     }
   }
 
-  function buildBoltBranch(x0, y0, x1, y1, depth, jitter, out) {
+  function buildBoltBranch(x0, y0, x1, y1, depth, jitter, out, gen) {
+    gen = gen || 0;
     if (depth <= 0) {
-      out.push({ x0: x0, y0: y0, x1: x1, y1: y1 });
+      out.push({ x0: x0, y0: y0, x1: x1, y1: y1, gen: gen });
       return;
     }
     var mx = (x0 + x1) * 0.5 + (Math.random() - 0.5) * jitter;
     var my = (y0 + y1) * 0.5 + (Math.random() - 0.5) * jitter;
-    buildBoltBranch(x0, y0, mx, my, depth - 1, jitter * 0.62, out);
-    buildBoltBranch(mx, my, x1, y1, depth - 1, jitter * 0.62, out);
-    if (depth >= 2 && Math.random() < 0.62) {
-      var blen = 25 + Math.random() * 70;
-      var bang = Math.atan2(y1 - y0, x1 - x0) + (Math.random() - 0.5) * 1.8;
-      buildBoltBranch(
-        mx, my,
-        mx + Math.cos(bang) * blen,
-        my + Math.sin(bang) * blen,
-        depth - 2,
-        jitter * 0.5,
-        out
-      );
+    buildBoltBranch(x0, y0, mx, my, depth - 1, jitter * 0.6, out, gen);
+    buildBoltBranch(mx, my, x1, y1, depth - 1, jitter * 0.6, out, gen);
+    // tapering side branches (electric flux fanning out, thinner each generation)
+    if (depth >= 2 && Math.random() < 0.72) {
+      var blen = 22 + Math.random() * 64;
+      var bang = Math.atan2(y1 - y0, x1 - x0) + (Math.random() < 0.5 ? 1 : -1) * (0.4 + Math.random() * 1.1);
+      buildBoltBranch(mx, my, mx + Math.cos(bang) * blen, my + Math.sin(bang) * blen, depth - 1, jitter * 0.45, out, gen + 1);
     }
-    if (depth >= 3 && Math.random() < 0.35) {
-      var bang2 = Math.random() * Math.PI * 2;
-      var blen2 = 15 + Math.random() * 40;
-      buildBoltBranch(
-        mx, my,
-        mx + Math.cos(bang2) * blen2,
-        my + Math.sin(bang2) * blen2,
-        1,
-        jitter * 0.4,
-        out
-      );
+    if (depth >= 3 && Math.random() < 0.5) {
+      var bang2 = Math.atan2(y1 - y0, x1 - x0) + (Math.random() < 0.5 ? 1 : -1) * (0.6 + Math.random() * 1.4);
+      var blen2 = 12 + Math.random() * 36;
+      buildBoltBranch(mx, my, mx + Math.cos(bang2) * blen2, my + Math.sin(bang2) * blen2, depth - 2, jitter * 0.35, out, gen + 2);
     }
   }
 
@@ -363,9 +348,9 @@
     if (ty < pad || ty > H - pad) { a.boltDir = -a.boltDir; ty = clamp(ty, pad, H - pad); }
     a.boltTX = tx;
     a.boltTY = ty;
-    var jitter = 28 + a.turb * 22 + a.radius * 1.0;
+    var jitter = 22 + a.turb * 20 + a.radius * 0.8;
     a.boltSegs = [];
-    buildBoltBranch(a.boltX, a.boltY, a.boltTX, a.boltTY, 4, jitter, a.boltSegs);
+    buildBoltBranch(a.boltX, a.boltY, a.boltTX, a.boltTY, 5, jitter, a.boltSegs, 0);
     a.zig = [];
     var n = 16 + Math.floor(Math.random() * 6);
     for (var s = 0; s <= n; s++) {
@@ -394,22 +379,24 @@
       seg = a.boltSegs[i];
       segFrac = (((seg.x0 + seg.x1) * 0.5 - a.boltX) * axx + ((seg.y0 + seg.y1) * 0.5 - a.boltY) * axy) / axLen2;
       if (segFrac > front) continue;
+      var gen = seg.gen || 0;
+      var genThin = 1 / (1 + gen * 0.85);
       dx = seg.x1 - seg.x0;
       dy = seg.y1 - seg.y0;
       d = Math.sqrt(dx * dx + dy * dy) || 1;
-      steps = Math.max(3, Math.ceil(d / 4));
+      steps = Math.max(3, Math.ceil(d / 3));
       for (zs = 0; zs <= steps; zs++) {
         zu = zs / steps;
-        zx = seg.x0 + dx * zu + (Math.random() - 0.5) * 1.6;
-        zy = seg.y0 + dy * zu + (Math.random() - 0.5) * 1.6;
+        zx = seg.x0 + dx * zu + (Math.random() - 0.5) * 1.2;
+        zy = seg.y0 + dy * zu + (Math.random() - 0.5) * 1.2;
         zang = Math.atan2(dy, dx);
         pushSplat(splatBuf, {
           x: zx, y: zy,
-          size: rad * (0.85 + pow * 0.4) * (0.85 + Math.random() * 0.3),
-          alpha: (0.26 + pow * 0.42) * (0.85 + Math.random() * 0.15),
-          ang: zang + (Math.random() - 0.5) * 0.15,
+          size: rad * (0.6 + pow * 0.3) * genThin * (0.85 + Math.random() * 0.25),
+          alpha: (0.24 + pow * 0.4) * (0.45 + genThin * 0.55) * (0.85 + Math.random() * 0.15),
+          ang: zang + (Math.random() - 0.5) * 0.12,
           mode: 3,
-          sharp: 0.98,
+          sharp: 0.99,
           seed: Math.random() * 50 + t + i,
           kind: 1
         });
@@ -501,19 +488,20 @@
     }
   }
 
-  function swirlAngle(px, py, ang, attractors, vortexPow) {
-    if (!attractors || !attractors.length) return ang;
-    var vf = sampleVortex(px, py, attractors, vortexPow);
-    if (vf.swirl < 0.04) return ang;
-    var tang = Math.atan2(vf.ay, vf.ax);
-    var mix = clamp(vf.swirl * 0.72, 0, 0.65);
-    var d = tang - ang;
-    while (d > Math.PI) d -= Math.PI * 2;
-    while (d < -Math.PI) d += Math.PI * 2;
-    return ang + d * mix;
+  function emitTrace(splatBuf, x, y, ang, rad, type, node) {
+    pushSplat(splatBuf, {
+      x: x, y: y,
+      size: rad * (node ? 1.0 : 0.7),
+      alpha: node ? 0.5 : 0.42,
+      ang: ang,
+      mode: 8,
+      sharp: 0.95,
+      seed: 0,
+      kind: node ? (10 + type) : type
+    });
   }
 
-  function emitTrail(a, t, pow, splatBuf, sparks, intensityPow, attractors, vortexPow) {
+  function emitTrail(a, t, pow, splatBuf, sparks, intensityPow) {
     var dx = a.x - a.px;
     var dy = a.y - a.py;
     var dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -534,15 +522,15 @@
           zdy = z1.y - z0.y;
           zd = Math.sqrt(zdx * zdx + zdy * zdy) || 1;
           zsteps = Math.max(2, Math.ceil(zd / 5));
+          zang = Math.atan2(zdy, zdx);
           for (zs = 0; zs < zsteps; zs++) {
             zu = zs / zsteps;
             zx = z0.x + zdx * zu;
             zy = z0.y + zdy * zu;
-            zang = Math.atan2(zdy, zdx);
             pushSplat(splatBuf, {
               x: zx, y: zy,
-              size: rad * (1.05 + pow * 0.45),
-              alpha: (0.32 + pow * 0.45),
+              size: rad * (0.7 + pow * 0.35),
+              alpha: (0.3 + pow * 0.42),
               ang: zang,
               mode: 3,
               sharp: 0.99,
@@ -550,6 +538,7 @@
               kind: 1
             });
           }
+          emitTrace(splatBuf, z1.x, z1.y, zang, rad, 3, (zi % 3 === 0));
         }
       }
       return;
@@ -564,7 +553,9 @@
       vy = dy / dist + a.vy;
       ang = Math.atan2(vy, vx);
       spd = Math.sqrt(vx * vx + vy * vy);
-      ang = swirlAngle(px, py, ang, attractors, vortexPow);
+      ang = windAngle(px, py, ang, t);
+
+      emitTrace(splatBuf, px, py, ang, rad, m, (i % 6 === 0));
 
       if (m === 1) {
         var curl = Math.sin(a.tendril + t * 1.5 + u * 5) * 0.35;
@@ -762,7 +753,7 @@
     }
   }
 
-  function updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget, speedMul, attractors, vortexPow) {
+  function updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget, speedMul) {
     var sm = speedMul || 1;
     dt *= sm;
     if (a.visual === undefined) initAgentType(a);
@@ -790,11 +781,9 @@
         a.vx = (p1.x - p0.x) * 14 * sm;
         a.vy = (p1.y - p0.y) * 14 * sm;
       }
-      if (attractors && attractors.length) {
-        var vf3 = sampleVortex(a.x, a.y, attractors, vortexPow);
-        a.vx += vf3.ax * 0.22 * sm;
-        a.vy += vf3.ay * 0.22 * sm;
-      }
+      var wf3 = sampleWind(a.x, a.y, t);
+      a.vx += wf3.vx * 0.9 * sm;
+      a.vy += wf3.vy * 0.9 * sm;
       var pad = 24;
       a.x = clamp(a.x, pad, W - pad);
       a.y = clamp(a.y, pad, H - pad);
@@ -849,12 +838,10 @@
       dirY += 0.32;
     }
 
-    if (attractors && attractors.length) {
-      var vf = sampleVortex(a.x, a.y, attractors, vortexPow);
-      var vMix = clamp(vf.swirl * 1.15, 0, 1);
-      dirX += vf.ax * vMix * 0.5;
-      dirY += vf.ay * vMix * 0.5;
-    }
+    // macro environment currents (chaos/entropy field)
+    var wnd = sampleWind(a.x, a.y, t);
+    dirX += wnd.vx * 2.4;
+    dirY += wnd.vy * 2.4;
 
     // desired velocity from steering direction, eased into current velocity
     var dl = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
@@ -894,13 +881,13 @@
     initSim: initSim,
     stepSimBox: stepSimBox,
     emitFromField: emitFromField,
-    emitAttractorSwirl: emitAttractorSwirl,
     initAgentType: initAgentType,
     updateAgentMotion: updateAgentMotion,
     emitTrail: emitTrail,
     sampleFlow: sampleFlow,
-    sampleVortex: sampleVortex,
-    speedFromSlider: speedFromSlider,
-    vortexPowFromSlider: vortexPowFromSlider
+    sampleWind: sampleWind,
+    configureWind: configureWind,
+    regenWind: regenWind,
+    speedFromSlider: speedFromSlider
   };
 })(typeof window !== 'undefined' ? window : globalThis);
