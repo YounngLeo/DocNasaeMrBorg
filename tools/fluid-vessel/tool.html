@@ -209,6 +209,13 @@
     </div>
   </div>
   <div class="control">
+    <label>Deformazione uncini</label>
+    <div class="row">
+      <input type="range" id="s-hook-deform" min="0.30" max="2.50" step="0.01" value="1.00">
+      <div class="val" id="v-hook-deform">1.00</div>
+    </div>
+  </div>
+  <div class="control">
     <label>Iridescenza</label>
     <div class="row">
       <input type="range" id="s-irid" min="0" max="1.5" step="0.05" value="0.4">
@@ -746,6 +753,7 @@ const cableTopY = 8;
 let rimVertexIndices = [];
 let rimVertexSet = new Set();
 let currentThickness = 0.12;
+let hookDeformScale = 1.0;
 let topCollarGroup = null;
 
 function smoothstep01(a, b, x) {
@@ -1164,7 +1172,7 @@ function addHook(vertexIdx, worldPos) {
   const cable = createCable(worldPos);
   scene.add(cable);
   softBody.pin(vertexIdx, worldPos, 1);
-  hooks.push({ vertexIdx, hookMesh, cable });
+  hooks.push({ vertexIdx, hookMesh, cable, restPos: worldPos.clone() });
   setupRimPinsFromRest();
   updateStatus();
 }
@@ -1261,7 +1269,8 @@ renderer.domElement.addEventListener('pointermove', (ev) => {
     if (raycaster.ray.intersectPlane(dragPlane, tmpV)) {
       tmpV.add(dragOffset);
       draggedHook.hookMesh.position.copy(tmpV);
-      softBody.setPinTarget(draggedHook.vertexIdx, tmpV);
+      const target = tmpV.clone().sub(draggedHook.restPos).multiplyScalar(hookDeformScale).add(draggedHook.restPos);
+      softBody.setPinTarget(draggedHook.vertexIdx, target);
     }
     return;
   }
@@ -1336,6 +1345,13 @@ bindSlider('s-stiffness', 'v-stiffness', 'stiffness');
 bindSlider('s-tension', 'v-tension', 'tension');
 bindSlider('s-damping', 'v-damping', 'damping', v => v.toFixed(3));
 bindSlider('s-rim', 'v-rim', 'rimTension');
+const hookDeformSlider = document.getElementById('s-hook-deform');
+const hookDeformVal = document.getElementById('v-hook-deform');
+hookDeformVal.textContent = parseFloat(hookDeformSlider.value).toFixed(2);
+hookDeformSlider.addEventListener('input', () => {
+  hookDeformScale = parseFloat(hookDeformSlider.value);
+  hookDeformVal.textContent = hookDeformScale.toFixed(2);
+});
 
 document.getElementById('s-irid').addEventListener('input', (e) => {
   const val = parseFloat(e.target.value);
