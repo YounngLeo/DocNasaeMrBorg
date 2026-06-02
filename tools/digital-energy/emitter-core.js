@@ -488,17 +488,23 @@
     }
   }
 
-  function emitTrace(splatBuf, x, y, ang, rad, type, node) {
-    pushSplat(splatBuf, {
-      x: x, y: y,
-      size: rad * (node ? 1.0 : 0.7),
-      alpha: node ? 0.5 : 0.42,
-      ang: ang,
-      mode: 8,
-      sharp: 0.95,
-      seed: 0,
-      kind: node ? (10 + type) : type
-    });
+  function emitTrace(splatBuf, x, y, ang, rad, type) {
+    var perpX = -Math.sin(ang);
+    var perpY = Math.cos(ang);
+    for (var k = -1; k <= 1; k++) {
+      var off = k * rad * 0.34;
+      pushSplat(splatBuf, {
+        x: x + perpX * off,
+        y: y + perpY * off,
+        size: rad * 0.9,
+        alpha: 0.42 * (k === 0 ? 1.0 : 0.62),
+        ang: ang,
+        mode: 8,
+        sharp: 0.95,
+        seed: type * 7 + (k + 1) * 13,
+        kind: type
+      });
+    }
   }
 
   function emitTrail(a, t, pow, splatBuf, sparks, intensityPow) {
@@ -538,7 +544,7 @@
               kind: 1
             });
           }
-          emitTrace(splatBuf, z1.x, z1.y, zang, rad, 3, (zi % 3 === 0));
+          emitTrace(splatBuf, z1.x, z1.y, zang, rad, 3);
         }
       }
       return;
@@ -555,7 +561,7 @@
       spd = Math.sqrt(vx * vx + vy * vy);
       ang = windAngle(px, py, ang, t);
 
-      emitTrace(splatBuf, px, py, ang, rad, m, (i % 6 === 0));
+      emitTrace(splatBuf, px, py, ang, rad, m);
 
       if (m === 1) {
         var curl = Math.sin(a.tendril + t * 1.5 + u * 5) * 0.35;

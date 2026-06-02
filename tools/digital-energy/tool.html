@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">cursed energy · fondo scuro · glow anime</div>
-  <div class="ver">v1.6 — correnti caos · trace tecnico · fulmine fine</div>
+  <div class="ver">v1.7 — fasci di linee sottili · correnti caos · fulmine fine</div>
 </div>
 
 <div class="actions">
@@ -545,14 +545,15 @@
     '    col += vec3(0.97, 0.84, 1.0) * core * 0.95;',
     '    col += violet * volm * 0.3;',
     '  } else if (mode == 8) {',
-    // technical trace: thin crisp line tracing the path + small node markers (architectural)
-    '    int ty = (kind >= 10) ? (kind - 10) : kind;',
-    '    float lw = mix(0.02, 0.055, 1.0 - vSharp);',
-    '    float line = smoothstep(lw, 0.0, abs(q.x)) * smoothstep(0.58, 0.0, abs(q.y));',
-    '    float node = (kind >= 10) ? exp(-r2 * 55.0) : 0.0;',
-    '    m = (line * 0.85 + node) * vAlpha;',
-    '    col = traceColor(ty);',
-    '    col += vec3(1.0) * node * 0.5;',
+    // thin tapered flow line tracing the path (long light fibers over every element)
+    '    float w = fbm(vec2(q.y * 2.0 + seed, uTime * 0.2 + seed));',
+    '    float xc = q.x + (w - 0.5) * 0.1;',
+    '    float lw = mix(0.014, 0.045, 1.0 - vSharp);',
+    '    float line = smoothstep(lw, 0.0, abs(xc));',
+    '    float tap = smoothstep(0.62, -0.04, abs(q.y));',
+    '    m = line * tap * vAlpha;',
+    '    col = traceColor(kind);',
+    '    col += vec3(1.0) * line * line * 0.3;',
     '  } else {',
     // water (Avatar): clean glossy translucent ribbon/whip with white crest highlight
     '    float flow = fbm(nUv * 1.0 + vec2(uTime * 0.18, 0.0));',
