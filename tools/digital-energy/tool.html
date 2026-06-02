@@ -4,11 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="robots" content="noindex,nofollow">
-<title>DIGITAL_ENERGY // VFX SCIE</title>
+<title>DIGITAL_ENERGY // AGENTI EMITTITORI</title>
 <style>
   :root {
     --bg-0: #050608;
-    --bg-1: #0a0812;
     --fg-0: #e8e0ff;
     --fg-1: #c678ff;
     --fg-2: #6a5a8a;
@@ -25,9 +24,7 @@
     background: var(--bg-0); color: var(--fg-1);
     font-family: var(--mono); font-size: 12px;
   }
-  ::selection { background: var(--acc); color: var(--bg-0); }
   canvas { display: block; cursor: crosshair; touch-action: none; }
-
   .title {
     position: fixed; top: 24px; left: 28px; z-index: 10;
     pointer-events: none; user-select: none;
@@ -37,26 +34,25 @@
   .title .back a:hover { color: var(--acc); }
   .title h1 { font-size: 14px; font-weight: normal; letter-spacing: 0.18em; color: var(--acc); text-transform: uppercase; }
   .title .sub { margin-top: 8px; font-size: 10px; letter-spacing: 0.14em; color: var(--fg-2); text-transform: uppercase; }
-  .title .ver { margin-top: 4px; font-size: 9px; color: var(--fg-3); letter-spacing: 0.12em; }
+  .title .ver { margin-top: 4px; font-size: 9px; color: var(--fg-3); }
 
   .hint {
     position: fixed; bottom: 28px; left: 28px; z-index: 10;
-    font-size: 10px; color: var(--fg-2); letter-spacing: 0.08em;
-    pointer-events: none; line-height: 1.7; max-width: 300px;
+    font-size: 10px; color: var(--fg-2); line-height: 1.75; max-width: 320px; pointer-events: none;
   }
   .hint .key { color: var(--fg-0); border: 1px solid var(--fg-3); padding: 1px 5px; font-size: 9px; }
 
   .actions {
     position: fixed; top: 24px; right: 28px; z-index: 10;
     display: flex; flex-direction: column;
-    background: rgba(5, 6, 8, 0.88); border: 1px solid var(--fg-3);
+    background: rgba(5, 6, 8, 0.9); border: 1px solid var(--fg-3);
   }
   .actions button {
     background: transparent; color: var(--fg-1);
     border: none; border-bottom: 1px solid var(--fg-3);
     padding: 10px 16px; font-family: inherit; font-size: 10px;
-    letter-spacing: 0.16em; text-transform: uppercase;
-    cursor: pointer; text-align: left; min-width: 200px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    cursor: pointer; text-align: left; min-width: 210px;
   }
   .actions button:last-child { border-bottom: none; }
   .actions button:hover { background: var(--acc); color: var(--bg-0); }
@@ -64,38 +60,38 @@
 
   .controls {
     position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 10;
-    display: flex; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 56px);
-    background: rgba(5, 6, 8, 0.9); border: 1px solid var(--fg-3);
+    display: flex; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 48px);
+    background: rgba(5, 6, 8, 0.92); border: 1px solid var(--fg-3);
   }
   .control {
-    padding: 10px 14px; border-right: 1px solid var(--fg-3); min-width: 118px;
+    padding: 9px 12px; border-right: 1px solid var(--fg-3); min-width: 108px;
   }
   .control:last-child { border-right: none; }
   .control label {
-    display: block; font-size: 9px; letter-spacing: 0.16em;
-    color: var(--fg-2); text-transform: uppercase; margin-bottom: 6px;
+    display: block; font-size: 8.5px; letter-spacing: 0.14em;
+    color: var(--fg-2); text-transform: uppercase; margin-bottom: 5px;
   }
   .control select {
     width: 100%; font-family: inherit; font-size: 10px;
     background: var(--bg-0); color: var(--fg-0); border: 1px solid var(--fg-3);
-    padding: 5px 6px; letter-spacing: 0.08em;
+    padding: 4px 5px;
   }
-  .control .row { display: flex; align-items: center; gap: 8px; }
+  .control .row { display: flex; align-items: center; gap: 6px; }
   .control input[type="range"] {
     -webkit-appearance: none; appearance: none;
-    width: 72px; height: 14px; background: transparent; outline: none;
+    width: 68px; height: 14px; background: transparent; outline: none;
   }
   .control input[type="range"]::-webkit-slider-runnable-track { height: 1px; background: var(--fg-3); }
   .control input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 10px; height: 10px;
-    background: var(--acc); margin-top: -4.5px; border: 0; cursor: pointer;
+    -webkit-appearance: none; width: 9px; height: 9px;
+    background: var(--acc); margin-top: -4px; border: 0; cursor: pointer;
   }
-  .control .val { font-size: 10px; color: var(--fg-0); min-width: 28px; text-align: right; font-variant-numeric: tabular-nums; }
+  .control .val { font-size: 9px; color: var(--fg-0); min-width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
 
   .status {
     position: fixed; bottom: 28px; right: 28px; z-index: 10;
-    font-size: 9px; color: var(--fg-2); letter-spacing: 0.12em;
-    text-align: right; line-height: 1.8; text-transform: uppercase; pointer-events: none;
+    font-size: 9px; color: var(--fg-2); text-align: right; line-height: 1.85;
+    text-transform: uppercase; pointer-events: none;
   }
   .status span { color: var(--acc); }
 
@@ -108,8 +104,8 @@
   .corner.bl { bottom: 12px; left: 12px; border-bottom: 1px solid; border-left: 1px solid; }
   .corner.br { bottom: 12px; right: 12px; border-bottom: 1px solid; border-right: 1px solid; }
 
-  @media (max-width: 900px) {
-    .controls { bottom: auto; top: 118px; left: 20px; right: 20px; transform: none; max-height: 36vh; overflow-y: auto; }
+  @media (max-width: 960px) {
+    .controls { bottom: auto; top: 112px; left: 16px; right: 16px; transform: none; max-height: 38vh; overflow-y: auto; }
     .hint { display: none; }
   }
 </style>
@@ -122,78 +118,70 @@
 
 <div class="title">
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
-  <h1>[ DIGITAL_ENERGY :: VFX ]</h1>
-  <div class="sub">scie energetiche · ombra · cristallo · anime</div>
-  <div class="ver">v0.1 — solo leveling · jujutsu kaisen insp.</div>
+  <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
+  <div class="sub">emettitori autonomi · scie anime / fumetto</div>
+  <div class="ver">v0.2 — 8 elementi · WebGL2</div>
 </div>
 
 <div class="actions">
-  <button type="button" id="btn-clear">↺ Pulisci scie</button>
+  <button type="button" id="btn-clear-agents">✕ Rimuovi agenti</button>
+  <button type="button" id="btn-clear-trails">↺ Pulisci scie</button>
   <button type="button" id="btn-export" class="export">↓ Esporta PNG</button>
 </div>
 
 <div class="controls">
   <div class="control">
-    <label>Tipo scia</label>
-    <select id="s-mode">
-      <option value="0">energia</option>
+    <label>Emettitore</label>
+    <select id="s-type">
+      <option value="0">luce</option>
       <option value="1">ombra</option>
-      <option value="2">cristallo</option>
+      <option value="2">ghiaccio</option>
+      <option value="3">elettricità</option>
+      <option value="4">sangue</option>
+      <option value="5">fuoco</option>
+      <option value="6" selected>energia</option>
+      <option value="7">acqua</option>
     </select>
   </div>
   <div class="control">
-    <label>Intensità</label>
+    <label>Intensità scia</label>
     <div class="row">
       <input type="range" id="s-intensity" min="1" max="15" step="1" value="8">
       <div class="val" id="v-intensity">8</div>
     </div>
   </div>
   <div class="control">
-    <label>Spessore</label>
+    <label>Turbolenza</label>
     <div class="row">
-      <input type="range" id="s-width" min="4" max="28" step="1" value="12">
-      <div class="val" id="v-width">12</div>
+      <input type="range" id="s-turb" min="0" max="100" step="1" value="40">
+      <div class="val" id="v-turb">0.40</div>
     </div>
   </div>
   <div class="control">
     <label>Decadenza</label>
     <div class="row">
-      <input type="range" id="s-decay" min="88" max="99" step="1" value="94">
-      <div class="val" id="v-decay">0.94</div>
+      <input type="range" id="s-decay" min="88" max="99" step="1" value="93">
+      <div class="val" id="v-decay">0.93</div>
     </div>
   </div>
   <div class="control">
-    <label>Turbulenza</label>
+    <label>Raggio scia</label>
     <div class="row">
-      <input type="range" id="s-turb" min="0" max="100" step="1" value="35">
-      <div class="val" id="v-turb">0.35</div>
-    </div>
-  </div>
-  <div class="control">
-    <label>Bloom</label>
-    <div class="row">
-      <input type="range" id="s-bloom" min="20" max="100" step="1" value="70">
-      <div class="val" id="v-bloom">0.70</div>
-    </div>
-  </div>
-  <div class="control">
-    <label>Scintille</label>
-    <div class="row">
-      <input type="range" id="s-spark" min="0" max="100" step="1" value="50">
-      <div class="val" id="v-spark">0.50</div>
+      <input type="range" id="s-radius" min="6" max="22" step="1" value="12">
+      <div class="val" id="v-radius">12</div>
     </div>
   </div>
 </div>
 
 <div class="hint">
-  <span class="key">DRAG</span> disegna scie luminose<br>
-  <span class="key">TIPO</span> energia / ombra / cristallo<br>
-  stile anime · accumulo GPU
+  <span class="key">CLICK</span> posiziona agente emettitore<br>
+  <span class="key">SHIFT+CLICK</span> rimuovi agente vicino<br>
+  ogni agente emette scie in autonomia
 </div>
 
 <div class="status">
-  modo: <span id="st-mode">energia</span><br>
-  traccia: <span id="st-active">off</span>
+  tipo: <span id="st-type">energia</span><br>
+  agenti: <span id="st-count">0</span>
 </div>
 
 <script>
@@ -207,38 +195,27 @@
     return;
   }
 
-  var MODE_NAMES = ['energia', 'ombra', 'cristallo'];
-  var MAX_SPLATS = 140;
-  var MAX_SPARKS = 48;
+  var TYPE_NAMES = ['luce', 'ombra', 'ghiaccio', 'elettricità', 'sangue', 'fuoco', 'energia', 'acqua'];
+  var MAX_AGENTS = 32;
+  var MAX_SPLATS = 220;
+  var MAX_SPARKS = 80;
 
-  var cfg = {
-    mode: 0,
-    intensity: 8,
-    width: 12,
-    decay: 0.94,
-    turb: 0.35,
-    bloom: 0.7,
-    spark: 0.5
-  };
-
+  var template = { type: 6, intensity: 8, turb: 0.4, decay: 0.93, radius: 12 };
+  var globalDecay = 0.93;
+  var agents = [];
+  var agentSeq = 0;
+  var splatBuf = [];
+  var sparks = [];
   var W = 1;
   var H = 1;
   var time0 = performance.now();
-  var drawing = false;
-  var lastX = 0;
-  var lastY = 0;
-  var lastVX = 0;
-  var lastVY = -1;
-  var splatBuf = [];
-  var sparks = [];
-
   var smoke = { tex: [null, null], fb: [null, null], idx: 0, w: 0, h: 0 };
-  var progFade, progSplat, progComposite, progSpark;
-  var bufQuad, bufSplat, bufSpark;
-  var uFade, uSplat, uComposite, uSpark;
+  var progFade, progSplat, progComposite, progSpark, progMarker;
+  var bufQuad, bufSplat, bufSpark, bufMarker;
+  var uFade, uSplat, uComposite, uSpark, uMarker;
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-  function intensityPow() { return 0.28 + ((cfg.intensity - 1) / 14) * 0.72; }
+  function intensityPow(v) { return 0.22 + ((v - 1) / 14) * 0.78; }
 
   function compile(type, src) {
     var sh = gl.createShader(type);
@@ -263,12 +240,7 @@
     return p;
   }
 
-  var VS_QUAD = [
-    '#version 300 es',
-    'in vec2 aQuad;',
-    'out vec2 vUv;',
-    'void main(){ vUv = aQuad * 0.5 + 0.5; gl_Position = vec4(aQuad, 0.0, 1.0); }'
-  ].join('\n');
+  var VS_QUAD = '#version 300 es\nin vec2 aQuad;\nout vec2 vUv;\nvoid main(){ vUv = aQuad * 0.5 + 0.5; gl_Position = vec4(aQuad, 0.0, 1.0); }';
 
   var FS_FADE = [
     '#version 300 es',
@@ -280,73 +252,86 @@
     'void main(){ outColor = texture(uTex, vUv) * uDecay; }'
   ].join('\n');
 
-  var FS_SPLAT = [
-    '#version 300 es',
-    'precision mediump float;',
-    'in float vAlpha;',
-    'in float vAngle;',
-    'in float vSharp;',
-    'uniform int uMode;',
-    'uniform float uBloom;',
-    'out vec4 outColor;',
-    'void main(){',
-    '  vec2 p = gl_PointCoord - 0.5;',
-    '  float ca = cos(vAngle); float sa = sin(vAngle);',
-    '  vec2 q = vec2(ca * p.x - sa * p.y, sa * p.x + ca * p.y);',
-    '  q.x *= 0.55 + vSharp * 0.9;',
-    '  float r2 = dot(q, q);',
-    '  float core, halo, ring;',
-    '  if (uMode == 2) {',
-    '    core = exp(-r2 * 9.0);',
-    '    ring = exp(-pow(sqrt(r2) - 0.32, 2.0) * 80.0) * 0.5;',
-    '    halo = exp(-r2 * 2.2) * 0.25;',
-    '  } else if (uMode == 1) {',
-    '    core = exp(-r2 * 4.5) * 0.35;',
-    '    halo = exp(-r2 * 1.2) * 0.7;',
-    '    ring = exp(-pow(sqrt(r2) - 0.42, 2.0) * 45.0) * 0.55;',
-    '  } else {',
-    '    core = exp(-r2 * 3.2);',
-    '    halo = exp(-r2 * 0.95) * 0.45;',
-    '    ring = exp(-pow(sqrt(r2) - 0.38, 2.0) * 30.0) * 0.35;',
-    '  }',
-    '  float m = (core + halo + ring) * vAlpha * uBloom;',
-    '  if (m < 0.002) discard;',
-    '  vec3 col;',
-    '  if (uMode == 2) {',
-    '    col = mix(vec3(0.75, 0.92, 1.0), vec3(0.95, 1.0, 1.0), core);',
-    '    col += vec3(0.3, 0.85, 0.95) * ring;',
-    '  } else if (uMode == 1) {',
-    '    col = mix(vec3(0.02, 0.0, 0.06), vec3(0.55, 0.08, 0.42), halo);',
-    '    col += vec3(0.85, 0.15, 0.35) * ring;',
-    '    col += vec3(0.2, 0.0, 0.3) * core;',
-    '  } else {',
-    '    col = mix(vec3(0.15, 0.35, 1.0), vec3(0.55, 0.25, 0.95), core);',
-    '    col += vec3(0.4, 0.75, 1.0) * halo;',
-    '    col += vec3(0.7, 0.5, 1.0) * ring;',
-    '  }',
-    '  outColor = vec4(col * m, m);',
-    '}'
-  ].join('\n');
-
   var VS_SPLAT = [
     '#version 300 es',
     'in vec2 aPos;',
     'in float aSize;',
     'in float aAlpha;',
     'in float aAngle;',
+    'in float aMode;',
     'in float aSharp;',
     'uniform vec2 uRes;',
     'out float vAlpha;',
     'out float vAngle;',
+    'out float vMode;',
     'out float vSharp;',
     'void main(){',
     '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
     '  c.y = -c.y;',
     '  gl_Position = vec4(c, 0.0, 1.0);',
-    '  gl_PointSize = max(6.0, aSize);',
-    '  vAlpha = aAlpha;',
-    '  vAngle = aAngle;',
-    '  vSharp = aSharp;',
+    '  gl_PointSize = max(5.0, aSize);',
+    '  vAlpha = aAlpha; vAngle = aAngle; vMode = aMode; vSharp = aSharp;',
+    '}'
+  ].join('\n');
+
+  var FS_SPLAT = [
+    '#version 300 es',
+    'precision mediump float;',
+    'in float vAlpha;',
+    'in float vAngle;',
+    'in float vMode;',
+    'in float vSharp;',
+    'uniform float uTime;',
+    'out vec4 outColor;',
+    'void main(){',
+    '  int mode = int(vMode + 0.5);',
+    '  vec2 p = gl_PointCoord - 0.5;',
+    '  float ca = cos(vAngle); float sa = sin(vAngle);',
+    '  vec2 q = vec2(ca * p.x - sa * p.y, sa * p.x + ca * p.y);',
+    '  q.x *= 0.45 + vSharp * 1.1;',
+    '  float r = length(q);',
+    '  float r2 = dot(q, q);',
+    '  float flick = 0.85 + 0.15 * sin(uTime * 18.0 + r * 40.0);',
+    '  float core = exp(-r2 * mix(2.8, 11.0, vSharp));',
+    '  float halo = exp(-r2 * mix(0.7, 2.0, 1.0 - vSharp));',
+    '  float ring = exp(-pow(r - mix(0.28, 0.42, vSharp), 2.0) * mix(25.0, 90.0, vSharp));',
+    '  float streak = exp(-abs(q.y) * mix(8.0, 22.0, vSharp)) * exp(-abs(q.x) * 3.5);',
+    '  float m = (core * 0.55 + halo * 0.4 + ring * 0.35 + streak * 0.2) * vAlpha * flick;',
+    '  vec3 col = vec3(0.5);',
+    '  if (mode == 0) {',
+    '    col = mix(vec3(1.0, 0.95, 0.82), vec3(1.0, 1.0, 1.0), core);',
+    '    col += vec3(1.0, 0.9, 0.6) * ring;',
+    '  } else if (mode == 1) {',
+    '    col = mix(vec3(0.01, 0.0, 0.04), vec3(0.35, 0.02, 0.25), halo);',
+    '    col += vec3(0.55, 0.05, 0.35) * ring;',
+    '    col *= 0.4 + core * 0.8;',
+    '  } else if (mode == 2) {',
+    '    col = mix(vec3(0.55, 0.85, 0.95), vec3(0.92, 0.98, 1.0), core);',
+    '    col += vec3(0.4, 0.95, 1.0) * ring * 1.2;',
+    '    col += vec3(0.8, 1.0, 1.0) * streak * 0.5;',
+    '  } else if (mode == 3) {',
+    '    col = mix(vec3(0.2, 0.45, 1.0), vec3(0.75, 0.9, 1.0), core);',
+    '    col += vec3(0.9, 0.95, 1.0) * ring;',
+    '    col += vec3(0.5, 0.7, 1.0) * streak * 1.5;',
+    '  } else if (mode == 4) {',
+    '    col = mix(vec3(0.25, 0.02, 0.05), vec3(0.75, 0.08, 0.12), core);',
+    '    col += vec3(0.9, 0.15, 0.2) * ring;',
+    '    m *= 0.85 + 0.15 * smoothstep(0.35, 0.0, r);',
+    '  } else if (mode == 5) {',
+    '    col = mix(vec3(0.9, 0.25, 0.05), vec3(1.0, 0.75, 0.2), core);',
+    '    col += vec3(1.0, 0.45, 0.1) * halo;',
+    '    col += vec3(1.0, 0.9, 0.5) * ring;',
+    '  } else if (mode == 6) {',
+    '    col = mix(vec3(0.12, 0.32, 0.95), vec3(0.55, 0.28, 0.92), core);',
+    '    col += vec3(0.45, 0.72, 1.0) * halo;',
+    '    col += vec3(0.75, 0.5, 1.0) * ring;',
+    '  } else {',
+    '    col = mix(vec3(0.1, 0.35, 0.55), vec3(0.45, 0.78, 0.92), core);',
+    '    col += vec3(0.35, 0.85, 0.95) * halo;',
+    '    col += vec3(0.6, 0.95, 1.0) * ring * 0.7;',
+    '  }',
+    '  if (m < 0.0015) discard;',
+    '  outColor = vec4(col * m, m);',
     '}'
   ].join('\n');
 
@@ -355,51 +340,21 @@
     'precision mediump float;',
     'in vec2 vUv;',
     'uniform sampler2D uTex;',
-    'uniform int uMode;',
     'uniform float uTime;',
-    'uniform float uPow;',
     'out vec4 outColor;',
     'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
     'void main(){',
     '  vec4 s = texture(uTex, vUv);',
     '  float dens = s.a;',
-    '  float n = sin(vUv.x * 60.0 + uTime) * sin(vUv.y * 52.0 - uTime * 1.2) * 0.5 + 0.5;',
-    '  dens = smoothstep(0.02, 0.65, dens * (0.7 + uPow * 0.35));',
-    '  vec3 col;',
-    '  if (uMode == 2) {',
-    '    col = mix(vec3(0.2, 0.45, 0.55), vec3(0.85, 0.95, 1.0), dens);',
-    '    col += vec3(0.5, 0.9, 1.0) * pow(dens, 2.0) * 0.35;',
-    '  } else if (uMode == 1) {',
-    '    col = mix(vec3(0.01, 0.0, 0.03), vec3(0.35, 0.05, 0.28), dens * 0.9);',
-    '    col += vec3(0.7, 0.12, 0.4) * pow(dens, 1.8) * 0.4 * n;',
-    '    col += vec3(0.15, 0.0, 0.2) * (1.0 - dens);',
-    '  } else {',
-    '    col = mix(vec3(0.08, 0.18, 0.45), vec3(0.45, 0.35, 0.95), dens);',
-    '    col += vec3(0.35, 0.65, 1.0) * pow(dens, 1.5) * 0.45;',
-    '    col += vec3(0.6, 0.4, 1.0) * smoothstep(0.5, 0.0, dens) * 0.2;',
-    '  }',
-    '  col *= 0.88 + 0.12 * n;',
-    '  float a = dens * (0.5 + uPow * 0.35);',
+    '  vec3 col = s.rgb / max(dens, 0.0008);',
+    '  float n = sin(vUv.x * 70.0 + uTime) * sin(vUv.y * 58.0 - uTime * 1.1) * 0.5 + 0.5;',
+    '  float grain = hash(vUv * 180.0 + uTime * 0.2) * 0.08;',
+    '  dens = smoothstep(0.012, 0.58, dens);',
+    '  col *= dens * (0.92 + grain);',
+    '  col += col * smoothstep(0.25, 0.75, dens) * 0.35;',
+    '  col *= 0.9 + 0.1 * n;',
+    '  float a = dens * 0.88;',
     '  outColor = vec4(col, a);',
-    '}'
-  ].join('\n');
-
-  var FS_SPARK = [
-    '#version 300 es',
-    'precision mediump float;',
-    'in float vLife;',
-    'uniform int uMode;',
-    'out vec4 outColor;',
-    'void main(){',
-    '  vec2 p = (gl_PointCoord - 0.5) * 2.0;',
-    '  float r = length(p);',
-    '  float star = max(0.0, 1.0 - r * 2.5);',
-    '  float spike = exp(-abs(p.x) * 22.0) + exp(-abs(p.y) * 22.0);',
-    '  float m = (star * 0.6 + spike * 0.15) * vLife;',
-    '  if (m < 0.02) discard;',
-    '  vec3 col = uMode == 2 ? vec3(0.9, 1.0, 1.0) :',
-    '             uMode == 1 ? vec3(0.9, 0.3, 0.6) : vec3(0.6, 0.85, 1.0);',
-    '  outColor = vec4(col, m);',
     '}'
   ].join('\n');
 
@@ -408,14 +363,74 @@
     'in vec2 aPos;',
     'in float aSize;',
     'in float aLife;',
+    'in float aMode;',
     'uniform vec2 uRes;',
     'out float vLife;',
+    'out float vMode;',
     'void main(){',
     '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
     '  c.y = -c.y;',
     '  gl_Position = vec4(c, 0.0, 1.0);',
     '  gl_PointSize = aSize;',
-    '  vLife = aLife;',
+    '  vLife = aLife; vMode = aMode;',
+    '}'
+  ].join('\n');
+
+  var FS_SPARK = [
+    '#version 300 es',
+    'precision mediump float;',
+    'in float vLife;',
+    'in float vMode;',
+    'out vec4 outColor;',
+    'void main(){',
+    '  int mode = int(vMode + 0.5);',
+    '  vec2 p = (gl_PointCoord - 0.5) * 2.0;',
+    '  float r = length(p);',
+    '  float cross = exp(-abs(p.x) * 28.0) + exp(-abs(p.y) * 28.0);',
+    '  float m = (max(0.0, 1.0 - r * 2.2) + cross * 0.12) * vLife;',
+    '  if (m < 0.02) discard;',
+    '  vec3 col = vec3(1.0);',
+    '  if (mode == 0) col = vec3(1.0, 0.95, 0.8);',
+    '  else if (mode == 1) col = vec3(0.6, 0.1, 0.5);',
+    '  else if (mode == 2) col = vec3(0.85, 0.98, 1.0);',
+    '  else if (mode == 3) col = vec3(0.6, 0.85, 1.0);',
+    '  else if (mode == 4) col = vec3(0.95, 0.2, 0.25);',
+    '  else if (mode == 5) col = vec3(1.0, 0.55, 0.15);',
+    '  else if (mode == 6) col = vec3(0.55, 0.75, 1.0);',
+    '  else col = vec3(0.45, 0.88, 0.95);',
+    '  outColor = vec4(col, m);',
+    '}'
+  ].join('\n');
+
+  var VS_MARKER = [
+    '#version 300 es',
+    'in vec2 aPos;',
+    'in float aSel;',
+    'uniform vec2 uRes;',
+    'out float vSel;',
+    'void main(){',
+    '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
+    '  c.y = -c.y;',
+    '  gl_Position = vec4(c, 0.0, 1.0);',
+    '  gl_PointSize = 14.0;',
+    '  vSel = aSel;',
+    '}'
+  ].join('\n');
+
+  var FS_MARKER = [
+    '#version 300 es',
+    'precision mediump float;',
+    'in float vSel;',
+    'out vec4 outColor;',
+    'void main(){',
+    '  vec2 p = gl_PointCoord - 0.5;',
+    '  float r = length(p);',
+    '  float ring = smoothstep(0.48, 0.42, r) * smoothstep(0.32, 0.38, r);',
+    '  float dot = 1.0 - smoothstep(0.0, 0.12, r);',
+    '  vec3 col = mix(vec3(0.55, 0.35, 0.85), vec3(0.85, 0.95, 1.0), vSel);',
+    '  float a = ring * 0.7 + dot * 0.35;',
+    '  if (a < 0.02) discard;',
+    '  outColor = vec4(col, a);',
     '}'
   ].join('\n');
 
@@ -424,6 +439,7 @@
     progSplat = link(compile(gl.VERTEX_SHADER, VS_SPLAT), compile(gl.FRAGMENT_SHADER, FS_SPLAT));
     progComposite = link(compile(gl.VERTEX_SHADER, VS_QUAD), compile(gl.FRAGMENT_SHADER, FS_COMPOSITE));
     progSpark = link(compile(gl.VERTEX_SHADER, VS_SPARK), compile(gl.FRAGMENT_SHADER, FS_SPARK));
+    progMarker = link(compile(gl.VERTEX_SHADER, VS_MARKER), compile(gl.FRAGMENT_SHADER, FS_MARKER));
 
     bufQuad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
@@ -432,23 +448,16 @@
     ]), gl.STATIC_DRAW);
     bufSplat = gl.createBuffer();
     bufSpark = gl.createBuffer();
+    bufMarker = gl.createBuffer();
 
     uFade = { tex: gl.getUniformLocation(progFade, 'uTex'), decay: gl.getUniformLocation(progFade, 'uDecay') };
     uSplat = {
       res: gl.getUniformLocation(progSplat, 'uRes'),
-      mode: gl.getUniformLocation(progSplat, 'uMode'),
-      bloom: gl.getUniformLocation(progSplat, 'uBloom')
+      time: gl.getUniformLocation(progSplat, 'uTime')
     };
-    uComposite = {
-      tex: gl.getUniformLocation(progComposite, 'uTex'),
-      mode: gl.getUniformLocation(progComposite, 'uMode'),
-      time: gl.getUniformLocation(progComposite, 'uTime'),
-      pow: gl.getUniformLocation(progComposite, 'uPow')
-    };
-    uSpark = {
-      res: gl.getUniformLocation(progSpark, 'uRes'),
-      mode: gl.getUniformLocation(progSpark, 'uMode')
-    };
+    uComposite = { tex: gl.getUniformLocation(progComposite, 'uTex'), time: gl.getUniformLocation(progComposite, 'uTime') };
+    uSpark = { res: gl.getUniformLocation(progSpark, 'uRes') };
+    uMarker = { res: gl.getUniformLocation(progMarker, 'uRes') };
   }
 
   function bindQuad(prog) {
@@ -458,8 +467,114 @@
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   }
 
+  function createAgent(x, y) {
+    return {
+      id: ++agentSeq,
+      x: x, y: y,
+      px: x, py: y,
+      type: template.type,
+      intensity: template.intensity,
+      turb: template.turb,
+      decay: template.decay,
+      radius: template.radius,
+      phase: Math.random() * Math.PI * 2,
+      emitAcc: 0,
+      vx: 0, vy: 0
+    };
+  }
+
+  function findNearest(px, py, maxD) {
+    var best = null;
+    var bestD = maxD * maxD;
+    agents.forEach(function (a) {
+      var dx = a.x - px;
+      var dy = a.y - py;
+      var d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = a; }
+    });
+    return best;
+  }
+
+  function typeMotion(a, t) {
+    var m = a.type;
+    var ph = a.phase + t * 0.4;
+    if (m === 0) return { ax: Math.sin(ph) * 0.35, ay: -0.55 - Math.cos(ph * 0.7) * 0.2 };
+    if (m === 1) return { ax: Math.sin(ph * 0.5) * 0.25, ay: Math.cos(ph * 0.4) * 0.2 };
+    if (m === 2) return { ax: Math.cos(ph * 1.2) * 0.5, ay: Math.sin(ph * 1.1) * 0.45 - 0.15 };
+    if (m === 3) return { ax: (Math.random() - 0.5) * 0.9, ay: (Math.random() - 0.5) * 0.9 };
+    if (m === 4) return { ax: Math.sin(ph) * 0.15, ay: 0.65 + Math.random() * 0.2 };
+    if (m === 5) return { ax: Math.sin(ph * 2.0) * 0.4, ay: -0.85 - Math.abs(Math.sin(ph * 3.0)) * 0.3 };
+    if (m === 6) return { ax: Math.sin(ph) * 0.45, ay: -0.7 - Math.cos(ph * 0.8) * 0.25 };
+    return { ax: Math.sin(ph * 0.8) * 0.35, ay: 0.35 + Math.cos(ph) * 0.2 };
+  }
+
+  function typeSharp(type) {
+    if (type === 2 || type === 3) return 0.95;
+    if (type === 1 || type === 4) return 0.4;
+    if (type === 5) return 0.55;
+    return 0.65;
+  }
+
+  function updateAgents(t) {
+    var minDecay = globalDecay;
+    agents.forEach(function (a) {
+      if (a.decay < minDecay) minDecay = a.decay;
+      var mot = typeMotion(a, t + a.phase);
+      a.vx = a.vx * 0.92 + mot.ax * 0.08;
+      a.vy = a.vy * 0.92 + mot.ay * 0.08;
+      a.px = a.x;
+      a.py = a.y;
+      a.x += a.vx + Math.sin(t * 1.7 + a.phase) * a.turb * 0.35;
+      a.y += a.vy + Math.cos(t * 1.3 + a.phase * 1.4) * a.turb * 0.3;
+      a.x = clamp(a.x, 20, W - 20);
+      a.y = clamp(a.y, 20, H - 20);
+
+      var pow = intensityPow(a.intensity);
+      a.emitAcc += pow * 0.55;
+      var emits = Math.floor(a.emitAcc);
+      a.emitAcc -= emits;
+      var dx = a.x - a.px;
+      var dy = a.y - a.py;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var steps = Math.max(emits, dist > 0.5 ? Math.min(8, Math.ceil(dist / 4)) : 0);
+      var turb = a.turb * 14;
+      var rad = a.radius * (0.9 + pow * 0.5);
+      var sharp = typeSharp(a.type);
+      for (var i = 0; i < steps; i++) {
+        var u = (i + 1) / (steps + 1);
+        var px = a.px + dx * u + (Math.random() - 0.5) * turb;
+        var py = a.py + dy * u + (Math.random() - 0.5) * turb;
+        var vx = dx / dist + a.vx + (Math.random() - 0.5) * a.turb;
+        var vy = dy / dist + a.vy + (Math.random() - 0.5) * a.turb;
+        var ang = Math.atan2(vy, vx);
+        var spd = Math.sqrt(vx * vx + vy * vy);
+        splatBuf.push({
+          x: px, y: py,
+          size: rad * (1.1 + spd * 0.15) * (2.0 + pow),
+          alpha: (0.22 + pow * 0.38) * (0.7 + a.decay * 0.3),
+          ang: ang,
+          mode: a.type,
+          sharp: sharp
+        });
+        if (Math.random() < pow * a.turb * 0.45) {
+          sparks.push({
+            x: px, y: py,
+            vx: vx * 1.5 + (Math.random() - 0.5) * 2,
+            vy: vy * 1.5 + (Math.random() - 0.5) * 2,
+            life: 1,
+            size: 3 + Math.random() * 7,
+            mode: a.type
+          });
+        }
+      }
+    });
+    if (splatBuf.length > MAX_SPLATS) splatBuf.splice(0, splatBuf.length - MAX_SPLATS);
+    if (sparks.length > MAX_SPARKS) sparks.splice(0, sparks.length - MAX_SPARKS);
+    return minDecay;
+  }
+
   function resizeSmoke() {
-    var scale = 0.75;
+    var scale = 0.8;
     var sw = Math.max(1, Math.floor(canvas.width * scale));
     var sh = Math.max(1, Math.floor(canvas.height * scale));
     if (smoke.w === sw && smoke.h === sh && smoke.tex[0]) return;
@@ -496,58 +611,14 @@
     sparks.length = 0;
   }
 
-  function emitSplat(x, y, vx, vy) {
-    var pow = intensityPow();
-    var ang = Math.atan2(vy, vx);
-    var speed = Math.sqrt(vx * vx + vy * vy);
-    var size = cfg.width * (0.85 + speed * 0.08) * pow * (2.2 + cfg.bloom * 0.8);
-    var alpha = 0.35 + pow * 0.45;
-    var sharp = cfg.mode === 2 ? 1.0 : cfg.mode === 1 ? 0.35 : 0.15;
-    splatBuf.push({ x: x, y: y, size: size, alpha: alpha, ang: ang, sharp: sharp });
-    if (splatBuf.length > MAX_SPLATS) splatBuf.splice(0, splatBuf.length - MAX_SPLATS);
-
-    if (Math.random() < cfg.spark * pow * 0.35) {
-      sparks.push({
-        x: x + (Math.random() - 0.5) * size * 0.3,
-        y: y + (Math.random() - 0.5) * size * 0.3,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
-        life: 1,
-        size: 4 + Math.random() * 8
-      });
-      if (sparks.length > MAX_SPARKS) sparks.shift();
-    }
-  }
-
-  function strokeTo(x, y) {
-    var dx = x - lastX;
-    var dy = y - lastY;
-    var dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 1.5) return;
-    var steps = Math.min(12, Math.ceil(dist / 3));
-    var turb = cfg.turb * 8;
-    for (var i = 1; i <= steps; i++) {
-      var t = i / steps;
-      var px = lastX + dx * t + (Math.random() - 0.5) * turb;
-      var py = lastY + dy * t + (Math.random() - 0.5) * turb;
-      var vx = dx / dist + (Math.random() - 0.5) * cfg.turb;
-      var vy = dy / dist + (Math.random() - 0.5) * cfg.turb;
-      emitSplat(px, py, vx, vy);
-    }
-    lastVX = dx / (dist || 1);
-    lastVY = dy / (dist || 1);
-    lastX = x;
-    lastY = y;
-  }
-
   function flushSplats(sw, sh) {
     if (!splatBuf.length) return;
     var dprX = sw / W;
     var dprY = sh / H;
     var dpr = (dprX + dprY) * 0.5;
     var n = splatBuf.length;
-    var stride = 6 * 4;
-    var data = new Float32Array(n * 6);
+    var stride = 7 * 4;
+    var data = new Float32Array(n * 7);
     var j = 0;
     splatBuf.forEach(function (s) {
       data[j++] = s.x * dprX;
@@ -555,6 +626,7 @@
       data[j++] = s.size * dpr;
       data[j++] = s.alpha;
       data[j++] = s.ang;
+      data[j++] = s.mode;
       data[j++] = s.sharp;
     });
     splatBuf.length = 0;
@@ -562,25 +634,15 @@
     gl.useProgram(progSplat);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufSplat);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
-    var loc0 = gl.getAttribLocation(progSplat, 'aPos');
-    gl.enableVertexAttribArray(loc0);
-    gl.vertexAttribPointer(loc0, 2, gl.FLOAT, false, stride, 0);
-    var loc1 = gl.getAttribLocation(progSplat, 'aSize');
-    gl.enableVertexAttribArray(loc1);
-    gl.vertexAttribPointer(loc1, 1, gl.FLOAT, false, stride, 8);
-    var loc2 = gl.getAttribLocation(progSplat, 'aAlpha');
-    gl.enableVertexAttribArray(loc2);
-    gl.vertexAttribPointer(loc2, 1, gl.FLOAT, false, stride, 16);
-    var loc3 = gl.getAttribLocation(progSplat, 'aAngle');
-    gl.enableVertexAttribArray(loc3);
-    gl.vertexAttribPointer(loc3, 1, gl.FLOAT, false, stride, 20);
-    var loc4 = gl.getAttribLocation(progSplat, 'aSharp');
-    gl.enableVertexAttribArray(loc4);
-    gl.vertexAttribPointer(loc4, 1, gl.FLOAT, false, stride, 24);
-
+    var loc = ['aPos', 'aSize', 'aAlpha', 'aAngle', 'aMode', 'aSharp'];
+    var off = [0, 8, 12, 16, 20, 24];
+    for (var k = 0; k < loc.length; k++) {
+      var l = gl.getAttribLocation(progSplat, loc[k]);
+      gl.enableVertexAttribArray(l);
+      gl.vertexAttribPointer(l, k === 0 ? 2 : 1, gl.FLOAT, false, stride, off[k]);
+    }
     gl.uniform2f(uSplat.res, sw, sh);
-    gl.uniform1i(uSplat.mode, cfg.mode);
-    gl.uniform1f(uSplat.bloom, 0.55 + cfg.bloom * 0.9);
+    gl.uniform1f(uSplat.time, (performance.now() - time0) * 0.001);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.drawArrays(gl.POINTS, 0, n);
@@ -588,24 +650,26 @@
 
   function drawSparks(sw, sh) {
     if (!sparks.length) return;
-    var stride = 4 * 4;
-    var data = new Float32Array(sparks.length * 4);
-    var j = 0;
     var dprX = sw / W;
     var dprY = sh / H;
+    var stride = 5 * 4;
+    var data = new Float32Array(sparks.length * 5);
+    var j = 0;
+    var alive = 0;
     for (var i = sparks.length - 1; i >= 0; i--) {
       var sp = sparks[i];
       sp.x += sp.vx;
       sp.y += sp.vy;
-      sp.life -= 0.06;
+      sp.life -= 0.045;
       if (sp.life <= 0) { sparks.splice(i, 1); continue; }
       data[j++] = sp.x * dprX;
       data[j++] = sp.y * dprY;
       data[j++] = sp.size * sp.life;
       data[j++] = sp.life;
+      data[j++] = sp.mode;
+      alive++;
     }
-    var n = j / 4;
-    if (!n) return;
+    if (!alive) return;
 
     gl.useProgram(progSpark);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufSpark);
@@ -619,13 +683,43 @@
     var a2 = gl.getAttribLocation(progSpark, 'aLife');
     gl.enableVertexAttribArray(a2);
     gl.vertexAttribPointer(a2, 1, gl.FLOAT, false, stride, 12);
+    var a3 = gl.getAttribLocation(progSpark, 'aMode');
+    gl.enableVertexAttribArray(a3);
+    gl.vertexAttribPointer(a3, 1, gl.FLOAT, false, stride, 16);
     gl.uniform2f(uSpark.res, sw, sh);
-    gl.uniform1i(uSpark.mode, cfg.mode);
-    gl.drawArrays(gl.POINTS, 0, n);
+    gl.drawArrays(gl.POINTS, 0, alive);
+  }
+
+  function drawMarkers() {
+    if (!agents.length) return;
+    var dprX = canvas.width / W;
+    var dprY = canvas.height / H;
+    var data = new Float32Array(agents.length * 3);
+    var j = 0;
+    agents.forEach(function (a) {
+      data[j++] = a.x * dprX;
+      data[j++] = a.y * dprY;
+      data[j++] = 0;
+    });
+    gl.useProgram(progMarker);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufMarker);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    var p = gl.getAttribLocation(progMarker, 'aPos');
+    gl.enableVertexAttribArray(p);
+    gl.vertexAttribPointer(p, 2, gl.FLOAT, false, 12, 0);
+    var s = gl.getAttribLocation(progMarker, 'aSel');
+    gl.enableVertexAttribArray(s);
+    gl.vertexAttribPointer(s, 1, gl.FLOAT, false, 12, 8);
+    gl.uniform2f(uMarker.res, canvas.width, canvas.height);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.POINTS, 0, agents.length);
   }
 
   function render() {
     if (!smoke.tex[0]) return;
+    var t = (performance.now() - time0) * 0.001;
+    var fadeDecay = updateAgents(t);
     var sw = smoke.w;
     var sh = smoke.h;
     var read = smoke.idx;
@@ -638,7 +732,7 @@
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, smoke.tex[read]);
     gl.uniform1i(uFade.tex, 0);
-    gl.uniform1f(uFade.decay, cfg.decay);
+    gl.uniform1f(uFade.decay, fadeDecay);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
     flushSplats(sw, sh);
@@ -647,7 +741,7 @@
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0.02, 0.02, 0.04, 1);
+    gl.clearColor(0.02, 0.02, 0.045, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.enable(gl.BLEND);
@@ -656,11 +750,11 @@
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, smoke.tex[write]);
     gl.uniform1i(uComposite.tex, 0);
-    gl.uniform1i(uComposite.mode, cfg.mode);
-    gl.uniform1f(uComposite.time, (performance.now() - time0) * 0.001);
-    gl.uniform1f(uComposite.pow, intensityPow());
+    gl.uniform1f(uComposite.time, t);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    drawMarkers();
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   }
 
@@ -683,53 +777,59 @@
     };
   }
 
+  function updateStatus() {
+    document.getElementById('st-type').textContent = TYPE_NAMES[template.type];
+    document.getElementById('st-count').textContent = String(agents.length);
+  }
+
   function bindSlider(id, vid, key, fmt) {
     var el = document.getElementById(id);
     var out = document.getElementById(vid);
     if (!el) return;
     el.addEventListener('input', function () {
       var v = parseFloat(el.value);
-      if (key === 'decay') cfg.decay = v / 100;
-      else if (key === 'turb') cfg.turb = v / 100;
-      else if (key === 'bloom') cfg.bloom = v / 100;
-      else if (key === 'spark') cfg.spark = v / 100;
-      else cfg[key] = v;
-      if (out) out.textContent = fmt ? fmt(cfg[key]) : String(cfg[key]);
+      if (key === 'decay') {
+        globalDecay = v / 100;
+        template.decay = globalDecay;
+        if (out) out.textContent = globalDecay.toFixed(2);
+      } else if (key === 'turb') {
+        template.turb = v / 100;
+        if (out) out.textContent = template.turb.toFixed(2);
+      } else {
+        template[key] = v;
+        if (out) out.textContent = fmt ? fmt(template[key]) : String(template[key]);
+      }
+      updateStatus();
     });
   }
 
   canvas.addEventListener('pointerdown', function (e) {
-    canvas.setPointerCapture(e.pointerId);
-    drawing = true;
     var p = pointerPos(e);
-    lastX = p.x;
-    lastY = p.y;
-    emitSplat(p.x, p.y, lastVX, lastVY);
-    document.getElementById('st-active').textContent = 'on';
+    if (e.shiftKey) {
+      var hit = findNearest(p.x, p.y, 36);
+      if (hit) agents = agents.filter(function (a) { return a.id !== hit.id; });
+      updateStatus();
+      return;
+    }
+    if (agents.length >= MAX_AGENTS) return;
+    agents.push(createAgent(p.x, p.y));
+    updateStatus();
   });
-  canvas.addEventListener('pointermove', function (e) {
-    if (!drawing) return;
-    strokeTo(pointerPos(e).x, pointerPos(e).y);
-  });
-  function endDraw() {
-    drawing = false;
-    document.getElementById('st-active').textContent = 'off';
-  }
-  canvas.addEventListener('pointerup', endDraw);
-  canvas.addEventListener('pointercancel', endDraw);
 
-  document.getElementById('s-mode').addEventListener('change', function (e) {
-    cfg.mode = parseInt(e.target.value, 10);
-    document.getElementById('st-mode').textContent = MODE_NAMES[cfg.mode];
+  document.getElementById('s-type').addEventListener('change', function (e) {
+    template.type = parseInt(e.target.value, 10);
+    updateStatus();
   });
   bindSlider('s-intensity', 'v-intensity', 'intensity');
-  bindSlider('s-width', 'v-width', 'width');
-  bindSlider('s-decay', 'v-decay', 'decay', function (v) { return v.toFixed(2); });
-  bindSlider('s-turb', 'v-turb', 'turb', function (v) { return v.toFixed(2); });
-  bindSlider('s-bloom', 'v-bloom', 'bloom', function (v) { return v.toFixed(2); });
-  bindSlider('s-spark', 'v-spark', 'spark', function (v) { return v.toFixed(2); });
+  bindSlider('s-turb', 'v-turb', 'turb');
+  bindSlider('s-decay', 'v-decay', 'decay');
+  bindSlider('s-radius', 'v-radius', 'radius');
 
-  document.getElementById('btn-clear').addEventListener('click', clearTrails);
+  document.getElementById('btn-clear-agents').addEventListener('click', function () {
+    agents = [];
+    updateStatus();
+  });
+  document.getElementById('btn-clear-trails').addEventListener('click', clearTrails);
   document.getElementById('btn-export').addEventListener('click', function () {
     render();
     var a = document.createElement('a');
@@ -740,6 +840,7 @@
 
   initGL();
   resize();
+  updateStatus();
   window.addEventListener('resize', resize);
   function loop() {
     render();
