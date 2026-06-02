@@ -155,7 +155,7 @@
         x1: -7, y1: y, x2: 7, y2: y,
         stroke: m.color, 'stroke-width': '0.55', opacity: '0.55'
       }));
-    }));
+    });
   }
 
   function drawModuleShape(g, mod) {
@@ -168,25 +168,25 @@
     var bottom = slotY(slotCount - 1) + 40;
     chainLayer.appendChild(svgEl('line', {
       x1: CX, y1: TOP - 20, x2: CX, y2: bottom,
-      stroke: '#3a3a3a', 'stroke-width': '2'
+      stroke: '#5eff7e', 'stroke-width': '1.6', opacity: '0.45'
     }));
     for (var i = 0; i < slotCount; i++) {
       var y = slotY(i);
       var link = svgEl('g', { transform: 'translate(' + CX + ',' + y + ')' });
       link.appendChild(svgEl('rect', {
         x: -10, y: -4, width: 20, height: 8, rx: 2,
-        fill: '#141414', stroke: '#555', 'stroke-width': '0.8'
+        fill: '#0a120a', stroke: '#3aaa50', 'stroke-width': '0.8'
       }));
       link.appendChild(svgEl('circle', {
-        cx: 0, cy: -14, r: 2.5, fill: 'none', stroke: '#666', 'stroke-width': '0.7'
+        cx: 0, cy: -14, r: 2.5, fill: 'none', stroke: '#5eff7e', 'stroke-width': '0.7', opacity: '0.7'
       }));
       link.appendChild(svgEl('circle', {
-        cx: 0, cy: 14, r: 2.5, fill: 'none', stroke: '#666', 'stroke-width': '0.7'
+        cx: 0, cy: 14, r: 2.5, fill: 'none', stroke: '#5eff7e', 'stroke-width': '0.7', opacity: '0.7'
       }));
       if (i < slotCount - 1) {
         link.appendChild(svgEl('line', {
           x1: 0, y1: 8, x2: 0, y2: STEP - 8,
-          stroke: '#444', 'stroke-width': '1.5'
+          stroke: '#3aaa50', 'stroke-width': '1.2', opacity: '0.55'
         }));
       }
       chainLayer.appendChild(link);
