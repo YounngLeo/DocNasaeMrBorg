@@ -664,16 +664,36 @@
         }
       } else if (m === 2) {
         a.grow += 0.02;
-        pushSplat(splatBuf, {
-          x: px, y: py,
-          size: rad * (1.3 + a.grow * 0.3),
-          alpha: (0.17 + pow * 0.26),
-          ang: ang - 0.3,
-          mode: 2,
-          sharp: 0.95,
-          seed: Math.random() * 70,
-          kind: 1
-        });
+        var iperpX = -Math.sin(ang);
+        var iperpY = Math.cos(ang);
+        var iang = ang + (Math.random() - 0.5) * 0.35;
+        var ik, ioff;
+        for (ik = -1; ik <= 1; ik++) {
+          ioff = ik * rad * (0.65 + Math.random() * 0.35);
+          pushSplat(splatBuf, {
+            x: px + iperpX * ioff,
+            y: py + iperpY * ioff,
+            size: rad * (2.0 + pow * 0.55) * (0.65 + a.grow * 0.12),
+            alpha: (0.15 + pow * 0.24) * (ik === 0 ? 1.0 : 0.7),
+            ang: iang + ik * 0.22 + (Math.random() - 0.5) * 0.4,
+            mode: 2,
+            sharp: 0.88 + Math.random() * 0.1,
+            seed: Math.random() * 70 + ik * 17,
+            kind: 1
+          });
+        }
+        if (thick > 1.1 && Math.random() < 0.45) {
+          pushSplat(splatBuf, {
+            x: px, y: py,
+            size: rad * 0.7,
+            alpha: (0.14 + pow * 0.22),
+            ang: iang + 0.7,
+            mode: 2,
+            sharp: 0.96,
+            seed: Math.random() * 40,
+            kind: 2
+          });
+        }
       } else if (m === 5) {
         var fcurl = Math.sin(t * 3 + a.phase + u * 5) * 0.55;
         var fperpX = -Math.sin(ang);
