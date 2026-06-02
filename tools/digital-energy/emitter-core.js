@@ -592,7 +592,7 @@
           pushSplat(splatBuf, {
             x: px + perpX1 * woff,
             y: py + perpY1 * woff,
-            size: rad * (2.3 + pow * 0.7),
+            size: rad * (2.3 + pow * 0.7) * (0.55 + Math.random() * 1.0),
             alpha: (0.15 + pow * 0.22) * (0.85 + Math.random() * 0.15),
             ang: ang + curl + wk * 0.18 + (Math.random() - 0.5) * 0.3,
             mode: 1,
@@ -606,11 +606,11 @@
         ang = Math.atan2(vy + fw.vy * 2.5, vx + fw.vx * 2.5);
         pushSplat(splatBuf, {
           x: px, y: py,
-          size: rad * (1.6 + spd * 0.1) * 1.2,
+          size: rad * (1.6 + spd * 0.1) * 1.2 * (0.55 + Math.random() * 1.0),
           alpha: (0.14 + pow * 0.22),
           ang: ang,
           mode: 7,
-          sharp: 0.5,
+          sharp: 0.35 + Math.random() * 0.4,
           seed: Math.random() * 60,
           kind: 1
         });
