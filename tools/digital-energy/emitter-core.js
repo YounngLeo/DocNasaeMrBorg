@@ -1,4 +1,4 @@
-/* Digital Energy — per-type motion, fluid box, emission (v0.7) */
+/* Digital Energy — per-type motion, fluid box, vortex attractors (v0.8) */
 (function (global) {
   'use strict';
 
@@ -92,7 +92,95 @@
     t = sim.sd; sim.sd = sim.tsd; sim.tsd = t;
   }
 
-  function stepSimBox(agents, dt, speedMul) {
+  function vortexPowFromSlider(v) {
+    return 0.25 + ((v - 1) / 14) * 2.35;
+  }
+
+  function sampleVortex(x, y, attractors, strengthMul) {
+    var ax = 0;
+    var ay = 0;
+    var swirl = 0;
+    var pow = strengthMul || 1;
+    var i, at, dx, dy, r2, R, r, fall, spin, pull;
+    for (i = 0; i < attractors.length; i++) {
+      at = attractors[i];
+      dx = x - at.x;
+      dy = y - at.y;
+      r2 = dx * dx + dy * dy;
+      R = at.radius || 80;
+      r = Math.sqrt(r2) || 0.001;
+      fall = Math.exp(-r2 / (R * R * 0.42));
+      spin = (at.spinSign || 1) * (at.strength || 1) * pow * fall;
+      pull = pow * fall * 0.42;
+      ax += (-dy / r) * spin * 2.4;
+      ay += (dx / r) * spin * 2.4;
+      ax -= (dx / r) * pull;
+      ay -= (dy / r) * pull;
+      if (fall > swirl) swirl = fall;
+    }
+    return { ax: ax, ay: ay, swirl: swirl };
+  }
+
+  function applyAttractorsToSim(attractors, vortexPow, speedMul) {
+    if (!sim || !attractors || !attractors.length) return;
+    var gw = sim.gw;
+    var gh = sim.gh;
+    var sm = speedMul || 1;
+    var pow = vortexPow || 1;
+    var ai, at, g, cellR, dj, di, i, j, wx, wy, vf, k, str;
+    for (ai = 0; ai < attractors.length; ai++) {
+      at = attractors[ai];
+      g = worldToGrid(at.x, at.y);
+      cellR = Math.max(4, Math.floor((at.radius / sim.W) * gw * 0.55));
+      for (dj = -cellR; dj <= cellR; dj++) {
+        for (di = -cellR; di <= cellR; di++) {
+          i = g.i + di;
+          j = g.j + dj;
+          if (i < 1 || i >= gw - 1 || j < 1 || j >= gh - 1) continue;
+          wx = ((i + 0.5) / gw) * sim.W;
+          wy = ((j + 0.5) / gh) * sim.H;
+          vf = sampleVortex(wx, wy, [at], pow);
+          k = idx(i, j);
+          str = vf.swirl;
+          sim.vx[k] += vf.ax * 0.11 * sm;
+          sim.vy[k] += vf.ay * 0.11 * sm;
+          if (str > 0.12) sim.vd[k] += str * 0.018 * sm;
+        }
+      }
+    }
+  }
+
+  function emitAttractorSwirl(splatBuf, attractors, t, pow, maxN) {
+    if (!attractors || !attractors.length) return;
+    var ai, at, arms, R, k, ang, ripple, r, px, py, tang;
+    for (ai = 0; ai < attractors.length; ai++) {
+      at = attractors[ai];
+      at.phase = (at.phase || 0) + 0.028 * (at.spinSign || 1);
+      arms = 12;
+      R = at.radius || 80;
+      for (k = 0; k < arms; k++) {
+        if (splatBuf.length >= maxN) return;
+        ang = at.phase + (k / arms) * Math.PI * 2;
+        ripple = 0.5 + 0.5 * Math.sin(t * 1.6 + k * 0.65);
+        r = R * ripple * (0.38 + 0.12 * Math.sin(t * 2.2 + k * 0.4));
+        px = at.x + Math.cos(ang) * r;
+        py = at.y + Math.sin(ang) * r;
+        tang = ang + Math.PI * 0.5 * (at.spinSign || 1);
+        pushSplat(splatBuf, {
+          x: px, y: py,
+          size: 7 + pow * 5,
+          alpha: 0.055 + pow * 0.075,
+          ang: tang,
+          mode: 6,
+          sharp: 0.48,
+          seed: t * 12 + k + ai * 17,
+          kind: 2
+        });
+      }
+    }
+  }
+
+  function stepSimBox(agents, dt, speedMul, attractors, vortexPow) {
     if (!sim) return;
     var gw = sim.gw;
     var gh = sim.gh;
@@ -122,6 +210,7 @@
         injectFluid(a.x, a.y, a.vx * 0.06, 0.12 * sm + 0.08, 0.2, false);
       }
     });
+    applyAttractorsToSim(attractors, vortexPow, sm);
     advect(sim.vd, sim.vx, sim.vy, sim.tvd, 0.993);
     advect(sim.vx, sim.vx, sim.vy, sim.tvx, 0.975);
     advect(sim.vy, sim.vx, sim.vy, sim.tvy, 0.975);
@@ -303,13 +392,15 @@
           });
         }
       }
-      if (Math.random() < 0.55) {
+      if (Math.random() < 0.48) {
+        var sAng = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.4;
+        var sSpd = 2 + Math.random() * 5;
         sparks.push({
           x: seg.x1, y: seg.y1,
-          vx: (Math.random() - 0.5) * 6,
-          vy: (Math.random() - 0.5) * 6,
-          life: 0.35 + Math.random() * 0.35,
-          size: 4 + Math.random() * 6,
+          vx: Math.cos(sAng) * sSpd,
+          vy: Math.sin(sAng) * sSpd,
+          life: 0.28 + Math.random() * 0.28,
+          size: 1.2 + Math.random() * 2.2,
           mode: 3,
           kind: 4
         });
@@ -317,10 +408,10 @@
     }
     sparks.push({
       x: a.x, y: a.y,
-      vx: (Math.random() - 0.5) * 2,
-      vy: (Math.random() - 0.5) * 2,
-      life: 0.5,
-      size: 6 + pow * 2,
+      vx: (Math.random() - 0.5) * 1.5,
+      vy: (Math.random() - 0.5) * 1.5,
+      life: 0.38,
+      size: 2 + pow * 0.8,
       mode: 3,
       kind: 4
     });
@@ -360,7 +451,19 @@
     }
   }
 
-  function emitTrail(a, t, pow, splatBuf, sparks, intensityPow) {
+  function swirlAngle(px, py, ang, attractors, vortexPow) {
+    if (!attractors || !attractors.length) return ang;
+    var vf = sampleVortex(px, py, attractors, vortexPow);
+    if (vf.swirl < 0.04) return ang;
+    var tang = Math.atan2(vf.ay, vf.ax);
+    var mix = clamp(vf.swirl * 0.72, 0, 0.65);
+    var d = tang - ang;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    return ang + d * mix;
+  }
+
+  function emitTrail(a, t, pow, splatBuf, sparks, intensityPow, attractors, vortexPow) {
     var dx = a.x - a.px;
     var dy = a.y - a.py;
     var dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -409,6 +512,7 @@
       vy = dy / dist + a.vy;
       ang = Math.atan2(vy, vx);
       spd = Math.sqrt(vx * vx + vy * vy);
+      ang = swirlAngle(px, py, ang, attractors, vortexPow);
 
       if (m === 1) {
         tend = Math.sin(a.tendril + t * 2.5 + u * 8) * 14;
@@ -497,20 +601,20 @@
         x: a.x, y: a.y,
         vx: (Math.random() - 0.5) * 3,
         vy: 1.5 + Math.random() * 2,
-        life: 0.7, size: 3, mode: 4, kind: 1
+        life: 0.65, size: 1.8, mode: 4, kind: 1
       });
     }
     if (m === 6 && Math.random() < pow * 0.35) {
       var ba = Math.random() * Math.PI * 2;
       sparks.push({
         x: a.x, y: a.y,
-        vx: Math.cos(ba) * 2.5, vy: Math.sin(ba) * 2.5,
-        life: 0.75, size: 5, mode: 6, kind: 3
+        vx: Math.cos(ba) * 2.2, vy: Math.sin(ba) * 2.2,
+        life: 0.62, size: 2.2, mode: 6, kind: 3
       });
     }
   }
 
-  function updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget, speedMul) {
+  function updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget, speedMul, attractors, vortexPow) {
     var sm = speedMul || 1;
     dt *= sm;
     if (a.visual === undefined) initAgentType(a);
@@ -532,6 +636,11 @@
         a.vx = (p1.x - p0.x) * 14 * sm;
         a.vy = (p1.y - p0.y) * 14 * sm;
         a.boltT += dt * (5.5 + a.turb * 5) * sm;
+      }
+      if (attractors && attractors.length) {
+        var vf3 = sampleVortex(a.x, a.y, attractors, vortexPow);
+        a.vx += vf3.ax * 0.22 * sm;
+        a.vy += vf3.ay * 0.22 * sm;
       }
       var pad = 24;
       a.x = clamp(a.x, pad, W - pad);
@@ -582,6 +691,18 @@
       a.vy += Math.sin(dashA) * dashF;
     }
 
+    if (attractors && attractors.length) {
+      var vf = sampleVortex(a.x, a.y, attractors, vortexPow);
+      var vMix = clamp(vf.swirl * 1.15, 0, 1);
+      ax += vf.ax * vMix * 1.35;
+      ay += vf.ay * vMix * 1.35;
+      if (vf.swirl > 0.2) {
+        var orbit = vf.swirl * 0.55;
+        a.targetX = a.x + vf.ax * orbit * 40;
+        a.targetY = a.y + vf.ay * orbit * 40;
+      }
+    }
+
     a.vx = a.vx * 0.76 + ax * 0.24;
     a.vy = a.vy * 0.76 + ay * 0.24;
     var spdCap = (a.type === 3 ? 14 : (5.5 + a.turb * 3.5)) * sm;
@@ -613,10 +734,13 @@
     initSim: initSim,
     stepSimBox: stepSimBox,
     emitFromField: emitFromField,
+    emitAttractorSwirl: emitAttractorSwirl,
     initAgentType: initAgentType,
     updateAgentMotion: updateAgentMotion,
     emitTrail: emitTrail,
     sampleFlow: sampleFlow,
-    speedFromSlider: speedFromSlider
+    sampleVortex: sampleVortex,
+    speedFromSlider: speedFromSlider,
+    vortexPowFromSlider: vortexPowFromSlider
   };
 })(typeof window !== 'undefined' ? window : globalThis);

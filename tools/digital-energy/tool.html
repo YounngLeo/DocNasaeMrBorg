@@ -120,11 +120,12 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">sim box · scie per elemento · ink anime</div>
-  <div class="ver">v0.7 — velocità · fulmini · fluidi</div>
+  <div class="ver">v0.8 — scintille · vortici attrattori</div>
 </div>
 
 <div class="actions">
   <button type="button" id="btn-clear-agents">✕ Rimuovi agenti</button>
+  <button type="button" id="btn-clear-attractors">◎ Rimuovi attrattori</button>
   <button type="button" id="btn-clear-trails">↺ Pulisci scie</button>
   <button type="button" id="btn-export" class="export">↓ Esporta PNG</button>
 </div>
@@ -178,19 +179,34 @@
       <div class="val" id="v-radius">12</div>
     </div>
   </div>
+  <div class="control">
+    <label>Forza vortice</label>
+    <div class="row">
+      <input type="range" id="s-vortex" min="1" max="15" step="1" value="8">
+      <div class="val" id="v-vortex">8</div>
+    </div>
+  </div>
+  <div class="control">
+    <label>Raggio attrattore</label>
+    <div class="row">
+      <input type="range" id="s-attr-r" min="40" max="200" step="5" value="90">
+      <div class="val" id="v-attr-r">90</div>
+    </div>
+  </div>
 </div>
 
 <div class="hint">
-  <span class="key">CLICK</span> posiziona agente emettitore<br>
-  <span class="key">SHIFT+CLICK</span> rimuovi agente vicino<br>
-  ogni tipo ha moto e scia propri · box sim fluido
+  <span class="key">CLICK</span> agente emettitore<br>
+  <span class="key">ALT+CLICK</span> attrattore vortice<br>
+  <span class="key">SHIFT+CLICK</span> rimuovi vicino (agente o attrattore)
 </div>
 
 <script src="emitter-core.js"></script>
 
 <div class="status">
   tipo: <span id="st-type">energia</span><br>
-  agenti: <span id="st-count">0</span>
+  agenti: <span id="st-count">0</span><br>
+  attrattori: <span id="st-attractors">0</span>
 </div>
 
 <script>
@@ -206,24 +222,29 @@
 
   var TYPE_NAMES = ['luce', 'ombra', 'ghiaccio', 'elettricità', 'sangue', 'fuoco', 'energia', 'acqua'];
   var MAX_AGENTS = 32;
+  var MAX_ATTRACTORS = 24;
   var MAX_SPLATS = 560;
   var MAX_SPARKS = 280;
   var SHOW_AGENTS = true;
   var SMOKE_SCALE = 1.0;
   var EC = window.DEEmitters;
 
-  var template = { type: 6, intensity: 8, turb: 0.4, decay: 0.93, radius: 12, speed: 8 };
+  var template = { type: 6, intensity: 8, turb: 0.4, decay: 0.93, radius: 12, speed: 8, vortex: 8, attrRadius: 90 };
   var moveSpeed = 1;
+  var vortexPow = 1;
   var globalDecay = 0.93;
   var agents = [];
+  var attractors = [];
   var agentSeq = 0;
+  var attractorSeq = 0;
   var splatBuf = [];
   var sparks = [];
   var W = 1;
   var H = 1;
   var time0 = performance.now();
   var smoke = { tex: [null, null], fb: [null, null], idx: 0, w: 0, h: 0 };
-  var progFade, progSplat, progComposite, progSpark, progAgent;
+  var progFade, progSplat, progComposite, progSpark, progAgent, progAttractor;
+  var bufAttractor, uAttractor;
   var bufQuad, bufSplat, bufSpark, bufAgent;
   var uFade, uSplat, uComposite, uSpark, uAgent;
 
@@ -540,11 +561,14 @@
 
   var FS_SPARK = [
     '#version 300 es',
-    'precision mediump float;',
+    'precision highp float;',
     'in float vLife;',
     'in float vMode;',
     'in float vKind;',
     'out vec4 outColor;',
+    'float needle(vec2 p, float ax, float ay) {',
+    '  return exp(-abs(p.x) * ax) * exp(-abs(p.y) * ay);',
+    '}',
     'void main(){',
     '  int mode = int(vMode + 0.5);',
     '  int kind = int(vKind + 0.5);',
@@ -552,33 +576,34 @@
     '  float r = length(p);',
     '  float m = 0.0;',
     '  if (mode == 2) {',
-    '    float shard = max(0.0, 1.0 - abs(p.x) * 4.0 - abs(p.y + 0.3) * 3.0);',
+    '    float shard = needle(p, 14.0, 9.0) * max(0.0, 1.0 - r * 3.5);',
     '    m = shard * vLife;',
     '  } else if (mode == 4 && kind == 1) {',
-    '    float drop = smoothstep(0.55, 0.15, r);',
-    '    float tail = exp(-abs(p.x) * 12.0) * smoothstep(0.2, -0.8, p.y);',
-    '    m = (drop + tail * 0.4) * vLife;',
+    '    float drop = smoothstep(0.42, 0.08, r);',
+    '    float tail = needle(p, 28.0, 6.0) * smoothstep(0.15, -0.75, p.y);',
+    '    m = (drop * 0.55 + tail * 0.65) * vLife;',
     '  } else if (mode == 7 && kind == 2) {',
-    '    float drop = smoothstep(0.5, 0.12, r);',
-    '    m = drop * vLife;',
+    '    float drop = smoothstep(0.38, 0.06, r);',
+    '    m = (drop + needle(p, 20.0, 14.0) * 0.35) * vLife;',
     '  } else if (mode == 6 && kind == 3) {',
-    '    float spark = max(0.0, 1.0 - r * 2.8);',
-    '    float streak = exp(-abs(p.x) * 22.0) * spark;',
-    '    m = (spark + streak * 0.65) * vLife;',
+    '    float streak = needle(p, 48.0, 10.0);',
+    '    float core = 1.0 - smoothstep(0.12, 0.28, r);',
+    '    m = (streak * 0.85 + core * 0.35) * vLife;',
     '  } else if (mode == 3 && kind == 4) {',
-    '    float cross = exp(-abs(p.x) * 38.0) + exp(-abs(p.y) * 38.0);',
-    '    float core = 1.0 - smoothstep(0.2, 0.55, r);',
-    '    m = (cross * 0.35 + core) * vLife;',
+    '    float bolt = needle(p, 72.0, 18.0) + needle(vec2(p.y, p.x), 72.0, 18.0) * 0.35;',
+    '    float core = 1.0 - smoothstep(0.08, 0.22, r);',
+    '    m = (bolt * 0.9 + core * 0.45) * vLife;',
     '  } else if (mode == 3) {',
-    '    float cross = exp(-abs(p.x) * 32.0) + exp(-abs(p.y) * 32.0);',
-    '    m = (max(0.0, 1.0 - r * 2.5) + cross * 0.25) * vLife;',
+    '    float bolt = needle(p, 55.0, 16.0);',
+    '    m = (bolt + (1.0 - smoothstep(0.15, 0.32, r)) * 0.25) * vLife;',
     '  } else {',
-    '    float cross = exp(-abs(p.x) * 28.0) + exp(-abs(p.y) * 28.0);',
-    '    m = (max(0.0, 1.0 - r * 2.2) + cross * 0.12) * vLife;',
+    '    float streak = needle(p, 40.0, 14.0);',
+    '    m = (streak + (1.0 - smoothstep(0.18, 0.34, r)) * 0.2) * vLife;',
     '  }',
-    '  float pm = 1.0 - smoothstep(0.48, 0.5, r);',
+    '  float pm = 1.0 - smoothstep(0.42, 0.48, r);',
     '  m *= pm;',
-    '  if (m < 0.02) discard;',
+    '  m = pow(m, 1.08);',
+    '  if (m < 0.025) discard;',
     '  vec3 col = vec3(1.0);',
     '  if (mode == 0) col = vec3(1.0, 0.95, 0.8);',
     '  else if (mode == 1) col = vec3(0.6, 0.1, 0.5);',
@@ -588,7 +613,45 @@
     '  else if (mode == 5) col = vec3(1.0, 0.55, 0.15);',
     '  else if (mode == 6) col = vec3(0.55, 0.75, 1.0);',
     '  else col = vec3(0.45, 0.88, 0.95);',
-    '  outColor = vec4(col, m);',
+    '  outColor = vec4(col, min(m * 1.15, 1.0));',
+    '}'
+  ].join('\n');
+
+  var VS_ATTRACTOR = [
+    '#version 300 es',
+    'in vec2 aPos;',
+    'in float aRadius;',
+    'in float aPhase;',
+    'uniform vec2 uRes;',
+    'out float vPhase;',
+    'out float vRad;',
+    'void main(){',
+    '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
+    '  c.y = -c.y;',
+    '  gl_Position = vec4(c, 0.0, 1.0);',
+    '  float sz = clamp(aRadius * 0.14, 14.0, 42.0);',
+    '  gl_PointSize = sz;',
+    '  vPhase = aPhase; vRad = aRadius;',
+    '}'
+  ].join('\n');
+
+  var FS_ATTRACTOR = [
+    '#version 300 es',
+    'precision highp float;',
+    'in float vPhase;',
+    'in float vRad;',
+    'out vec4 outColor;',
+    'void main(){',
+    '  vec2 p = (gl_PointCoord - 0.5) * 2.0;',
+    '  float r = length(p);',
+    '  float ang = atan(p.y, p.x);',
+    '  float ring = smoothstep(0.92, 0.78, r) * smoothstep(0.52, 0.68, r);',
+    '  float spiral = sin(ang * 4.0 - r * 10.0 + vPhase * 8.0) * 0.5 + 0.5;',
+    '  float arms = pow(sin(ang * 3.0 + vPhase * 5.0) * 0.5 + 0.5, 2.0);',
+    '  float m = ring * 0.75 + spiral * ring * 0.55 + arms * ring * 0.25;',
+    '  if (m < 0.04) discard;',
+    '  vec3 col = mix(vec3(0.35, 0.22, 0.62), vec3(0.55, 0.38, 0.88), spiral);',
+    '  outColor = vec4(col, m * 0.72);',
     '}'
   ].join('\n');
 
@@ -656,6 +719,7 @@
     progComposite = link(compile(gl.VERTEX_SHADER, VS_QUAD), compile(gl.FRAGMENT_SHADER, FS_COMPOSITE));
     progSpark = link(compile(gl.VERTEX_SHADER, VS_SPARK), compile(gl.FRAGMENT_SHADER, FS_SPARK));
     progAgent = link(compile(gl.VERTEX_SHADER, VS_AGENT), compile(gl.FRAGMENT_SHADER, FS_AGENT));
+    progAttractor = link(compile(gl.VERTEX_SHADER, VS_ATTRACTOR), compile(gl.FRAGMENT_SHADER, FS_ATTRACTOR));
 
     bufQuad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
@@ -665,6 +729,7 @@
     bufSplat = gl.createBuffer();
     bufSpark = gl.createBuffer();
     bufAgent = gl.createBuffer();
+    bufAttractor = gl.createBuffer();
 
     uFade = { tex: gl.getUniformLocation(progFade, 'uTex'), decay: gl.getUniformLocation(progFade, 'uDecay') };
     uSplat = {
@@ -678,6 +743,7 @@
     };
     uSpark = { res: gl.getUniformLocation(progSpark, 'uRes') };
     uAgent = { res: gl.getUniformLocation(progAgent, 'uRes') };
+    uAttractor = { res: gl.getUniformLocation(progAttractor, 'uRes') };
   }
 
   function bindQuad(prog) {
@@ -748,6 +814,48 @@
     return best;
   }
 
+  function findNearestAttractor(px, py, maxD) {
+    var best = null;
+    var bestD = maxD * maxD;
+    attractors.forEach(function (at) {
+      var dx = at.x - px;
+      var dy = at.y - py;
+      var d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = at; }
+    });
+    return best;
+  }
+
+  function createAttractor(x, y) {
+    return {
+      id: ++attractorSeq,
+      x: x,
+      y: y,
+      radius: template.attrRadius,
+      strength: 1,
+      spinSign: Math.random() < 0.5 ? -1 : 1,
+      phase: Math.random() * Math.PI * 2
+    };
+  }
+
+  function removeNearest(px, py) {
+    var hitA = findNearest(px, py, 40);
+    var hitT = findNearestAttractor(px, py, 44);
+    if (!hitA && !hitT) return;
+    if (!hitA) {
+      attractors = attractors.filter(function (at) { return at.id !== hitT.id; });
+      return;
+    }
+    if (!hitT) {
+      agents = agents.filter(function (a) { return a.id !== hitA.id; });
+      return;
+    }
+    var dA = (hitA.x - px) * (hitA.x - px) + (hitA.y - py) * (hitA.y - py);
+    var dT = (hitT.x - px) * (hitT.x - px) + (hitT.y - py) * (hitT.y - py);
+    if (dA <= dT) agents = agents.filter(function (a) { return a.id !== hitA.id; });
+    else attractors = attractors.filter(function (at) { return at.id !== hitT.id; });
+  }
+
   function typeMotion(a, t) {
     var m = a.type;
     var ph = a.phase + t * 0.35;
@@ -795,7 +903,7 @@
   function updateAgents(t) {
     var minDecay = globalDecay;
     var dt = 0.016;
-    if (EC) EC.stepSimBox(agents, dt, moveSpeed);
+    if (EC) EC.stepSimBox(agents, dt, moveSpeed, attractors, vortexPow);
     agents.forEach(function (a) {
       if (a.decay < minDecay) minDecay = a.decay;
       if (a.targetX === undefined) {
@@ -812,14 +920,15 @@
       }
       a.orbitAng += a.orbitSpd * 0.045 * moveSpeed;
       if (EC) {
-        EC.updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget, moveSpeed);
+        EC.updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget, moveSpeed, attractors, vortexPow);
       }
       var pow = intensityPow(a.intensity);
-      if (EC) EC.emitTrail(a, t, pow, splatBuf, sparks, intensityPow);
+      if (EC) EC.emitTrail(a, t, pow, splatBuf, sparks, intensityPow, attractors, vortexPow);
     });
     if (EC) {
       EC.emitFromField(splatBuf, 1, 0.5, MAX_SPLATS);
       EC.emitFromField(splatBuf, 7, 0.45, MAX_SPLATS);
+      EC.emitAttractorSwirl(splatBuf, attractors, t, 0.55, MAX_SPLATS);
     }
     if (splatBuf.length > MAX_SPLATS) splatBuf.splice(0, splatBuf.length - MAX_SPLATS);
     if (sparks.length > MAX_SPARKS) sparks.splice(0, sparks.length - MAX_SPARKS);
@@ -913,19 +1022,26 @@
     var alive = 0;
     for (var i = sparks.length - 1; i >= 0; i--) {
       var sp = sparks[i];
+      if (EC && attractors.length) {
+        var vfSp = EC.sampleVortex(sp.x, sp.y, attractors, vortexPow);
+        sp.vx += vfSp.ax * 0.12 * sp.life;
+        sp.vy += vfSp.ay * 0.12 * sp.life;
+      }
       sp.x += sp.vx;
       sp.y += sp.vy;
       if (sp.mode === 4 && sp.kind === 1) {
         sp.vy += 0.18;
         sp.vx *= 0.96;
         sp.life -= 0.038;
+      } else if (sp.kind === 4 && sp.mode === 3) {
+        sp.life -= 0.032;
       } else {
-        sp.life -= 0.045;
+        sp.life -= 0.04;
       }
       if (sp.life <= 0) { sparks.splice(i, 1); continue; }
       data[j++] = sp.x * dprX;
       data[j++] = sp.y * dprY;
-      data[j++] = sp.size * sp.life;
+      data[j++] = sp.size * sp.life * 0.88;
       data[j++] = sp.life;
       data[j++] = sp.mode;
       data[j++] = sp.kind || 0;
@@ -986,6 +1102,37 @@
     gl.drawArrays(gl.POINTS, 0, agents.length);
   }
 
+  function drawAttractors() {
+    if (!attractors.length) return;
+    var dprX = canvas.width / W;
+    var dprY = canvas.height / H;
+    var stride = 4 * 4;
+    var data = new Float32Array(attractors.length * 4);
+    var j = 0;
+    attractors.forEach(function (at) {
+      data[j++] = at.x * dprX;
+      data[j++] = at.y * dprY;
+      data[j++] = at.radius;
+      data[j++] = at.phase || 0;
+    });
+    gl.useProgram(progAttractor);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufAttractor);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    var p = gl.getAttribLocation(progAttractor, 'aPos');
+    gl.enableVertexAttribArray(p);
+    gl.vertexAttribPointer(p, 2, gl.FLOAT, false, stride, 0);
+    var r = gl.getAttribLocation(progAttractor, 'aRadius');
+    gl.enableVertexAttribArray(r);
+    gl.vertexAttribPointer(r, 1, gl.FLOAT, false, stride, 8);
+    var ph = gl.getAttribLocation(progAttractor, 'aPhase');
+    gl.enableVertexAttribArray(ph);
+    gl.vertexAttribPointer(ph, 1, gl.FLOAT, false, stride, 12);
+    gl.uniform2f(uAttractor.res, canvas.width, canvas.height);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.POINTS, 0, attractors.length);
+  }
+
   function render() {
     if (!smoke.tex[0]) return;
     var t = (performance.now() - time0) * 0.001;
@@ -1025,6 +1172,7 @@
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
+    drawAttractors();
     drawAgents();
   }
 
@@ -1041,6 +1189,10 @@
       a.y = clamp(a.y, 24, H - 24);
       if (a.targetX !== undefined) pickRoamTarget(a);
     });
+    attractors.forEach(function (at) {
+      at.x = clamp(at.x, 24, W - 24);
+      at.y = clamp(at.y, 24, H - 24);
+    });
     if (EC) EC.initSim(W, H);
     resizeSmoke();
   }
@@ -1056,6 +1208,8 @@
   function updateStatus() {
     document.getElementById('st-type').textContent = TYPE_NAMES[template.type];
     document.getElementById('st-count').textContent = String(agents.length);
+    var stAt = document.getElementById('st-attractors');
+    if (stAt) stAt.textContent = String(attractors.length);
   }
 
   function bindSlider(id, vid, key, fmt) {
@@ -1075,6 +1229,14 @@
         template.speed = v;
         moveSpeed = EC ? EC.speedFromSlider(v) : 1;
         if (out) out.textContent = String(template.speed);
+      } else if (key === 'vortex') {
+        template.vortex = v;
+        vortexPow = EC ? EC.vortexPowFromSlider(v) : 1;
+        if (out) out.textContent = String(template.vortex);
+      } else if (key === 'attrRadius') {
+        template.attrRadius = v;
+        attractors.forEach(function (at) { at.radius = v; });
+        if (out) out.textContent = String(Math.round(v));
       } else {
         template[key] = v;
         if (out) out.textContent = fmt ? fmt(template[key]) : String(template[key]);
@@ -1086,8 +1248,13 @@
   canvas.addEventListener('pointerdown', function (e) {
     var p = pointerPos(e);
     if (e.shiftKey) {
-      var hit = findNearest(p.x, p.y, 36);
-      if (hit) agents = agents.filter(function (a) { return a.id !== hit.id; });
+      removeNearest(p.x, p.y);
+      updateStatus();
+      return;
+    }
+    if (e.altKey) {
+      if (attractors.length >= MAX_ATTRACTORS) return;
+      attractors.push(createAttractor(p.x, p.y));
       updateStatus();
       return;
     }
@@ -1105,9 +1272,15 @@
   bindSlider('s-turb', 'v-turb', 'turb');
   bindSlider('s-decay', 'v-decay', 'decay');
   bindSlider('s-radius', 'v-radius', 'radius');
+  bindSlider('s-vortex', 'v-vortex', 'vortex');
+  bindSlider('s-attr-r', 'v-attr-r', 'attrRadius');
 
   document.getElementById('btn-clear-agents').addEventListener('click', function () {
     agents = [];
+    updateStatus();
+  });
+  document.getElementById('btn-clear-attractors').addEventListener('click', function () {
+    attractors = [];
     updateStatus();
   });
   document.getElementById('btn-clear-trails').addEventListener('click', clearTrails);
@@ -1124,6 +1297,7 @@
     console.warn('emitter-core.js mancante');
   } else {
     moveSpeed = EC.speedFromSlider(template.speed);
+    vortexPow = EC.vortexPowFromSlider(template.vortex);
   }
   resize();
   updateStatus();
