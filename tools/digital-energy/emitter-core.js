@@ -518,7 +518,8 @@
     var dy = a.y - a.py;
     var dist = Math.sqrt(dx * dx + dy * dy) || 1;
     var steps = Math.max(1, dist > 0.2 ? Math.min(46, Math.ceil(dist / 0.8)) : 1);
-    var rad = a.radius * (0.62 + pow * 0.42);
+    var radBase = a.radius * (0.62 + pow * 0.42);
+    var rad = radBase;
     var m = a.type;
 
     if (m === 3) {
@@ -566,6 +567,12 @@
       ang = Math.atan2(vy, vx);
       spd = Math.sqrt(vx * vx + vy * vy);
       ang = windAngle(px, py, ang, t);
+
+      // long-period, continuous thickness wave (swells & pinches along the trail)
+      var thWave = Math.sin(px * 0.010 + py * 0.008 + t * 0.35) * 0.6
+                 + Math.sin(px * 0.0034 - py * 0.0046 - t * 0.18) * 0.4;
+      var thick = 0.28 + 2.0 * (thWave * 0.5 + 0.5);
+      rad = radBase * thick;
 
       emitTrace(splatBuf, px, py, ang, rad, m);
 
