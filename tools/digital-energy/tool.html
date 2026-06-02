@@ -119,8 +119,8 @@
 <div class="title">
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
-  <div class="sub">energia maledetta · ink anime / cel-shading</div>
-  <div class="ver">v0.5 — ink anime · energia maledetta</div>
+  <div class="sub">sim box · scie per elemento · ink anime</div>
+  <div class="ver">v0.6 — sim box · agenti per tipo</div>
 </div>
 
 <div class="actions">
@@ -176,8 +176,10 @@
 <div class="hint">
   <span class="key">CLICK</span> posiziona agente emettitore<br>
   <span class="key">SHIFT+CLICK</span> rimuovi agente vicino<br>
-  ogni agente emette scie in autonomia
+  ogni tipo ha moto e scia propri · box sim fluido
 </div>
+
+<script src="emitter-core.js"></script>
 
 <div class="status">
   tipo: <span id="st-type">energia</span><br>
@@ -199,8 +201,9 @@
   var MAX_AGENTS = 32;
   var MAX_SPLATS = 560;
   var MAX_SPARKS = 180;
-  var SHOW_MARKERS = false;
+  var SHOW_AGENTS = true;
   var SMOKE_SCALE = 1.0;
+  var EC = window.DEEmitters;
 
   var template = { type: 6, intensity: 8, turb: 0.4, decay: 0.93, radius: 12 };
   var globalDecay = 0.93;
@@ -212,9 +215,9 @@
   var H = 1;
   var time0 = performance.now();
   var smoke = { tex: [null, null], fb: [null, null], idx: 0, w: 0, h: 0 };
-  var progFade, progSplat, progComposite, progSpark;
-  var bufQuad, bufSplat, bufSpark;
-  var uFade, uSplat, uComposite, uSpark;
+  var progFade, progSplat, progComposite, progSpark, progAgent;
+  var bufQuad, bufSplat, bufSpark, bufAgent;
+  var uFade, uSplat, uComposite, uSpark, uAgent;
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function intensityPow(v) { return 0.22 + ((v - 1) / 14) * 0.78; }
@@ -263,18 +266,20 @@
     'in float aMode;',
     'in float aSharp;',
     'in float aSeed;',
+    'in float aKind;',
     'uniform vec2 uRes;',
     'out float vAlpha;',
     'out float vAngle;',
     'out float vMode;',
     'out float vSharp;',
     'out float vSeed;',
+    'out float vKind;',
     'void main(){',
     '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
     '  c.y = -c.y;',
     '  gl_Position = vec4(c, 0.0, 1.0);',
     '  gl_PointSize = max(6.0, aSize);',
-    '  vAlpha = aAlpha; vAngle = aAngle; vMode = aMode; vSharp = aSharp; vSeed = aSeed;',
+    '  vAlpha = aAlpha; vAngle = aAngle; vMode = aMode; vSharp = aSharp; vSeed = aSeed; vKind = aKind;',
     '}'
   ].join('\n');
 
@@ -286,6 +291,7 @@
     'in float vMode;',
     'in float vSharp;',
     'in float vSeed;',
+    'in float vKind;',
     'uniform float uTime;',
     'out vec4 outColor;',
     'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }',
@@ -335,13 +341,25 @@
     '    branch *= exp(-abs(p.y) * 3.0); m = max(m, branch); p = p * 1.65 + vec2(0.35, 0.18);',
     '  } return m;',
     '}',
-    'float softPoint(vec2 p, float feather){',
-    '  return 1.0 - smoothstep(0.5 - feather, 0.5, length(p));',
+    'float jaggedMask(vec2 p, int mode, int kind, float seed){',
+    '  float ang = atan(p.y, p.x);',
+    '  float r = length(p);',
+    '  float n = fbm(vec2(ang * (4.0 + float(mode) * 0.5), seed * 0.17));',
+    '  float rad = 0.42 + n * 0.11;',
+    '  if (mode == 1) rad = 0.28 + n * 0.16;',
+    '  else if (mode == 3) rad = 0.36 + n * 0.07;',
+    '  else if (mode == 7) rad = 0.38 + n * 0.08;',
+    '  else if (mode == 2) rad = 0.34 + n * 0.12;',
+    '  if (kind == 1) rad *= 1.18;',
+    '  if (kind == 2) rad *= 0.88;',
+    '  if (kind == 3) rad = 0.22 + n * 0.08;',
+    '  return 1.0 - smoothstep(rad, rad + 0.025, r);',
     '}',
     'void main(){',
     '  int mode = int(vMode + 0.5);',
+    '  int kind = int(vKind + 0.5);',
     '  vec2 p = gl_PointCoord - 0.5;',
-    '  float pointMask = softPoint(p, 0.14);',
+    '  float pointMask = jaggedMask(p, mode, kind, vSeed);',
     '  if (pointMask < 0.001) discard;',
     '  float ca = cos(vAngle); float sa = sin(vAngle);',
     '  vec2 q = vec2(ca * p.x - sa * p.y, sa * p.x + ca * p.y);',
@@ -371,12 +389,20 @@
     '    m = (body + rays) * vAlpha * flick;',
     '    col = shade3D(vec3(1.0, 0.94, 0.75), ndl, rim, spec + rays);',
     '  } else if (mode == 1) {',
-    '    float sm = fbm(nUv + vec2(uTime * 0.35, -uTime * 0.2));',
-    '    float puff = exp(-r2 * mix(0.7, 1.8, sm)) * smoothstep(0.52, 0.05, r + sm * 0.25);',
-    '    float tend = exp(-abs(q.y + sm * 0.5) * 5.0) * exp(-r2 * 0.9);',
-    '    m = (puff * 1.0 + tend * 0.65) * vAlpha;',
-    '    col = shade3D(vec3(0.04, 0.01, 0.08), ndl * 0.4, rim * 0.8, spec * 0.2);',
-    '    col = mix(vec3(0.0), col * 0.85, puff + tend * 0.55);',
+    '    float sm = fbm(nUv + vec2(uTime * 0.4, -uTime * 0.25));',
+    '    if (kind == 3) {',
+    '      float pillar = exp(-abs(q.x + sm * 0.3) * 10.0) * smoothstep(0.5, 0.0, abs(q.y));',
+    '      m = pillar * vAlpha;',
+    '      col = mix(vec3(0.0), vec3(0.15, 0.02, 0.22), pillar);',
+    '    } else {',
+    '      float puff = exp(-r2 * mix(0.6, 1.6, sm)) * smoothstep(0.55, 0.02, r + sm * 0.3);',
+    '      float tend = exp(-abs(q.x * 0.5 + q.y + sm * 0.4) * mix(4.0, 8.0, vSharp)) * exp(-r2 * 0.8);',
+    '      float eye = exp(-pow(r - 0.12, 2.0) * 80.0) * 0.5;',
+    '      m = (puff + tend * 0.8) * vAlpha;',
+    '      col = shade3D(vec3(0.02, 0.0, 0.05), ndl * 0.35, rim, spec * 0.15);',
+    '      col = mix(vec3(0.0), col, puff + tend);',
+    '      col += vec3(0.55, 0.08, 0.75) * eye;',
+    '    }',
     '  } else if (mode == 2) {',
     '    float shards = 0.0;',
     '    for (int i = 0; i < 6; i++) {',
@@ -389,10 +415,11 @@
     '    col = shade3D(vec3(0.5, 0.82, 0.95), ndl, rim + shards * 0.5, spec);',
     '    col += vec3(0.9, 1.0, 1.0) * cel(shards, 3.0) * 0.4;',
     '  } else if (mode == 3) {',
-    '    float bolt = cel(lightning(q, seed, uTime), 4.0);',
-    '    float core = exp(-r2 * 12.0);',
-    '    m = (bolt * 1.15 + core * 0.45) * vAlpha * flick;',
-    '    col = shade3D(vec3(0.2, 0.45, 1.0), ndl, bolt, bolt + spec);',
+    '    float bolt = cel(lightning(q, seed, uTime), 5.0);',
+    '    float core = exp(-r2 * mix(14.0, 28.0, vSharp));',
+    '    float streak = exp(-abs(q.y) * mix(20.0, 45.0, vSharp)) * exp(-abs(q.x) * 4.0);',
+    '    m = (bolt * 1.2 + core * 0.5 + streak * 0.7) * vAlpha * flick;',
+    '    col = shade3D(vec3(0.15, 0.4, 1.0), ndl, bolt + streak, bolt + spec);',
     '  } else if (mode == 4) {',
     '    float nv = fbm(nUv + uTime * 0.04);',
     '    float ribbon = exp(-abs(q.x + nv * 0.4) * mix(5.0, 12.0, vSharp));',
@@ -546,11 +573,70 @@
     '}'
   ].join('\n');
 
+  var VS_AGENT = [
+    '#version 300 es',
+    'in vec2 aPos;',
+    'in float aType;',
+    'in float aPulse;',
+    'uniform vec2 uRes;',
+    'out float vType;',
+    'out float vPulse;',
+    'void main(){',
+    '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
+    '  c.y = -c.y;',
+    '  gl_Position = vec4(c, 0.0, 1.0);',
+    '  float sz = 11.0 + aPulse * 4.0;',
+    '  if (int(aType + 0.5) == 1) sz = 18.0 + aPulse * 6.0;',
+    '  if (int(aType + 0.5) == 3) sz = 9.0 + aPulse * 3.0;',
+    '  gl_PointSize = sz;',
+    '  vType = aType; vPulse = aPulse;',
+    '}'
+  ].join('\n');
+
+  var FS_AGENT = [
+    '#version 300 es',
+    'precision mediump float;',
+    'in float vType;',
+    'in float vPulse;',
+    'out vec4 outColor;',
+    'void main(){',
+    '  int t = int(vType + 0.5);',
+    '  vec2 p = (gl_PointCoord - 0.5) * 2.0;',
+    '  float m = 0.0;',
+    '  vec3 col = vec3(0.4);',
+    '  if (t == 0) {',
+    '    float cross = exp(-abs(p.x)*22.0)+exp(-abs(p.y)*22.0);',
+    '    m = cross * (0.7 + vPulse * 0.3); col = vec3(1.0, 0.95, 0.8);',
+    '  } else if (t == 1) {',
+    '    float body = exp(-abs(p.x)*8.0) * smoothstep(0.6,-0.5,p.y);',
+    '    float head = 1.0 - smoothstep(0.15,0.35,length(p-vec2(0.0,0.45)));',
+    '    m = max(body, head*0.6); col = vec3(0.05,0.0,0.1);',
+    '    col += vec3(0.7,0.15,0.9) * (1.0-smoothstep(0.0,0.12,length(p-vec2(0.0,0.42))));',
+    '  } else if (t == 2) {',
+    '    m = max(0.0, 1.0-abs(p.x)*3.5-abs(p.y)*3.5); col = vec3(0.8,0.98,1.0);',
+    '  } else if (t == 3) {',
+    '    float z = abs(p.x)+abs(p.y*0.6); m = 1.0-smoothstep(0.35,0.55,z); col = vec3(0.5,0.8,1.0);',
+    '  } else if (t == 4) {',
+    '    m = 1.0-smoothstep(0.35,0.55,length(p-vec2(0.0,0.15))); col = vec3(0.7,0.05,0.1);',
+    '  } else if (t == 5) {',
+    '    m = max(0.0,1.0-abs(p.x)*4.0-abs(p.y+0.2)*3.0); col = vec3(1.0,0.4,0.1);',
+    '  } else if (t == 6) {',
+    '    float h = abs(sin(atan(p.y,p.x)*3.0)); m = smoothstep(0.85,0.95,h)*(1.0-length(p)*1.2); col = vec3(0.5,0.3,0.95);',
+    '  } else {',
+    '    float rip = sin(length(p)*12.0-vPulse*8.0)*0.5+0.5;',
+    '    m = (1.0-smoothstep(0.3,0.55,length(p)))*(0.6+rip*0.4); col = vec3(0.2,0.55,0.85);',
+    '  }',
+    '  if (m < 0.05) discard;',
+    '  outColor = vec4(col, m * 0.85);',
+    '}'
+  ].join('\n');
+
   function initGL() {
     progFade = link(compile(gl.VERTEX_SHADER, VS_QUAD), compile(gl.FRAGMENT_SHADER, FS_FADE));
     progSplat = link(compile(gl.VERTEX_SHADER, VS_SPLAT), compile(gl.FRAGMENT_SHADER, FS_SPLAT));
     progComposite = link(compile(gl.VERTEX_SHADER, VS_QUAD), compile(gl.FRAGMENT_SHADER, FS_COMPOSITE));
     progSpark = link(compile(gl.VERTEX_SHADER, VS_SPARK), compile(gl.FRAGMENT_SHADER, FS_SPARK));
+    progAgent = link(compile(gl.VERTEX_SHADER, VS_AGENT), compile(gl.FRAGMENT_SHADER, FS_AGENT));
 
     bufQuad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
@@ -559,6 +645,7 @@
     ]), gl.STATIC_DRAW);
     bufSplat = gl.createBuffer();
     bufSpark = gl.createBuffer();
+    bufAgent = gl.createBuffer();
 
     uFade = { tex: gl.getUniformLocation(progFade, 'uTex'), decay: gl.getUniformLocation(progFade, 'uDecay') };
     uSplat = {
@@ -571,6 +658,7 @@
       time: gl.getUniformLocation(progComposite, 'uTime')
     };
     uSpark = { res: gl.getUniformLocation(progSpark, 'uRes') };
+    uAgent = { res: gl.getUniformLocation(progAgent, 'uRes') };
   }
 
   function bindQuad(prog) {
@@ -609,6 +697,7 @@
       pulse: Math.random()
     };
     pickRoamTarget(a);
+    if (EC) EC.initAgentType(a);
     return a;
   }
 
@@ -685,6 +774,8 @@
 
   function updateAgents(t) {
     var minDecay = globalDecay;
+    var dt = 0.016;
+    if (EC) EC.stepSimBox(agents, dt);
     agents.forEach(function (a) {
       if (a.decay < minDecay) minDecay = a.decay;
       if (a.targetX === undefined) {
@@ -697,149 +788,19 @@
         a.dashT = a.dashT || 0.5;
         a.pulse = a.pulse || 0;
         pickRoamTarget(a);
+        if (EC) EC.initAgentType(a);
       }
-      var dxT = a.targetX - a.x;
-      var dyT = a.targetY - a.y;
-      var dT = Math.sqrt(dxT * dxT + dyT * dyT) || 1;
-      if (dT < 130) pickRoamTarget(a);
       a.orbitAng += a.orbitSpd * 0.045;
-      var midX = (a.homeX + a.targetX) * 0.5;
-      var midY = (a.homeY + a.targetY) * 0.5;
-      var orbAx = Math.cos(a.orbitAng) * 1.35;
-      var orbAy = Math.sin(a.orbitAng * 0.87) * 1.25;
-      var mot = typeMotion(a, t + a.phase);
-      var bnd = boundarySteer(a);
-      var roam = 0.34;
-      var home = 0.003;
-      var ax = mot.ax + bnd.ax + (dxT / dT) * roam + (a.homeX - a.x) * home;
-      var ay = mot.ay + bnd.ay + (dyT / dT) * roam + (a.homeY - a.y) * home;
-      ax += orbAx + (midX - a.x) * 0.004;
-      ay += orbAy + (midY - a.y) * 0.004;
-      a.dashT -= 0.016;
-      if (a.dashT <= 0) {
-        a.dashT = 0.55 + Math.random() * 1.4;
-        var dashA = Math.random() * Math.PI * 2;
-        var dashF = 2.8 + a.turb * 3.5;
-        a.vx += Math.cos(dashA) * dashF;
-        a.vy += Math.sin(dashA) * dashF;
+      if (EC) {
+        EC.updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget);
       }
-      a.vx = a.vx * 0.78 + ax * 0.22;
-      a.vy = a.vy * 0.78 + ay * 0.22;
-      var spdCap = 5.2 + a.turb * 3.4;
-      var spd = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
-      if (spd > spdCap) {
-        a.vx = (a.vx / spd) * spdCap;
-        a.vy = (a.vy / spd) * spdCap;
-      }
-      a.px = a.x;
-      a.py = a.y;
-      a.pulse += 0.05;
-      var pulse = 1.0 + Math.sin(a.pulse) * 0.15;
-      a.x += a.vx * pulse + Math.sin(t * 2.8 + a.phase) * a.turb * 0.55;
-      a.y += a.vy * pulse + Math.cos(t * 2.0 + a.phase * 1.4) * a.turb * 0.5;
-      var pad = 24;
-      if (a.x < pad) { a.x = pad; a.vx = Math.abs(a.vx) * 0.55 + 0.15; }
-      if (a.x > W - pad) { a.x = W - pad; a.vx = -Math.abs(a.vx) * 0.55 - 0.15; }
-      if (a.y < pad) { a.y = pad; a.vy = Math.abs(a.vy) * 0.55 + 0.15; }
-      if (a.y > H - pad) { a.y = H - pad; a.vy = -Math.abs(a.vy) * 0.55 - 0.15; }
-
       var pow = intensityPow(a.intensity);
-      a.emitAcc += pow * 0.88;
-      var emits = Math.floor(a.emitAcc);
-      a.emitAcc -= emits;
-      var dx = a.x - a.px;
-      var dy = a.y - a.py;
-      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      var steps = Math.max(emits, dist > 0.25 ? Math.min(26, Math.ceil(dist / 1.6)) : 0);
-      var turb = a.turb * 4;
-      var rad = a.radius * (1.05 + pow * 0.65);
-      var sharp = typeSharp(a.type);
-      for (var i = 0; i < steps; i++) {
-        var u = (i + 1) / (steps + 1);
-        var px = a.px + dx * u + (Math.random() - 0.5) * turb * 0.35;
-        var py = a.py + dy * u + (Math.random() - 0.5) * turb * 0.35;
-        var vx = dx / dist + a.vx + (Math.random() - 0.5) * a.turb;
-        var vy = dy / dist + a.vy + (Math.random() - 0.5) * a.turb;
-        var ang = Math.atan2(vy, vx);
-        var spd = Math.sqrt(vx * vx + vy * vy);
-        splatBuf.push({
-          x: px, y: py,
-          size: rad * (1.2 + spd * 0.18) * (2.8 + pow * 0.45),
-          alpha: (0.11 + pow * 0.22) * (0.8 + a.decay * 0.2),
-          ang: ang,
-          mode: a.type,
-          sharp: sharp,
-          seed: Math.random() * 97.0 + t * 0.17
-        });
-        if (spd > 0.35 && Math.random() < 0.55) {
-          splatBuf.push({
-            x: px, y: py,
-            size: rad * (0.85 + spd * 0.25) * (3.2 + pow * 0.5),
-            alpha: (0.08 + pow * 0.16) * 0.85,
-            ang: ang,
-            mode: a.type,
-            sharp: Math.min(1.0, sharp + 0.15),
-            seed: Math.random() * 53.0 + t * 0.31
-          });
-        }
-        if (a.type === 2 && Math.random() < pow * 0.22) {
-          sparks.push({
-            x: px, y: py,
-            vx: vx * 0.6 + (Math.random() - 0.5) * 1.2,
-            vy: vy * 0.6 - 0.4 - Math.random() * 0.8,
-            life: 0.5 + Math.random() * 0.4,
-            size: 2.5 + Math.random() * 5,
-            mode: 2,
-            kind: 0
-          });
-        }
-        if (a.type === 7 && Math.random() < pow * 0.2) {
-          sparks.push({
-            x: px, y: py,
-            vx: vx * 0.4 + (Math.random() - 0.5) * 1.5,
-            vy: vy * 0.4 + (Math.random() - 0.5) * 1.5,
-            life: 0.55 + Math.random() * 0.35,
-            size: 2 + Math.random() * 4,
-            mode: 7,
-            kind: 2
-          });
-        }
-        if (a.type === 4 && Math.random() < pow * 0.42) {
-          sparks.push({
-            x: px, y: py,
-            vx: (Math.random() - 0.5) * 3.5,
-            vy: 1.2 + Math.random() * 2.8,
-            life: 0.65 + Math.random() * 0.35,
-            size: 2 + Math.random() * 4,
-            mode: 4,
-            kind: 1
-          });
-        }
-        if (a.type === 6 && Math.random() < pow * 0.38) {
-          var burst = 1.8 + Math.random() * 2.5;
-          sparks.push({
-            x: px, y: py,
-            vx: Math.cos(ang + (Math.random() - 0.5)) * burst,
-            vy: Math.sin(ang + (Math.random() - 0.5)) * burst,
-            life: 0.7 + Math.random() * 0.4,
-            size: 4 + Math.random() * 8,
-            mode: 6,
-            kind: 3
-          });
-        }
-        if (Math.random() < pow * a.turb * 0.38) {
-          sparks.push({
-            x: px, y: py,
-            vx: vx * 1.5 + (Math.random() - 0.5) * 2,
-            vy: vy * 1.5 + (Math.random() - 0.5) * 2,
-            life: 1,
-            size: 3 + Math.random() * 7,
-            mode: a.type,
-            kind: 0
-          });
-        }
-      }
+      if (EC) EC.emitTrail(a, t, pow, splatBuf, sparks, intensityPow);
     });
+    if (EC) {
+      EC.emitFromField(splatBuf, 1, 0.5, MAX_SPLATS);
+      EC.emitFromField(splatBuf, 7, 0.45, MAX_SPLATS);
+    }
     if (splatBuf.length > MAX_SPLATS) splatBuf.splice(0, splatBuf.length - MAX_SPLATS);
     if (sparks.length > MAX_SPARKS) sparks.splice(0, sparks.length - MAX_SPARKS);
     return minDecay;
@@ -889,8 +850,8 @@
     var dprY = sh / H;
     var dpr = (dprX + dprY) * 0.5;
     var n = splatBuf.length;
-    var stride = 8 * 4;
-    var data = new Float32Array(n * 8);
+    var stride = 9 * 4;
+    var data = new Float32Array(n * 9);
     var j = 0;
     splatBuf.forEach(function (s) {
       data[j++] = s.x * dprX;
@@ -901,14 +862,15 @@
       data[j++] = s.mode;
       data[j++] = s.sharp;
       data[j++] = s.seed || 0;
+      data[j++] = s.kind || 0;
     });
     splatBuf.length = 0;
 
     gl.useProgram(progSplat);
     gl.bindBuffer(gl.ARRAY_BUFFER, bufSplat);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
-    var loc = ['aPos', 'aSize', 'aAlpha', 'aAngle', 'aMode', 'aSharp', 'aSeed'];
-    var off = [0, 8, 12, 16, 20, 24, 28];
+    var loc = ['aPos', 'aSize', 'aAlpha', 'aAngle', 'aMode', 'aSharp', 'aSeed', 'aKind'];
+    var off = [0, 8, 12, 16, 20, 24, 28, 32];
     for (var k = 0; k < loc.length; k++) {
       var l = gl.getAttribLocation(progSplat, loc[k]);
       gl.enableVertexAttribArray(l);
@@ -973,6 +935,37 @@
     gl.drawArrays(gl.POINTS, 0, alive);
   }
 
+  function drawAgents() {
+    if (!SHOW_AGENTS || !agents.length) return;
+    var dprX = canvas.width / W;
+    var dprY = canvas.height / H;
+    var stride = 4 * 4;
+    var data = new Float32Array(agents.length * 4);
+    var j = 0;
+    agents.forEach(function (a) {
+      data[j++] = a.x * dprX;
+      data[j++] = a.y * dprY;
+      data[j++] = a.type;
+      data[j++] = 0.5 + 0.5 * Math.sin(a.pulse);
+    });
+    gl.useProgram(progAgent);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufAgent);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    var p = gl.getAttribLocation(progAgent, 'aPos');
+    gl.enableVertexAttribArray(p);
+    gl.vertexAttribPointer(p, 2, gl.FLOAT, false, stride, 0);
+    var ty = gl.getAttribLocation(progAgent, 'aType');
+    gl.enableVertexAttribArray(ty);
+    gl.vertexAttribPointer(ty, 1, gl.FLOAT, false, stride, 8);
+    var pu = gl.getAttribLocation(progAgent, 'aPulse');
+    gl.enableVertexAttribArray(pu);
+    gl.vertexAttribPointer(pu, 1, gl.FLOAT, false, stride, 12);
+    gl.uniform2f(uAgent.res, canvas.width, canvas.height);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.POINTS, 0, agents.length);
+  }
+
   function render() {
     if (!smoke.tex[0]) return;
     var t = (performance.now() - time0) * 0.001;
@@ -1011,6 +1004,8 @@
     gl.uniform1f(uComposite.time, t);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    drawAgents();
   }
 
   function resize() {
@@ -1026,6 +1021,7 @@
       a.y = clamp(a.y, 24, H - 24);
       if (a.targetX !== undefined) pickRoamTarget(a);
     });
+    if (EC) EC.initSim(W, H);
     resizeSmoke();
   }
 
@@ -1099,6 +1095,9 @@
   });
 
   initGL();
+  if (!EC) {
+    console.warn('emitter-core.js mancante');
+  }
   resize();
   updateStatus();
   window.addEventListener('resize', resize);
