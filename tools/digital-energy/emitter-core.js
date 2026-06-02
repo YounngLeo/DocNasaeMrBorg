@@ -346,24 +346,37 @@
 
   function pickBoltTarget(a, W, H) {
     var pad = 60;
-    a.boltX = a.x;
-    a.boltY = a.y;
-    a.boltTX = pad + Math.random() * (W - pad * 2);
-    a.boltTY = pad + Math.random() * (H - pad * 2);
-    var jitter = 42 + a.turb * 35 + a.radius * 1.5;
+    if (a.boltTX !== undefined && a.zig && a.zig.length) {
+      a.boltX = a.boltTX;
+      a.boltY = a.boltTY;
+    } else {
+      a.boltX = a.x;
+      a.boltY = a.y;
+    }
+    a.boltDir = (a.boltDir === undefined)
+      ? Math.random() * Math.PI * 2
+      : a.boltDir + (Math.random() - 0.5) * 1.0;
+    var travel = 180 + Math.random() * 220;
+    var tx = a.boltX + Math.cos(a.boltDir) * travel;
+    var ty = a.boltY + Math.sin(a.boltDir) * travel;
+    if (tx < pad || tx > W - pad) { a.boltDir = Math.PI - a.boltDir; tx = clamp(tx, pad, W - pad); }
+    if (ty < pad || ty > H - pad) { a.boltDir = -a.boltDir; ty = clamp(ty, pad, H - pad); }
+    a.boltTX = tx;
+    a.boltTY = ty;
+    var jitter = 28 + a.turb * 22 + a.radius * 1.0;
     a.boltSegs = [];
     buildBoltBranch(a.boltX, a.boltY, a.boltTX, a.boltTY, 4, jitter, a.boltSegs);
     a.zig = [];
-    var n = 14 + Math.floor(Math.random() * 6);
+    var n = 16 + Math.floor(Math.random() * 6);
     for (var s = 0; s <= n; s++) {
       var u = s / n;
       a.zig.push({
-        x: a.boltX + (a.boltTX - a.boltX) * u + (Math.random() - 0.5) * jitter * 0.35,
-        y: a.boltY + (a.boltTY - a.boltY) * u + (Math.random() - 0.5) * jitter * 0.35
+        x: a.boltX + (a.boltTX - a.boltX) * u + (Math.random() - 0.5) * jitter * 0.3,
+        y: a.boltY + (a.boltTY - a.boltY) * u + (Math.random() - 0.5) * jitter * 0.3
       });
     }
     a.boltT = 0;
-    a.boltWait = 0.06 + Math.random() * 0.1;
+    a.boltHold = 0;
   }
 
   function pushSplat(splatBuf, o) {
@@ -372,17 +385,23 @@
 
   function emitBoltTree(a, rad, pow, t, splatBuf, sparks) {
     if (!a.boltSegs) return;
-    var i, seg, dx, dy, d, steps, zs, zu, zx, zy, zang;
+    var front = a.boltT === undefined ? 1 : clamp(a.boltT + 0.06, 0, 1);
+    var axx = (a.boltTX || 0) - (a.boltX || 0);
+    var axy = (a.boltTY || 0) - (a.boltY || 0);
+    var axLen2 = axx * axx + axy * axy || 1;
+    var i, seg, dx, dy, d, steps, zs, zu, zx, zy, zang, segFrac;
     for (i = 0; i < a.boltSegs.length; i++) {
       seg = a.boltSegs[i];
+      segFrac = (((seg.x0 + seg.x1) * 0.5 - a.boltX) * axx + ((seg.y0 + seg.y1) * 0.5 - a.boltY) * axy) / axLen2;
+      if (segFrac > front) continue;
       dx = seg.x1 - seg.x0;
       dy = seg.y1 - seg.y0;
       d = Math.sqrt(dx * dx + dy * dy) || 1;
       steps = Math.max(3, Math.ceil(d / 4));
       for (zs = 0; zs <= steps; zs++) {
         zu = zs / steps;
-        zx = seg.x0 + dx * zu + (Math.random() - 0.5) * 3;
-        zy = seg.y0 + dy * zu + (Math.random() - 0.5) * 3;
+        zx = seg.x0 + dx * zu + (Math.random() - 0.5) * 1.6;
+        zy = seg.y0 + dy * zu + (Math.random() - 0.5) * 1.6;
         zang = Math.atan2(dy, dx);
         pushSplat(splatBuf, {
           x: zx, y: zy,
@@ -505,8 +524,10 @@
     if (m === 3) {
       emitBoltTree(a, rad, pow, t, splatBuf, sparks);
       if (a.zig && a.zig.length > 1) {
+        var zfront = a.boltT === undefined ? 1 : clamp(a.boltT + 0.06, 0, 1);
         var zi, z0, z1, zdx, zdy, zd, zsteps, zs, zu, zx, zy, zang;
         for (zi = 1; zi < a.zig.length; zi++) {
+          if ((zi / (a.zig.length - 1)) > zfront) break;
           z0 = a.zig[zi - 1];
           z1 = a.zig[zi];
           zdx = z1.x - z0.x;
@@ -748,12 +769,18 @@
 
     if (a.type === 3) {
       if (!a.zig || a.zig.length < 2) pickBoltTarget(a, W, H);
-      a.boltWait = (a.boltWait || 0) - dt;
-      if (a.boltT >= 1 || a.boltWait <= 0) pickBoltTarget(a, W, H);
+      if (a.boltT < 1) {
+        a.boltT += dt * (4.5 + a.turb * 2.5) * sm;
+        if (a.boltT >= 1) { a.boltT = 1; a.boltHold = 0.22 + Math.random() * 0.2; }
+      } else {
+        a.boltHold = (a.boltHold || 0) - dt;
+        if (a.boltHold <= 0) pickBoltTarget(a, W, H);
+      }
       if (a.zig.length > 1) {
-        var seg = Math.floor(a.boltT * (a.zig.length - 1));
+        var prog = clamp(a.boltT, 0, 1);
+        var seg = Math.floor(prog * (a.zig.length - 1));
         seg = clamp(seg, 0, a.zig.length - 2);
-        var u = (a.boltT * (a.zig.length - 1)) - seg;
+        var u = (prog * (a.zig.length - 1)) - seg;
         var p0 = a.zig[seg];
         var p1 = a.zig[seg + 1];
         a.px = a.x;
@@ -762,7 +789,6 @@
         a.y = p0.y + (p1.y - p0.y) * u;
         a.vx = (p1.x - p0.x) * 14 * sm;
         a.vy = (p1.y - p0.y) * 14 * sm;
-        a.boltT += dt * (5.5 + a.turb * 5) * sm;
       }
       if (attractors && attractors.length) {
         var vf3 = sampleVortex(a.x, a.y, attractors, vortexPow);
