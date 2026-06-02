@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">cursed energy · fondo scuro · glow anime</div>
-  <div class="ver">v1.9 — ombra riccioli neri liquidi · rim sottile</div>
+  <div class="ver">v2.0 — ombra nera densa · acqua Korra a cresta bianca</div>
 </div>
 
 <div class="actions">
@@ -387,13 +387,13 @@
     // accent color per emitter type, used by the technical trace lines (mode 8)
     'vec3 traceColor(int ty){',
     '  if (ty == 0) return vec3(1.0, 0.95, 0.78);',
-    '  if (ty == 1) return vec3(0.3, 0.85, 1.05);',
+    '  if (ty == 1) return vec3(0.2, 0.46, 0.66);',
     '  if (ty == 2) return vec3(0.72, 0.92, 1.0);',
     '  if (ty == 3) return vec3(0.6, 0.82, 1.0);',
     '  if (ty == 4) return vec3(1.0, 0.32, 0.34);',
     '  if (ty == 5) return vec3(1.0, 0.6, 0.2);',
     '  if (ty == 6) return vec3(0.78, 0.4, 1.0);',
-    '  return vec3(0.38, 0.74, 1.0);',
+    '  return vec3(0.68, 0.9, 1.0);',
     '}',
     // single organic tendril: curved centerline (fbm) that tapers to a point at the tip
     'float wispOrganic(vec2 q, float seed, float t){',
@@ -466,12 +466,12 @@
     '      float w2 = wispOrganic(q + vec2(0.13, 0.0), seed + 9.0, uTime * 1.2) * 0.9;',
     '      float w3 = wispOrganic(q - vec2(0.15, 0.0), seed + 21.0, uTime * 0.85) * 0.78;',
     '      float strands = max(w1, max(w2, w3));',
-    '      float rim = smoothstep(0.12, 0.4, strands) * (1.0 - smoothstep(0.4, 0.78, strands));',
-    '      m = (strands * 1.05 + rim * 0.35) * vAlpha;',
-    '      vec3 darkInk = vec3(0.012, 0.016, 0.03);',
-    '      vec3 rimCol = vec3(0.34, 0.78, 1.05);',
+    '      float rim = smoothstep(0.1, 0.34, strands) * (1.0 - smoothstep(0.34, 0.62, strands));',
+    '      m = (strands * 1.35 + rim * 0.2) * vAlpha;',
+    '      vec3 darkInk = vec3(0.006, 0.009, 0.02);',
+    '      vec3 rimCol = vec3(0.22, 0.5, 0.72);',
     '      col = darkInk;',
-    '      col += rimCol * rim * 0.85;',
+    '      col += rimCol * rim * 0.45;',
     '    }',
     '  } else if (mode == 2) {',
     '    float shards = 0.0;',
@@ -555,22 +555,20 @@
     '    col = traceColor(kind);',
     '    col += vec3(1.0) * line * line * 0.35;',
     '  } else {',
-    // water (Avatar): clean glossy translucent ribbon/whip with white crest highlight
-    '    float flow = fbm(nUv * 1.0 + vec2(uTime * 0.18, 0.0));',
-    '    float flow2 = fbm(nUv * 2.2 - vec2(uTime * 0.1, flow));',
-    '    vec2 fq = q + vec2((flow - 0.5) * 0.16, 0.0);',
-    '    float curve = sin(fq.x * 5.0 + flow * 3.0) * 0.05;',
-    '    float band = exp(-abs(fq.y + curve) * mix(5.0, 11.0, vSharp));',
-    '    band *= smoothstep(0.55, 0.02, abs(fq.x)) * exp(-r2 * 0.85);',
-    '    float gloss = exp(-abs(fq.y + curve + 0.05) * mix(34.0, 64.0, vSharp)) * smoothstep(0.5, 0.0, abs(fq.x));',
-    '    float crest = smoothstep(0.62, 0.92, flow2) * band;',
-    '    float finger = 0.0;',
-    '    if (kind >= 5) finger = exp(-abs(q.x + sin(q.y * 14.0) * 0.1) * 12.0) * band;',
-    '    m = (band * 0.95 + gloss * 0.7 + crest * 0.45 + finger * 0.4) * vAlpha;',
-    '    vec3 deep = vec3(0.05, 0.36, 0.76);',
-    '    vec3 lite = vec3(0.42, 0.8, 1.0);',
+    // water (Korra): translucent blue ribbon with a bright white crest along the leading edge
+    '    float flow = fbm(nUv * 0.9 + vec2(uTime * 0.18, 0.0));',
+    '    vec2 fq = q + vec2((flow - 0.5) * 0.14, 0.0);',
+    '    float curve = sin(fq.x * 4.5 + flow * 3.0) * 0.06;',
+    '    float yy = fq.y + curve;',
+    '    float along = smoothstep(0.62, 0.04, abs(fq.x));',
+    '    float band = exp(-abs(yy) * mix(5.0, 10.0, vSharp)) * along;',
+    '    float gloss = exp(-abs(yy) * mix(26.0, 52.0, vSharp)) * along;',
+    '    float crest = exp(-abs(yy + 0.16) * mix(28.0, 58.0, vSharp)) * along;',
+    '    m = (band * 0.85 + gloss * 0.5 + crest * 0.85) * vAlpha;',
+    '    vec3 deep = vec3(0.04, 0.32, 0.78);',
+    '    vec3 lite = vec3(0.45, 0.82, 1.0);',
     '    col = mix(deep, lite, cel(band, 4.0));',
-    '    col += vec3(0.92, 0.98, 1.0) * (gloss + crest * 0.85);',
+    '    col += vec3(0.95, 0.99, 1.0) * (crest * 1.0 + gloss * 0.5);',
     '  }',
   '  col *= 1.45;',
   '  m *= pointMask;',
