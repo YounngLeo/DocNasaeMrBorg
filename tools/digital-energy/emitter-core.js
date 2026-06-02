@@ -675,28 +675,36 @@
           kind: 1
         });
       } else if (m === 5) {
-        var fcurl = Math.sin(t * 3 + a.phase + u * 5) * 0.6;
-        pushSplat(splatBuf, {
-          x: px, y: py - rad * 0.3,
-          size: rad * (1.5 + a.heat * 0.25),
-          alpha: (0.16 + pow * 0.26) * a.heat,
-          ang: ang - 1.2 + fcurl,
-          mode: 5,
-          sharp: 0.5,
-          seed: Math.random() * 50,
-          kind: 1
-        });
-        if (Math.random() < 0.5) {
+        var fcurl = Math.sin(t * 3 + a.phase + u * 5) * 0.55;
+        var fperpX = -Math.sin(ang);
+        var fperpY = Math.cos(ang);
+        var fang = ang - 1.28 + fcurl;
+        var fk, foff;
+        for (fk = -1; fk <= 1; fk++) {
+          foff = fk * rad * (0.7 + Math.random() * 0.38);
           pushSplat(splatBuf, {
-            x: px + (Math.random() - 0.5) * rad * 1.2,
-            y: py - rad * (0.5 + Math.random() * 0.6),
-            size: rad * (1.0 + a.heat * 0.2),
-            alpha: (0.1 + pow * 0.2) * a.heat,
-            ang: ang - 1.4 + fcurl * 1.3,
+            x: px + fperpX * foff,
+            y: py - rad * (0.25 + Math.random() * 0.45) + fperpY * foff * 0.25,
+            size: rad * (2.1 + pow * 0.6) * (0.6 + a.heat * 0.15),
+            alpha: (0.14 + pow * 0.24) * a.heat * (fk === 0 ? 1.0 : 0.72),
+            ang: fang + fk * 0.14 + (Math.random() - 0.5) * 0.2,
             mode: 5,
-            sharp: 0.6,
+            sharp: 0.4 + Math.random() * 0.28,
             seed: Math.random() * 50,
             kind: 1
+          });
+        }
+        if (thick > 1.15 && Math.random() < 0.4) {
+          pushSplat(splatBuf, {
+            x: px + (Math.random() - 0.5) * rad * 0.5,
+            y: py - rad * (0.35 + Math.random() * 0.5),
+            size: rad * 0.75,
+            alpha: (0.12 + pow * 0.2) * a.heat,
+            ang: fang,
+            mode: 5,
+            sharp: 0.92,
+            seed: Math.random() * 40,
+            kind: 2
           });
         }
         a.heat = clamp(a.heat * 0.998, 0.5, 1.2);
