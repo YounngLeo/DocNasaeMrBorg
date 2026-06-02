@@ -6,7 +6,7 @@
   var GRID_W = 128;
   var GRID_H = 96;
   var ISO = 0.44;
-  var MAX_PART = 720;
+  var MAX_PART = 3200;
 
   var cfg = {
     steam: 55,
@@ -29,13 +29,21 @@
   var sculpting = false;
 
   var gl = null;
-  var progParticle = null;
+  var progSplat = null;
+  var progFade = null;
+  var progComposite = null;
   var progLine = null;
   var bufParticle = null;
   var bufLine = null;
-  var uParticle = {};
+  var bufQuad = null;
+  var uSplat = {};
+  var uFade = {};
+  var uComposite = {};
+  var smoke = { tex: [null, null], fb: [null, null], idx: 0, w: 0, h: 0 };
   var contourLines = [];
   var useWebGL = false;
+  var smoke2d = null;
+  var smoke2dCtx = null;
 
   var DRAGON_BLOBS = [
     { x: 0.50, y: 0.36, rx: 0.13, ry: 0.12, a: 1.0 },
@@ -50,6 +58,11 @@
 
   function $(id) { return document.getElementById(id); }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  /** 0.35 … 2.2 — mappa slider pressione vapore */
+  function steamPower() {
+    return 0.35 + (cfg.steam / 100) * 1.85;
+  }
 
   function gridIdx(gx, gy) {
     return gy * GRID_W + gx;
@@ -209,15 +222,18 @@
   }
 
   function spawnParticle() {
+    var power = steamPower();
     var m = emitter.mouth[Math.floor(Math.random() * emitter.mouth.length)];
+    var burst = 0.55 + Math.random() * 0.9;
     particles.push({
-      x: m.x + (Math.random() - 0.5) * 10,
-      y: m.y + (Math.random() - 0.5) * 4,
-      vx: (Math.random() - 0.5) * 0.55,
-      vy: -1.1 - Math.random() * 1.6,
-      life: 1,
-      heat: 0.85 + Math.random() * 0.15,
-      r: 2.2 + Math.random() * 3.5,
+      x: m.x + (Math.random() - 0.5) * 16,
+      y: m.y + (Math.random() - 0.5) * 6,
+      vx: (Math.random() - 0.5) * 0.35 * power,
+      vy: -(1.6 + Math.random() * 2.4) * power,
+      life: 1.15 + Math.random() * 0.55,
+      heat: 0.5 + Math.random() * 0.5,
+      dens: power * burst,
+      splat: (14 + Math.random() * 26) * power,
       escaped: false
     });
   }
@@ -246,24 +262,42 @@
 
   function step() {
     if (cfg.running) {
-      var rate = Math.round(cfg.steam * 0.14);
+      var rate = Math.round(cfg.steam * 0.52 + 12 * steamPower());
       for (var s = 0; s < rate; s++) spawnParticle();
     }
     stats.inside = 0;
+    var power = steamPower();
     for (var i = particles.length - 1; i >= 0; i--) {
       var p = particles[i];
-      p.vx += (Math.random() - 0.5) * 0.05;
-      p.vy -= 0.012 + (1 - p.heat) * 0.008;
+      p.vx += (Math.random() - 0.5) * 0.04 * power;
+      p.vy -= (0.008 + (1 - p.heat) * 0.006) * power;
       p.x += p.vx;
       p.y += p.vy;
       collideParticle(p);
       if (!p.escaped && sampleField(p.x, p.y) > ISO * 0.85) stats.inside++;
-      p.life -= p.escaped ? 0.005 : 0.0038;
-      p.heat *= 0.998;
-      if (p.life <= 0 || p.y < -30 || p.x < -40 || p.x > W + 40) particles.splice(i, 1);
+      p.life -= (p.escaped ? 0.0011 : 0.00085) / power;
+      p.heat *= 0.9992;
+      p.dens *= 0.9995;
+      p.splat = Math.min(72, p.splat * 1.0012);
+      if (p.life <= 0 || p.y < 6 || p.x < -60 || p.x > W + 60) particles.splice(i, 1);
     }
     if (particles.length > MAX_PART) particles.splice(0, particles.length - MAX_PART);
     if (gridDirty) rebuildContours();
+  }
+
+  function clearSmoke() {
+    if (useWebGL && gl) {
+      var w = smoke.w;
+      var h = smoke.h;
+      for (var t = 0; t < 2; t++) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, smoke.fb[t]);
+        gl.viewport(0, 0, w, h);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+    if (smoke2dCtx) smoke2dCtx.clearRect(0, 0, smoke2d.width, smoke2d.height);
   }
 
   /* ── WebGL2 ─────────────────────────────────────────────── */
@@ -290,47 +324,128 @@
     return p;
   }
 
+  function initQuad() {
+    bufQuad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+      -1, -1, 1, -1, -1, 1,
+      -1, 1, 1, -1, 1, 1
+    ]), gl.STATIC_DRAW);
+  }
+
+  function bindQuad(prog) {
+    var loc = gl.getAttribLocation(prog, 'aQuad');
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  }
+
+  function resizeSmoke() {
+    if (!gl) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var sw = Math.max(1, Math.floor(W * dpr));
+    var sh = Math.max(1, Math.floor(H * dpr));
+    if (smoke.w === sw && smoke.h === sh && smoke.tex[0]) return;
+    smoke.w = sw;
+    smoke.h = sh;
+    for (var i = 0; i < 2; i++) {
+      if (smoke.tex[i]) gl.deleteTexture(smoke.tex[i]);
+      if (smoke.fb[i]) gl.deleteFramebuffer(smoke.fb[i]);
+      smoke.tex[i] = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, smoke.tex[i]);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, sw, sh, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      smoke.fb[i] = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, smoke.fb[i]);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, smoke.tex[i], 0);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    smoke.idx = 0;
+    clearSmoke();
+  }
+
   function initWebGL() {
     gl = canvas.getContext('webgl2', { alpha: false, antialias: true, premultipliedAlpha: false });
     if (!gl) return false;
 
-    var vsP = compileShader(gl.VERTEX_SHADER, [
+    var vsSplat = compileShader(gl.VERTEX_SHADER, [
       '#version 300 es',
       'in vec2 aPos;',
       'in float aSize;',
-      'in float aAlpha;',
+      'in float aDens;',
       'in float aHeat;',
       'uniform vec2 uRes;',
-      'out float vAlpha;',
+      'out float vDens;',
       'out float vHeat;',
       'void main(){',
       '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
       '  c.y = -c.y;',
       '  gl_Position = vec4(c, 0.0, 1.0);',
-      '  gl_PointSize = aSize;',
-      '  vAlpha = aAlpha;',
+      '  gl_PointSize = max(4.0, aSize);',
+      '  vDens = aDens;',
       '  vHeat = aHeat;',
       '}'
     ].join('\n'));
 
-    var fsP = compileShader(gl.FRAGMENT_SHADER, [
+    var fsSplat = compileShader(gl.FRAGMENT_SHADER, [
       '#version 300 es',
       'precision mediump float;',
-      'in float vAlpha;',
+      'in float vDens;',
       'in float vHeat;',
       'out vec4 outColor;',
       'void main(){',
-      '  vec2 p = gl_PointCoord - 0.5;',
-      '  float r = length(p);',
-      '  float core = smoothstep(0.48, 0.0, r);',
-      '  float wisp = smoothstep(0.5, 0.08, r);',
-      '  float puff = 0.65 + 0.35 * sin(r * 18.0);',
-      '  vec3 cool = vec3(0.45, 0.68, 0.82);',
-      '  vec3 warm = vec3(0.88, 0.94, 1.0);',
-      '  vec3 col = mix(cool, warm, vHeat * core);',
-      '  col += vec3(0.12, 0.18, 0.14) * (1.0 - vHeat) * wisp;',
-      '  float a = wisp * vAlpha * (0.18 + 0.82 * core) * puff;',
-      '  if (a < 0.01) discard;',
+      '  vec2 p = (gl_PointCoord - 0.5) * 2.0;',
+      '  float r2 = dot(p, p);',
+      '  float d = exp(-r2 * 2.8);',
+      '  float a = d * vDens * 0.055;',
+      '  if (a < 0.002) discard;',
+      '  float h = 0.35 + vHeat * 0.65;',
+      '  outColor = vec4(h, h, h + 0.06, a);',
+      '}'
+    ].join('\n'));
+
+    var vsQuad = compileShader(gl.VERTEX_SHADER, [
+      '#version 300 es',
+      'in vec2 aQuad;',
+      'out vec2 vUv;',
+      'void main(){',
+      '  vUv = aQuad * 0.5 + 0.5;',
+      '  gl_Position = vec4(aQuad, 0.0, 1.0);',
+      '}'
+    ].join('\n'));
+
+    var fsFade = compileShader(gl.FRAGMENT_SHADER, [
+      '#version 300 es',
+      'precision mediump float;',
+      'in vec2 vUv;',
+      'uniform sampler2D uTex;',
+      'uniform float uDecay;',
+      'out vec4 outColor;',
+      'void main(){',
+      '  vec4 c = texture(uTex, vUv);',
+      '  outColor = c * uDecay;',
+      '}'
+    ].join('\n'));
+
+    var fsComposite = compileShader(gl.FRAGMENT_SHADER, [
+      '#version 300 es',
+      'precision mediump float;',
+      'in vec2 vUv;',
+      'uniform sampler2D uSmoke;',
+      'uniform float uPower;',
+      'out vec4 outColor;',
+      'void main(){',
+      '  float dens = texture(uSmoke, vUv).a;',
+      '  dens = smoothstep(0.015, 0.72, dens * (0.85 + uPower * 0.35));',
+      '  vec3 cool = vec3(0.32, 0.42, 0.50);',
+      '  vec3 mid = vec3(0.58, 0.68, 0.76);',
+      '  vec3 warm = vec3(0.88, 0.92, 0.96);',
+      '  vec3 col = mix(cool, mid, clamp(dens * 1.4, 0.0, 1.0));',
+      '  col = mix(col, warm, pow(dens, 1.6) * 0.55);',
+      '  float a = dens * (0.55 + uPower * 0.25);',
       '  outColor = vec4(col, a);',
       '}'
     ].join('\n'));
@@ -354,19 +469,67 @@
       'void main(){ outColor = uColor; }'
     ].join('\n'));
 
-    if (!vsP || !fsP || !vsL || !fsL) return false;
+    if (!vsSplat || !fsSplat || !vsQuad || !fsFade || !fsComposite || !vsL || !fsL) return false;
 
-    progParticle = linkProgram(vsP, fsP);
+    progSplat = linkProgram(vsSplat, fsSplat);
+    progFade = linkProgram(vsQuad, fsFade);
+    progComposite = linkProgram(vsQuad, fsComposite);
     progLine = linkProgram(vsL, fsL);
-    if (!progParticle || !progLine) return false;
+    if (!progSplat || !progFade || !progComposite || !progLine) return false;
 
     bufParticle = gl.createBuffer();
     bufLine = gl.createBuffer();
-    uParticle = {
-      res: gl.getUniformLocation(progParticle, 'uRes')
+    initQuad();
+    uSplat = {
+      res: gl.getUniformLocation(progSplat, 'uRes')
+    };
+    uFade = {
+      tex: gl.getUniformLocation(progFade, 'uTex'),
+      decay: gl.getUniformLocation(progFade, 'uDecay')
+    };
+    uComposite = {
+      smoke: gl.getUniformLocation(progComposite, 'uSmoke'),
+      power: gl.getUniformLocation(progComposite, 'uPower')
     };
     useWebGL = true;
     return true;
+  }
+
+  function drawSmokeSplats(targetW, targetH) {
+    if (!particles.length) return;
+    var stride = 5 * 4;
+    var data = new Float32Array(particles.length * 5);
+    var j = 0;
+    var dpr = targetW / W;
+    particles.forEach(function (p) {
+      data[j++] = p.x * dpr;
+      data[j++] = p.y * dpr;
+      data[j++] = p.splat * dpr * (0.9 + p.life * 0.45);
+      data[j++] = p.dens * p.life;
+      data[j++] = p.heat;
+    });
+
+    gl.useProgram(progSplat);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bufParticle);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
+    var locPos = gl.getAttribLocation(progSplat, 'aPos');
+    gl.enableVertexAttribArray(locPos);
+    gl.vertexAttribPointer(locPos, 2, gl.FLOAT, false, stride, 0);
+    var locSize = gl.getAttribLocation(progSplat, 'aSize');
+    gl.enableVertexAttribArray(locSize);
+    gl.vertexAttribPointer(locSize, 1, gl.FLOAT, false, stride, 8);
+    var locDens = gl.getAttribLocation(progSplat, 'aDens');
+    gl.enableVertexAttribArray(locDens);
+    gl.vertexAttribPointer(locDens, 1, gl.FLOAT, false, stride, 12);
+    var locHeat = gl.getAttribLocation(progSplat, 'aHeat');
+    gl.enableVertexAttribArray(locHeat);
+    gl.vertexAttribPointer(locHeat, 1, gl.FLOAT, false, stride, 16);
+
+    gl.uniform2f(uSplat.res, targetW, targetH);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
+    gl.drawArrays(gl.POINTS, 0, particles.length);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   }
 
   function drawLines(segs, rgba, width) {
@@ -384,9 +547,39 @@
   }
 
   function drawWebGL() {
+    if (!smoke.tex[0]) return;
+    var sw = smoke.w;
+    var sh = smoke.h;
+    var read = smoke.idx;
+    var write = 1 - read;
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, smoke.fb[write]);
+    gl.viewport(0, 0, sw, sh);
+    gl.useProgram(progFade);
+    bindQuad(progFade);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, smoke.tex[read]);
+    gl.uniform1i(uFade.tex, 0);
+    gl.uniform1f(uFade.decay, 0.972 - steamPower() * 0.008);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    drawSmokeSplats(sw, sh);
+    smoke.idx = write;
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.02, 0.024, 0.03, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.enable(gl.BLEND);
+    gl.useProgram(progComposite);
+    bindQuad(progComposite);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, smoke.tex[write]);
+    gl.uniform1i(uComposite.smoke, 0);
+    gl.uniform1f(uComposite.power, steamPower());
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
     drawLines(contourLines.inner, [0.28, 0.75, 0.68, 0.22], 1);
     drawLines(contourLines.outer, [0.42, 0.92, 0.88, 0.75], 1.8);
@@ -394,49 +587,52 @@
     var dPath = dragonEmitterLines();
     drawLines(dPath.glow, [0.35, 0.85, 0.95, 0.35], 1.2);
     drawLines(dPath.main, [0.55, 0.98, 0.88, 0.9], 2);
-
-    if (!particles.length) return;
-
-    var stride = 5 * 4;
-    var data = new Float32Array(particles.length * 5);
-    var j = 0;
-    particles.forEach(function (p) {
-      data[j++] = p.x;
-      data[j++] = p.y;
-      data[j++] = p.r * (1.4 + p.life * 2.2);
-      data[j++] = p.life * (p.escaped ? 0.65 : 0.9);
-      data[j++] = p.heat;
-    });
-
-    gl.useProgram(progParticle);
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufParticle);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
-    var locPos = gl.getAttribLocation(progParticle, 'aPos');
-    gl.enableVertexAttribArray(locPos);
-    gl.vertexAttribPointer(locPos, 2, gl.FLOAT, false, stride, 0);
-    var locSize = gl.getAttribLocation(progParticle, 'aSize');
-    gl.enableVertexAttribArray(locSize);
-    gl.vertexAttribPointer(locSize, 1, gl.FLOAT, false, stride, 8);
-    var locAlpha = gl.getAttribLocation(progParticle, 'aAlpha');
-    gl.enableVertexAttribArray(locAlpha);
-    gl.vertexAttribPointer(locAlpha, 1, gl.FLOAT, false, stride, 12);
-    var locHeat = gl.getAttribLocation(progParticle, 'aHeat');
-    gl.enableVertexAttribArray(locHeat);
-    gl.vertexAttribPointer(locHeat, 1, gl.FLOAT, false, stride, 16);
-
-    gl.uniform2f(uParticle.res, W, H);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-    gl.drawArrays(gl.POINTS, 0, particles.length);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   }
 
-  /* ── Canvas 2D fallback ───────────────────────────────────── */
+  /* ── Canvas 2D fallback (accumulo vapore) ─────────────────── */
   var ctx2d = null;
 
+  function ensureSmoke2d() {
+    if (!smoke2d) {
+      smoke2d = document.createElement('canvas');
+      smoke2dCtx = smoke2d.getContext('2d');
+    }
+    if (smoke2d.width !== W || smoke2d.height !== H) {
+      smoke2d.width = W;
+      smoke2d.height = H;
+      smoke2dCtx.clearRect(0, 0, W, H);
+    }
+  }
+
+  function splatSmoke2d(p) {
+    var g = smoke2dCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.splat);
+    var a = p.dens * p.life * 0.14;
+    g.addColorStop(0, 'rgba(235, 245, 255, ' + a + ')');
+    g.addColorStop(0.25, 'rgba(190, 215, 235, ' + (a * 0.45) + ')');
+    g.addColorStop(0.65, 'rgba(140, 170, 190, ' + (a * 0.12) + ')');
+    g.addColorStop(1, 'rgba(100, 130, 150, 0)');
+    smoke2dCtx.fillStyle = g;
+    smoke2dCtx.beginPath();
+    smoke2dCtx.arc(p.x, p.y, p.splat, 0, Math.PI * 2);
+    smoke2dCtx.fill();
+  }
+
   function draw2D() {
+    ensureSmoke2d();
+    smoke2dCtx.globalCompositeOperation = 'source-over';
+    smoke2dCtx.globalAlpha = 0.965 - steamPower() * 0.012;
+    smoke2dCtx.drawImage(smoke2d, 0, 0);
+    smoke2dCtx.globalAlpha = 1;
+    smoke2dCtx.globalCompositeOperation = 'lighter';
+    particles.forEach(splatSmoke2d);
+    smoke2dCtx.globalCompositeOperation = 'source-over';
+
     ctx2d.fillStyle = '#050608';
     ctx2d.fillRect(0, 0, W, H);
+    ctx2d.globalAlpha = 0.92;
+    ctx2d.drawImage(smoke2d, 0, 0);
+    ctx2d.globalAlpha = 1;
+
     ctx2d.strokeStyle = 'rgba(74,246,255,0.25)';
     ctx2d.lineWidth = 1;
     var segs = contourLines.outer;
@@ -450,13 +646,6 @@
     ctx2d.strokeStyle = 'rgba(94,255,126,0.85)';
     ctx2d.lineWidth = 2;
     strokeSegs2d(d.main);
-    particles.forEach(function (p) {
-      ctx2d.beginPath();
-      ctx2d.arc(p.x, p.y, p.r * 1.8, 0, Math.PI * 2);
-      var a = p.life * 0.5;
-      ctx2d.fillStyle = 'rgba(200, 230, 255, ' + a + ')';
-      ctx2d.fill();
-    });
   }
 
   function strokeSegs2d(arr) {
@@ -526,10 +715,17 @@
     canvas.style.height = H + 'px';
     CX = W * 0.5;
     CY = H * 0.48;
-    if (useWebGL) gl.viewport(0, 0, canvas.width, canvas.height);
-    else {
+    if (useWebGL) {
+      resizeSmoke();
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    } else {
       ctx2d = canvas.getContext('2d');
       ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (smoke2d) {
+        smoke2d.width = W;
+        smoke2d.height = H;
+        smoke2dCtx.clearRect(0, 0, W, H);
+      }
     }
     layoutEmitter();
     gridDirty = true;
@@ -585,6 +781,7 @@
       resetDragon.addEventListener('click', function () {
         seedDragonDivider();
         particles = [];
+        clearSmoke();
         stats.bounce = stats.escaped = 0;
       });
     }
@@ -593,6 +790,7 @@
       clearSculpt.addEventListener('click', function () {
         clearField();
         particles = [];
+        clearSmoke();
       });
     }
     var pause = $('fl-pause');
@@ -607,6 +805,7 @@
     if (clearP) {
       clearP.addEventListener('click', function () {
         particles = [];
+        clearSmoke();
         stats.bounce = stats.escaped = 0;
       });
     }
