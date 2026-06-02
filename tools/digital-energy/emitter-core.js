@@ -637,28 +637,22 @@
           });
         }
       } else if (m === 4) {
-        pushSplat(splatBuf, {
-          x: px, y: py,
-          size: rad * (1.5 + spd * 0.12) * 1.25,
-          alpha: (0.16 + pow * 0.26),
-          ang: ang,
-          mode: 4,
-          sharp: 0.86,
-          seed: Math.random() * 40,
-          kind: 1
-        });
-        if (Math.random() < 0.45) {
-          var bperp = ang + Math.PI * 0.5;
-          var boff = (Math.random() - 0.5) * rad * 1.6;
+        var bcurl = Math.sin(a.phase + t * 2 + u * 6) * 0.4;
+        var bperpX = -Math.sin(ang);
+        var bperpY = Math.cos(ang);
+        var bang = ang + bcurl;
+        var bk, boff;
+        for (bk = -1; bk <= 1; bk++) {
+          boff = bk * rad * (0.55 + Math.random() * 0.32);
           pushSplat(splatBuf, {
-            x: px + Math.cos(bperp) * boff,
-            y: py + Math.sin(bperp) * boff,
-            size: rad * (1.1 + spd * 0.08),
-            alpha: (0.1 + pow * 0.18),
-            ang: ang + (Math.random() - 0.5) * 0.5,
+            x: px + bperpX * boff,
+            y: py + bperpY * boff + rad * 0.15,
+            size: rad * (2.0 + pow * 0.55),
+            alpha: (0.14 + pow * 0.24) * (bk === 0 ? 1.0 : 0.72),
+            ang: bang + bk * 0.12 + (Math.random() - 0.5) * 0.25,
             mode: 4,
-            sharp: 0.92,
-            seed: Math.random() * 40,
+            sharp: 0.88 + Math.random() * 0.08,
+            seed: Math.random() * 40 + bk * 11,
             kind: 1
           });
         }
@@ -675,23 +669,11 @@
             y: py + iperpY * ioff,
             size: rad * (2.0 + pow * 0.55) * (0.65 + a.grow * 0.12),
             alpha: (0.15 + pow * 0.24) * (ik === 0 ? 1.0 : 0.7),
-            ang: iang + ik * 0.22 + (Math.random() - 0.5) * 0.4,
+            ang: iang + ik * 0.35 + (Math.random() - 0.5) * 0.55,
             mode: 2,
-            sharp: 0.88 + Math.random() * 0.1,
+            sharp: 0.92 + Math.random() * 0.06,
             seed: Math.random() * 70 + ik * 17,
             kind: 1
-          });
-        }
-        if (thick > 1.1 && Math.random() < 0.45) {
-          pushSplat(splatBuf, {
-            x: px, y: py,
-            size: rad * 0.7,
-            alpha: (0.14 + pow * 0.22),
-            ang: iang + 0.7,
-            mode: 2,
-            sharp: 0.96,
-            seed: Math.random() * 40,
-            kind: 2
           });
         }
       } else if (m === 5) {
