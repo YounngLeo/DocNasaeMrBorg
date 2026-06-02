@@ -155,7 +155,7 @@
   <div class="back"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
   <h1>[ FLUID_VESSEL :: MEMBRANA ]</h1>
   <div class="sub">generatore contenitori biomorfi · PBD · uncini</div>
-  <div class="ver">v.08 — raggio +20% · muro doppio · doppia faccia</div>
+  <div class="ver">v.08b — shell estrusa · no z-fight camera</div>
 </div>
 
 <div class="actions">
@@ -269,7 +269,7 @@ const camera = new THREE.PerspectiveCamera(32, window.innerWidth / window.innerH
 camera.position.set(0, 1.6, 7.0);
 camera.lookAt(0, 0.2, 0);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, logarithmicDepthBuffer: true });
 renderer.debug.checkShaderErrors = true;
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -289,7 +289,7 @@ controls.dampingFactor = 0.08;
 controls.enablePan = false;
 controls.target.set(0, 0.2, 0);
 controls.minDistance = 3;
-controls.maxDistance = 14;
+controls.maxDistance = 40;
 controls.update();
 
 const key = new THREE.DirectionalLight(0xfff2dc, 1.25);
@@ -802,44 +802,47 @@ function buildVaseOuter(detail) {
   return { geo, rimIdx };
 }
 
+function shellNormalAt(i, outerNorm, rimSet, out) {
+  let nx = outerNorm[i * 3], ny = outerNorm[i * 3 + 1], nz = outerNorm[i * 3 + 2];
+  const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+  nx /= len; ny /= len; nz /= len;
+  if (rimSet.has(i)) {
+    ny = 0;
+    const lr = Math.sqrt(nx * nx + nz * nz) || 1;
+    nx /= lr; nz /= lr;
+  }
+  out[0] = nx; out[1] = ny; out[2] = nz;
+  return out;
+}
+
+/** Shell estrusa: sim = parete interna, unica superficie visibile = esterno (+n·t). Niente faccia interna → no z-fight in camera. */
 function buildRenderShell(outerGeo, rimIdx, thickness) {
   const outerPos = outerGeo.attributes.position.array;
   const outerNorm = outerGeo.attributes.normal.array;
   const outerIdx = outerGeo.index.array;
   const N = outerPos.length / 3;
   const rimSet = new Set(rimIdx);
-  const positions = new Float32Array(N * 6);
+  const positions = new Float32Array(N * 2);
   const indices = [];
+  const n = [0, 0, 0];
 
   for (let i = 0; i < N; i++) {
     positions[i * 3] = outerPos[i * 3];
     positions[i * 3 + 1] = outerPos[i * 3 + 1];
     positions[i * 3 + 2] = outerPos[i * 3 + 2];
-  }
-  for (let i = 0; i < N; i++) {
-    let nx = outerNorm[i * 3], ny = outerNorm[i * 3 + 1], nz = outerNorm[i * 3 + 2];
-    const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-    nx /= len; ny /= len; nz /= len;
-    if (rimSet.has(i)) {
-      ny = 0;
-      const lr = Math.sqrt(nx * nx + nz * nz) || 1;
-      nx /= lr; nz /= lr;
-    }
-    positions[(N + i) * 3] = outerPos[i * 3] - nx * thickness;
-    positions[(N + i) * 3 + 1] = outerPos[i * 3 + 1] - ny * thickness;
-    positions[(N + i) * 3 + 2] = outerPos[i * 3 + 2] - nz * thickness;
+    shellNormalAt(i, outerNorm, rimSet, n);
+    positions[(N + i) * 3] = outerPos[i * 3] + n[0] * thickness;
+    positions[(N + i) * 3 + 1] = outerPos[i * 3 + 1] + n[1] * thickness;
+    positions[(N + i) * 3 + 2] = outerPos[i * 3 + 2] + n[2] * thickness;
   }
 
-  for (let i = 0; i < outerIdx.length; i++) indices.push(outerIdx[i]);
-  for (let i = 0; i < outerIdx.length; i += 3) {
-    indices.push(outerIdx[i] + N, outerIdx[i + 2] + N, outerIdx[i + 1] + N);
-  }
+  for (let i = 0; i < outerIdx.length; i++) indices.push(outerIdx[i] + N);
   const R = rimIdx.length;
   for (let k = 0; k < R; k++) {
-    const aO = rimIdx[k], bO = rimIdx[(k + 1) % R];
-    const aI = aO + N, bI = bO + N;
-    indices.push(aO, aI, bO);
-    indices.push(bO, aI, bI);
+    const aI = rimIdx[k], bI = rimIdx[(k + 1) % R];
+    const aO = aI + N, bO = bI + N;
+    indices.push(aI, aO, bI);
+    indices.push(bI, aO, bO);
   }
 
   const geo = new THREE.BufferGeometry();
@@ -850,6 +853,8 @@ function buildRenderShell(outerGeo, rimIdx, thickness) {
 }
 
 let renderNormalTick = 0;
+
+const _shellN = [0, 0, 0];
 
 function updateRenderShell() {
   if (!softBody || !renderGeo || !simGeo) return;
@@ -863,18 +868,10 @@ function updateRenderShell() {
     renderPos[i * 3] = outerPos[i * 3];
     renderPos[i * 3 + 1] = outerPos[i * 3 + 1];
     renderPos[i * 3 + 2] = outerPos[i * 3 + 2];
-
-    let nx = outerNorm[i * 3], ny = outerNorm[i * 3 + 1], nz = outerNorm[i * 3 + 2];
-    const len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
-    nx /= len; ny /= len; nz /= len;
-    if (rimVertexSet.has(i)) {
-      ny = 0;
-      const lr = Math.sqrt(nx * nx + nz * nz) || 1;
-      nx /= lr; nz /= lr;
-    }
-    renderPos[(N + i) * 3] = outerPos[i * 3] - nx * t;
-    renderPos[(N + i) * 3 + 1] = outerPos[i * 3 + 1] - ny * t;
-    renderPos[(N + i) * 3 + 2] = outerPos[i * 3 + 2] - nz * t;
+    shellNormalAt(i, outerNorm, rimVertexSet, _shellN);
+    renderPos[(N + i) * 3] = outerPos[i * 3] + _shellN[0] * t;
+    renderPos[(N + i) * 3 + 1] = outerPos[i * 3 + 1] + _shellN[1] * t;
+    renderPos[(N + i) * 3 + 2] = outerPos[i * 3 + 2] + _shellN[2] * t;
   }
   renderGeo.attributes.position.needsUpdate = true;
   renderNormalTick++;
