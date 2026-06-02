@@ -1,4 +1,4 @@
-/* Digital Energy — per-type motion, fluid box, emission (v0.6) */
+/* Digital Energy — per-type motion, fluid box, emission (v0.7) */
 (function (global) {
   'use strict';
 
@@ -46,17 +46,17 @@
     var g = worldToGrid(x, y);
     var k = idx(g.i, g.j);
     var arr = isShadow ? sim.sd : sim.vd;
-    var vx = isShadow ? sim.vx : sim.vx;
-    var vy = isShadow ? sim.vy : sim.vy;
+    var n = Math.sin(x * 0.04 + y * 0.03) * 0.15;
     arr[k] += dens;
-    vx[k] += fx;
-    vy[k] += fy;
+    sim.vx[k] += fx + n;
+    sim.vy[k] += fy + n * 0.5;
     for (var dj = -1; dj <= 1; dj++) {
       for (var di = -1; di <= 1; di++) {
+        if (di === 0 && dj === 0) continue;
         var kk = idx(g.i + di, g.j + dj);
-        arr[kk] += dens * 0.22;
-        vx[kk] += fx * 0.35;
-        vy[kk] += fy * 0.35;
+        arr[kk] += dens * 0.18;
+        sim.vx[kk] += fx * 0.3 + (Math.random() - 0.5) * 0.08;
+        sim.vy[kk] += fy * 0.3 + (Math.random() - 0.5) * 0.08;
       }
     }
   }
@@ -67,8 +67,8 @@
     for (var j = 1; j < gh - 1; j++) {
       for (var i = 1; i < gw - 1; i++) {
         var k = idx(i, j);
-        var px = i - velX[k] * 0.85;
-        var py = j - velY[k] * 0.85;
+        var px = i - velX[k] * 0.9;
+        var py = j - velY[k] * 0.9;
         var i0 = clamp(Math.floor(px), 0, gw - 1);
         var j0 = clamp(Math.floor(py), 0, gh - 1);
         var i1 = Math.min(i0 + 1, gw - 1);
@@ -92,45 +92,44 @@
     t = sim.sd; sim.sd = sim.tsd; sim.tsd = t;
   }
 
-  function stepSimBox(agents, dt) {
+  function stepSimBox(agents, dt, speedMul) {
     if (!sim) return;
     var gw = sim.gw;
     var gh = sim.gh;
     var n = gw * gh;
-    var river = Math.sin(performance.now() * 0.00035) * 0.4 + 0.6;
+    var sm = speedMul || 1;
+    var river = Math.sin(performance.now() * 0.00035 * sm) * 0.4 + 0.6;
     for (var j = 1; j < gh - 1; j++) {
       for (var i = 1; i < gw - 1; i++) {
         var k = idx(i, j);
-        sim.vx[k] *= 0.96;
-        sim.vy[k] *= 0.96;
-        sim.vd[k] *= 0.985;
-        sim.sd[k] *= 0.978;
-        sim.vy[k] += 0.02 * river;
-        sim.vx[k] += (i / gw - 0.5) * 0.008;
-        sim.sd[k] += 0.004;
-        sim.vy[k] -= 0.035;
+        sim.vx[k] *= 0.965;
+        sim.vy[k] *= 0.965;
+        sim.vd[k] *= 0.988;
+        sim.sd[k] *= 0.98;
+        var curl = Math.sin(i * 0.31 + j * 0.27) * 0.012;
+        sim.vy[k] += 0.022 * river * sm;
+        sim.vx[k] += curl + (i / gw - 0.5) * 0.01 * sm;
+        sim.sd[k] += 0.003 * sm;
+        sim.vy[k] -= 0.03 * sm;
       }
     }
     agents.forEach(function (a) {
       if (a.type === 7) {
-        injectFluid(a.x, a.y, a.vx * 0.12, a.vy * 0.12, 0.35 + a.intensity * 0.02, false);
+        injectFluid(a.x, a.y, a.vx * 0.14 * sm, a.vy * 0.14 * sm, 0.4 + a.intensity * 0.025, false);
       } else if (a.type === 1) {
-        injectFluid(a.x, a.y, (Math.random() - 0.5) * 0.2, -0.55 - a.intensity * 0.02, 0.4, true);
-        injectFluid(a.x, a.y - 8, 0, -0.7, 0.25, true);
+        injectFluid(a.x, a.y, (Math.random() - 0.5) * 0.25, -0.6 * sm, 0.42, true);
+      } else if (a.type === 4) {
+        injectFluid(a.x, a.y, a.vx * 0.06, 0.12 * sm + 0.08, 0.2, false);
       }
     });
-    advect(sim.vd, sim.vx, sim.vy, sim.tvd, 0.992);
-    advect(sim.vx, sim.vx, sim.vy, sim.tvx, 0.97);
-    advect(sim.vy, sim.vx, sim.vy, sim.tvy, 0.97);
-    advect(sim.sd, sim.vx, sim.vy * 0.6 - 0.15, sim.tsd, 0.965);
+    advect(sim.vd, sim.vx, sim.vy, sim.tvd, 0.993);
+    advect(sim.vx, sim.vx, sim.vy, sim.tvx, 0.975);
+    advect(sim.vy, sim.vx, sim.vy, sim.tvy, 0.975);
+    advect(sim.sd, sim.vx, sim.vy * 0.55 - 0.12, sim.tsd, 0.968);
     swapField();
     for (var e = 0; e < n; e++) {
-      if (sim.vd[e] > 0.02) {
-        sim.vx[e] += sim.vd[e] * 0.04;
-      }
-      if (sim.sd[e] > 0.02) {
-        sim.vy[e] -= sim.sd[e] * 0.06;
-      }
+      if (sim.vd[e] > 0.02) sim.vx[e] += sim.vd[e] * 0.045;
+      if (sim.sd[e] > 0.02) sim.vy[e] -= sim.sd[e] * 0.065;
     }
   }
 
@@ -139,26 +138,79 @@
     var gw = sim.gw;
     var gh = sim.gh;
     var arr = mode === 1 ? sim.sd : sim.vd;
-    var step = mode === 1 ? 2 : 3;
+    var step = mode === 1 ? 2 : 2;
     for (var j = 2; j < gh - 2; j += step) {
       for (var i = 2; i < gw - 2; i += step) {
         var k = idx(i, j);
-        if (arr[k] < 0.12) continue;
-        var x = (i / gw) * sim.W;
-        var y = (j / gh) * sim.H;
+        if (arr[k] < 0.1) continue;
+        var vx = sim.vx[k];
+        var vy = sim.vy[k];
+        var spd = Math.sqrt(vx * vx + vy * vy) || 0.001;
+        var px = -vy / spd;
+        var py = vx / spd;
+        var jag = Math.sin(i * 1.7 + j * 2.3) * 14 + Math.cos(i * 0.9 - j * 1.1) * 10;
+        var x = (i / gw) * sim.W + px * jag + (Math.random() - 0.5) * 6;
+        var y = (j / gh) * sim.H + py * jag * 0.6 + (Math.random() - 0.5) * 6;
         splatBuf.push({
-          x: x + (Math.random() - 0.5) * 8,
-          y: y + (Math.random() - 0.5) * 8,
-          size: 6 + arr[k] * 22 + pow * 2,
-          alpha: arr[k] * (0.08 + pow * 0.12),
-          ang: Math.atan2(sim.vy[k], sim.vx[k] + 0.001),
+          x: x, y: y,
+          size: 7 + arr[k] * 24 + pow * 2.5,
+          alpha: arr[k] * (0.12 + pow * 0.16),
+          ang: Math.atan2(vy, vx),
           mode: mode,
-          sharp: mode === 1 ? 0.5 : 0.35,
+          sharp: mode === 1 ? 0.45 : 0.32,
           seed: Math.random() * 80,
-          kind: 2
+          kind: 5
         });
+        if (arr[k] > 0.2 && Math.random() < 0.4 && splatBuf.length < maxN) {
+          splatBuf.push({
+            x: x + px * (8 + Math.random() * 12),
+            y: y + py * (8 + Math.random() * 12),
+            size: 5 + arr[k] * 14,
+            alpha: arr[k] * 0.08,
+            ang: Math.atan2(vy, vx) + (Math.random() - 0.5) * 0.8,
+            mode: mode,
+            sharp: 0.25,
+            seed: Math.random() * 40,
+            kind: 6
+          });
+        }
         if (splatBuf.length >= maxN) return;
       }
+    }
+  }
+
+  function buildBoltBranch(x0, y0, x1, y1, depth, jitter, out) {
+    if (depth <= 0) {
+      out.push({ x0: x0, y0: y0, x1: x1, y1: y1 });
+      return;
+    }
+    var mx = (x0 + x1) * 0.5 + (Math.random() - 0.5) * jitter;
+    var my = (y0 + y1) * 0.5 + (Math.random() - 0.5) * jitter;
+    buildBoltBranch(x0, y0, mx, my, depth - 1, jitter * 0.62, out);
+    buildBoltBranch(mx, my, x1, y1, depth - 1, jitter * 0.62, out);
+    if (depth >= 2 && Math.random() < 0.62) {
+      var blen = 25 + Math.random() * 70;
+      var bang = Math.atan2(y1 - y0, x1 - x0) + (Math.random() - 0.5) * 1.8;
+      buildBoltBranch(
+        mx, my,
+        mx + Math.cos(bang) * blen,
+        my + Math.sin(bang) * blen,
+        depth - 2,
+        jitter * 0.5,
+        out
+      );
+    }
+    if (depth >= 3 && Math.random() < 0.35) {
+      var bang2 = Math.random() * Math.PI * 2;
+      var blen2 = 15 + Math.random() * 40;
+      buildBoltBranch(
+        mx, my,
+        mx + Math.cos(bang2) * blen2,
+        my + Math.sin(bang2) * blen2,
+        1,
+        jitter * 0.4,
+        out
+      );
     }
   }
 
@@ -177,7 +229,7 @@
       a.boltT = 0;
       a.boltWait = 0;
       a.zig = [];
-      for (var z = 0; z < 6; z++) a.zig.push({ x: a.x, y: a.y });
+      a.boltSegs = [];
     } else if (a.type === 7) {
       a.streamAng = Math.random() * Math.PI * 2;
       a.wet = 0;
@@ -190,91 +242,195 @@
 
   function pickBoltTarget(a, W, H) {
     var pad = 60;
+    a.boltX = a.x;
+    a.boltY = a.y;
     a.boltTX = pad + Math.random() * (W - pad * 2);
     a.boltTY = pad + Math.random() * (H - pad * 2);
-    var segs = 5 + Math.floor(Math.random() * 4);
-    a.zig.length = 0;
-    for (var s = 0; s <= segs; s++) {
-      var u = s / segs;
+    var jitter = 42 + a.turb * 35 + a.radius * 1.5;
+    a.boltSegs = [];
+    buildBoltBranch(a.boltX, a.boltY, a.boltTX, a.boltTY, 4, jitter, a.boltSegs);
+    a.zig = [];
+    var n = 14 + Math.floor(Math.random() * 6);
+    for (var s = 0; s <= n; s++) {
+      var u = s / n;
       a.zig.push({
-        x: a.boltX + (a.boltTX - a.boltX) * u + (Math.random() - 0.5) * 40,
-        y: a.boltY + (a.boltTY - a.boltY) * u + (Math.random() - 0.5) * 40
+        x: a.boltX + (a.boltTX - a.boltX) * u + (Math.random() - 0.5) * jitter * 0.35,
+        y: a.boltY + (a.boltTY - a.boltY) * u + (Math.random() - 0.5) * jitter * 0.35
       });
     }
     a.boltT = 0;
-    a.boltWait = 0.08 + Math.random() * 0.12;
+    a.boltWait = 0.06 + Math.random() * 0.1;
   }
 
   function pushSplat(splatBuf, o) {
     splatBuf.push(o);
   }
 
+  function emitBoltTree(a, rad, pow, t, splatBuf, sparks) {
+    if (!a.boltSegs) return;
+    var i, seg, dx, dy, d, steps, zs, zu, zx, zy, zang;
+    for (i = 0; i < a.boltSegs.length; i++) {
+      seg = a.boltSegs[i];
+      dx = seg.x1 - seg.x0;
+      dy = seg.y1 - seg.y0;
+      d = Math.sqrt(dx * dx + dy * dy) || 1;
+      steps = Math.max(3, Math.ceil(d / 4));
+      for (zs = 0; zs <= steps; zs++) {
+        zu = zs / steps;
+        zx = seg.x0 + dx * zu + (Math.random() - 0.5) * 3;
+        zy = seg.y0 + dy * zu + (Math.random() - 0.5) * 3;
+        zang = Math.atan2(dy, dx);
+        pushSplat(splatBuf, {
+          x: zx, y: zy,
+          size: rad * (1.2 + pow * 0.5) * (0.85 + Math.random() * 0.35),
+          alpha: (0.22 + pow * 0.38) * (0.85 + Math.random() * 0.15),
+          ang: zang + (Math.random() - 0.5) * 0.15,
+          mode: 3,
+          sharp: 0.98,
+          seed: Math.random() * 50 + t + i,
+          kind: 1
+        });
+        if (Math.random() < 0.22) {
+          pushSplat(splatBuf, {
+            x: zx, y: zy,
+            size: rad * 0.55,
+            alpha: (0.15 + pow * 0.25),
+            ang: zang + 1.57,
+            mode: 3,
+            sharp: 0.85,
+            seed: Math.random() * 30,
+            kind: 7
+          });
+        }
+      }
+      if (Math.random() < 0.55) {
+        sparks.push({
+          x: seg.x1, y: seg.y1,
+          vx: (Math.random() - 0.5) * 6,
+          vy: (Math.random() - 0.5) * 6,
+          life: 0.35 + Math.random() * 0.35,
+          size: 4 + Math.random() * 6,
+          mode: 3,
+          kind: 4
+        });
+      }
+    }
+    sparks.push({
+      x: a.x, y: a.y,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      life: 0.5,
+      size: 6 + pow * 2,
+      mode: 3,
+      kind: 4
+    });
+  }
+
+  function emitFluidJagged(px, py, ang, rad, pow, mode, splatBuf, fw) {
+    var perpX = -Math.sin(ang);
+    var perpY = Math.cos(ang);
+    var i, off, jag, fx, fy;
+    for (i = -3; i <= 3; i++) {
+      off = i * (2.5 + Math.random() * 4);
+      jag = (Math.random() - 0.5) * 18;
+      fx = px + perpX * off + Math.cos(ang) * jag;
+      fy = py + perpY * off + Math.sin(ang) * jag;
+      pushSplat(splatBuf, {
+        x: fx, y: fy,
+        size: rad * (1.6 + Math.abs(i) * 0.15) * (2.2 + pow * 0.35),
+        alpha: (0.14 + pow * 0.22) * (1 - Math.abs(i) * 0.08),
+        ang: ang + (Math.random() - 0.5) * 0.35,
+        mode: mode,
+        sharp: mode === 7 ? 0.2 : 0.3,
+        seed: Math.random() * 60,
+        kind: mode === 7 ? 5 : 6
+      });
+    }
+    if (fw) {
+      pushSplat(splatBuf, {
+        x: px + fw.vx * 3, y: py + fw.vy * 3,
+        size: rad * 2,
+        alpha: 0.1 + pow * 0.15,
+        ang: Math.atan2(fw.vy, fw.vx),
+        mode: mode,
+        sharp: 0.18,
+        seed: Math.random() * 20,
+        kind: 1
+      });
+    }
+  }
+
   function emitTrail(a, t, pow, splatBuf, sparks, intensityPow) {
     var dx = a.x - a.px;
     var dy = a.y - a.py;
     var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    var steps = Math.max(1, dist > 0.2 ? Math.min(28, Math.ceil(dist / 1.4)) : 1);
+    var steps = Math.max(1, dist > 0.2 ? Math.min(30, Math.ceil(dist / 1.2)) : 1);
     var rad = a.radius * (1.05 + pow * 0.65);
     var m = a.type;
 
-    if (m === 3 && a.zig && a.zig.length > 1) {
-      for (var zi = 1; zi < a.zig.length; zi++) {
-        var z0 = a.zig[zi - 1];
-        var z1 = a.zig[zi];
-        var zdx = z1.x - z0.x;
-        var zdy = z1.y - z0.y;
-        var zd = Math.sqrt(zdx * zdx + zdy * zdy) || 1;
-        var zsteps = Math.max(2, Math.ceil(zd / 6));
-        for (var zs = 0; zs < zsteps; zs++) {
-          var zu = zs / zsteps;
-          var zx = z0.x + zdx * zu;
-          var zy = z0.y + zdy * zu;
-          var zang = Math.atan2(zdy, zdx);
-          pushSplat(splatBuf, {
-            x: zx, y: zy,
-            size: rad * (1.5 + pow * 0.6),
-            alpha: (0.2 + pow * 0.35) * 0.9,
-            ang: zang,
-            mode: 3,
-            sharp: 0.98,
-            seed: Math.random() * 40 + t,
-            kind: 1
-          });
+    if (m === 3) {
+      emitBoltTree(a, rad, pow, t, splatBuf, sparks);
+      if (a.zig && a.zig.length > 1) {
+        var zi, z0, z1, zdx, zdy, zd, zsteps, zs, zu, zx, zy, zang;
+        for (zi = 1; zi < a.zig.length; zi++) {
+          z0 = a.zig[zi - 1];
+          z1 = a.zig[zi];
+          zdx = z1.x - z0.x;
+          zdy = z1.y - z0.y;
+          zd = Math.sqrt(zdx * zdx + zdy * zdy) || 1;
+          zsteps = Math.max(2, Math.ceil(zd / 5));
+          for (zs = 0; zs < zsteps; zs++) {
+            zu = zs / zsteps;
+            zx = z0.x + zdx * zu;
+            zy = z0.y + zdy * zu;
+            zang = Math.atan2(zdy, zdx);
+            pushSplat(splatBuf, {
+              x: zx, y: zy,
+              size: rad * (1.8 + pow * 0.7),
+              alpha: (0.28 + pow * 0.42),
+              ang: zang,
+              mode: 3,
+              sharp: 0.99,
+              seed: Math.random() * 40 + t,
+              kind: 1
+            });
+          }
         }
       }
       return;
     }
 
-    for (var i = 0; i < steps; i++) {
-      var u = (i + 1) / (steps + 1);
-      var px = a.px + dx * u;
-      var py = a.py + dy * u;
-      var vx = dx / dist + a.vx;
-      var vy = dy / dist + a.vy;
-      var ang = Math.atan2(vy, vx);
-      var spd = Math.sqrt(vx * vx + vy * vy);
+    var i, u, px, py, vx, vy, ang, spd, tend, fw;
+    for (i = 0; i < steps; i++) {
+      u = (i + 1) / (steps + 1);
+      px = a.px + dx * u;
+      py = a.py + dy * u;
+      vx = dx / dist + a.vx;
+      vy = dy / dist + a.vy;
+      ang = Math.atan2(vy, vx);
+      spd = Math.sqrt(vx * vx + vy * vy);
 
       if (m === 1) {
-        var tend = Math.sin(a.tendril + t * 2.5 + u * 8) * 12;
+        tend = Math.sin(a.tendril + t * 2.5 + u * 8) * 14;
         px += tend;
         py -= 4 + Math.random() * 6;
         pushSplat(splatBuf, {
           x: px, y: py,
-          size: rad * (1.8 + pow * 0.5) * (0.6 + Math.random() * 0.5),
-          alpha: (0.12 + pow * 0.2) * (0.7 + Math.random() * 0.3),
+          size: rad * (1.8 + pow * 0.55) * (0.6 + Math.random() * 0.5),
+          alpha: (0.16 + pow * 0.24) * (0.75 + Math.random() * 0.25),
           ang: ang + Math.PI * 0.5,
           mode: 1,
           sharp: 0.35 + Math.random() * 0.25,
           seed: Math.random() * 90,
           kind: 1
         });
-        if (Math.random() < 0.35) {
+        if (Math.random() < 0.4) {
           pushSplat(splatBuf, {
-            x: px + (Math.random() - 0.5) * 20,
-            y: py - 10 - Math.random() * 25,
-            size: rad * 2.2,
-            alpha: (0.06 + pow * 0.1) * 0.8,
-            ang: -Math.PI * 0.5 + (Math.random() - 0.5) * 0.4,
+            x: px + (Math.random() - 0.5) * 22,
+            y: py - 10 - Math.random() * 28,
+            size: rad * 2.4,
+            alpha: (0.1 + pow * 0.14),
+            ang: -Math.PI * 0.5 + (Math.random() - 0.5) * 0.5,
             mode: 1,
             sharp: 0.2,
             seed: Math.random() * 50,
@@ -282,58 +438,38 @@
           });
         }
       } else if (m === 7) {
-        var fw = sampleFlow(px, py);
-        ang = Math.atan2(vy + fw.vy * 2, vx + fw.vx * 2);
-        pushSplat(splatBuf, {
-          x: px, y: py,
-          size: rad * (2.2 + spd * 0.25) * (2.5 + pow * 0.4),
-          alpha: (0.1 + pow * 0.18) * 0.95,
-          ang: ang,
-          mode: 7,
-          sharp: 0.22,
-          seed: Math.random() * 60,
-          kind: 1
-        });
-        if (Math.random() < 0.4) {
-          pushSplat(splatBuf, {
-            x: px, y: py,
-            size: rad * 1.4,
-            alpha: (0.05 + pow * 0.08),
-            ang: ang,
-            mode: 7,
-            sharp: 0.15,
-            seed: Math.random() * 30,
-            kind: 2
-          });
-        }
-      } else if (m === 2) {
-        a.grow += 0.02;
-        pushSplat(splatBuf, {
-          x: px, y: py,
-          size: rad * (1.3 + a.grow * 0.3),
-          alpha: (0.14 + pow * 0.22),
-          ang: ang - 0.3,
-          mode: 2,
-          sharp: 0.95,
-          seed: Math.random() * 70,
-          kind: 1
-        });
+        fw = sampleFlow(px, py);
+        ang = Math.atan2(vy + fw.vy * 2.5, vx + fw.vx * 2.5);
+        emitFluidJagged(px, py, ang, rad, pow, 7, splatBuf, fw);
       } else if (m === 4) {
+        emitFluidJagged(px, py, ang + (Math.random() - 0.5) * 0.2, rad * 0.9, pow, 4, splatBuf, null);
         pushSplat(splatBuf, {
           x: px, y: py,
-          size: rad * (1.5 + spd * 0.1),
-          alpha: (0.15 + pow * 0.25),
+          size: rad * (1.5 + spd * 0.12),
+          alpha: (0.18 + pow * 0.28),
           ang: ang,
           mode: 4,
           sharp: 0.28,
           seed: Math.random() * 40,
           kind: 1
         });
+      } else if (m === 2) {
+        a.grow += 0.02;
+        pushSplat(splatBuf, {
+          x: px, y: py,
+          size: rad * (1.3 + a.grow * 0.3),
+          alpha: (0.17 + pow * 0.26),
+          ang: ang - 0.3,
+          mode: 2,
+          sharp: 0.95,
+          seed: Math.random() * 70,
+          kind: 1
+        });
       } else if (m === 5) {
         pushSplat(splatBuf, {
           x: px, y: py,
           size: rad * (1.4 + a.heat * 0.2),
-          alpha: (0.14 + pow * 0.24) * a.heat,
+          alpha: (0.17 + pow * 0.28) * a.heat,
           ang: ang - 0.5,
           mode: 5,
           sharp: 0.5,
@@ -342,12 +478,12 @@
         });
         a.heat = clamp(a.heat * 0.998, 0.5, 1.2);
       } else {
-        var sharp = m === 3 ? 0.95 : (m === 6 ? 0.7 : 0.62);
+        var sharp = m === 6 ? 0.7 : 0.62;
         pushSplat(splatBuf, {
           x: px + (Math.random() - 0.5) * a.turb * 3,
           y: py + (Math.random() - 0.5) * a.turb * 3,
-          size: rad * (1.2 + spd * 0.15) * (2.6 + pow * 0.4),
-          alpha: (0.1 + pow * 0.2) * (0.8 + a.decay * 0.2),
+          size: rad * (1.2 + spd * 0.15) * (2.8 + pow * 0.45),
+          alpha: (0.14 + pow * 0.24) * (0.85 + a.decay * 0.15),
           ang: ang,
           mode: m,
           sharp: sharp,
@@ -356,7 +492,7 @@
         });
       }
     }
-    if (m === 4 && Math.random() < pow * 0.28) {
+    if (m === 4 && Math.random() < pow * 0.32) {
       sparks.push({
         x: a.x, y: a.y,
         vx: (Math.random() - 0.5) * 3,
@@ -364,7 +500,7 @@
         life: 0.7, size: 3, mode: 4, kind: 1
       });
     }
-    if (m === 6 && Math.random() < pow * 0.32) {
+    if (m === 6 && Math.random() < pow * 0.35) {
       var ba = Math.random() * Math.PI * 2;
       sparks.push({
         x: a.x, y: a.y,
@@ -374,12 +510,14 @@
     }
   }
 
-  function updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget) {
+  function updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget, speedMul) {
+    var sm = speedMul || 1;
+    dt *= sm;
     if (a.visual === undefined) initAgentType(a);
 
     if (a.type === 3) {
       if (!a.zig || a.zig.length < 2) pickBoltTarget(a, W, H);
-      a.boltWait -= dt;
+      a.boltWait = (a.boltWait || 0) - dt;
       if (a.boltT >= 1 || a.boltWait <= 0) pickBoltTarget(a, W, H);
       if (a.zig.length > 1) {
         var seg = Math.floor(a.boltT * (a.zig.length - 1));
@@ -391,9 +529,9 @@
         a.py = a.y;
         a.x = p0.x + (p1.x - p0.x) * u;
         a.y = p0.y + (p1.y - p0.y) * u;
-        a.vx = (p1.x - p0.x) * 12;
-        a.vy = (p1.y - p0.y) * 12;
-        a.boltT += dt * (4.5 + a.turb * 4);
+        a.vx = (p1.x - p0.x) * 14 * sm;
+        a.vy = (p1.y - p0.y) * 14 * sm;
+        a.boltT += dt * (5.5 + a.turb * 5) * sm;
       }
       var pad = 24;
       a.x = clamp(a.x, pad, W - pad);
@@ -408,14 +546,14 @@
 
     var mot = typeMotion(a, t + a.phase);
     var bnd = boundarySteer(a);
-    var roam = 0.34;
-    var ax = mot.ax + bnd.ax + (dxT / dT) * roam;
-    var ay = mot.ay + bnd.ay + (dyT / dT) * roam;
+    var roam = 0.34 * sm;
+    var ax = (mot.ax + bnd.ax + (dxT / dT) * roam) * sm;
+    var ay = (mot.ay + bnd.ay + (dyT / dT) * roam) * sm;
 
     if (a.type === 1) {
       a.tendril += dt * 2.2;
-      ay -= a.rise * 1.1;
-      ax += Math.sin(a.tendril) * 0.6;
+      ay -= a.rise * 1.1 * sm;
+      ax += Math.sin(a.tendril) * 0.6 * sm;
       a.slaveT += dt;
       if (a.slaveT > 2.5) {
         a.slaveT = 0;
@@ -423,30 +561,30 @@
       }
     } else if (a.type === 7) {
       var fl = sampleFlow(a.x, a.y);
-      ax += fl.vx * 1.8 + Math.cos(a.streamAng) * 0.5;
-      ay += fl.vy * 1.8 + Math.sin(a.streamAng) * 0.35 + 0.25;
-      a.streamAng += dt * 0.4;
+      ax += (fl.vx * 1.8 + Math.cos(a.streamAng) * 0.5) * sm;
+      ay += (fl.vy * 1.8 + Math.sin(a.streamAng) * 0.35 + 0.25) * sm;
+      a.streamAng += dt * 0.4 * sm;
       a.wet = clamp(a.wet + dt, 0, 1);
     } else if (a.type === 5) {
-      ay -= 0.65;
+      ay -= 0.65 * sm;
       a.heat = Math.min(1.3, a.heat + dt * 0.15);
     } else if (a.type === 2) {
-      ay += 0.12;
+      ay += 0.12 * sm;
       ax *= 0.85;
     }
 
     a.dashT = (a.dashT || 0) - dt;
     if (a.dashT <= 0 && a.type !== 1) {
-      a.dashT = 0.5 + Math.random() * 1.2;
+      a.dashT = (0.5 + Math.random() * 1.2) / sm;
       var dashA = Math.random() * Math.PI * 2;
-      var dashF = 2.5 + a.turb * 3;
+      var dashF = (2.5 + a.turb * 3) * sm;
       a.vx += Math.cos(dashA) * dashF;
       a.vy += Math.sin(dashA) * dashF;
     }
 
     a.vx = a.vx * 0.76 + ax * 0.24;
     a.vy = a.vy * 0.76 + ay * 0.24;
-    var spdCap = a.type === 3 ? 14 : (5.5 + a.turb * 3.5);
+    var spdCap = (a.type === 3 ? 14 : (5.5 + a.turb * 3.5)) * sm;
     var spd = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
     if (spd > spdCap) {
       a.vx = (a.vx / spd) * spdCap;
@@ -457,14 +595,18 @@
     a.py = a.y;
     a.pulse += dt * 3;
     var pulse = 1 + Math.sin(a.pulse) * 0.12;
-    a.x += a.vx * pulse + Math.sin(t * 2.8 + a.phase) * a.turb * 0.45;
-    a.y += a.vy * pulse + Math.cos(t * 2 + a.phase) * a.turb * 0.4;
+    a.x += a.vx * pulse + Math.sin(t * 2.8 + a.phase) * a.turb * 0.45 * sm;
+    a.y += a.vy * pulse + Math.cos(t * 2 + a.phase) * a.turb * 0.4 * sm;
 
     var pad2 = 24;
     if (a.x < pad2) { a.x = pad2; a.vx = Math.abs(a.vx) * 0.5 + 0.2; }
     if (a.x > W - pad2) { a.x = W - pad2; a.vx = -Math.abs(a.vx) * 0.5 - 0.2; }
     if (a.y < pad2) { a.y = pad2; a.vy = Math.abs(a.vy) * 0.5 + 0.2; }
     if (a.y > H - pad2) { a.y = H - pad2; a.vy = -Math.abs(a.vy) * 0.5 - 0.2; }
+  }
+
+  function speedFromSlider(v) {
+    return 0.35 + ((v - 1) / 14) * 1.85;
   }
 
   global.DEEmitters = {
@@ -474,6 +616,7 @@
     initAgentType: initAgentType,
     updateAgentMotion: updateAgentMotion,
     emitTrail: emitTrail,
-    sampleFlow: sampleFlow
+    sampleFlow: sampleFlow,
+    speedFromSlider: speedFromSlider
   };
 })(typeof window !== 'undefined' ? window : globalThis);

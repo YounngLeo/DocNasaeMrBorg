@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">sim box · scie per elemento · ink anime</div>
-  <div class="ver">v0.6 — sim box · agenti per tipo</div>
+  <div class="ver">v0.7 — velocità · fulmini · fluidi</div>
 </div>
 
 <div class="actions">
@@ -148,6 +148,13 @@
     <div class="row">
       <input type="range" id="s-intensity" min="1" max="15" step="1" value="8">
       <div class="val" id="v-intensity">8</div>
+    </div>
+  </div>
+  <div class="control">
+    <label>Velocità agenti</label>
+    <div class="row">
+      <input type="range" id="s-speed" min="1" max="15" step="1" value="8">
+      <div class="val" id="v-speed">8</div>
     </div>
   </div>
   <div class="control">
@@ -200,12 +207,13 @@
   var TYPE_NAMES = ['luce', 'ombra', 'ghiaccio', 'elettricità', 'sangue', 'fuoco', 'energia', 'acqua'];
   var MAX_AGENTS = 32;
   var MAX_SPLATS = 560;
-  var MAX_SPARKS = 180;
+  var MAX_SPARKS = 280;
   var SHOW_AGENTS = true;
   var SMOKE_SCALE = 1.0;
   var EC = window.DEEmitters;
 
-  var template = { type: 6, intensity: 8, turb: 0.4, decay: 0.93, radius: 12 };
+  var template = { type: 6, intensity: 8, turb: 0.4, decay: 0.93, radius: 12, speed: 8 };
+  var moveSpeed = 1;
   var globalDecay = 0.93;
   var agents = [];
   var agentSeq = 0;
@@ -417,9 +425,12 @@
     '  } else if (mode == 3) {',
     '    float bolt = cel(lightning(q, seed, uTime), 5.0);',
     '    float core = exp(-r2 * mix(14.0, 28.0, vSharp));',
-    '    float streak = exp(-abs(q.y) * mix(20.0, 45.0, vSharp)) * exp(-abs(q.x) * 4.0);',
-    '    m = (bolt * 1.2 + core * 0.5 + streak * 0.7) * vAlpha * flick;',
-    '    col = shade3D(vec3(0.15, 0.4, 1.0), ndl, bolt + streak, bolt + spec);',
+    '    float streak = exp(-abs(q.y) * mix(22.0, 50.0, vSharp)) * exp(-abs(q.x) * 4.0);',
+    '    float fork = 0.0;',
+    '    if (kind == 7) fork = exp(-abs(q.x) * 25.0) * exp(-r2 * 8.0);',
+    '    m = (bolt * 1.25 + core * 0.55 + streak * 0.75 + fork) * vAlpha * flick;',
+    '    col = shade3D(vec3(0.2, 0.5, 1.0), ndl, bolt + streak, bolt + spec + fork);',
+    '    col += vec3(0.85, 0.95, 1.0) * bolt * 0.35;',
     '  } else if (mode == 4) {',
     '    float nv = fbm(nUv + uTime * 0.04);',
     '    float ribbon = exp(-abs(q.x + nv * 0.4) * mix(5.0, 12.0, vSharp));',
@@ -451,15 +462,18 @@
     '    stream *= exp(-fq.x * fq.x * 3.0) * exp(-r2 * 1.2);',
     '    stream = cel(stream, 5.0);',
     '    float hl = cel(exp(-abs(fq.x) * 20.0) * stream, 3.0);',
-    '    m = (stream + hl * 0.5) * vAlpha;',
-    '    col = shade3D(vec3(0.06, 0.35, 0.62), ndl, rim, spec + hl);',
-    '    col += vec3(0.7, 0.95, 1.0) * hl * 0.35;',
+    '    float finger = 0.0;',
+    '    if (kind >= 5) finger = exp(-abs(q.x + sin(q.y * 16.0) * 0.12) * 12.0) * stream;',
+    '    m = (stream + hl * 0.55 + finger * 0.6) * vAlpha;',
+    '    col = shade3D(vec3(0.08, 0.42, 0.72), ndl, rim, spec + hl);',
+    '    col += vec3(0.75, 0.98, 1.0) * (hl + finger) * 0.45;',
     '  }',
-    '  col = mix(col, vec3(0.02, 0.01, 0.04), inkL * 0.92);',
-    '  m *= pointMask * (1.0 - inkL * 0.15);',
-    '  m += inkL * 0.55 * vAlpha;',
-    '  if (m < 0.001) discard;',
-    '  outColor = vec4(col * m, m);',
+  '  col *= 1.38;',
+  '  col = mix(col, vec3(0.03, 0.02, 0.06), inkL * 0.55);',
+  '  m *= pointMask * (1.0 - inkL * 0.08);',
+  '  m += inkL * 0.35 * vAlpha;',
+  '  if (m < 0.001) discard;',
+  '  outColor = vec4(col * m, min(m * 1.08, 1.0));',
     '}'
   ].join('\n');
 
@@ -492,13 +506,14 @@
     '  float luma = dot(col, vec3(0.299, 0.587, 0.114));',
     '  float l = cel(luma, 6.0);',
     '  col = col / max(luma, 0.001) * l * dens;',
-    '  dens = smoothstep(0.004, 0.42, dens);',
+    '  dens = smoothstep(0.003, 0.48, dens);',
+    '  col *= 1.32;',
     '  float hatch = sin((vUv.x + vUv.y) * 140.0 + uTime * 0.5) * 0.5 + 0.5;',
     '  hatch = cel(hatch, 3.0);',
-    '  col *= 0.94 + hatch * 0.06 * dens;',
-    '  col = mix(col, vec3(0.02, 0.01, 0.05), edge * 0.88);',
-    '  col += col * cel(dens, 4.0) * 0.25;',
-    '  float a = clamp(dens * 0.96, 0.0, 1.0);',
+    '  col *= 0.96 + hatch * 0.05 * dens;',
+    '  col = mix(col, vec3(0.03, 0.02, 0.06), edge * 0.62);',
+    '  col += col * cel(dens, 4.0) * 0.42;',
+    '  float a = clamp(dens * 0.98, 0.0, 1.0);',
     '  outColor = vec4(col, a);',
     '}'
   ].join('\n');
@@ -550,9 +565,13 @@
     '    float spark = max(0.0, 1.0 - r * 2.8);',
     '    float streak = exp(-abs(p.x) * 22.0) * spark;',
     '    m = (spark + streak * 0.65) * vLife;',
+    '  } else if (mode == 3 && kind == 4) {',
+    '    float cross = exp(-abs(p.x) * 38.0) + exp(-abs(p.y) * 38.0);',
+    '    float core = 1.0 - smoothstep(0.2, 0.55, r);',
+    '    m = (cross * 0.35 + core) * vLife;',
     '  } else if (mode == 3) {',
     '    float cross = exp(-abs(p.x) * 32.0) + exp(-abs(p.y) * 32.0);',
-    '    m = (max(0.0, 1.0 - r * 2.5) + cross * 0.2) * vLife;',
+    '    m = (max(0.0, 1.0 - r * 2.5) + cross * 0.25) * vLife;',
     '  } else {',
     '    float cross = exp(-abs(p.x) * 28.0) + exp(-abs(p.y) * 28.0);',
     '    m = (max(0.0, 1.0 - r * 2.2) + cross * 0.12) * vLife;',
@@ -564,7 +583,7 @@
     '  if (mode == 0) col = vec3(1.0, 0.95, 0.8);',
     '  else if (mode == 1) col = vec3(0.6, 0.1, 0.5);',
     '  else if (mode == 2) col = vec3(0.85, 0.98, 1.0);',
-    '  else if (mode == 3) col = vec3(0.6, 0.85, 1.0);',
+    '  else if (mode == 3) col = vec3(0.75, 0.92, 1.0);',
     '  else if (mode == 4) col = vec3(0.95, 0.15, 0.2);',
     '  else if (mode == 5) col = vec3(1.0, 0.55, 0.15);',
     '  else if (mode == 6) col = vec3(0.55, 0.75, 1.0);',
@@ -686,6 +705,7 @@
       turb: template.turb,
       decay: template.decay,
       radius: template.radius,
+      speed: template.speed,
       phase: Math.random() * Math.PI * 2,
       emitAcc: 0,
       vx: 0, vy: 0,
@@ -775,7 +795,7 @@
   function updateAgents(t) {
     var minDecay = globalDecay;
     var dt = 0.016;
-    if (EC) EC.stepSimBox(agents, dt);
+    if (EC) EC.stepSimBox(agents, dt, moveSpeed);
     agents.forEach(function (a) {
       if (a.decay < minDecay) minDecay = a.decay;
       if (a.targetX === undefined) {
@@ -790,9 +810,9 @@
         pickRoamTarget(a);
         if (EC) EC.initAgentType(a);
       }
-      a.orbitAng += a.orbitSpd * 0.045;
+      a.orbitAng += a.orbitSpd * 0.045 * moveSpeed;
       if (EC) {
-        EC.updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget);
+        EC.updateAgentMotion(a, t, dt, W, H, boundarySteer, typeMotion, pickRoamTarget, moveSpeed);
       }
       var pow = intensityPow(a.intensity);
       if (EC) EC.emitTrail(a, t, pow, splatBuf, sparks, intensityPow);
@@ -1051,6 +1071,10 @@
       } else if (key === 'turb') {
         template.turb = v / 100;
         if (out) out.textContent = template.turb.toFixed(2);
+      } else if (key === 'speed') {
+        template.speed = v;
+        moveSpeed = EC ? EC.speedFromSlider(v) : 1;
+        if (out) out.textContent = String(template.speed);
       } else {
         template[key] = v;
         if (out) out.textContent = fmt ? fmt(template[key]) : String(template[key]);
@@ -1077,6 +1101,7 @@
     updateStatus();
   });
   bindSlider('s-intensity', 'v-intensity', 'intensity');
+  bindSlider('s-speed', 'v-speed', 'speed');
   bindSlider('s-turb', 'v-turb', 'turb');
   bindSlider('s-decay', 'v-decay', 'decay');
   bindSlider('s-radius', 'v-radius', 'radius');
@@ -1097,6 +1122,8 @@
   initGL();
   if (!EC) {
     console.warn('emitter-core.js mancante');
+  } else {
+    moveSpeed = EC.speedFromSlider(template.speed);
   }
   resize();
   updateStatus();
