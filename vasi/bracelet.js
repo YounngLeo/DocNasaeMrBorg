@@ -9,7 +9,7 @@
     spirale:  { label: 'spirale',  draw: drawSpirale }
   };
 
-  var MAT_COLORS = { argilla: '#dfb98f', pla: '#93f3ff', resina: '#6edbff' };
+  var MAT_COLORS = { argilla: '#c9a87c', pla: '#5eff7e', resina: '#4af6ff' };
 
   var svg = document.getElementById('br-svg');
   var chainLayer = document.getElementById('br-chain-layer');
@@ -58,43 +58,103 @@
 
   function slotY(i) { return TOP + i * STEP; }
 
+  function drawWireRings(g, topY, bottomY, rx, n, color) {
+    for (var i = 1; i <= n; i++) {
+      var y = topY + (bottomY - topY) * (i / (n + 1));
+      var t = i / (n + 1);
+      var ringRx = rx * (0.78 + 0.22 * Math.sin(t * Math.PI));
+      g.appendChild(svgEl('ellipse', {
+        cx: 0, cy: y, rx: ringRx, ry: 2.3,
+        fill: 'none', stroke: color, 'stroke-width': '0.55', opacity: '0.42'
+      }));
+    }
+  }
+
   function drawCilindro(g, m, h) {
-    g.appendChild(svgEl('rect', {
-      x: -14, y: -h * 0.45, width: 28, height: h * 0.75, rx: 3,
-      fill: m.color, stroke: '#c4f3ff', 'stroke-width': '0.7', opacity: '0.86'
+    var top = -h * 0.45;
+    var bottom = h * 0.30;
+    var rx = 14;
+    g.appendChild(svgEl('ellipse', {
+      cx: 0, cy: top, rx: rx, ry: 4,
+      fill: 'none', stroke: m.color, 'stroke-width': '1.0', opacity: '0.95'
     }));
     g.appendChild(svgEl('ellipse', {
-      cx: 0, cy: -h * 0.45, rx: 14, ry: 4,
-      fill: 'none', stroke: '#d8f8ff', 'stroke-width': '0.9', opacity: '0.9'
+      cx: 0, cy: bottom, rx: rx, ry: 3.2,
+      fill: 'none', stroke: m.color, 'stroke-width': '0.75', opacity: '0.5', 'stroke-dasharray': '2.5 2'
+    }));
+    [-12, -6, 0, 6, 12].forEach(function (x) {
+      g.appendChild(svgEl('line', {
+        x1: x, y1: top, x2: x, y2: bottom,
+        stroke: m.color, 'stroke-width': x === 0 ? '0.9' : '0.6', opacity: x === 0 ? '0.85' : '0.6'
+      }));
+    });
+    drawWireRings(g, top, bottom, rx, 3, m.color);
+    g.appendChild(svgEl('rect', {
+      x: -14, y: top, width: 28, height: bottom - top, rx: 3,
+      fill: 'none', stroke: m.color, 'stroke-width': '0.45', opacity: '0.35'
     }));
   }
 
   function drawCono(g, m, h) {
+    var top = -h * 0.45;
+    var bottom = h * 0.30;
+    g.appendChild(svgEl('ellipse', {
+      cx: 0, cy: bottom, rx: 16, ry: 3.6,
+      fill: 'none', stroke: m.color, 'stroke-width': '0.8', opacity: '0.55', 'stroke-dasharray': '2.5 2'
+    }));
+    [-14, -7, 0, 7, 14].forEach(function (x) {
+      g.appendChild(svgEl('line', {
+        x1: 0, y1: top, x2: x, y2: bottom,
+        stroke: m.color, 'stroke-width': x === 0 ? '0.9' : '0.6', opacity: x === 0 ? '0.88' : '0.6'
+      }));
+    });
+    drawWireRings(g, top, bottom, 16, 2, m.color);
     g.appendChild(svgEl('path', {
-      d: 'M-16 ' + (h * 0.3) + ' L0 ' + (-h * 0.45) + ' L16 ' + (h * 0.3) + ' Z',
-      fill: m.color, stroke: '#c4f3ff', 'stroke-width': '0.7', opacity: '0.86'
+      d: 'M-16 ' + bottom + ' L0 ' + top + ' L16 ' + bottom + ' Z',
+      fill: 'none', stroke: m.color, 'stroke-width': '0.6', opacity: '0.6'
     }));
   }
 
   function drawBulbo(g, m, h) {
+    var bodyRy = h * 0.38;
+    var neckTop = -h * 0.45;
+    var neckBottom = -h * 0.23;
     g.appendChild(svgEl('ellipse', {
-      cx: 0, cy: 0, rx: 16, ry: h * 0.38,
-      fill: m.color, stroke: '#c4f3ff', 'stroke-width': '0.7', opacity: '0.86'
+      cx: 0, cy: 0, rx: 16, ry: bodyRy,
+      fill: 'none', stroke: m.color, 'stroke-width': '0.9', opacity: '0.9'
     }));
+    [-12, -6, 0, 6, 12].forEach(function (x) {
+      g.appendChild(svgEl('line', {
+        x1: x * 0.35, y1: -bodyRy, x2: x, y2: bodyRy,
+        stroke: m.color, 'stroke-width': x === 0 ? '0.85' : '0.55', opacity: x === 0 ? '0.85' : '0.56'
+      }));
+    });
+    drawWireRings(g, -bodyRy, bodyRy, 16, 3, m.color);
     g.appendChild(svgEl('rect', {
-      x: -6, y: -h * 0.45, width: 12, height: h * 0.22, rx: 2,
-      fill: m.color, stroke: '#b6ebff', 'stroke-width': '0.6', opacity: '0.8'
+      x: -6, y: neckTop, width: 12, height: neckBottom - neckTop, rx: 2,
+      fill: 'none', stroke: m.color, 'stroke-width': '0.75', opacity: '0.82'
+    }));
+    g.appendChild(svgEl('ellipse', {
+      cx: 0, cy: neckTop, rx: 6, ry: 2.2,
+      fill: 'none', stroke: m.color, 'stroke-width': '0.7', opacity: '0.75'
     }));
   }
 
   function drawSpirale(g, m, h) {
     g.appendChild(svgEl('path', {
       d: 'M0 ' + (-h * 0.4) + ' Q14 ' + (-h * 0.15) + ' 0 0.1 T0 ' + (h * 0.35),
-      fill: 'none', stroke: '#c7f5ff', 'stroke-width': '4.6', 'stroke-linecap': 'round', opacity: '0.92'
+      fill: 'none', stroke: m.color, 'stroke-width': '4.2', 'stroke-linecap': 'round', opacity: '0.30'
     }));
     g.appendChild(svgEl('path', {
       d: 'M0 ' + (-h * 0.4) + ' Q14 ' + (-h * 0.15) + ' 0 0.1 T0 ' + (h * 0.35),
-      fill: 'none', stroke: m.color, 'stroke-width': '2.4', 'stroke-linecap': 'round', opacity: '0.72'
+      fill: 'none', stroke: m.color, 'stroke-width': '2.1', 'stroke-linecap': 'round', opacity: '0.96'
+    }));
+    [0.25, 0.5, 0.75].forEach(function (t) {
+      var y = (-h * 0.4) + (h * 0.75) * t;
+      g.appendChild(svgEl('line', {
+        x1: -7, y1: y, x2: 7, y2: y,
+        stroke: m.color, 'stroke-width': '0.55', opacity: '0.55'
+      }));
     }));
   }
 
@@ -108,25 +168,25 @@
     var bottom = slotY(slotCount - 1) + 40;
     chainLayer.appendChild(svgEl('line', {
       x1: CX, y1: TOP - 20, x2: CX, y2: bottom,
-      stroke: '#6dc9e8', 'stroke-width': '1.8', opacity: '0.66'
+      stroke: '#3a3a3a', 'stroke-width': '2'
     }));
     for (var i = 0; i < slotCount; i++) {
       var y = slotY(i);
       var link = svgEl('g', { transform: 'translate(' + CX + ',' + y + ')' });
       link.appendChild(svgEl('rect', {
         x: -10, y: -4, width: 20, height: 8, rx: 2,
-        fill: 'rgba(9,20,28,0.88)', stroke: '#9ee9ff', 'stroke-width': '0.7', opacity: '0.9'
+        fill: '#141414', stroke: '#555', 'stroke-width': '0.8'
       }));
       link.appendChild(svgEl('circle', {
-        cx: 0, cy: -14, r: 2.5, fill: 'none', stroke: '#99e5ff', 'stroke-width': '0.75', opacity: '0.82'
+        cx: 0, cy: -14, r: 2.5, fill: 'none', stroke: '#666', 'stroke-width': '0.7'
       }));
       link.appendChild(svgEl('circle', {
-        cx: 0, cy: 14, r: 2.5, fill: 'none', stroke: '#99e5ff', 'stroke-width': '0.75', opacity: '0.82'
+        cx: 0, cy: 14, r: 2.5, fill: 'none', stroke: '#666', 'stroke-width': '0.7'
       }));
       if (i < slotCount - 1) {
         link.appendChild(svgEl('line', {
           x1: 0, y1: 8, x2: 0, y2: STEP - 8,
-          stroke: '#7ed4f0', 'stroke-width': '1.2', opacity: '0.62'
+          stroke: '#444', 'stroke-width': '1.5'
         }));
       }
       chainLayer.appendChild(link);
@@ -155,7 +215,7 @@
       drawModuleShape(g, mod);
       g.appendChild(svgEl('text', {
         x: 0, y: (mod.height || 40) * 0.55,
-        'text-anchor': 'middle', fill: '#d7f7ff', 'font-size': '7',
+        'text-anchor': 'middle', fill: '#d0d0d0', 'font-size': '7',
         'font-family': 'Courier New, monospace'
       })).textContent = mod.name.slice(0, 8);
       moduleLayer.appendChild(g);
@@ -174,11 +234,11 @@
       });
       g.appendChild(svgEl('rect', {
         x: -18, y: -18, width: 36, height: 36, rx: 2,
-        fill: 'rgba(134, 224, 255, 0.05)', stroke: '#8be2ff', 'stroke-width': '0.8',
+        fill: 'rgba(94,255,126,0.04)', stroke: '#3aaa50', 'stroke-width': '0.8',
         'stroke-dasharray': '3 2', opacity: '0.7'
       }));
       g.appendChild(svgEl('text', {
-        x: 0, y: 4, 'text-anchor': 'middle', fill: '#9be9ff',
+        x: 0, y: 4, 'text-anchor': 'middle', fill: '#3aaa50',
         'font-size': '14', 'font-family': 'Courier New, monospace'
       })).textContent = '+';
       slotLayer.appendChild(g);
