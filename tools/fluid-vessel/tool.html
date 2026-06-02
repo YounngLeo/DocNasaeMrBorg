@@ -155,7 +155,7 @@
   <div class="back"><a href="../#fluid-vessel">← tools_index</a> / fluid_vessel / tool</div>
   <h1>[ FLUID_VESSEL :: MEMBRANA ]</h1>
   <div class="sub">generatore contenitori biomorfi · PBD · uncini</div>
-  <div class="ver">v.08 — raggio +20% · muro doppio · doppia faccia</div>
+  <div class="ver">v.09 — print tune 0.4 TPU · hook deform</div>
 </div>
 
 <div class="actions">
@@ -190,8 +190,8 @@
   <div class="control">
     <label>Smorzamento</label>
     <div class="row">
-      <input type="range" id="s-damping" min="0.72" max="0.998" step="0.001" value="0.965">
-      <div class="val" id="v-damping">0.965</div>
+      <input type="range" id="s-damping" min="0.55" max="0.995" step="0.005" value="0.90">
+      <div class="val" id="v-damping">0.900</div>
     </div>
   </div>
   <div class="control">
@@ -216,24 +216,10 @@
     </div>
   </div>
   <div class="control">
-    <label>Iridescenza</label>
+    <label>Risoluzione (print)</label>
     <div class="row">
-      <input type="range" id="s-irid" min="0" max="1.5" step="0.05" value="0.4">
-      <div class="val" id="v-irid">0.40</div>
-    </div>
-  </div>
-  <div class="control">
-    <label>Fresnel / vetro</label>
-    <div class="row">
-      <input type="range" id="s-fresnel" min="1.5" max="9" step="0.1" value="3.2">
-      <div class="val" id="v-fresnel">3.2</div>
-    </div>
-  </div>
-  <div class="control">
-    <label>Risoluzione</label>
-    <div class="row">
-      <input type="range" id="s-detail" min="3" max="8" step="1" value="6">
-      <div class="val" id="v-detail">6</div>
+      <input type="range" id="s-detail" min="3" max="7" step="1" value="5">
+      <div class="val" id="v-detail">5</div>
     </div>
   </div>
 </div>
@@ -333,12 +319,13 @@ const material = new THREE.MeshPhysicalMaterial({
   sheen: 0.9,
   sheenRoughness: 0.62,
   sheenColor: new THREE.Color(0x9ce8d6),
-  iridescence: 0.22,
+  iridescence: 1.0,
   iridescenceIOR: 1.22,
-  iridescenceThicknessRange: [200, 380],
+  iridescenceThicknessRange: [240, 610],
   depthWrite: true,
   flatShading: false,
 });
+material.clearcoat = 0.7;
 
 const hookMat = new THREE.MeshStandardMaterial({
   color: 0xc8ccd0, metalness: 0.95, roughness: 0.28,
@@ -513,6 +500,7 @@ class SoftBody {
   step(dt) {
     dt = Math.min(dt, 1 / 60);
     const { stiffness, tension, damping, iterations, pressure, rimTension } = this.params;
+    const dampPerStep = Math.pow(Math.min(0.9999, Math.max(0.5, damping)), dt * 90);
     const MAX_V = 9;
     const MAX_DIST = 28;
 
@@ -590,9 +578,9 @@ class SoftBody {
         this.x[i * 3 + 2] = this.p[i * 3 + 2];
         continue;
       }
-      this.v[i * 3] = (this.p[i * 3] - this.x[i * 3]) / dt * damping;
-      this.v[i * 3 + 1] = (this.p[i * 3 + 1] - this.x[i * 3 + 1]) / dt * damping;
-      this.v[i * 3 + 2] = (this.p[i * 3 + 2] - this.x[i * 3 + 2]) / dt * damping;
+      this.v[i * 3] = (this.p[i * 3] - this.x[i * 3]) / dt * dampPerStep;
+      this.v[i * 3 + 1] = (this.p[i * 3 + 1] - this.x[i * 3 + 1]) / dt * dampPerStep;
+      this.v[i * 3 + 2] = (this.p[i * 3 + 2] - this.x[i * 3 + 2]) / dt * dampPerStep;
       this.x[i * 3] = this.p[i * 3];
       this.x[i * 3 + 1] = this.p[i * 3 + 1];
       this.x[i * 3 + 2] = this.p[i * 3 + 2];
@@ -762,8 +750,8 @@ function smoothstep01(a, b, x) {
 }
 
 function buildVaseOuter(detail) {
-  const lat = [0, 0, 20, 28, 36, 44, 52, 64, 80][detail] || 44;
-  const lon = [0, 0, 40, 52, 64, 76, 88, 104, 128][detail] || 76;
+  const lat = [0, 0, 18, 24, 30, 36, 44, 54][detail] || 36;
+  const lon = [0, 0, 34, 44, 56, 68, 82, 98][detail] || 68;
   const yMin = -1.0;
   const yMax = 1.4;
 
@@ -1117,10 +1105,9 @@ function syncSimParamsFromUI() {
   softBody.params.tension = parseFloat(document.getElementById('s-tension').value);
   softBody.params.damping = parseFloat(document.getElementById('s-damping').value);
   softBody.params.rimTension = parseFloat(document.getElementById('s-rim').value);
-  material.iridescence = Math.min(1, parseFloat(document.getElementById('s-irid').value));
 }
 
-createMesh(6);
+createMesh(5);
 
 function createHookMesh() {
   const S = 2.2;
@@ -1351,19 +1338,6 @@ hookDeformVal.textContent = parseFloat(hookDeformSlider.value).toFixed(2);
 hookDeformSlider.addEventListener('input', () => {
   hookDeformScale = parseFloat(hookDeformSlider.value);
   hookDeformVal.textContent = hookDeformScale.toFixed(2);
-});
-
-document.getElementById('s-irid').addEventListener('input', (e) => {
-  const val = parseFloat(e.target.value);
-  material.iridescence = Math.min(1, val);
-  material.iridescenceThicknessRange = [120, 280 + val * 220];
-  material.needsUpdate = false;
-  document.getElementById('v-irid').textContent = val.toFixed(2);
-});
-document.getElementById('s-fresnel').addEventListener('input', (e) => {
-  const val = parseFloat(e.target.value);
-  material.clearcoat = 0.2 + (val / 9) * 0.5;
-  document.getElementById('v-fresnel').textContent = val.toFixed(1);
 });
 
 document.getElementById('s-thickness').addEventListener('input', (e) => {
