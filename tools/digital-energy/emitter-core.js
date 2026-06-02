@@ -575,19 +575,57 @@
       } else if (m === 7) {
         fw = sampleFlow(px, py);
         ang = Math.atan2(vy + fw.vy * 2.5, vx + fw.vx * 2.5);
-        emitFluidJagged(px, py, ang, rad, pow, 7, splatBuf, fw);
-      } else if (m === 4) {
-        emitFluidJagged(px, py, ang + (Math.random() - 0.5) * 0.2, rad * 0.9, pow, 4, splatBuf, null);
         pushSplat(splatBuf, {
           x: px, y: py,
-          size: rad * (1.5 + spd * 0.12),
-          alpha: (0.18 + pow * 0.28),
+          size: rad * (1.6 + spd * 0.1) * 1.2,
+          alpha: (0.14 + pow * 0.22),
+          ang: ang,
+          mode: 7,
+          sharp: 0.5,
+          seed: Math.random() * 60,
+          kind: 1
+        });
+        if (Math.random() < 0.4) {
+          var wperp = ang + Math.PI * 0.5;
+          var woff = (Math.random() - 0.5) * rad * 1.3;
+          pushSplat(splatBuf, {
+            x: px + Math.cos(wperp) * woff,
+            y: py + Math.sin(wperp) * woff,
+            size: rad * (1.1 + spd * 0.08),
+            alpha: (0.09 + pow * 0.16),
+            ang: ang,
+            mode: 7,
+            sharp: 0.6,
+            seed: Math.random() * 60,
+            kind: 5
+          });
+        }
+      } else if (m === 4) {
+        pushSplat(splatBuf, {
+          x: px, y: py,
+          size: rad * (1.5 + spd * 0.12) * 1.25,
+          alpha: (0.16 + pow * 0.26),
           ang: ang,
           mode: 4,
-          sharp: 0.28,
+          sharp: 0.86,
           seed: Math.random() * 40,
           kind: 1
         });
+        if (Math.random() < 0.45) {
+          var bperp = ang + Math.PI * 0.5;
+          var boff = (Math.random() - 0.5) * rad * 1.6;
+          pushSplat(splatBuf, {
+            x: px + Math.cos(bperp) * boff,
+            y: py + Math.sin(bperp) * boff,
+            size: rad * (1.1 + spd * 0.08),
+            alpha: (0.1 + pow * 0.18),
+            ang: ang + (Math.random() - 0.5) * 0.5,
+            mode: 4,
+            sharp: 0.92,
+            seed: Math.random() * 40,
+            kind: 1
+          });
+        }
       } else if (m === 2) {
         a.grow += 0.02;
         pushSplat(splatBuf, {
@@ -601,16 +639,30 @@
           kind: 1
         });
       } else if (m === 5) {
+        var fcurl = Math.sin(t * 3 + a.phase + u * 5) * 0.6;
         pushSplat(splatBuf, {
-          x: px, y: py,
-          size: rad * (1.4 + a.heat * 0.2),
-          alpha: (0.17 + pow * 0.28) * a.heat,
-          ang: ang - 0.5,
+          x: px, y: py - rad * 0.3,
+          size: rad * (1.5 + a.heat * 0.25),
+          alpha: (0.16 + pow * 0.26) * a.heat,
+          ang: ang - 1.2 + fcurl,
           mode: 5,
           sharp: 0.5,
           seed: Math.random() * 50,
           kind: 1
         });
+        if (Math.random() < 0.5) {
+          pushSplat(splatBuf, {
+            x: px + (Math.random() - 0.5) * rad * 1.2,
+            y: py - rad * (0.5 + Math.random() * 0.6),
+            size: rad * (1.0 + a.heat * 0.2),
+            alpha: (0.1 + pow * 0.2) * a.heat,
+            ang: ang - 1.4 + fcurl * 1.3,
+            mode: 5,
+            sharp: 0.6,
+            seed: Math.random() * 50,
+            kind: 1
+          });
+        }
         a.heat = clamp(a.heat * 0.998, 0.5, 1.2);
       } else {
         var sharp = m === 6 ? 0.72 : 0.64;
