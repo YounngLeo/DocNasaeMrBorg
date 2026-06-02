@@ -570,13 +570,15 @@
       emitTrace(splatBuf, px, py, ang, rad, m);
 
       if (m === 1) {
-        var curl = Math.sin(a.tendril + t * 1.5 + u * 5) * 0.35;
-        if (Math.random() < 0.55) {
+        var curl = Math.sin(a.tendril + t * 1.5 + u * 4) * 0.5;
+        var perpX1 = -Math.sin(ang);
+        var perpY1 = Math.cos(ang);
+        if (Math.random() < 0.45) {
           pushSplat(splatBuf, {
             x: px + (Math.random() - 0.5) * rad,
             y: py + (Math.random() - 0.5) * rad,
-            size: rad * (2.8 + pow * 0.9),
-            alpha: (0.12 + pow * 0.16),
+            size: rad * (2.6 + pow * 0.8),
+            alpha: (0.13 + pow * 0.16),
             ang: ang,
             mode: 1,
             sharp: 0.2,
@@ -585,16 +587,16 @@
           });
         }
         var wk;
-        for (wk = 0; wk < 2; wk++) {
-          var wperp = (wk === 0 ? -1 : 1) * rad * (0.5 + Math.random() * 0.5);
+        for (wk = -1; wk <= 1; wk++) {
+          var woff = wk * rad * (0.7 + Math.random() * 0.4);
           pushSplat(splatBuf, {
-            x: px + wperp,
-            y: py - (3 + Math.random() * 7),
+            x: px + perpX1 * woff,
+            y: py + perpY1 * woff,
             size: rad * (2.3 + pow * 0.7),
-            alpha: (0.14 + pow * 0.22) * (0.8 + Math.random() * 0.2),
-            ang: curl + (Math.random() - 0.5) * 0.3,
+            alpha: (0.15 + pow * 0.22) * (0.85 + Math.random() * 0.15),
+            ang: ang + curl + wk * 0.18 + (Math.random() - 0.5) * 0.3,
             mode: 1,
-            sharp: 0.5 + Math.random() * 0.3,
+            sharp: 0.45 + Math.random() * 0.3,
             seed: Math.random() * 90,
             kind: 1
           });

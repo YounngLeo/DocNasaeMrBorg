@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">cursed energy · fondo scuro · glow anime</div>
-  <div class="ver">v1.8 — più linee sottili · fulmine ultra-fine ramificato</div>
+  <div class="ver">v1.9 — ombra riccioli neri liquidi · rim sottile</div>
 </div>
 
 <div class="actions">
@@ -461,17 +461,17 @@
     '      m = body * vAlpha;',
     '      col = vec3(0.012, 0.016, 0.03);',
     '    } else {',
-    // Solo Leveling: tapered organic cyan tendrils (smoke-like wisps) rising over the dark body
+    // Solo Leveling: black liquid smoky curls that OCCLUDE, with only a thin glowing rim
     '      float w1 = wispOrganic(q, seed, uTime);',
-    '      float w2 = wispOrganic(q + vec2(0.13, 0.0), seed + 9.0, uTime * 1.2) * 0.85;',
-    '      float w3 = wispOrganic(q - vec2(0.15, 0.0), seed + 21.0, uTime * 0.85) * 0.7;',
+    '      float w2 = wispOrganic(q + vec2(0.13, 0.0), seed + 9.0, uTime * 1.2) * 0.9;',
+    '      float w3 = wispOrganic(q - vec2(0.15, 0.0), seed + 21.0, uTime * 0.85) * 0.78;',
     '      float strands = max(w1, max(w2, w3));',
-    '      float s = clamp((q.y + 0.55) / 1.1, 0.0, 1.0);',
-    '      float tip = pow(strands, 1.4) * (1.0 - s);',
-    '      m = (strands * 0.95 + tip * 0.45) * vAlpha;',
-    '      vec3 cyan = vec3(0.26, 0.8, 1.08);',
-    '      col = cyan * (0.5 + strands * 0.6);',
-    '      col += vec3(0.8, 0.97, 1.12) * (strands * strands * 0.8 + tip * 0.7);',
+    '      float rim = smoothstep(0.12, 0.4, strands) * (1.0 - smoothstep(0.4, 0.78, strands));',
+    '      m = (strands * 1.05 + rim * 0.35) * vAlpha;',
+    '      vec3 darkInk = vec3(0.012, 0.016, 0.03);',
+    '      vec3 rimCol = vec3(0.34, 0.78, 1.05);',
+    '      col = darkInk;',
+    '      col += rimCol * rim * 0.85;',
     '    }',
     '  } else if (mode == 2) {',
     '    float shards = 0.0;',
