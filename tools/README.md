@@ -6,18 +6,22 @@ Sezione interna del sito studio. Due tool generativi protetti da auth Cloudflare
 
 ```
 tools/
-├── index.html              ← galleria (2 card hardcoded, stile Cuore_Statico)
+├── index.html              ← galleria tool (nav + schede)
 ├── assets/
 │   └── presets.js          ← libreria preset save/load (localStorage)
 ├── cuore-statico/
 │   ├── tool.html           ← studio audio Tone.js
-│   ├── info.html           ← scheda dettaglio
 │   └── preview.svg
-└── barene-frame/
-    ├── tool.html           ← generatore cornici biomorfiche
-    ├── info.html           ← scheda dettaglio + preset manager
-    ├── preview.svg
-    └── shot_*.svg          ← screenshot per la scheda dettaglio
+├── barene-frame/
+│   ├── tool.html           ← generatore cornici biomorfiche
+│   ├── preview.svg
+│   └── shot_*.svg
+├── fluid-vessel/
+│   ├── tool.html           ← membrana PBD · Three.js
+│   └── preview.svg
+└── digital-energy/
+    ├── tool.html           ← scie VFX anime · WebGL2
+    └── preview.svg
 ```
 
 ## aggiornare un tool

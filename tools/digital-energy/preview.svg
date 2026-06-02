@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <rect width="320" height="200" fill="#050608"/>
+  <rect x="8" y="8" width="304" height="184" stroke="#2a1a4a" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <defs>
+    <linearGradient id="eg" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2244ff"/>
+      <stop offset="55%" stop-color="#8844ff"/>
+      <stop offset="100%" stop-color="#44eeff"/>
+    </linearGradient>
+    <linearGradient id="sg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0828"/>
+      <stop offset="50%" stop-color="#6a18aa"/>
+      <stop offset="100%" stop-color="#ff2266" stop-opacity="0.6"/>
+    </linearGradient>
+    <linearGradient id="cg" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#e8ffff"/>
+      <stop offset="100%" stop-color="#44ccff"/>
+    </linearGradient>
+  </defs>
+  <path d="M40 165 Q80 120 120 90 T200 55 T280 35" stroke="url(#eg)" stroke-width="3" opacity="0.9" stroke-linecap="round"/>
+  <path d="M40 165 Q80 120 120 90 T200 55" stroke="#88aaff" stroke-width="8" opacity="0.25" stroke-linecap="round"/>
+  <path d="M55 150 Q100 100 150 75 T250 45" stroke="url(#sg)" stroke-width="2.5" opacity="0.85" stroke-linecap="round"/>
+  <path d="M70 140 L95 95 L118 110 L140 70 L162 88" stroke="url(#cg)" stroke-width="1.8" opacity="0.95" stroke-linejoin="round"/>
+  <g fill="#c678ff" opacity="0.9">
+    <polygon points="138,68 145,78 132,76"/>
+    <polygon points="160,86 168,92 155,94"/>
+    <polygon points="92,93 100,88 98,100"/>
+  </g>
+  <text x="16" y="24" fill="#c678ff" font-family="Courier New,monospace" font-size="9" letter-spacing="2">DIGITAL_ENERGY</text>
+  <text x="16" y="38" fill="#4a3a6a" font-family="Courier New,monospace" font-size="8" letter-spacing="1">VFX · ANIME TRAILS</text>
+</svg>

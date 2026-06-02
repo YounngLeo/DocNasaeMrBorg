@@ -141,6 +141,8 @@
   .nav-list a.blue-link:hover { background: rgba(74,246,255,0.06); }
   .nav-list a.gold-link  { color: #fff03a; }
   .nav-list a.gold-link:hover { background: rgba(255,240,58,0.06); }
+  .nav-list a.purple-link { color: var(--purple); }
+  .nav-list a.purple-link:hover { background: rgba(198,120,255,0.08); }
 
   /* === SECTIONS === */
   .section {
@@ -209,6 +211,7 @@
   .tool-header.amber { border-bottom-color: var(--amber); }
   .tool-header.blue  { border-bottom-color: var(--blue); }
   .tool-header.gold  { border-bottom-color: #fff03a; }
+  .tool-header.purple { border-bottom-color: var(--purple); }
 
   .tool-meta {
     display: flex;
@@ -242,9 +245,16 @@
   .tool-header.blue  .right b { color: var(--blue); }
   .tool-header.gold  .name { color: #fff03a; }
   .tool-header.gold  .right b { color: #fff03a; }
+  .tool-header.purple .name { color: var(--purple); }
+  .tool-header.purple .right b { color: var(--purple); }
   .section.gold .section-title { color: #fff03a; }
+  .section.purple { border-color: var(--purple); }
+  .section.purple .section-title { color: var(--purple); }
+  .section.purple ul li b { color: var(--purple); font-weight: normal; letter-spacing: 1px; }
   .launch-btn.gold { border-color: #fff03a; color: #fff03a; }
   .launch-btn.gold:hover { background: #fff03a; color: var(--bg); }
+  .launch-btn.purple { border-color: var(--purple); color: var(--purple); }
+  .launch-btn.purple:hover { background: var(--purple); color: var(--bg); }
 
   /* === LAUNCH BAR === */
   .launch-bar {
@@ -458,7 +468,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 03 active</div>
+    <div class="nav-progress" id="navProgress">// 04 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -473,6 +483,10 @@
       <span><span class="marker">▸</span>FLUID_VESSEL</span>
       <span class="num">TOOL_03 · MEMBRANE</span>
     </a>
+    <a href="#digital-energy" class="purple-link" data-nav="digital-energy">
+      <span><span class="marker">▸</span>DIGITAL_ENERGY</span>
+      <span class="num">TOOL_04 · VFX</span>
+    </a>
   </div>
 </nav>
 
@@ -481,7 +495,7 @@
 <!-- ============================ -->
 <section class="section">
   <div class="section-title">// SYSTEM_STATUS</div>
-  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">03 / 03</span></div>
+  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">04 / 04</span></div>
   <div class="row"><span class="label">STUDIO</span><span class="value">DOCTNASA&MRBORG</span></div>
   <div class="row"><span class="label">YEAR</span><span class="value">2026</span></div>
   <div class="row"><span class="label">ACCESS</span><span class="value">CLOUDFLARE.ACCESS</span></div>
@@ -782,8 +796,79 @@
 
 </div>
 
+<div class="divider">— — — — — — — —</div>
+
+<!-- ============================ -->
+<!-- TOOL_04 :: DIGITAL_ENERGY    -->
+<!-- ============================ -->
+<div class="tool-block" id="digital-energy" data-section="digital-energy">
+
+  <div class="tool-header purple">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_04 :: VFX</div>
+        <div class="name">DIGITAL_ENERGY</div>
+        <div class="sub">scie_luminose.anime · energia · ombra · cristallo</div>
+      </div>
+      <div class="right">
+        <b>v0.1</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="digital-energy/preview.svg" alt="digital_energy preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="digital-energy/tool.html" class="launch-btn purple">▶ LAUNCH</a>
+    <a href="digital-energy/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section purple">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Pittura di scie energetiche in stile anime — ispirazione visiva da <b>Solo Leveling</b> (aura di sistema, bagliori elettrici) e <b>Jujutsu Kaisen</b> (energia maledetta, ombre viola, cristalli taglienti). Disegna con il puntatore: il motore WebGL2 accumula il tratto in una texture senza particelle visibili, per un vapore/energia continuo e performante.</p>
+      </section>
+      <section class="section purple">
+        <div class="section-title">// MODALITÀ</div>
+        <ul>
+          <li><b>ENERGIA</b> — nucleo blu, alone viola, anello luminoso (system aura)</li>
+          <li><b>OMBRA</b> — cuore scuro, bordo rosso/viola, dissolvenza spettrale (cursed energy)</li>
+          <li><b>CRISTALLO</b> — core bianco-ciano, facet ring, scintille a stella</li>
+        </ul>
+      </section>
+      <section class="section">
+        <div class="section-title">// CONTROLLI</div>
+        <ul>
+          <li>Intensità, spessore, decadenza, turbolenza, bloom, scintille</li>
+          <li>Pulisci scie · export PNG del frame corrente</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section purple">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>WebGL2 · accumulo GPU</dd>
+          <dt>OUTPUT</dt><dd>PNG screenshot</dd>
+          <dt>INPUT</dt><dd>pointer · touch</dd>
+          <dt>TAGS</dt><dd>vfx · anime · trails · drawing</dd>
+        </dl>
+      </section>
+      <section class="section">
+        <div class="section-title">// PERFORMANCE</div>
+        <p style="font-size:11px;line-height:1.65;opacity:0.85">Buffer fumo a risoluzione ridotta (0.75×), batch splat per frame, cap sui punti emessi. Pensato per sketch rapidi e storyboard VFX, non per export video (usa sequenza di PNG se serve animazione).</p>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
-  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.2</span>
+  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.3</span>
   <span>END_OF_INDEX</span>
 </footer>
 
@@ -840,10 +925,11 @@
       var label = id === 'cuore-statico' ? '// viewing CUORE_STATICO' :
                   id === 'barene-frame'  ? '// viewing BARENE_FRAME' :
                   id === 'fluid-vessel'  ? '// viewing FLUID_VESSEL' :
-                  '// 03 active';
+                  id === 'digital-energy' ? '// viewing DIGITAL_ENERGY' :
+                  '// 04 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 03 active';
+      navProgress.textContent = '// 04 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });
