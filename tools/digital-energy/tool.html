@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">cursed energy · fondo scuro · glow anime</div>
-  <div class="ver">v1.7 — fasci di linee sottili · correnti caos · fulmine fine</div>
+  <div class="ver">v1.8 — più linee sottili · fulmine ultra-fine ramificato</div>
 </div>
 
 <div class="actions">
@@ -365,13 +365,13 @@
     '}',
     'float lightning(vec2 q, float seed, float t){',
     '  float m = 0.0; vec2 p = q * 3.0 + vec2(seed, seed * 0.37);',
-    '  for (int i = 0; i < 5; i++) {',
+    '  for (int i = 0; i < 6; i++) {',
     '    float fi = float(i);',
     '    float off = sin(t * 24.0 + seed * 6.0 + fi * 2.4) * 0.16;',
-    '    float zig = sin(p.y * 9.0 + fi + off) * 0.32 + sin(p.y * 23.0 + fi * 3.0 + off) * 0.09;',
-    '    float branch = exp(-abs(p.x + zig) * mix(40.0, 92.0, vSharp));',
-    '    branch *= exp(-abs(p.y) * 2.4); m = max(m, branch);',
-    '    p = p * 1.6 + vec2(0.4, 0.16);',
+    '    float zig = sin(p.y * 9.0 + fi + off) * 0.32 + sin(p.y * 23.0 + fi * 3.0 + off) * 0.1 + sin(p.y * 51.0 + fi) * 0.03;',
+    '    float branch = exp(-abs(p.x + zig) * mix(70.0, 150.0, vSharp));',
+    '    branch *= exp(-abs(p.y) * 2.3); m = max(m, branch);',
+    '    p = p * 1.55 + vec2(0.4, 0.16);',
     '  } return m;',
     '}',
     // bundle of thin wavy parallel filaments (muscle-fiber look) along q.y (flow axis)
@@ -493,9 +493,9 @@
     '    col = mix(col, vec3(0.82, 0.95, 1.0), edgeFr * 0.6);',
     '  } else if (mode == 3) {',
     '    float bolt = lightning(q, seed, uTime);',
-    '    float core = exp(-r2 * mix(40.0, 85.0, vSharp));',
-    '    float streak = exp(-abs(q.y) * mix(58.0, 120.0, vSharp)) * exp(-abs(q.x) * 2.4);',
-    '    float halo = exp(-r2 * mix(4.0, 9.0, vSharp)) * 0.3;',
+    '    float core = exp(-r2 * mix(60.0, 120.0, vSharp));',
+    '    float streak = exp(-abs(q.y) * mix(80.0, 160.0, vSharp)) * exp(-abs(q.x) * 2.4);',
+    '    float halo = exp(-r2 * mix(4.0, 9.0, vSharp)) * 0.26;',
     '    float fork = 0.0;',
     '    if (kind == 7) fork = exp(-abs(q.x) * 36.0) * exp(-r2 * 10.0);',
     '    m = (bolt * 1.35 + core * 1.05 + streak * 1.15 + fork + halo) * vAlpha * flick;',
@@ -546,14 +546,14 @@
     '    col += violet * volm * 0.3;',
     '  } else if (mode == 8) {',
     // thin tapered flow line tracing the path (long light fibers over every element)
-    '    float w = fbm(vec2(q.y * 2.0 + seed, uTime * 0.2 + seed));',
-    '    float xc = q.x + (w - 0.5) * 0.1;',
-    '    float lw = mix(0.014, 0.045, 1.0 - vSharp);',
+    '    float w = fbm(vec2(q.y * 2.2 + seed, uTime * 0.2 + seed));',
+    '    float xc = q.x + (w - 0.5) * 0.12 + sin(q.y * 5.0 + seed) * 0.02;',
+    '    float lw = mix(0.007, 0.022, 1.0 - vSharp);',
     '    float line = smoothstep(lw, 0.0, abs(xc));',
-    '    float tap = smoothstep(0.62, -0.04, abs(q.y));',
+    '    float tap = smoothstep(0.64, -0.04, abs(q.y));',
     '    m = line * tap * vAlpha;',
     '    col = traceColor(kind);',
-    '    col += vec3(1.0) * line * line * 0.3;',
+    '    col += vec3(1.0) * line * line * 0.35;',
     '  } else {',
     // water (Avatar): clean glossy translucent ribbon/whip with white crest highlight
     '    float flow = fbm(nUv * 1.0 + vec2(uTime * 0.18, 0.0));',

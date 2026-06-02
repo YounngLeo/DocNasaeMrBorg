@@ -291,15 +291,20 @@
     buildBoltBranch(x0, y0, mx, my, depth - 1, jitter * 0.6, out, gen);
     buildBoltBranch(mx, my, x1, y1, depth - 1, jitter * 0.6, out, gen);
     // tapering side branches (electric flux fanning out, thinner each generation)
-    if (depth >= 2 && Math.random() < 0.72) {
-      var blen = 22 + Math.random() * 64;
-      var bang = Math.atan2(y1 - y0, x1 - x0) + (Math.random() < 0.5 ? 1 : -1) * (0.4 + Math.random() * 1.1);
+    if (depth >= 2 && Math.random() < 0.82) {
+      var blen = 20 + Math.random() * 60;
+      var bang = Math.atan2(y1 - y0, x1 - x0) + (Math.random() < 0.5 ? 1 : -1) * (0.35 + Math.random() * 1.1);
       buildBoltBranch(mx, my, mx + Math.cos(bang) * blen, my + Math.sin(bang) * blen, depth - 1, jitter * 0.45, out, gen + 1);
     }
-    if (depth >= 3 && Math.random() < 0.5) {
-      var bang2 = Math.atan2(y1 - y0, x1 - x0) + (Math.random() < 0.5 ? 1 : -1) * (0.6 + Math.random() * 1.4);
-      var blen2 = 12 + Math.random() * 36;
-      buildBoltBranch(mx, my, mx + Math.cos(bang2) * blen2, my + Math.sin(bang2) * blen2, depth - 2, jitter * 0.35, out, gen + 2);
+    if (depth >= 2 && Math.random() < 0.6) {
+      var bang2 = Math.atan2(y1 - y0, x1 - x0) + (Math.random() < 0.5 ? 1 : -1) * (0.6 + Math.random() * 1.5);
+      var blen2 = 10 + Math.random() * 34;
+      buildBoltBranch(mx, my, mx + Math.cos(bang2) * blen2, my + Math.sin(bang2) * blen2, depth - 1, jitter * 0.35, out, gen + 2);
+    }
+    if (depth >= 4 && Math.random() < 0.4) {
+      var bang3 = Math.random() * Math.PI * 2;
+      var blen3 = 8 + Math.random() * 20;
+      buildBoltBranch(mx, my, mx + Math.cos(bang3) * blen3, my + Math.sin(bang3) * blen3, 1, jitter * 0.3, out, gen + 3);
     }
   }
 
@@ -392,8 +397,8 @@
         zang = Math.atan2(dy, dx);
         pushSplat(splatBuf, {
           x: zx, y: zy,
-          size: rad * (0.6 + pow * 0.3) * genThin * (0.85 + Math.random() * 0.25),
-          alpha: (0.24 + pow * 0.4) * (0.45 + genThin * 0.55) * (0.85 + Math.random() * 0.15),
+          size: rad * (0.42 + pow * 0.22) * genThin * (0.85 + Math.random() * 0.25),
+          alpha: (0.26 + pow * 0.42) * (0.45 + genThin * 0.55) * (0.85 + Math.random() * 0.15),
           ang: zang + (Math.random() - 0.5) * 0.12,
           mode: 3,
           sharp: 0.99,
@@ -491,17 +496,18 @@
   function emitTrace(splatBuf, x, y, ang, rad, type) {
     var perpX = -Math.sin(ang);
     var perpY = Math.cos(ang);
-    for (var k = -1; k <= 1; k++) {
-      var off = k * rad * 0.34;
+    for (var k = -2; k <= 2; k++) {
+      var off = k * rad * 0.26 + (Math.random() - 0.5) * rad * 0.12;
+      var fall = 1 - Math.abs(k) * 0.22;
       pushSplat(splatBuf, {
         x: x + perpX * off,
         y: y + perpY * off,
-        size: rad * 0.9,
-        alpha: 0.42 * (k === 0 ? 1.0 : 0.62),
+        size: rad * 0.92,
+        alpha: 0.4 * fall,
         ang: ang,
         mode: 8,
         sharp: 0.95,
-        seed: type * 7 + (k + 1) * 13,
+        seed: type * 7 + (k + 2) * 11 + Math.random() * 3,
         kind: type
       });
     }
@@ -535,8 +541,8 @@
             zy = z0.y + zdy * zu;
             pushSplat(splatBuf, {
               x: zx, y: zy,
-              size: rad * (0.7 + pow * 0.35),
-              alpha: (0.3 + pow * 0.42),
+              size: rad * (0.5 + pow * 0.28),
+              alpha: (0.32 + pow * 0.44),
               ang: zang,
               mode: 3,
               sharp: 0.99,
