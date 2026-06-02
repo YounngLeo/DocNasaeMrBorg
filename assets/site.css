@@ -2569,6 +2569,83 @@ footer.site-foot a:hover { color: var(--acc); }
   border-top: 1px dotted var(--line-h);
 }
 .wp-note b { color: var(--acc); font-weight: normal; }
+
+/* Cultivation module aesthetic pass: ethereal wireframe panel */
+.cv-module {
+  border-color: rgba(126, 198, 255, 0.35);
+  background:
+    radial-gradient(110% 85% at 90% -12%, rgba(118, 218, 255, 0.12), transparent 62%),
+    radial-gradient(95% 70% at -10% 110%, rgba(162, 234, 255, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(7, 10, 15, 0.92), rgba(6, 8, 13, 0.94));
+  box-shadow:
+    inset 0 0 0 1px rgba(171, 241, 255, 0.08),
+    0 14px 42px rgba(3, 7, 15, 0.45);
+}
+.cv-module::before {
+  content: '// PIANO INTERATTIVO · ETHER-WIREFRAME · COLTIVAZIONE';
+  border-color: rgba(171, 241, 255, 0.55);
+  color: #aef2ff;
+  background: linear-gradient(90deg, rgba(7, 14, 22, 0.95), rgba(5, 10, 16, 0.96));
+  text-shadow: 0 0 10px rgba(165, 237, 255, 0.28);
+}
+.cv-module .wall-stage {
+  border-right-color: rgba(130, 208, 255, 0.24);
+  background: linear-gradient(165deg, rgba(5, 8, 12, 0.95), rgba(8, 12, 18, 0.94));
+}
+.cv-module .wall-stage .ws-corner {
+  color: rgba(157, 225, 255, 0.7);
+}
+.cv-module .wall-stage .ws-readout {
+  color: #b7f4ff;
+  background: rgba(5, 14, 20, 0.7);
+  border-color: rgba(166, 237, 255, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(166, 237, 255, 0.12);
+}
+.cv-module .wall-panel {
+  background:
+    linear-gradient(180deg, rgba(8, 12, 18, 0.94), rgba(6, 10, 16, 0.94)),
+    repeating-linear-gradient(0deg, rgba(153, 222, 255, 0.03) 0 1px, transparent 1px 24px);
+}
+.cv-module .wp-title {
+  color: rgba(161, 231, 255, 0.84);
+  letter-spacing: 2.2px;
+}
+.cv-module .wp-row-head {
+  color: #d3f7ff;
+}
+.cv-module .wp-row-head .vv {
+  color: #9fefff;
+}
+.cv-module .wp-row input[type="range"]::-webkit-slider-runnable-track,
+.cv-module .wp-row input[type="range"]::-moz-range-track {
+  background: rgba(162, 233, 255, 0.38);
+}
+.cv-module .wp-row input[type="range"]::-webkit-slider-thumb,
+.cv-module .wp-row input[type="range"]::-moz-range-thumb {
+  background: #b4f4ff;
+  box-shadow: 0 0 0 1px rgba(8, 20, 30, 0.85), 0 0 10px rgba(165, 237, 255, 0.42);
+}
+.cv-module .wp-btn {
+  border-color: rgba(147, 223, 255, 0.35);
+  color: #d6f9ff;
+  background: rgba(7, 15, 21, 0.5);
+}
+.cv-module .wp-btn:hover {
+  border-color: #aaf2ff;
+  color: #081017;
+  background: #aaf2ff;
+}
+.cv-module .wp-btn.pri {
+  border-color: rgba(171, 241, 255, 0.62);
+  color: #b8f3ff;
+}
+.cv-module .wp-note {
+  border-top-color: rgba(159, 230, 255, 0.26);
+  color: rgba(197, 241, 255, 0.72);
+}
+.cv-module .wp-note b {
+  color: #b7f3ff;
+}
 @media (max-width: 820px) {
   .wall-grid {
     grid-template-columns: 1fr;

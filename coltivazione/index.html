@@ -92,7 +92,7 @@
   </div>
 
   <!-- ── PIANO INTERATTIVO · COPERTURA VEGETALE ──────────── -->
-  <div class="wall-module">
+  <div class="wall-module cv-module">
     <div class="wall-grid">
       <div class="wall-stage" id="wall-stage">
         <canvas id="wall-canvas"></canvas>
@@ -678,30 +678,47 @@
   }
 
   function drawWallBackdrop() {
-    ctx.fillStyle = '#070707';
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#06080c');
+    g.addColorStop(0.45, '#0a0f16');
+    g.addColorStop(1, '#05070b');
+    ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.strokeStyle = '#101010';
-    ctx.lineWidth = 0.6;
-    const brickH = 28;
-    const brickW = 72;
-    for (let y = 0; y < H; y += brickH) {
+    // Wireframe blueprint lattice, softer than masonry grid.
+    ctx.strokeStyle = 'rgba(126, 198, 255, 0.09)';
+    ctx.lineWidth = 0.7;
+    const cellY = 34;
+    const cellX = 56;
+    for (let y = 0; y < H; y += cellY) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(W, y);
       ctx.stroke();
-      const offset = (Math.floor(y / brickH) % 2) * (brickW / 2);
-      for (let x = -offset; x < W; x += brickW) {
+    }
+    for (let x = 0; x < W; x += cellX) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, H);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(170, 235, 255, 0.12)';
+    ctx.lineWidth = 0.45;
+    for (let y = 0; y < H; y += cellY * 2) {
+      const offset = (Math.floor(y / (cellY * 2)) % 2) * (cellX / 2);
+      for (let x = -offset; x < W + cellX; x += cellX) {
         ctx.beginPath();
         ctx.moveTo(x, y);
-        ctx.lineTo(x, y + brickH);
+        ctx.lineTo(x + cellX / 2, y + cellY);
+        ctx.lineTo(x, y + cellY * 2);
         ctx.stroke();
       }
     }
 
-    ctx.strokeStyle = '#1a1a1a';
+    ctx.strokeStyle = 'rgba(171, 241, 255, 0.35)';
     ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
+    ctx.setLineDash([5, 5]);
     ctx.strokeRect(8, 8, W - 16, H - 16);
     ctx.setLineDash([]);
   }
@@ -712,16 +729,16 @@
       const br = sorted[i];
       if (br.pts.length < 2) continue;
 
-      const litBase = 26 + (1 - br.depth / 5) * 35;
-      const alpha = 0.62 + (1 - br.depth / 5) * 0.32;
+      const litBase = 58 + (1 - br.depth / 5) * 24;
+      const alpha = 0.48 + (1 - br.depth / 5) * 0.34;
       const thick = params.thickness * (1 - br.depth * 0.12);
 
-      ctx.strokeStyle = 'hsla(135, 70%, ' + litBase + '%, ' + alpha + ')';
+      ctx.strokeStyle = 'hsla(170, 68%, ' + litBase + '%, ' + alpha + ')';
       ctx.lineWidth = Math.max(0.4, thick);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.shadowColor = 'rgba(94,255,126,0.6)';
-      ctx.shadowBlur = 3.5;
+      ctx.shadowColor = 'rgba(130, 233, 255, 0.55)';
+      ctx.shadowBlur = 5.5;
 
       const p = br.pts;
       ctx.beginPath();
@@ -738,7 +755,7 @@
 
       if (br.pts.length > 10 && br.depth >= 1) {
         const skip = Math.max(8, 22 - br.depth * 3);
-        ctx.fillStyle = 'hsla(135, 75%, ' + Math.min(70, litBase + 10) + '%, 0.5)';
+        ctx.fillStyle = 'hsla(182, 72%, ' + Math.min(88, litBase + 8) + '%, 0.45)';
         for (let k = skip; k < br.pts.length; k += skip) {
           const pt = br.pts[k];
           ctx.beginPath();
@@ -748,8 +765,8 @@
       }
     }
 
-    ctx.fillStyle = '#5eff7e';
-    ctx.strokeStyle = '#5eff7e';
+    ctx.fillStyle = '#baf5ff';
+    ctx.strokeStyle = '#8be6ff';
     ctx.lineWidth = 0.6;
     for (let i = 0; i < seedPoints.length; i++) {
       const s = seedPoints[i];
@@ -839,7 +856,7 @@
     for (const br of sorted) {
       if (br.pts.length < 2) continue;
       const litBase = 26 + (1 - br.depth / 5) * 35;
-      const col = 'hsl(135,70%,' + litBase.toFixed(0) + '%)';
+      const col = 'hsl(170,68%,' + litBase.toFixed(0) + '%)';
       const sw = Math.max(0.4, params.thickness * (1 - br.depth * 0.12)).toFixed(2);
       let d = 'M ' + br.pts[0].x.toFixed(2) + ' ' + br.pts[0].y.toFixed(2);
       for (let k = 1; k < br.pts.length - 1; k++) {
