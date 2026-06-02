@@ -119,8 +119,8 @@
 <div class="title">
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
-  <div class="sub">emettitori autonomi · scie anime / fumetto</div>
-  <div class="ver">v0.4 — alta risoluzione · sfondo bianco</div>
+  <div class="sub">energia maledetta · ink anime / cel-shading</div>
+  <div class="ver">v0.5 — ink anime · energia maledetta</div>
 </div>
 
 <div class="actions">
@@ -197,8 +197,8 @@
 
   var TYPE_NAMES = ['luce', 'ombra', 'ghiaccio', 'elettricità', 'sangue', 'fuoco', 'energia', 'acqua'];
   var MAX_AGENTS = 32;
-  var MAX_SPLATS = 420;
-  var MAX_SPARKS = 140;
+  var MAX_SPLATS = 560;
+  var MAX_SPARKS = 180;
   var SHOW_MARKERS = false;
   var SMOKE_SCALE = 1.0;
 
@@ -299,41 +299,41 @@
     '}',
     'float fbm(vec2 p){',
     '  float v = 0.0; float a = 0.5;',
-    '  for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.1; a *= 0.5; }',
+    '  for (int i = 0; i < 5; i++) { v += a * noise(p); p *= 2.05; a *= 0.52; }',
     '  return v;',
     '}',
-    'float voronoi(vec2 p){',
-    '  vec2 n = floor(p); vec2 f = fract(p);',
-    '  float md = 8.0;',
-    '  for (int j = -1; j <= 1; j++) {',
-    '    for (int i = -1; i <= 1; i++) {',
-    '      vec2 g = vec2(float(i), float(j));',
-    '      vec2 o = hash(n + g) * vec2(1.0);',
-    '      md = min(md, length(g + o - f));',
-    '    }',
-    '  }',
-    '  return md;',
+    'float cel(float x, float steps){ return (floor(clamp(x, 0.0, 1.0) * steps) + 0.5) / steps; }',
+    'float brush(vec2 uv, float t){',
+    '  float b = fbm(uv * vec2(2.8, 0.9) + vec2(t * 0.4, 0.0));',
+    '  b += fbm(uv * 5.5 - vec2(0.0, t * 0.25)) * 0.45;',
+    '  return cel(b, 5.0);',
+    '}',
+    'float ink(float r, float brushV, float w){',
+    '  return smoothstep(w + brushV * 0.06, w - 0.06 - brushV * 0.04, r);',
+    '}',
+    'vec3 shade3D(vec3 base, float ndl, float rim, float spec){',
+    '  float l = cel(ndl, 4.0);',
+    '  float r = cel(rim, 3.0);',
+    '  vec3 c = base * (0.22 + l * 0.78);',
+    '  c += vec3(1.0) * cel(spec, 3.0) * 0.45;',
+    '  c = mix(c, base * 1.35, r * 0.4);',
+    '  return c;',
     '}',
     'float iceShard(vec2 q, float ang, float len, float w){',
     '  float ca = cos(ang); float sa = sin(ang);',
     '  vec2 r = vec2(ca * q.x - sa * q.y, sa * q.x + ca * q.y);',
-    '  float tip = smoothstep(len, len - 0.08, r.y) * smoothstep(-0.02, 0.06, r.y);',
+    '  float tip = smoothstep(len, len - 0.07, r.y) * smoothstep(-0.02, 0.05, r.y);',
     '  float body = exp(-abs(r.x) * w) * tip;',
-    '  float facet = smoothstep(0.015, 0.0, abs(fract(r.y * 14.0) - 0.5) - 0.18);',
-    '  return body * (0.65 + facet * 0.55);',
+    '  return body;',
     '}',
     'float lightning(vec2 q, float seed, float t){',
-    '  float m = 0.0;',
-    '  vec2 p = q * 3.2 + vec2(seed, seed * 0.37);',
-    '  for (int i = 0; i < 3; i++) {',
+    '  float m = 0.0; vec2 p = q * 3.0 + vec2(seed, seed * 0.37);',
+    '  for (int i = 0; i < 4; i++) {',
     '    float fi = float(i);',
-    '    float off = sin(t * 22.0 + seed * 6.0 + fi * 2.4) * 0.12;',
-    '    float branch = exp(-abs(p.x + sin(p.y * 8.0 + fi + off) * 0.35) * mix(18.0, 42.0, vSharp));',
-    '    branch *= exp(-abs(p.y) * 2.8);',
-    '    m = max(m, branch);',
-    '    p = p * 1.7 + vec2(0.4, 0.2);',
-    '  }',
-    '  return m;',
+    '    float off = sin(t * 24.0 + seed * 6.0 + fi * 2.4) * 0.14;',
+    '    float branch = exp(-abs(p.x + sin(p.y * 9.0 + fi + off) * 0.32) * mix(20.0, 48.0, vSharp));',
+    '    branch *= exp(-abs(p.y) * 3.0); m = max(m, branch); p = p * 1.65 + vec2(0.35, 0.18);',
+    '  } return m;',
     '}',
     'float softPoint(vec2 p, float feather){',
     '  return 1.0 - smoothstep(0.5 - feather, 0.5, length(p));',
@@ -345,123 +345,92 @@
     '  if (pointMask < 0.001) discard;',
     '  float ca = cos(vAngle); float sa = sin(vAngle);',
     '  vec2 q = vec2(ca * p.x - sa * p.y, sa * p.x + ca * p.y);',
-    '  float aspect = mix(0.72, 1.55, vSharp);',
+    '  float aspect = mix(0.85, 2.1, vSharp);',
     '  q.x *= aspect;',
     '  float r = length(q);',
     '  float r2 = dot(q, q);',
     '  float seed = vSeed;',
-    '  vec2 nUv = q * mix(7.0, 14.0, vSharp) + vec2(seed * 0.13, seed * 0.07);',
-    '  float flick = 0.9 + 0.1 * sin(uTime * 16.0 + seed * 3.1 + r * 35.0);',
+    '  vec2 nUv = q * mix(8.0, 16.0, vSharp) + vec2(seed * 0.13, seed * 0.07);',
+    '  float br = brush(nUv, uTime + seed);',
+    '  float ndl = cel(0.55 + 0.45 * cos(q.x * 9.0 + br * 4.0) * (1.0 - r * 1.2), 4.0);',
+    '  float rim = cel(1.0 - smoothstep(0.12, 0.48, r - br * 0.04), 3.0);',
+    '  float spec = cel(exp(-abs(q.x + br * 0.2) * 16.0) * (1.0 - r), 3.0);',
+    '  float inkL = ink(r, br, 0.36);',
+    '  float flick = 0.9 + 0.1 * sin(uTime * 16.0 + seed * 3.1);',
     '  float m = 0.0;',
     '  vec3 col = vec3(0.5);',
     '  if (mode == 0) {',
-    '    float core = exp(-r2 * 10.0);',
-    '    float halo = exp(-r2 * 2.2);',
+    '    float body = exp(-r2 * mix(3.0, 9.0, 1.0 - br));',
     '    float rays = 0.0;',
-    '    for (int i = 0; i < 6; i++) {',
-    '      float ang = float(i) * 1.047 + seed;',
-    '      float ca2 = cos(ang); float sa2 = sin(ang);',
-    '      vec2 rq = vec2(ca2 * q.x - sa2 * q.y, sa2 * q.x + ca2 * q.y);',
-    '      rays += exp(-abs(rq.y) * 28.0) * exp(-abs(rq.x) * 4.0) * 0.22;',
+    '    for (int i = 0; i < 8; i++) {',
+    '      float ang = float(i) * 0.785 + seed;',
+    '      float c2 = cos(ang); float s2 = sin(ang);',
+    '      vec2 rq = vec2(c2 * q.x - s2 * q.y, s2 * q.x + c2 * q.y);',
+    '      rays += exp(-abs(rq.y) * 32.0) * exp(-abs(rq.x) * 5.0) * 0.18;',
     '    }',
-    '    float flare = exp(-pow(r - 0.32, 2.0) * 55.0);',
-    '    m = (core * 0.7 + halo * 0.45 + rays + flare * 0.5) * vAlpha * flick;',
-    '    col = mix(vec3(1.0, 0.92, 0.72), vec3(1.0, 1.0, 1.0), core);',
-    '    col += vec3(1.0, 0.85, 0.45) * flare;',
+    '    m = (body + rays) * vAlpha * flick;',
+    '    col = shade3D(vec3(1.0, 0.94, 0.75), ndl, rim, spec + rays);',
     '  } else if (mode == 1) {',
-    '    vec2 puffUv = nUv * 1.2 + vec2(uTime * 0.22, -uTime * 0.14);',
-    '    float smoke = fbm(puffUv);',
-    '    float smoke2 = fbm(puffUv * 2.3 - vec2(uTime * 0.35, uTime * 0.18));',
-    '    float volDrift = fbm(nUv * 0.8 + vec2(-uTime * 0.4, uTime * 0.28));',
-    '    float puff = exp(-r2 * mix(0.9, 2.2, smoke));',
-    '    puff *= smoothstep(0.55, 0.08, r + volDrift * 0.28 + smoke2 * 0.15);',
-    '    float tendril = exp(-abs(q.y + smoke * 0.4 + volDrift * 0.2) * mix(4.0, 9.0, vSharp));',
-    '    tendril *= exp(-r2 * 1.1);',
-    '    float wisp = fbm(nUv * 2.0 - vec2(uTime * 0.55, uTime * 0.12));',
-    '    wisp = smoothstep(0.35, 0.85, wisp) * exp(-r2 * 2.8);',
-    '    m = (puff * 0.95 + tendril * 0.7 + wisp * 0.5) * vAlpha;',
-    '    col = mix(vec3(0.0, 0.0, 0.0), vec3(0.12, 0.02, 0.1), smoke);',
-    '    col = mix(col, vec3(0.22, 0.03, 0.18), smoke2 * 0.5);',
-    '    col *= 0.35 + puff * 0.65;',
+    '    float sm = fbm(nUv + vec2(uTime * 0.35, -uTime * 0.2));',
+    '    float puff = exp(-r2 * mix(0.7, 1.8, sm)) * smoothstep(0.52, 0.05, r + sm * 0.25);',
+    '    float tend = exp(-abs(q.y + sm * 0.5) * 5.0) * exp(-r2 * 0.9);',
+    '    m = (puff * 1.0 + tend * 0.65) * vAlpha;',
+    '    col = shade3D(vec3(0.04, 0.01, 0.08), ndl * 0.4, rim * 0.8, spec * 0.2);',
+    '    col = mix(vec3(0.0), col * 0.85, puff + tend * 0.55);',
     '  } else if (mode == 2) {',
-    '    float cell = voronoi(nUv * 1.1 + vec2(0.0, uTime * 0.04));',
-    '    float facet = smoothstep(0.02, 0.14, cell) * smoothstep(0.42, 0.22, cell) * 0.65;',
     '    float shards = 0.0;',
-    '    for (int i = 0; i < 5; i++) {',
+    '    for (int i = 0; i < 6; i++) {',
     '      float fi = float(i);',
-    '      float ang = hash1(seed + fi * 1.73) * 6.283 + fi * 0.9;',
-    '      float len = 0.22 + hash1(seed * 0.5 + fi) * 0.38;',
-    '      float w = mix(12.0, 28.0, vSharp);',
-    '      shards += iceShard(q - vec2((hash1(seed + fi) - 0.5) * 0.12, fi * 0.04), ang, len, w);',
+    '      float ang = hash1(seed + fi) * 6.28;',
+    '      shards += iceShard(q - vec2((hash1(seed + fi * 2.0) - 0.5) * 0.14, fi * 0.03), ang, 0.2 + hash1(seed + fi) * 0.35, mix(14.0, 30.0, vSharp));',
     '    }',
-    '    float stack = exp(-abs(q.y + 0.08) * 5.0) * facet;',
-    '    float rim = pow(1.0 - smoothstep(0.08, 0.48, r), 2.0);',
-    '    m = (shards * 0.85 + stack * 0.55 + rim * 0.25) * vAlpha;',
-    '    col = mix(vec3(0.45, 0.78, 0.92), vec3(0.95, 0.99, 1.0), shards);',
-    '    col += vec3(0.55, 0.95, 1.0) * facet * 0.6;',
-    '    col += vec3(0.85, 1.0, 1.0) * rim * 0.4;',
+    '    shards = cel(shards, 4.0);',
+    '    m = (shards + exp(-r2 * 2.0) * 0.35) * vAlpha;',
+    '    col = shade3D(vec3(0.5, 0.82, 0.95), ndl, rim + shards * 0.5, spec);',
+    '    col += vec3(0.9, 1.0, 1.0) * cel(shards, 3.0) * 0.4;',
     '  } else if (mode == 3) {',
-    '    float bolt = lightning(q, seed, uTime);',
-    '    float core = exp(-r2 * mix(8.0, 20.0, vSharp));',
-    '    float arc = exp(-abs(q.x + sin(q.y * 20.0 + uTime * 30.0) * 0.08) * 35.0) * exp(-r2 * 2.5);',
-    '    m = (bolt * 1.1 + core * 0.5 + arc * 0.65) * vAlpha * flick;',
-    '    col = mix(vec3(0.15, 0.4, 1.0), vec3(0.85, 0.95, 1.0), bolt + core);',
-    '    col += vec3(0.7, 0.85, 1.0) * arc;',
+    '    float bolt = cel(lightning(q, seed, uTime), 4.0);',
+    '    float core = exp(-r2 * 12.0);',
+    '    m = (bolt * 1.15 + core * 0.45) * vAlpha * flick;',
+    '    col = shade3D(vec3(0.2, 0.45, 1.0), ndl, bolt, bolt + spec);',
     '  } else if (mode == 4) {',
-    '    float nv = fbm(nUv * 1.1 + vec2(uTime * 0.03, seed * 0.02));',
-    '    float nv2 = fbm(nUv * 2.4 + vec2(-uTime * 0.05, nv));',
-    '    float ribbon = exp(-abs(q.x + nv * 0.35) * mix(6.0, 14.0, vSharp));',
-    '    ribbon *= exp(-abs(q.y + nv2 * 0.25) * 2.5);',
-    '    float edge = r + nv * 0.32 + nv2 * 0.12 - 0.06;',
-    '    float pool = smoothstep(0.42, 0.02, edge);',
-    '    pool = pow(pool, mix(1.1, 1.8, vSharp));',
-    '    float meniscus = exp(-pow(r - 0.28 - nv * 0.08, 2.0) * 40.0);',
-    '    float glob = 0.0;',
-    '    for (int i = 0; i < 4; i++) {',
-    '      float fi = float(i);',
-    '      vec2 c2 = vec2(hash1(seed + fi) - 0.5, hash1(seed * 1.7 + fi) - 0.5) * 0.42;',
-    '      float d = length(q - c2);',
-    '      glob += smoothstep(0.16, 0.01, d) * 0.28;',
-    '    }',
-    '    float spec = exp(-abs(q.x + nv * 0.5) * 22.0) * pool * 0.35;',
-    '    m = (pool * 0.95 + ribbon * 0.75 + glob * 0.45 + meniscus * 0.3 + spec) * vAlpha;',
-    '    col = mix(vec3(0.35, 0.0, 0.02), vec3(0.62, 0.04, 0.08), pool);',
-    '    col += vec3(0.85, 0.08, 0.12) * ribbon * 0.45;',
-    '    col += vec3(1.0, 0.35, 0.38) * spec;',
+    '    float nv = fbm(nUv + uTime * 0.04);',
+    '    float ribbon = exp(-abs(q.x + nv * 0.4) * mix(5.0, 12.0, vSharp));',
+    '    ribbon *= exp(-abs(q.y) * 2.2);',
+    '    float pool = cel(smoothstep(0.4 + nv * 0.2, 0.02, r), 4.0);',
+    '    m = (pool * 0.95 + ribbon * 0.8) * vAlpha;',
+    '    col = shade3D(vec3(0.55, 0.02, 0.06), ndl, rim, spec);',
+    '    col = mix(vec3(0.25, 0.0, 0.02), col, pool);',
     '  } else if (mode == 5) {',
-    '    float turb = fbm(nUv + vec2(0.0, -uTime * 0.35));',
-    '    float flame = exp(-abs(q.y - turb * 0.2) * mix(4.0, 9.0, vSharp));',
-    '    flame *= exp(-r2 * mix(1.0, 2.8, 1.0 - vSharp));',
-    '    float ember = voronoi(nUv * 2.2 + uTime * 0.2);',
-    '    ember = smoothstep(0.05, 0.0, ember) * 0.5;',
-    '    m = (flame * 0.9 + ember) * vAlpha * flick;',
-    '    col = mix(vec3(0.85, 0.15, 0.02), vec3(1.0, 0.65, 0.12), flame);',
-    '    col += vec3(1.0, 0.92, 0.55) * ember;',
+    '    float fl = exp(-abs(q.y - br * 0.15) * mix(3.5, 8.0, vSharp)) * exp(-r2 * 1.5);',
+    '    fl = cel(fl, 5.0);',
+    '    m = fl * vAlpha * flick;',
+    '    col = shade3D(vec3(1.0, 0.35, 0.05), ndl, rim, spec);',
     '  } else if (mode == 6) {',
-    '    float core = exp(-r2 * mix(2.5, 8.0, vSharp));',
-    '    float ring = exp(-pow(r - mix(0.2, 0.36, vSharp), 2.0) * mix(28.0, 80.0, vSharp));',
-    '    float pulse = 0.78 + 0.22 * sin(uTime * 8.0 + seed * 2.0);',
-    '    m = (core * 0.7 + ring * 0.6) * vAlpha * pulse;',
-    '    col = mix(vec3(0.1, 0.28, 0.95), vec3(0.55, 0.22, 0.9), core);',
-    '    col += vec3(0.5, 0.75, 1.0) * ring;',
+    '    float core = cel(exp(-r2 * mix(2.0, 7.0, vSharp)), 5.0);',
+    '    float ring = cel(exp(-pow(abs(r - 0.2 - br * 0.03), 1.2) * mix(35.0, 90.0, vSharp)), 4.0);',
+    '    float aura = exp(-abs(q.y + sin(q.x * 12.0 + uTime * 6.0) * 0.06) * 6.0) * exp(-r2 * 1.2);',
+    '    aura = cel(aura, 4.0);',
+    '    float pulse = 0.75 + 0.25 * sin(uTime * 9.0 + seed * 2.0);',
+    '    m = (core * 0.85 + ring * 0.75 + aura * 0.55) * vAlpha * pulse;',
+    '    vec3 jjk = mix(vec3(0.02, 0.0, 0.05), vec3(0.42, 0.06, 0.72), core);',
+    '    jjk = mix(jjk, vec3(0.65, 0.35, 0.95), ring);',
+    '    jjk += vec3(0.45, 0.75, 1.0) * aura * 0.5;',
+    '    col = shade3D(jjk, ndl, rim + ring, spec + core * 0.5);',
     '  } else {',
-    '    float flow = fbm(nUv + vec2(uTime * 0.14, uTime * 0.07));',
-    '    float flow2 = fbm(nUv * 1.9 - vec2(uTime * 0.2, flow));',
-    '    vec2 flowQ = q + vec2(flow * 0.15, flow2 * 0.1);',
-    '    float stream = exp(-abs(flowQ.y) * mix(4.5, 10.0, vSharp));',
-    '    stream *= exp(-flowQ.x * flowQ.x * mix(2.0, 5.5, vSharp));',
-    '    stream *= exp(-r2 * 1.4);',
-    '    float body = exp(-r2 * 2.8) * smoothstep(0.5, 0.05, r);',
-    '    float foam = smoothstep(0.32, 0.06, r + flow * 0.1) * exp(-r2 * 3.5);',
-    '    float caust = pow(max(0.0, sin((flowQ.x + flow) * 24.0) * sin((flowQ.y - flow2) * 20.0)), 3.0);',
-    '    caust = smoothstep(0.15, 0.85, caust) * stream * 0.4;',
-    '    float highlight = exp(-abs(flowQ.x) * 18.0) * stream * 0.45;',
-    '    m = (stream * 0.85 + body * 0.5 + foam * 0.4 + caust + highlight) * vAlpha;',
-    '    col = mix(vec3(0.05, 0.28, 0.48), vec3(0.25, 0.62, 0.88), stream + body);',
-    '    col += vec3(0.55, 0.88, 0.98) * (foam + highlight);',
-    '    col += vec3(0.75, 0.98, 1.0) * caust;',
+    '    float flow = fbm(nUv + vec2(uTime * 0.16, 0.0));',
+    '    vec2 fq = q + vec2(flow * 0.18, br * 0.08);',
+    '    float stream = exp(-abs(fq.y) * mix(4.0, 9.0, vSharp));',
+    '    stream *= exp(-fq.x * fq.x * 3.0) * exp(-r2 * 1.2);',
+    '    stream = cel(stream, 5.0);',
+    '    float hl = cel(exp(-abs(fq.x) * 20.0) * stream, 3.0);',
+    '    m = (stream + hl * 0.5) * vAlpha;',
+    '    col = shade3D(vec3(0.06, 0.35, 0.62), ndl, rim, spec + hl);',
+    '    col += vec3(0.7, 0.95, 1.0) * hl * 0.35;',
     '  }',
-    '  m *= pointMask;',
+    '  col = mix(col, vec3(0.02, 0.01, 0.04), inkL * 0.92);',
+    '  m *= pointMask * (1.0 - inkL * 0.15);',
+    '  m += inkL * 0.55 * vAlpha;',
     '  if (m < 0.001) discard;',
     '  outColor = vec4(col * m, m);',
     '}'
@@ -475,18 +444,34 @@
     'uniform vec2 uTexel;',
     'uniform float uTime;',
     'out vec4 outColor;',
+    'float cel(float x, float s){ return (floor(clamp(x,0.0,1.0)*s)+0.5)/s; }',
+    'float sampA(vec2 uv){ return texture(uTex, uv).a; }',
     'void main(){',
+    '  vec2 t = uTexel;',
+    '  float a0 = sampA(vUv);',
+    '  float ax = sampA(vUv + vec2(t.x, 0.0)) - sampA(vUv - vec2(t.x, 0.0));',
+    '  float ay = sampA(vUv + vec2(0.0, t.y)) - sampA(vUv - vec2(0.0, t.y));',
+    '  float aD = sampA(vUv + t) + sampA(vUv - t) + sampA(vUv + vec2(t.x,-t.y)) + sampA(vUv + vec2(-t.x,t.y));',
+    '  float edge = length(vec2(ax, ay)) * 14.0 + abs(a0 * 4.0 - aD) * 2.5;',
+    '  edge = cel(edge, 4.0);',
     '  vec4 c = texture(uTex, vUv);',
-    '  vec4 n = texture(uTex, vUv + vec2(0.0, uTexel.y));',
-    '  vec4 s2 = texture(uTex, vUv - vec2(0.0, uTexel.y));',
-    '  vec4 e = texture(uTex, vUv + vec2(uTexel.x, 0.0));',
-    '  vec4 w = texture(uTex, vUv - vec2(uTexel.x, 0.0));',
-    '  vec4 blur = (c * 2.0 + n + s2 + e + w) / 6.0;',
+    '  vec4 blur = (c',
+    '    + texture(uTex, vUv + vec2(0.0, t.y))',
+    '    + texture(uTex, vUv - vec2(0.0, t.y))',
+    '    + texture(uTex, vUv + vec2(t.x, 0.0))',
+    '    + texture(uTex, vUv - vec2(t.x, 0.0))) / 5.0;',
     '  float dens = blur.a;',
-    '  vec3 col = blur.rgb / max(dens, 0.0004);',
-    '  dens = smoothstep(0.006, 0.38, dens);',
-    '  col = pow(max(col * dens, vec3(0.0)), vec3(0.96));',
-    '  float a = clamp(dens * 0.95, 0.0, 1.0);',
+    '  vec3 col = blur.rgb / max(dens, 0.0003);',
+    '  float luma = dot(col, vec3(0.299, 0.587, 0.114));',
+    '  float l = cel(luma, 6.0);',
+    '  col = col / max(luma, 0.001) * l * dens;',
+    '  dens = smoothstep(0.004, 0.42, dens);',
+    '  float hatch = sin((vUv.x + vUv.y) * 140.0 + uTime * 0.5) * 0.5 + 0.5;',
+    '  hatch = cel(hatch, 3.0);',
+    '  col *= 0.94 + hatch * 0.06 * dens;',
+    '  col = mix(col, vec3(0.02, 0.01, 0.05), edge * 0.88);',
+    '  col += col * cel(dens, 4.0) * 0.25;',
+    '  float a = clamp(dens * 0.96, 0.0, 1.0);',
     '  outColor = vec4(col, a);',
     '}'
   ].join('\n');
@@ -534,6 +519,10 @@
     '  } else if (mode == 7 && kind == 2) {',
     '    float drop = smoothstep(0.5, 0.12, r);',
     '    m = drop * vLife;',
+    '  } else if (mode == 6 && kind == 3) {',
+    '    float spark = max(0.0, 1.0 - r * 2.8);',
+    '    float streak = exp(-abs(p.x) * 22.0) * spark;',
+    '    m = (spark + streak * 0.65) * vLife;',
     '  } else if (mode == 3) {',
     '    float cross = exp(-abs(p.x) * 32.0) + exp(-abs(p.y) * 32.0);',
     '    m = (max(0.0, 1.0 - r * 2.5) + cross * 0.2) * vLife;',
@@ -612,7 +601,12 @@
       phase: Math.random() * Math.PI * 2,
       emitAcc: 0,
       vx: 0, vy: 0,
-      noisePhase: Math.random() * 1000
+      noisePhase: Math.random() * 1000,
+      orbitR: 55 + Math.random() * 110,
+      orbitSpd: 0.7 + Math.random() * 1.4,
+      orbitAng: Math.random() * Math.PI * 2,
+      dashT: 0.4 + Math.random() * 1.2,
+      pulse: Math.random()
     };
     pickRoamTarget(a);
     return a;
@@ -651,7 +645,7 @@
     var n = smoothNoise1(t + a.noisePhase, a.phase);
     var ax = 0;
     var ay = 0;
-    var amp = 0.72;
+    var amp = 1.05;
     if (m === 0) {
       ax = Math.sin(ph) * amp;
       ay = Math.cos(ph * 0.85) * amp;
@@ -671,8 +665,8 @@
       ax = Math.sin(ph * 1.8) * amp;
       ay = -0.35 + Math.cos(ph * 2.1) * amp;
     } else if (m === 6) {
-      ax = Math.sin(ph) * amp;
-      ay = Math.cos(ph * 0.75) * amp;
+      ax = Math.sin(ph * 1.2) * amp * 1.15 + n * 0.35;
+      ay = Math.cos(ph * 0.9) * amp * 1.1 + smoothNoise1(t * 1.5, a.phase) * 0.4;
     } else {
       ax = Math.sin(ph * 0.75) * amp + n * 0.15;
       ay = Math.cos(ph * 0.9) * amp + n * 0.12;
@@ -697,21 +691,41 @@
         a.homeX = a.x;
         a.homeY = a.y;
         a.noisePhase = a.noisePhase || Math.random() * 1000;
+        a.orbitR = a.orbitR || 80;
+        a.orbitSpd = a.orbitSpd || 1.0;
+        a.orbitAng = a.orbitAng || 0;
+        a.dashT = a.dashT || 0.5;
+        a.pulse = a.pulse || 0;
         pickRoamTarget(a);
       }
       var dxT = a.targetX - a.x;
       var dyT = a.targetY - a.y;
       var dT = Math.sqrt(dxT * dxT + dyT * dyT) || 1;
-      if (dT < 100) pickRoamTarget(a);
+      if (dT < 130) pickRoamTarget(a);
+      a.orbitAng += a.orbitSpd * 0.045;
+      var midX = (a.homeX + a.targetX) * 0.5;
+      var midY = (a.homeY + a.targetY) * 0.5;
+      var orbAx = Math.cos(a.orbitAng) * 1.35;
+      var orbAy = Math.sin(a.orbitAng * 0.87) * 1.25;
       var mot = typeMotion(a, t + a.phase);
       var bnd = boundarySteer(a);
-      var roam = 0.26;
-      var home = 0.006;
+      var roam = 0.34;
+      var home = 0.003;
       var ax = mot.ax + bnd.ax + (dxT / dT) * roam + (a.homeX - a.x) * home;
       var ay = mot.ay + bnd.ay + (dyT / dT) * roam + (a.homeY - a.y) * home;
-      a.vx = a.vx * 0.82 + ax * 0.18;
-      a.vy = a.vy * 0.82 + ay * 0.18;
-      var spdCap = 3.8 + a.turb * 2.6;
+      ax += orbAx + (midX - a.x) * 0.004;
+      ay += orbAy + (midY - a.y) * 0.004;
+      a.dashT -= 0.016;
+      if (a.dashT <= 0) {
+        a.dashT = 0.55 + Math.random() * 1.4;
+        var dashA = Math.random() * Math.PI * 2;
+        var dashF = 2.8 + a.turb * 3.5;
+        a.vx += Math.cos(dashA) * dashF;
+        a.vy += Math.sin(dashA) * dashF;
+      }
+      a.vx = a.vx * 0.78 + ax * 0.22;
+      a.vy = a.vy * 0.78 + ay * 0.22;
+      var spdCap = 5.2 + a.turb * 3.4;
       var spd = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
       if (spd > spdCap) {
         a.vx = (a.vx / spd) * spdCap;
@@ -719,8 +733,10 @@
       }
       a.px = a.x;
       a.py = a.y;
-      a.x += a.vx + Math.sin(t * 2.1 + a.phase) * a.turb * 0.42;
-      a.y += a.vy + Math.cos(t * 1.6 + a.phase * 1.4) * a.turb * 0.38;
+      a.pulse += 0.05;
+      var pulse = 1.0 + Math.sin(a.pulse) * 0.15;
+      a.x += a.vx * pulse + Math.sin(t * 2.8 + a.phase) * a.turb * 0.55;
+      a.y += a.vy * pulse + Math.cos(t * 2.0 + a.phase * 1.4) * a.turb * 0.5;
       var pad = 24;
       if (a.x < pad) { a.x = pad; a.vx = Math.abs(a.vx) * 0.55 + 0.15; }
       if (a.x > W - pad) { a.x = W - pad; a.vx = -Math.abs(a.vx) * 0.55 - 0.15; }
@@ -728,15 +744,15 @@
       if (a.y > H - pad) { a.y = H - pad; a.vy = -Math.abs(a.vy) * 0.55 - 0.15; }
 
       var pow = intensityPow(a.intensity);
-      a.emitAcc += pow * 0.72;
+      a.emitAcc += pow * 0.88;
       var emits = Math.floor(a.emitAcc);
       a.emitAcc -= emits;
       var dx = a.x - a.px;
       var dy = a.y - a.py;
       var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      var steps = Math.max(emits, dist > 0.35 ? Math.min(18, Math.ceil(dist / 2.2)) : 0);
-      var turb = a.turb * 6;
-      var rad = a.radius * (1.0 + pow * 0.55);
+      var steps = Math.max(emits, dist > 0.25 ? Math.min(26, Math.ceil(dist / 1.6)) : 0);
+      var turb = a.turb * 4;
+      var rad = a.radius * (1.05 + pow * 0.65);
       var sharp = typeSharp(a.type);
       for (var i = 0; i < steps; i++) {
         var u = (i + 1) / (steps + 1);
@@ -748,13 +764,24 @@
         var spd = Math.sqrt(vx * vx + vy * vy);
         splatBuf.push({
           x: px, y: py,
-          size: rad * (1.15 + spd * 0.12) * (2.4 + pow * 0.35),
-          alpha: (0.14 + pow * 0.26) * (0.75 + a.decay * 0.25),
+          size: rad * (1.2 + spd * 0.18) * (2.8 + pow * 0.45),
+          alpha: (0.11 + pow * 0.22) * (0.8 + a.decay * 0.2),
           ang: ang,
           mode: a.type,
           sharp: sharp,
           seed: Math.random() * 97.0 + t * 0.17
         });
+        if (spd > 0.35 && Math.random() < 0.55) {
+          splatBuf.push({
+            x: px, y: py,
+            size: rad * (0.85 + spd * 0.25) * (3.2 + pow * 0.5),
+            alpha: (0.08 + pow * 0.16) * 0.85,
+            ang: ang,
+            mode: a.type,
+            sharp: Math.min(1.0, sharp + 0.15),
+            seed: Math.random() * 53.0 + t * 0.31
+          });
+        }
         if (a.type === 2 && Math.random() < pow * 0.22) {
           sparks.push({
             x: px, y: py,
@@ -788,7 +815,19 @@
             kind: 1
           });
         }
-        if (Math.random() < pow * a.turb * 0.45) {
+        if (a.type === 6 && Math.random() < pow * 0.38) {
+          var burst = 1.8 + Math.random() * 2.5;
+          sparks.push({
+            x: px, y: py,
+            vx: Math.cos(ang + (Math.random() - 0.5)) * burst,
+            vy: Math.sin(ang + (Math.random() - 0.5)) * burst,
+            life: 0.7 + Math.random() * 0.4,
+            size: 4 + Math.random() * 8,
+            mode: 6,
+            kind: 3
+          });
+        }
+        if (Math.random() < pow * a.turb * 0.38) {
           sparks.push({
             x: px, y: py,
             vx: vx * 1.5 + (Math.random() - 0.5) * 2,
