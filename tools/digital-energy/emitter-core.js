@@ -4,7 +4,22 @@
 
   var sim = null;
 
+  // per-type glide profiles: speed (px/frame), wander amplitude/freq, target seek, steer easing
+  var MOTION = {
+    0: { speed: 3.0, wander: 0.70, wfreq: 1.0, seek: 0.50, steer: 0.10 },
+    1: { speed: 1.5, wander: 0.95, wfreq: 0.55, seek: 0.32, steer: 0.045 },
+    2: { speed: 1.7, wander: 0.32, wfreq: 0.5, seek: 0.42, steer: 0.040 },
+    3: { speed: 3.0, wander: 0.70, wfreq: 1.0, seek: 0.50, steer: 0.10 },
+    4: { speed: 2.1, wander: 0.48, wfreq: 0.85, seek: 0.42, steer: 0.065 },
+    5: { speed: 2.4, wander: 0.82, wfreq: 1.35, seek: 0.38, steer: 0.085 },
+    6: { speed: 3.0, wander: 0.74, wfreq: 1.05, seek: 0.50, steer: 0.10 },
+    7: { speed: 2.5, wander: 0.40, wfreq: 0.7, seek: 0.40, steer: 0.075 }
+  };
+
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function smoothNoise1(t, ph) {
+    return Math.sin(t * 0.9 + ph) * 0.4 + Math.sin(t * 1.7 + ph * 1.3) * 0.25 + Math.sin(t * 2.9 + ph * 0.7) * 0.15;
+  }
 
   function initSim(W, H) {
     var gw = Math.max(48, Math.min(200, Math.floor(W * 0.22)));
@@ -203,9 +218,9 @@
     }
     agents.forEach(function (a) {
       if (a.type === 7) {
-        injectFluid(a.x, a.y, a.vx * 0.14 * sm, a.vy * 0.14 * sm, 0.4 + a.intensity * 0.025, false);
+        injectFluid(a.x, a.y, a.vx * 0.22 * sm, a.vy * 0.22 * sm, 0.5 + a.intensity * 0.03, false);
       } else if (a.type === 1) {
-        injectFluid(a.x, a.y, (Math.random() - 0.5) * 0.25, -0.6 * sm, 0.42, true);
+        injectFluid(a.x, a.y, (Math.random() - 0.5) * 0.3 + a.vx * 0.05, -0.75 * sm, 0.55, true);
       } else if (a.type === 4) {
         injectFluid(a.x, a.y, a.vx * 0.06, 0.12 * sm + 0.08, 0.2, false);
       }
@@ -242,11 +257,11 @@
         var y = (j / gh) * sim.H + py * jag * 0.6 + (Math.random() - 0.5) * 6;
         splatBuf.push({
           x: x, y: y,
-          size: 7 + arr[k] * 24 + pow * 2.5,
-          alpha: arr[k] * (0.12 + pow * 0.16),
+          size: 5 + arr[k] * 16 + pow * 1.8,
+          alpha: arr[k] * (0.1 + pow * 0.14),
           ang: Math.atan2(vy, vx),
           mode: mode,
-          sharp: mode === 1 ? 0.45 : 0.32,
+          sharp: mode === 1 ? 0.42 : 0.34,
           seed: Math.random() * 80,
           kind: 5
         });
@@ -392,15 +407,31 @@
           });
         }
       }
-      if (Math.random() < 0.48) {
+      if (Math.random() < 0.5) {
         var sAng = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.4;
         var sSpd = 2 + Math.random() * 5;
         sparks.push({
           x: seg.x1, y: seg.y1,
           vx: Math.cos(sAng) * sSpd,
           vy: Math.sin(sAng) * sSpd,
-          life: 0.28 + Math.random() * 0.28,
-          size: 1.2 + Math.random() * 2.2,
+          life: 0.2 + Math.random() * 0.2,
+          size: 3.5 + Math.random() * 4,
+          mode: 3,
+          kind: 4
+        });
+      }
+      // thin forked sparks branching off the bolt (diramazioni)
+      var forks = Math.random() < 0.4 ? 2 : 1;
+      for (var fk = 0; fk < forks; fk++) {
+        if (Math.random() > 0.5) continue;
+        var fAng = Math.atan2(dy, dx) + (Math.random() < 0.5 ? 1 : -1) * (0.6 + Math.random() * 0.9);
+        var fSpd = 3 + Math.random() * 6;
+        sparks.push({
+          x: seg.x1, y: seg.y1,
+          vx: Math.cos(fAng) * fSpd,
+          vy: Math.sin(fAng) * fSpd,
+          life: 0.14 + Math.random() * 0.16,
+          size: 2 + Math.random() * 2.5,
           mode: 3,
           kind: 4
         });
@@ -410,8 +441,8 @@
       x: a.x, y: a.y,
       vx: (Math.random() - 0.5) * 1.5,
       vy: (Math.random() - 0.5) * 1.5,
-      life: 0.38,
-      size: 2 + pow * 0.8,
+      life: 0.3,
+      size: 5 + pow * 1.5,
       mode: 3,
       kind: 4
     });
@@ -428,11 +459,11 @@
       fy = py + perpY * off + Math.sin(ang) * jag;
       pushSplat(splatBuf, {
         x: fx, y: fy,
-        size: rad * (1.6 + Math.abs(i) * 0.15) * (2.2 + pow * 0.35),
-        alpha: (0.14 + pow * 0.22) * (1 - Math.abs(i) * 0.08),
+        size: rad * (1.15 + Math.abs(i) * 0.12) * (1.25 + pow * 0.25),
+        alpha: (0.13 + pow * 0.2) * (1 - Math.abs(i) * 0.08),
         ang: ang + (Math.random() - 0.5) * 0.35,
         mode: mode,
-        sharp: mode === 7 ? 0.2 : 0.3,
+        sharp: mode === 7 ? 0.24 : 0.34,
         seed: Math.random() * 60,
         kind: mode === 7 ? 5 : 6
       });
@@ -467,8 +498,8 @@
     var dx = a.x - a.px;
     var dy = a.y - a.py;
     var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    var steps = Math.max(1, dist > 0.2 ? Math.min(30, Math.ceil(dist / 1.2)) : 1);
-    var rad = a.radius * (1.05 + pow * 0.65);
+    var steps = Math.max(1, dist > 0.2 ? Math.min(46, Math.ceil(dist / 0.8)) : 1);
+    var rad = a.radius * (0.62 + pow * 0.42);
     var m = a.type;
 
     if (m === 3) {
@@ -582,34 +613,74 @@
         });
         a.heat = clamp(a.heat * 0.998, 0.5, 1.2);
       } else {
-        var sharp = m === 6 ? 0.7 : 0.62;
+        var sharp = m === 6 ? 0.72 : 0.64;
         pushSplat(splatBuf, {
-          x: px + (Math.random() - 0.5) * a.turb * 3,
-          y: py + (Math.random() - 0.5) * a.turb * 3,
-          size: rad * (1.2 + spd * 0.15) * (2.8 + pow * 0.45),
-          alpha: (0.14 + pow * 0.24) * (0.85 + a.decay * 0.15),
+          x: px + (Math.random() - 0.5) * a.turb * 2.2,
+          y: py + (Math.random() - 0.5) * a.turb * 2.2,
+          size: rad * (1.05 + spd * 0.1) * (1.45 + pow * 0.3),
+          alpha: (0.13 + pow * 0.22) * (0.85 + a.decay * 0.15),
           ang: ang,
           mode: m,
           sharp: sharp,
           seed: Math.random() * 97 + t * 0.17,
           kind: m === 6 ? 1 : 0
         });
+        if (m === 6 && Math.random() < 0.5) {
+          pushSplat(splatBuf, {
+            x: px + (Math.random() - 0.5) * rad * 1.4,
+            y: py + (Math.random() - 0.5) * rad * 1.4,
+            size: rad * 0.5,
+            alpha: (0.1 + pow * 0.16),
+            ang: ang + (Math.random() - 0.5),
+            mode: 6,
+            sharp: 0.9,
+            seed: Math.random() * 60,
+            kind: 1
+          });
+        }
       }
     }
-    if (m === 4 && Math.random() < pow * 0.32) {
+    if (m === 4 && Math.random() < pow * 0.3) {
       sparks.push({
         x: a.x, y: a.y,
         vx: (Math.random() - 0.5) * 3,
         vy: 1.5 + Math.random() * 2,
-        life: 0.65, size: 1.8, mode: 4, kind: 1
+        life: 0.6, size: 5, mode: 4, kind: 1
       });
     }
-    if (m === 6 && Math.random() < pow * 0.35) {
-      var ba = Math.random() * Math.PI * 2;
+    if (m === 6 && Math.random() < pow * 0.42) {
+      var ba = Math.atan2(a.vy, a.vx) + (Math.random() - 0.5) * 1.4;
+      var bs = 2.5 + Math.random() * 3;
       sparks.push({
         x: a.x, y: a.y,
-        vx: Math.cos(ba) * 2.2, vy: Math.sin(ba) * 2.2,
-        life: 0.62, size: 2.2, mode: 6, kind: 3
+        vx: Math.cos(ba) * bs, vy: Math.sin(ba) * bs,
+        life: 0.55, size: 7, mode: 6, kind: 3
+      });
+    }
+    if (m === 2 && Math.random() < pow * 0.4) {
+      var ia = Math.random() * Math.PI * 2;
+      var is = 1.5 + Math.random() * 3.5;
+      sparks.push({
+        x: a.x, y: a.y,
+        vx: Math.cos(ia) * is, vy: Math.sin(ia) * is,
+        life: 0.5 + Math.random() * 0.3, size: 6, mode: 2, kind: 0
+      });
+    }
+    if (m === 7 && Math.random() < pow * 0.35) {
+      var wa = Math.atan2(a.vy, a.vx) + (Math.random() - 0.5) * 1.2;
+      var ws = 1.5 + Math.random() * 2.5;
+      sparks.push({
+        x: a.x, y: a.y,
+        vx: Math.cos(wa) * ws, vy: Math.sin(wa) * ws + 0.5,
+        life: 0.5, size: 5, mode: 7, kind: 2
+      });
+    }
+    if (m === 5 && Math.random() < pow * 0.45) {
+      sparks.push({
+        x: a.x + (Math.random() - 0.5) * rad,
+        y: a.y, vx: (Math.random() - 0.5) * 1.5,
+        vy: -1.2 - Math.random() * 1.8,
+        life: 0.55, size: 5.5, mode: 5, kind: 0
       });
     }
   }
@@ -648,82 +719,89 @@
       return;
     }
 
+    // --- Natural steering motion (anime-glide): continuous wander + arrive ---
+    var prof = MOTION[a.type] || MOTION[6];
     var dxT = a.targetX - a.x;
     var dyT = a.targetY - a.y;
     var dT = Math.sqrt(dxT * dxT + dyT * dyT) || 1;
-    if (dT < 130) pickRoamTarget(a);
+    if (dT < 110) pickRoamTarget(a);
 
-    var mot = typeMotion(a, t + a.phase);
+    var spd = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+    var heading = spd > 0.06 ? Math.atan2(a.vy, a.vx) : a.phase;
+
+    // smooth, continuous wander (no random teleporting dashes)
+    a.wanderT = (a.wanderT || 0) + dt;
+    var wob = smoothNoise1(a.wanderT * prof.wfreq + a.noisePhase, a.phase * 1.3);
+    var steerAng = heading + wob * prof.wander;
+
+    var dirX = Math.cos(steerAng);
+    var dirY = Math.sin(steerAng);
+
+    // gentle large-scale roam toward drifting target
+    dirX += (dxT / dT) * prof.seek;
+    dirY += (dyT / dT) * prof.seek;
+
     var bnd = boundarySteer(a);
-    var roam = 0.34 * sm;
-    var ax = (mot.ax + bnd.ax + (dxT / dT) * roam) * sm;
-    var ay = (mot.ay + bnd.ay + (dyT / dT) * roam) * sm;
+    dirX += bnd.ax * 2.0;
+    dirY += bnd.ay * 2.0;
 
+    // per-type bias + slow internal phases (no positional noise)
     if (a.type === 1) {
-      a.tendril += dt * 2.2;
-      ay -= a.rise * 1.1 * sm;
-      ax += Math.sin(a.tendril) * 0.6 * sm;
+      a.tendril += dt * 1.4;
+      dirY -= 0.55;
+      dirX += Math.sin(a.tendril) * 0.32;
       a.slaveT += dt;
-      if (a.slaveT > 2.5) {
-        a.slaveT = 0;
-        a.rise = 0.7 + Math.random() * 0.6;
-      }
+      if (a.slaveT > 2.5) { a.slaveT = 0; a.rise = 0.7 + Math.random() * 0.6; }
     } else if (a.type === 7) {
       var fl = sampleFlow(a.x, a.y);
-      ax += (fl.vx * 1.8 + Math.cos(a.streamAng) * 0.5) * sm;
-      ay += (fl.vy * 1.8 + Math.sin(a.streamAng) * 0.35 + 0.25) * sm;
+      dirX += fl.vx * 3.2;
+      dirY += fl.vy * 3.2 + 0.18;
       a.streamAng += dt * 0.4 * sm;
       a.wet = clamp(a.wet + dt, 0, 1);
     } else if (a.type === 5) {
-      ay -= 0.65 * sm;
+      dirY -= 0.7;
       a.heat = Math.min(1.3, a.heat + dt * 0.15);
     } else if (a.type === 2) {
-      ay += 0.12 * sm;
-      ax *= 0.85;
-    }
-
-    a.dashT = (a.dashT || 0) - dt;
-    if (a.dashT <= 0 && a.type !== 1) {
-      a.dashT = (0.5 + Math.random() * 1.2) / sm;
-      var dashA = Math.random() * Math.PI * 2;
-      var dashF = (2.5 + a.turb * 3) * sm;
-      a.vx += Math.cos(dashA) * dashF;
-      a.vy += Math.sin(dashA) * dashF;
+      dirY += 0.18;
+    } else if (a.type === 4) {
+      dirY += 0.32;
     }
 
     if (attractors && attractors.length) {
       var vf = sampleVortex(a.x, a.y, attractors, vortexPow);
       var vMix = clamp(vf.swirl * 1.15, 0, 1);
-      ax += vf.ax * vMix * 1.35;
-      ay += vf.ay * vMix * 1.35;
-      if (vf.swirl > 0.2) {
-        var orbit = vf.swirl * 0.55;
-        a.targetX = a.x + vf.ax * orbit * 40;
-        a.targetY = a.y + vf.ay * orbit * 40;
-      }
+      dirX += vf.ax * vMix * 0.5;
+      dirY += vf.ay * vMix * 0.5;
     }
 
-    a.vx = a.vx * 0.76 + ax * 0.24;
-    a.vy = a.vy * 0.76 + ay * 0.24;
-    var spdCap = (a.type === 3 ? 14 : (5.5 + a.turb * 3.5)) * sm;
-    var spd = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
-    if (spd > spdCap) {
-      a.vx = (a.vx / spd) * spdCap;
-      a.vy = (a.vy / spd) * spdCap;
+    // desired velocity from steering direction, eased into current velocity
+    var dl = Math.sqrt(dirX * dirX + dirY * dirY) || 1;
+    var baseSpeed = prof.speed * (0.85 + a.turb * 0.5) * sm;
+    var dvx = (dirX / dl) * baseSpeed;
+    var dvy = (dirY / dl) * baseSpeed;
+    var steerRate = prof.steer * sm;
+    if (steerRate > 0.6) steerRate = 0.6;
+    a.vx += (dvx - a.vx) * steerRate;
+    a.vy += (dvy - a.vy) * steerRate;
+
+    var spdCap = baseSpeed * 1.35;
+    var spd2 = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+    if (spd2 > spdCap) {
+      a.vx = (a.vx / spd2) * spdCap;
+      a.vy = (a.vy / spd2) * spdCap;
     }
 
     a.px = a.x;
     a.py = a.y;
-    a.pulse += dt * 3;
-    var pulse = 1 + Math.sin(a.pulse) * 0.12;
-    a.x += a.vx * pulse + Math.sin(t * 2.8 + a.phase) * a.turb * 0.45 * sm;
-    a.y += a.vy * pulse + Math.cos(t * 2 + a.phase) * a.turb * 0.4 * sm;
+    a.pulse += dt * 2.2;
+    a.x += a.vx;
+    a.y += a.vy;
 
     var pad2 = 24;
-    if (a.x < pad2) { a.x = pad2; a.vx = Math.abs(a.vx) * 0.5 + 0.2; }
-    if (a.x > W - pad2) { a.x = W - pad2; a.vx = -Math.abs(a.vx) * 0.5 - 0.2; }
-    if (a.y < pad2) { a.y = pad2; a.vy = Math.abs(a.vy) * 0.5 + 0.2; }
-    if (a.y > H - pad2) { a.y = H - pad2; a.vy = -Math.abs(a.vy) * 0.5 - 0.2; }
+    if (a.x < pad2) { a.x = pad2; a.vx = Math.abs(a.vx) * 0.6 + 0.15; }
+    if (a.x > W - pad2) { a.x = W - pad2; a.vx = -Math.abs(a.vx) * 0.6 - 0.15; }
+    if (a.y < pad2) { a.y = pad2; a.vy = Math.abs(a.vy) * 0.6 + 0.15; }
+    if (a.y > H - pad2) { a.y = H - pad2; a.vy = -Math.abs(a.vy) * 0.6 - 0.15; }
   }
 
   function speedFromSlider(v) {

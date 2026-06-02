@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">sim box · scie per elemento · ink anime</div>
-  <div class="ver">v0.8 — scintille · vortici attrattori</div>
+  <div class="ver">v1.0 — moto fluido · anime · acqua niagara</div>
 </div>
 
 <div class="actions">
@@ -223,8 +223,8 @@
   var TYPE_NAMES = ['luce', 'ombra', 'ghiaccio', 'elettricità', 'sangue', 'fuoco', 'energia', 'acqua'];
   var MAX_AGENTS = 32;
   var MAX_ATTRACTORS = 24;
-  var MAX_SPLATS = 560;
-  var MAX_SPARKS = 280;
+  var MAX_SPLATS = 1100;
+  var MAX_SPARKS = 360;
   var SHOW_AGENTS = true;
   var SMOKE_SCALE = 1.0;
   var EC = window.DEEmitters;
@@ -307,7 +307,7 @@
     '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
     '  c.y = -c.y;',
     '  gl_Position = vec4(c, 0.0, 1.0);',
-    '  gl_PointSize = max(6.0, aSize);',
+    '  gl_PointSize = max(2.5, aSize);',
     '  vAlpha = aAlpha; vAngle = aAngle; vMode = aMode; vSharp = aSharp; vSeed = aSeed; vKind = aKind;',
     '}'
   ].join('\n');
@@ -366,8 +366,8 @@
     '  for (int i = 0; i < 4; i++) {',
     '    float fi = float(i);',
     '    float off = sin(t * 24.0 + seed * 6.0 + fi * 2.4) * 0.14;',
-    '    float branch = exp(-abs(p.x + sin(p.y * 9.0 + fi + off) * 0.32) * mix(20.0, 48.0, vSharp));',
-    '    branch *= exp(-abs(p.y) * 3.0); m = max(m, branch); p = p * 1.65 + vec2(0.35, 0.18);',
+    '    float branch = exp(-abs(p.x + sin(p.y * 9.0 + fi + off) * 0.32) * mix(34.0, 78.0, vSharp));',
+    '    branch *= exp(-abs(p.y) * 2.6); m = max(m, branch); p = p * 1.65 + vec2(0.35, 0.18);',
     '  } return m;',
     '}',
     'float jaggedMask(vec2 p, int mode, int kind, float seed){',
@@ -418,40 +418,53 @@
     '    m = (body + rays) * vAlpha * flick;',
     '    col = shade3D(vec3(1.0, 0.94, 0.75), ndl, rim, spec + rays);',
     '  } else if (mode == 1) {',
-    '    float sm = fbm(nUv + vec2(uTime * 0.4, -uTime * 0.25));',
+    '    float sm = fbm(nUv * 0.8 + vec2(uTime * 0.3, -uTime * 0.2));',
     '    if (kind == 3) {',
     '      float pillar = exp(-abs(q.x + sm * 0.3) * 10.0) * smoothstep(0.5, 0.0, abs(q.y));',
     '      m = pillar * vAlpha;',
     '      col = mix(vec3(0.0), vec3(0.15, 0.02, 0.22), pillar);',
     '    } else {',
-    '      float puff = exp(-r2 * mix(0.6, 1.6, sm)) * smoothstep(0.55, 0.02, r + sm * 0.3);',
-    '      float tend = exp(-abs(q.x * 0.5 + q.y + sm * 0.4) * mix(4.0, 8.0, vSharp)) * exp(-r2 * 0.8);',
-    '      float eye = exp(-pow(r - 0.12, 2.0) * 80.0) * 0.5;',
-    '      m = (puff + tend * 0.8) * vAlpha;',
-    '      col = shade3D(vec3(0.02, 0.0, 0.05), ndl * 0.35, rim, spec * 0.15);',
-    '      col = mix(vec3(0.0), col, puff + tend);',
-    '      col += vec3(0.55, 0.08, 0.75) * eye;',
+    // volumetric billowing smoke: layered density + backlit self-shadow
+    '      float d1 = fbm(nUv * 1.3 + vec2(uTime * 0.25, sm));',
+    '      float d2 = fbm(nUv * 2.7 - vec2(uTime * 0.18, sm * 0.5));',
+    '      float vol = exp(-r2 * mix(1.0, 2.0, d1)) * smoothstep(0.52, 0.0, r - d1 * 0.18 + d2 * 0.12);',
+    '      float wisp = exp(-abs(q.x * 0.6 + q.y * 0.8 + (d1 - 0.5) * 0.9) * mix(3.5, 7.0, vSharp)) * exp(-r2 * 0.6);',
+    '      float occ = clamp(d1 * 1.2 - d2 * 0.4, 0.0, 1.0);',
+    '      m = (vol + wisp * 0.55) * vAlpha;',
+    '      vec3 deep = vec3(0.03, 0.0, 0.06);',
+    '      vec3 lit = vec3(0.32, 0.1, 0.42);',
+    '      col = mix(deep, lit, cel(occ, 4.0));',
+    '      col += vec3(0.55, 0.25, 0.78) * cel(rim, 3.0) * 0.45 * vol;',
+    '      col = mix(vec3(0.0), col, clamp(vol + wisp, 0.0, 1.0));',
     '    }',
     '  } else if (mode == 2) {',
     '    float shards = 0.0;',
-    '    for (int i = 0; i < 6; i++) {',
+    '    float facets = 0.0;',
+    '    for (int i = 0; i < 7; i++) {',
     '      float fi = float(i);',
     '      float ang = hash1(seed + fi) * 6.28;',
-    '      shards += iceShard(q - vec2((hash1(seed + fi * 2.0) - 0.5) * 0.14, fi * 0.03), ang, 0.2 + hash1(seed + fi) * 0.35, mix(14.0, 30.0, vSharp));',
+    '      float len = 0.16 + hash1(seed + fi) * 0.3;',
+    '      float sh = iceShard(q - vec2((hash1(seed + fi * 2.0) - 0.5) * 0.12, fi * 0.025), ang, len, mix(26.0, 52.0, vSharp));',
+    '      shards = max(shards, sh);',
+    '      facets += sh * 0.3;',
     '    }',
-    '    shards = cel(shards, 4.0);',
-    '    m = (shards + exp(-r2 * 2.0) * 0.35) * vAlpha;',
-    '    col = shade3D(vec3(0.5, 0.82, 0.95), ndl, rim + shards * 0.5, spec);',
-    '    col += vec3(0.9, 1.0, 1.0) * cel(shards, 3.0) * 0.4;',
+    '    float glint = pow(exp(-r2 * mix(10.0, 26.0, vSharp)), 1.5);',
+    '    float edgeFr = smoothstep(0.34, 0.3, r) * (1.0 - smoothstep(0.36, 0.42, r));',
+    '    m = (shards * 1.05 + facets * 0.4 + glint * 0.45 + edgeFr * 0.3) * vAlpha;',
+    '    col = shade3D(vec3(0.62, 0.85, 0.97), ndl, rim + shards * 0.6, spec + glint);',
+    '    col += vec3(0.85, 0.97, 1.0) * (shards + glint) * 0.55;',
+    '    col = mix(col, vec3(0.7, 0.92, 1.0), edgeFr * 0.5);',
     '  } else if (mode == 3) {',
-    '    float bolt = cel(lightning(q, seed, uTime), 5.0);',
-    '    float core = exp(-r2 * mix(14.0, 28.0, vSharp));',
-    '    float streak = exp(-abs(q.y) * mix(22.0, 50.0, vSharp)) * exp(-abs(q.x) * 4.0);',
+    '    float bolt = lightning(q, seed, uTime);',
+    '    float core = exp(-r2 * mix(26.0, 52.0, vSharp));',
+    '    float streak = exp(-abs(q.y) * mix(40.0, 90.0, vSharp)) * exp(-abs(q.x) * 3.0);',
+    '    float halo = exp(-r2 * mix(3.0, 7.0, vSharp)) * 0.22;',
     '    float fork = 0.0;',
-    '    if (kind == 7) fork = exp(-abs(q.x) * 25.0) * exp(-r2 * 8.0);',
-    '    m = (bolt * 1.25 + core * 0.55 + streak * 0.75 + fork) * vAlpha * flick;',
-    '    col = shade3D(vec3(0.2, 0.5, 1.0), ndl, bolt + streak, bolt + spec + fork);',
-    '    col += vec3(0.85, 0.95, 1.0) * bolt * 0.35;',
+    '    if (kind == 7) fork = exp(-abs(q.x) * 32.0) * exp(-r2 * 9.0);',
+    '    m = (bolt * 1.15 + core * 0.7 + streak * 0.85 + fork + halo) * vAlpha * flick;',
+    '    vec3 elec = mix(vec3(0.18, 0.42, 0.95), vec3(0.78, 0.92, 1.0), core + bolt * 0.5);',
+    '    col = elec;',
+    '    col += vec3(0.9, 0.96, 1.0) * (bolt + core) * 0.55;',
     '  } else if (mode == 4) {',
     '    float nv = fbm(nUv + uTime * 0.04);',
     '    float ribbon = exp(-abs(q.x + nv * 0.4) * mix(5.0, 12.0, vSharp));',
@@ -477,24 +490,31 @@
     '    jjk += vec3(0.45, 0.75, 1.0) * aura * 0.5;',
     '    col = shade3D(jjk, ndl, rim + ring, spec + core * 0.5);',
     '  } else {',
-    '    float flow = fbm(nUv + vec2(uTime * 0.16, 0.0));',
-    '    vec2 fq = q + vec2(flow * 0.18, br * 0.08);',
-    '    float stream = exp(-abs(fq.y) * mix(4.0, 9.0, vSharp));',
-    '    stream *= exp(-fq.x * fq.x * 3.0) * exp(-r2 * 1.2);',
+    // water — Niagara-style layered flowing ribbons with foam crests
+    '    float flow = fbm(nUv * 1.1 + vec2(uTime * 0.22, 0.0));',
+    '    float flow2 = fbm(nUv * 2.3 - vec2(uTime * 0.12, flow));',
+    '    vec2 fq = q + vec2((flow - 0.5) * 0.22, (flow2 - 0.5) * 0.14);',
+    '    float stream = exp(-abs(fq.y) * mix(4.5, 10.0, vSharp));',
+    '    stream *= exp(-fq.x * fq.x * 2.6) * exp(-r2 * 1.1);',
+    '    float ribbon = exp(-abs(fq.y + sin(fq.x * 9.0 + flow * 4.0) * 0.07) * mix(10.0, 22.0, vSharp)) * stream;',
     '    stream = cel(stream, 5.0);',
-    '    float hl = cel(exp(-abs(fq.x) * 20.0) * stream, 3.0);',
+    '    float foam = smoothstep(0.55, 0.85, flow2) * stream;',
+    '    float hl = cel(exp(-abs(fq.x) * 18.0) * stream, 3.0);',
     '    float finger = 0.0;',
     '    if (kind >= 5) finger = exp(-abs(q.x + sin(q.y * 16.0) * 0.12) * 12.0) * stream;',
-    '    m = (stream + hl * 0.55 + finger * 0.6) * vAlpha;',
-    '    col = shade3D(vec3(0.08, 0.42, 0.72), ndl, rim, spec + hl);',
-    '    col += vec3(0.75, 0.98, 1.0) * (hl + finger) * 0.45;',
+    '    m = (stream * 0.9 + ribbon * 0.7 + hl * 0.5 + finger * 0.55 + foam * 0.6) * vAlpha;',
+    '    vec3 deep = vec3(0.04, 0.32, 0.62);',
+    '    vec3 shallow = vec3(0.2, 0.62, 0.85);',
+    '    col = mix(deep, shallow, cel(stream + ribbon, 4.0));',
+    '    col += vec3(0.85, 0.98, 1.0) * (foam + hl * 0.6 + finger * 0.5);',
+    '    col = mix(vec3(0.02, 0.18, 0.4), col, clamp(stream + ribbon + foam, 0.0, 1.0));',
     '  }',
-  '  col *= 1.38;',
-  '  col = mix(col, vec3(0.03, 0.02, 0.06), inkL * 0.55);',
-  '  m *= pointMask * (1.0 - inkL * 0.08);',
-  '  m += inkL * 0.35 * vAlpha;',
+  '  col *= 1.42;',
+  '  col = mix(col, vec3(0.04, 0.03, 0.07), inkL * 0.22);',
+  '  m *= pointMask * (1.0 - inkL * 0.04);',
+  '  m += inkL * 0.12 * vAlpha;',
   '  if (m < 0.001) discard;',
-  '  outColor = vec4(col * m, min(m * 1.08, 1.0));',
+  '  outColor = vec4(col * m, min(m * 1.05, 1.0));',
     '}'
   ].join('\n');
 
@@ -510,31 +530,49 @@
     'float sampA(vec2 uv){ return texture(uTex, uv).a; }',
     'void main(){',
     '  vec2 t = uTexel;',
-    '  float a0 = sampA(vUv);',
-    '  float ax = sampA(vUv + vec2(t.x, 0.0)) - sampA(vUv - vec2(t.x, 0.0));',
-    '  float ay = sampA(vUv + vec2(0.0, t.y)) - sampA(vUv - vec2(0.0, t.y));',
-    '  float aD = sampA(vUv + t) + sampA(vUv - t) + sampA(vUv + vec2(t.x,-t.y)) + sampA(vUv + vec2(-t.x,t.y));',
-    '  float edge = length(vec2(ax, ay)) * 14.0 + abs(a0 * 4.0 - aD) * 2.5;',
-    '  edge = cel(edge, 4.0);',
     '  vec4 c = texture(uTex, vUv);',
-    '  vec4 blur = (c',
+    // soft bloom (gentle anime light glow)
+    '  vec4 acc = c * 0.4;',
+    '  float wsum = 0.4;',
+    '  for (int i = 0; i < 8; i++) {',
+    '    float a = float(i) * 0.7853981;',
+    '    vec2 d = vec2(cos(a), sin(a));',
+    '    acc += texture(uTex, vUv + d * t * 2.2) * 0.085;',
+    '    acc += texture(uTex, vUv + d * t * 5.0) * 0.04;',
+    '    wsum += 0.125;',
+    '  }',
+    '  vec4 soft = acc / wsum;',
+    // crisp local color (un-premultiply) with light smoothing
+    '  vec4 blur = (c * 1.6',
     '    + texture(uTex, vUv + vec2(0.0, t.y))',
     '    + texture(uTex, vUv - vec2(0.0, t.y))',
     '    + texture(uTex, vUv + vec2(t.x, 0.0))',
-    '    + texture(uTex, vUv - vec2(t.x, 0.0))) / 5.0;',
+    '    + texture(uTex, vUv - vec2(t.x, 0.0))) / 5.6;',
     '  float dens = blur.a;',
     '  vec3 col = blur.rgb / max(dens, 0.0003);',
+    // anime cel banding (kept, but elegant: 7 soft steps)
     '  float luma = dot(col, vec3(0.299, 0.587, 0.114));',
-    '  float l = cel(luma, 6.0);',
-    '  col = col / max(luma, 0.001) * l * dens;',
-    '  dens = smoothstep(0.003, 0.48, dens);',
-    '  col *= 1.32;',
-    '  float hatch = sin((vUv.x + vUv.y) * 140.0 + uTime * 0.5) * 0.5 + 0.5;',
-    '  hatch = cel(hatch, 3.0);',
-    '  col *= 0.96 + hatch * 0.05 * dens;',
-    '  col = mix(col, vec3(0.03, 0.02, 0.06), edge * 0.62);',
-    '  col += col * cel(dens, 4.0) * 0.42;',
-    '  float a = clamp(dens * 0.98, 0.0, 1.0);',
+    '  float lq = mix(luma, cel(luma, 7.0), 0.7);',
+    '  col = col / max(luma, 0.001) * lq;',
+    // ink line art: thin dark outline on silhouettes (anime contour)
+    '  float ax = sampA(vUv + vec2(t.x, 0.0)) - sampA(vUv - vec2(t.x, 0.0));',
+    '  float ay = sampA(vUv + vec2(0.0, t.y)) - sampA(vUv - vec2(0.0, t.y));',
+    '  float lap = sampA(vUv + t) + sampA(vUv - t) + sampA(vUv + vec2(t.x,-t.y)) + sampA(vUv + vec2(-t.x,t.y)) - 4.0 * sampA(vUv);',
+    '  float edge = length(vec2(ax, ay)) * 11.0 + abs(lap) * 2.0;',
+    '  edge = cel(smoothstep(0.25, 0.7, edge), 2.0);',
+    '  float coverage = smoothstep(0.004, 0.42, dens);',
+    '  col *= coverage;',
+    // additive glow + interior rim light (anime energy sheen)
+    '  col += soft.rgb * 0.42;',
+    '  col += col * cel(coverage, 4.0) * 0.3;',
+    // faint cross-hatch in shadow areas (manga texture, very subtle)
+    '  float hatch = sin((vUv.x - vUv.y) * 220.0) * 0.5 + 0.5;',
+    '  hatch = step(0.5, hatch);',
+    '  col *= 1.0 - hatch * 0.04 * coverage * (1.0 - luma);',
+    // ink outline (toward deep indigo, not pure black)
+    '  col = mix(col, vec3(0.05, 0.03, 0.09), edge * 0.7);',
+    '  col *= 1.4;',
+    '  float a = clamp(max(coverage, edge * 0.85) * 0.99, 0.0, 1.0);',
     '  outColor = vec4(col, a);',
     '}'
   ].join('\n');
@@ -546,16 +584,18 @@
     'in float aLife;',
     'in float aMode;',
     'in float aKind;',
+    'in float aAngle;',
     'uniform vec2 uRes;',
     'out float vLife;',
     'out float vMode;',
     'out float vKind;',
+    'out float vAngle;',
     'void main(){',
     '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
     '  c.y = -c.y;',
     '  gl_Position = vec4(c, 0.0, 1.0);',
     '  gl_PointSize = aSize;',
-    '  vLife = aLife; vMode = aMode; vKind = aKind;',
+    '  vLife = aLife; vMode = aMode; vKind = aKind; vAngle = aAngle;',
     '}'
   ].join('\n');
 
@@ -565,55 +605,72 @@
     'in float vLife;',
     'in float vMode;',
     'in float vKind;',
+    'in float vAngle;',
     'out vec4 outColor;',
-    'float needle(vec2 p, float ax, float ay) {',
-    '  return exp(-abs(p.x) * ax) * exp(-abs(p.y) * ay);',
+    'float hash1(float n){ return fract(sin(n) * 43758.5453); }',
+    // oriented comet streak: bright head at +x, fading tail at -x
+    'float streak(vec2 q, float perpK, float headK, float tailK){',
+    '  float across = exp(-abs(q.y) * perpK);',
+    '  float along = q.x >= 0.0 ? exp(-q.x * headK) : exp(q.x * tailK);',
+    '  return across * along;',
     '}',
     'void main(){',
     '  int mode = int(vMode + 0.5);',
     '  int kind = int(vKind + 0.5);',
     '  vec2 p = (gl_PointCoord - 0.5) * 2.0;',
     '  float r = length(p);',
+    '  float ca = cos(vAngle); float sa = sin(vAngle);',
+    '  vec2 q = vec2(ca * p.x + sa * p.y, -sa * p.x + ca * p.y);',
+    '  float core = 1.0 - smoothstep(0.0, 0.16, r);',
     '  float m = 0.0;',
-    '  if (mode == 2) {',
-    '    float shard = needle(p, 14.0, 9.0) * max(0.0, 1.0 - r * 3.5);',
-    '    m = shard * vLife;',
-    '  } else if (mode == 4 && kind == 1) {',
-    '    float drop = smoothstep(0.42, 0.08, r);',
-    '    float tail = needle(p, 28.0, 6.0) * smoothstep(0.15, -0.75, p.y);',
-    '    m = (drop * 0.55 + tail * 0.65) * vLife;',
-    '  } else if (mode == 7 && kind == 2) {',
-    '    float drop = smoothstep(0.38, 0.06, r);',
-    '    m = (drop + needle(p, 20.0, 14.0) * 0.35) * vLife;',
-    '  } else if (mode == 6 && kind == 3) {',
-    '    float streak = needle(p, 48.0, 10.0);',
-    '    float core = 1.0 - smoothstep(0.12, 0.28, r);',
-    '    m = (streak * 0.85 + core * 0.35) * vLife;',
-    '  } else if (mode == 3 && kind == 4) {',
-    '    float bolt = needle(p, 72.0, 18.0) + needle(vec2(p.y, p.x), 72.0, 18.0) * 0.35;',
-    '    float core = 1.0 - smoothstep(0.08, 0.22, r);',
-    '    m = (bolt * 0.9 + core * 0.45) * vLife;',
-    '  } else if (mode == 3) {',
-    '    float bolt = needle(p, 55.0, 16.0);',
-    '    m = (bolt + (1.0 - smoothstep(0.15, 0.32, r)) * 0.25) * vLife;',
+    '  float coreMul = 0.55;',
+    '  vec3 tint = vec3(0.6, 0.8, 1.0);',
+    '  if (mode == 3) {',
+    // electricity: ultra-thin filament + slight crackling fork, hot blue-white
+    '    float jitter = sin(q.x * 28.0 + vLife * 40.0) * 0.05;',
+    '    float arc = streak(vec2(q.x, q.y + jitter), 60.0, 3.0, 5.5);',
+    '    float fork = streak(vec2(q.x, (q.y - 0.18) * 1.0), 80.0, 4.0, 6.0) * 0.4;',
+    '    m = (arc + fork) * 1.1; coreMul = 0.9;',
+    '    tint = vec3(0.55, 0.78, 1.0);',
+    '  } else if (mode == 2) {',
+    // ice: sharp crystalline sliver, very thin
+    '    float shard = streak(q, 26.0, 5.0, 7.0);',
+    '    float glint = pow(core, 2.0);',
+    '    m = shard * 0.9 + glint * 0.5; coreMul = 0.7;',
+    '    tint = vec3(0.78, 0.95, 1.0);',
+    '  } else if (mode == 4) {',
+    // blood: small droplet with short tail
+    '    float drop = smoothstep(0.34, 0.04, r);',
+    '    float tail = streak(q, 22.0, 8.0, 4.0) * 0.5;',
+    '    m = drop * 0.8 + tail; coreMul = 0.25;',
+    '    tint = vec3(0.85, 0.1, 0.12);',
+    '  } else if (mode == 5) {',
+    // fire ember: hot point + rising flicker
+    '    float ember = smoothstep(0.3, 0.0, r);',
+    '    float flick = streak(q, 16.0, 6.0, 3.0) * 0.4;',
+    '    m = ember + flick; coreMul = 0.8;',
+    '    tint = vec3(1.0, 0.5, 0.12);',
+    '  } else if (mode == 6) {',
+    // energy mote: thin radiant streak
+    '    float s = streak(q, 30.0, 4.0, 5.0);',
+    '    m = s + core * 0.4; coreMul = 0.85;',
+    '    tint = vec3(0.6, 0.45, 1.0);',
+    '  } else if (mode == 7) {',
+    // water spray: tiny rounded bead
+    '    float bead = smoothstep(0.3, 0.02, r);',
+    '    m = bead * 0.9; coreMul = 0.3;',
+    '    tint = vec3(0.55, 0.85, 0.98);',
     '  } else {',
-    '    float streak = needle(p, 40.0, 14.0);',
-    '    m = (streak + (1.0 - smoothstep(0.18, 0.34, r)) * 0.2) * vLife;',
+    '    float s = streak(q, 28.0, 5.0, 5.0);',
+    '    m = s + core * 0.35; coreMul = 0.7;',
+    '    tint = vec3(1.0, 0.95, 0.82);',
     '  }',
-    '  float pm = 1.0 - smoothstep(0.42, 0.48, r);',
-    '  m *= pm;',
-    '  m = pow(m, 1.08);',
-    '  if (m < 0.025) discard;',
-    '  vec3 col = vec3(1.0);',
-    '  if (mode == 0) col = vec3(1.0, 0.95, 0.8);',
-    '  else if (mode == 1) col = vec3(0.6, 0.1, 0.5);',
-    '  else if (mode == 2) col = vec3(0.85, 0.98, 1.0);',
-    '  else if (mode == 3) col = vec3(0.75, 0.92, 1.0);',
-    '  else if (mode == 4) col = vec3(0.95, 0.15, 0.2);',
-    '  else if (mode == 5) col = vec3(1.0, 0.55, 0.15);',
-    '  else if (mode == 6) col = vec3(0.55, 0.75, 1.0);',
-    '  else col = vec3(0.45, 0.88, 0.95);',
-    '  outColor = vec4(col, min(m * 1.15, 1.0));',
+    '  float pm = 1.0 - smoothstep(0.46, 0.5, r);',
+    '  m = (m + core * coreMul) * pm * vLife;',
+    '  if (m < 0.02) discard;',
+    // hot white core blended toward type tint at the edges
+    '  vec3 col = mix(tint, vec3(1.0), clamp(core * coreMul * 1.4, 0.0, 1.0));',
+    '  outColor = vec4(col * (0.7 + vLife * 0.5), min(m * 1.2, 1.0));',
     '}'
   ].join('\n');
 
@@ -1016,8 +1073,9 @@
     if (!sparks.length) return;
     var dprX = sw / W;
     var dprY = sh / H;
-    var stride = 6 * 4;
-    var data = new Float32Array(sparks.length * 6);
+    var dpr = (dprX + dprY) * 0.5;
+    var stride = 7 * 4;
+    var data = new Float32Array(sparks.length * 7);
     var j = 0;
     var alive = 0;
     for (var i = sparks.length - 1; i >= 0; i--) {
@@ -1030,21 +1088,27 @@
       sp.x += sp.vx;
       sp.y += sp.vy;
       if (sp.mode === 4 && sp.kind === 1) {
-        sp.vy += 0.18;
-        sp.vx *= 0.96;
-        sp.life -= 0.038;
+        sp.vy += 0.2;
+        sp.vx *= 0.95;
+        sp.life -= 0.042;
+      } else if (sp.mode === 5) {
+        sp.vy -= 0.06;
+        sp.vx *= 0.97;
+        sp.life -= 0.05;
       } else if (sp.kind === 4 && sp.mode === 3) {
-        sp.life -= 0.032;
+        sp.life -= 0.05;
       } else {
-        sp.life -= 0.04;
+        sp.life -= 0.045;
       }
       if (sp.life <= 0) { sparks.splice(i, 1); continue; }
+      var ang = (sp.ang !== undefined) ? sp.ang : Math.atan2(sp.vy, sp.vx);
       data[j++] = sp.x * dprX;
       data[j++] = sp.y * dprY;
-      data[j++] = sp.size * sp.life * 0.88;
+      data[j++] = sp.size * (0.45 + sp.life * 0.65) * dpr;
       data[j++] = sp.life;
       data[j++] = sp.mode;
       data[j++] = sp.kind || 0;
+      data[j++] = ang;
       alive++;
     }
     if (!alive) return;
@@ -1067,6 +1131,9 @@
     var a4 = gl.getAttribLocation(progSpark, 'aKind');
     gl.enableVertexAttribArray(a4);
     gl.vertexAttribPointer(a4, 1, gl.FLOAT, false, stride, 20);
+    var a5 = gl.getAttribLocation(progSpark, 'aAngle');
+    gl.enableVertexAttribArray(a5);
+    gl.vertexAttribPointer(a5, 1, gl.FLOAT, false, stride, 24);
     gl.uniform2f(uSpark.res, sw, sh);
     gl.drawArrays(gl.POINTS, 0, alive);
   }
