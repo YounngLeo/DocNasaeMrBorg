@@ -6,13 +6,15 @@
     var dd = document.querySelector('.nav-dd');
     if (dd) {
       var btn = dd.querySelector('.nav-dd-btn');
-      btn.addEventListener('click', function(e){
-        e.stopPropagation();
-        dd.classList.toggle('open');
-      });
-      document.addEventListener('click', function(e){
-        if (!dd.contains(e.target)) dd.classList.remove('open');
-      });
+      if (btn) {
+        btn.addEventListener('click', function(e){
+          e.stopPropagation();
+          dd.classList.toggle('open');
+        });
+        document.addEventListener('click', function(e){
+          if (!dd.contains(e.target)) dd.classList.remove('open');
+        });
+      }
     }
 
     /* — LIGHTBOX — */

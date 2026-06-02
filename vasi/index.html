@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<base href="./">
 <title>VASI // DoctNasa&MrBorg</title>
 <link rel="stylesheet" href="../assets/site.css">
 </head>
@@ -47,7 +48,11 @@
   <div class="wall-module br-module">
     <div class="wall-grid">
       <div class="wall-stage br-stage" id="br-stage">
-        <svg id="br-svg" viewBox="0 0 200 500" aria-label="Catena verticale con moduli vaso">
+        <svg id="br-svg" viewBox="0 0 200 500" width="200" height="500" aria-label="Catena verticale con moduli vaso">
+          <rect width="200" height="500" fill="#070b07"/>
+          <g id="br-guide" aria-hidden="true">
+            <line x1="100" y1="16" x2="100" y2="484" stroke="#5eff7e" stroke-width="1.2" opacity="0.35"/>
+          </g>
           <g id="br-chain-layer"></g>
           <g id="br-slot-layer"></g>
           <g id="br-module-layer"></g>
@@ -499,6 +504,6 @@
 </div>
 
 <script src="../assets/site.js"></script>
-<script src="bracelet.js"></script>
+<script src="./bracelet.js?v=4"></script>
 </body>
 </html>

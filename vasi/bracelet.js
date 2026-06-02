@@ -1,21 +1,15 @@
 /* Configuratore catena verticale — moduli vaso creati dall'utente */
 (function () {
   var STORAGE_KEY = 'vasi_catena_moduli_v1';
-
-  var SHAPES = {
-    cilindro: { label: 'cilindro', draw: drawCilindro },
-    cono:     { label: 'cono',     draw: drawCono },
-    bulbo:    { label: 'bulbo',    draw: drawBulbo },
-    spirale:  { label: 'spirale',  draw: drawSpirale }
-  };
-
   var MAT_COLORS = { argilla: '#c9a87c', pla: '#5eff7e', resina: '#4af6ff' };
+  var SHAPES;
 
+  function boot() {
   var svg = document.getElementById('br-svg');
   var chainLayer = document.getElementById('br-chain-layer');
   var moduleLayer = document.getElementById('br-module-layer');
   var slotLayer = document.getElementById('br-slot-layer');
-  if (!svg || !chainLayer) return;
+  if (!svg || !chainLayer || !moduleLayer || !slotLayer) return;
 
   var userModules = [];
   var chain = [];
@@ -27,16 +21,39 @@
   var TOP = 36;
   var STEP = 58;
 
+  function normalizeModule(m) {
+    if (!m || !m.id) return null;
+    var mat = MAT_COLORS[m.material] ? m.material : 'argilla';
+    var shape = SHAPES[m.shape] ? m.shape : 'cilindro';
+    var h = parseInt(m.height, 10);
+    if (!h || h < 24) h = 40;
+    if (h > 64) h = 64;
+    return {
+      id: String(m.id),
+      name: String(m.name || 'MOD'),
+      material: mat,
+      shape: shape,
+      color: m.color || MAT_COLORS[mat],
+      height: h
+    };
+  }
+
   function load() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       var data = JSON.parse(raw);
-      if (Array.isArray(data.modules)) userModules = data.modules;
-      if (Array.isArray(data.chain)) chain = data.chain;
-      if (data.slotCount) slotCount = data.slotCount;
-      if (data.moduleCounter) moduleCounter = data.moduleCounter;
-    } catch (e) {}
+      if (Array.isArray(data.modules)) {
+        userModules = data.modules.map(normalizeModule).filter(Boolean);
+      }
+      if (Array.isArray(data.chain)) chain = data.chain.map(function (id) { return id ? String(id) : null; });
+      var sc = parseInt(data.slotCount, 10);
+      if (sc >= 3 && sc <= 14) slotCount = sc;
+      var mc = parseInt(data.moduleCounter, 10);
+      if (mc > 0) moduleCounter = mc;
+    } catch (e) {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (err) {}
+    }
   }
 
   function save() {
@@ -158,6 +175,13 @@
     });
   }
 
+  SHAPES = {
+    cilindro: { label: 'cilindro', draw: drawCilindro },
+    cono:     { label: 'cono',     draw: drawCono },
+    bulbo:    { label: 'bulbo',    draw: drawBulbo },
+    spirale:  { label: 'spirale',  draw: drawSpirale }
+  };
+
   function drawModuleShape(g, mod) {
     var fn = SHAPES[mod.shape] ? SHAPES[mod.shape].draw : drawCilindro;
     fn(g, mod, mod.height || 40);
@@ -217,7 +241,7 @@
         x: 0, y: (mod.height || 40) * 0.55,
         'text-anchor': 'middle', fill: '#d0d0d0', 'font-size': '7',
         'font-family': 'Courier New, monospace'
-      })).textContent = mod.name.slice(0, 8);
+      })).textContent = String(mod.name || 'MOD').slice(0, 8);
       moduleLayer.appendChild(g);
     }
   }
@@ -266,6 +290,15 @@
     if (chain.length > slotCount) chain.length = slotCount;
     var h = TOP + slotCount * STEP + 40;
     svg.setAttribute('viewBox', '0 0 200 ' + h);
+    svg.setAttribute('width', '200');
+    svg.setAttribute('height', String(h));
+    var bg = svg.querySelector('rect');
+    if (bg) {
+      bg.setAttribute('width', '200');
+      bg.setAttribute('height', String(h));
+    }
+    var guide = svg.querySelector('#br-guide line');
+    if (guide) guide.setAttribute('y2', String(h - 16));
     drawChain();
     drawModules();
     drawSlots();
@@ -354,21 +387,26 @@
     save(); render();
   }
 
+  function on(id, type, fn) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener(type, fn);
+  }
+
   svg.addEventListener('click', function (e) {
-    var g = e.target.closest('[data-slot]');
+    var g = e.target.closest ? e.target.closest('[data-slot]') : null;
     if (!g) return;
     var slot = parseInt(g.getAttribute('data-slot'), 10);
     if (chain[slot]) removeFromChain(slot);
     else addToChain(slot);
   });
 
-  document.getElementById('br-create').addEventListener('click', createModule);
-  document.getElementById('br-add').addEventListener('click', function () { addToChain(); });
-  document.getElementById('br-remove').addEventListener('click', function () { removeFromChain(); });
-  document.getElementById('br-clear').addEventListener('click', function () {
+  on('br-create', 'click', createModule);
+  on('br-add', 'click', function () { addToChain(); });
+  on('br-remove', 'click', function () { removeFromChain(); });
+  on('br-clear', 'click', function () {
     chain = []; save(); render();
   });
-  document.getElementById('br-export').addEventListener('click', function () {
+  on('br-export', 'click', function () {
     var lines = ['CATENA VERTICALE — DoctNasa&MrBorg', ''];
     for (var i = 0; i < slotCount; i++) {
       if (!chain[i]) continue;
@@ -382,17 +420,20 @@
       window.prompt('Copia:', text);
     }
   });
-  document.getElementById('br-slots').addEventListener('input', function (e) {
+  on('br-slots', 'input', function (e) {
     slotCount = parseInt(e.target.value, 10);
-    document.getElementById('brv-slots').textContent = String(slotCount);
+    var slotsVal = document.getElementById('brv-slots');
+    if (slotsVal) slotsVal.textContent = String(slotCount);
     save(); render();
   });
-  document.getElementById('br-mat').addEventListener('change', function (e) {
+  on('br-mat', 'change', function (e) {
     var c = MAT_COLORS[e.target.value];
-    if (c) document.getElementById('br-color').value = c;
+    var colorIn = document.getElementById('br-color');
+    if (c && colorIn) colorIn.value = c;
   });
-  document.getElementById('br-height').addEventListener('input', function (e) {
-    document.getElementById('brv-height').textContent = e.target.value;
+  on('br-height', 'input', function (e) {
+    var hv = document.getElementById('brv-height');
+    if (hv) hv.textContent = e.target.value;
   });
 
   load();
@@ -403,5 +444,17 @@
     });
     selectedModuleId = 'mod_seed';
   }
+  var hasChain = false;
+  for (var ci = 0; ci < chain.length; ci++) {
+    if (chain[ci]) { hasChain = true; break; }
+  }
+  if (!hasChain && selectedModuleId) chain[0] = selectedModuleId;
   render();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 })();
