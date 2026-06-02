@@ -386,8 +386,8 @@
         zang = Math.atan2(dy, dx);
         pushSplat(splatBuf, {
           x: zx, y: zy,
-          size: rad * (1.2 + pow * 0.5) * (0.85 + Math.random() * 0.35),
-          alpha: (0.22 + pow * 0.38) * (0.85 + Math.random() * 0.15),
+          size: rad * (0.85 + pow * 0.4) * (0.85 + Math.random() * 0.3),
+          alpha: (0.26 + pow * 0.42) * (0.85 + Math.random() * 0.15),
           ang: zang + (Math.random() - 0.5) * 0.15,
           mode: 3,
           sharp: 0.98,
@@ -520,8 +520,8 @@
             zang = Math.atan2(zdy, zdx);
             pushSplat(splatBuf, {
               x: zx, y: zy,
-              size: rad * (1.8 + pow * 0.7),
-              alpha: (0.28 + pow * 0.42),
+              size: rad * (1.05 + pow * 0.45),
+              alpha: (0.32 + pow * 0.45),
               ang: zang,
               mode: 3,
               sharp: 0.99,
@@ -546,30 +546,33 @@
       ang = swirlAngle(px, py, ang, attractors, vortexPow);
 
       if (m === 1) {
-        tend = Math.sin(a.tendril + t * 2.5 + u * 8) * 14;
-        px += tend;
-        py -= 4 + Math.random() * 6;
-        pushSplat(splatBuf, {
-          x: px, y: py,
-          size: rad * (1.8 + pow * 0.55) * (0.6 + Math.random() * 0.5),
-          alpha: (0.16 + pow * 0.24) * (0.75 + Math.random() * 0.25),
-          ang: ang + Math.PI * 0.5,
-          mode: 1,
-          sharp: 0.35 + Math.random() * 0.25,
-          seed: Math.random() * 90,
-          kind: 1
-        });
-        if (Math.random() < 0.4) {
+        var curl = Math.sin(a.tendril + t * 1.5 + u * 5) * 0.35;
+        if (Math.random() < 0.55) {
           pushSplat(splatBuf, {
-            x: px + (Math.random() - 0.5) * 22,
-            y: py - 10 - Math.random() * 28,
-            size: rad * 2.4,
-            alpha: (0.1 + pow * 0.14),
-            ang: -Math.PI * 0.5 + (Math.random() - 0.5) * 0.5,
+            x: px + (Math.random() - 0.5) * rad,
+            y: py + (Math.random() - 0.5) * rad,
+            size: rad * (2.8 + pow * 0.9),
+            alpha: (0.12 + pow * 0.16),
+            ang: ang,
             mode: 1,
             sharp: 0.2,
-            seed: Math.random() * 50,
+            seed: Math.random() * 90,
             kind: 3
+          });
+        }
+        var wk;
+        for (wk = 0; wk < 2; wk++) {
+          var wperp = (wk === 0 ? -1 : 1) * rad * (0.5 + Math.random() * 0.5);
+          pushSplat(splatBuf, {
+            x: px + wperp,
+            y: py - (3 + Math.random() * 7),
+            size: rad * (2.3 + pow * 0.7),
+            alpha: (0.14 + pow * 0.22) * (0.8 + Math.random() * 0.2),
+            ang: curl + (Math.random() - 0.5) * 0.3,
+            mode: 1,
+            sharp: 0.5 + Math.random() * 0.3,
+            seed: Math.random() * 90,
+            kind: 1
           });
         }
       } else if (m === 7) {
@@ -665,27 +668,28 @@
         }
         a.heat = clamp(a.heat * 0.998, 0.5, 1.2);
       } else {
-        var sharp = m === 6 ? 0.72 : 0.64;
+        var sharp = m === 6 ? 0.5 : 0.64;
         pushSplat(splatBuf, {
-          x: px + (Math.random() - 0.5) * a.turb * 2.2,
-          y: py + (Math.random() - 0.5) * a.turb * 2.2,
-          size: rad * (1.05 + spd * 0.1) * (1.45 + pow * 0.3),
-          alpha: (0.13 + pow * 0.22) * (0.85 + a.decay * 0.15),
+          x: px + (Math.random() - 0.5) * a.turb * 2.0,
+          y: py + (Math.random() - 0.5) * a.turb * 2.0,
+          size: rad * (1.05 + spd * 0.1) * (m === 6 ? (1.9 + pow * 0.5) : (1.45 + pow * 0.3)),
+          alpha: (0.12 + pow * 0.2) * (0.85 + a.decay * 0.15),
           ang: ang,
           mode: m,
           sharp: sharp,
           seed: Math.random() * 97 + t * 0.17,
           kind: m === 6 ? 1 : 0
         });
-        if (m === 6 && Math.random() < 0.5) {
+        if (m === 6 && Math.random() < 0.7) {
+          var ra = Math.random() * Math.PI * 2;
           pushSplat(splatBuf, {
-            x: px + (Math.random() - 0.5) * rad * 1.4,
-            y: py + (Math.random() - 0.5) * rad * 1.4,
-            size: rad * 0.5,
-            alpha: (0.1 + pow * 0.16),
-            ang: ang + (Math.random() - 0.5),
+            x: px + Math.cos(ra) * rad * 0.8,
+            y: py + Math.sin(ra) * rad * 0.8,
+            size: rad * (1.1 + pow * 0.3),
+            alpha: (0.08 + pow * 0.14),
+            ang: ra,
             mode: 6,
-            sharp: 0.9,
+            sharp: 0.85,
             seed: Math.random() * 60,
             kind: 1
           });
