@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">cursed energy · fondo scuro · glow anime</div>
-  <div class="ver">v2.7 — spessore lungo-periodo · creste acqua · tutte le tipologie</div>
+  <div class="ver">v2.7.1 — fix shader · preview tools</div>
 </div>
 
 <div class="actions">
@@ -374,6 +374,12 @@
     '    p = p * 1.55 + vec2(0.4, 0.16);',
     '  } return m;',
     '}',
+    // long-period, high-variance thickness along flow (shared by all types)
+    'float flowThick(vec2 along, float seed, float t){',
+    '  float v = fbm(vec2(along.y * 0.28 + seed * 0.4, t * 0.05 + seed * 0.2));',
+    '  float v2 = fbm(vec2(along.y * 0.12 + seed * 1.1, t * 0.03)) * 0.45;',
+    '  return 0.12 + 2.85 * (v + v2);',
+    '}',
     // bundle of thin wavy parallel filaments (muscle-fiber look) along q.y (flow axis)
     'float fiber(vec2 q, float seed, float t, float freq, float warp, float sh){',
     '  float tv = flowThick(q, seed, t);',
@@ -395,12 +401,6 @@
     '  if (ty == 5) return vec3(1.0, 0.72, 0.28);',
     '  if (ty == 6) return vec3(0.78, 0.4, 1.0);',
     '  return vec3(0.68, 0.9, 1.0);',
-    '}',
-    // long-period, high-variance thickness along flow (shared by all types)
-    'float flowThick(vec2 along, float seed, float t){',
-    '  float v = fbm(vec2(along.y * 0.28 + seed * 0.4, t * 0.05 + seed * 0.2));',
-    '  float v2 = fbm(vec2(along.y * 0.12 + seed * 1.1, t * 0.03)) * 0.45;',
-    '  return 0.12 + 2.85 * (v + v2);',
     '}',
     // single organic tendril: curved centerline (fbm) that tapers to a point at the tip
     'float wispOrganic(vec2 q, float seed, float t){',
@@ -857,6 +857,9 @@
     progComposite = link(compile(gl.VERTEX_SHADER, VS_QUAD), compile(gl.FRAGMENT_SHADER, FS_COMPOSITE));
     progSpark = link(compile(gl.VERTEX_SHADER, VS_SPARK), compile(gl.FRAGMENT_SHADER, FS_SPARK));
     progAgent = link(compile(gl.VERTEX_SHADER, VS_AGENT), compile(gl.FRAGMENT_SHADER, FS_AGENT));
+    if (!progSplat || !progComposite || !progFade) {
+      console.error('Digital Energy: shader compile failed — check console warnings above');
+    }
 
     bufQuad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, bufQuad);
