@@ -202,12 +202,170 @@ function addTube(field, nx, ny, nz, ax, ay, az, bx, by, bz, radius, strength, or
   }
 }
 
+function fieldIdx(x, y, z, nx, ny) {
+  return x + y * nx + z * nx * ny;
+}
+
+function sampleField(field, nx, ny, nz, origin, cs, wx, wy, wz) {
+  const fx = clamp((wx - origin[0]) / cs, 0, nx - 1.001);
+  const fy = clamp((wy - origin[1]) / cs, 0, ny - 1.001);
+  const fz = clamp((wz - origin[2]) / cs, 0, nz - 1.001);
+  const x0 = fx | 0, y0 = fy | 0, z0 = fz | 0;
+  const tx = fx - x0, ty = fy - y0, tz = fz - z0;
+  const idx = (x, y, z) => fieldIdx(x, y, z, nx, ny);
+  const c000 = field[idx(x0, y0, z0)];
+  const c100 = field[idx(x0 + 1, y0, z0)];
+  const c010 = field[idx(x0, y0 + 1, z0)];
+  const c110 = field[idx(x0 + 1, y0 + 1, z0)];
+  const c001 = field[idx(x0, y0, z0 + 1)];
+  const c101 = field[idx(x0 + 1, y0, z0 + 1)];
+  const c011 = field[idx(x0, y0 + 1, z0 + 1)];
+  const c111 = field[idx(x0 + 1, y0 + 1, z0 + 1)];
+  const x00 = lerp(c000, c100, tx);
+  const x10 = lerp(c010, c110, tx);
+  const x01 = lerp(c001, c101, tx);
+  const x11 = lerp(c011, c111, tx);
+  const y0v = lerp(x00, x10, ty);
+  const y1v = lerp(x01, x11, ty);
+  return lerp(y0v, y1v, tz);
+}
+
+function fieldGradient(field, nx, ny, nz, origin, cs, wx, wy, wz) {
+  const e = cs * 0.45;
+  const dx = sampleField(field, nx, ny, nz, origin, cs, wx + e, wy, wz) -
+             sampleField(field, nx, ny, nz, origin, cs, wx - e, wy, wz);
+  const dy = sampleField(field, nx, ny, nz, origin, cs, wx, wy + e, wz) -
+             sampleField(field, nx, ny, nz, origin, cs, wx, wy - e, wz);
+  const dz = sampleField(field, nx, ny, nz, origin, cs, wx, wy, wz + e) -
+             sampleField(field, nx, ny, nz, origin, cs, wx, wy, wz - e);
+  const len = Math.hypot(dx, dy, dz) || 1;
+  return [dx / len, dy / len, dz / len];
+}
+
+function snapToIso(field, nx, ny, nz, iso, origin, cs, x, y, z, maxIter = 18) {
+  for (let i = 0; i < maxIter; i++) {
+    const v = sampleField(field, nx, ny, nz, origin, cs, x, y, z) - iso;
+    if (Math.abs(v) < 0.012) return [x, y, z];
+    const [gx, gy, gz] = fieldGradient(field, nx, ny, nz, origin, cs, x, y, z);
+    const g2 = gx * gx + gy * gy + gz * gz + 1e-6;
+    const step = (v / g2) * 0.55;
+    x -= gx * step;
+    y -= gy * step;
+    z -= gz * step;
+  }
+  return [x, y, z];
+}
+
+function cross3(ax, ay, az, bx, by, bz) {
+  return [ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx];
+}
+
+function pushSeg(positions, ax, ay, az, bx, by, bz) {
+  if (Math.hypot(bx - ax, by - ay, bz - az) < 0.003) return;
+  positions.push(ax, ay, az, bx, by, bz);
+}
+
+function walkWrapFiber(field, nx, ny, nz, iso, origin, cs, sx, sy, sz, steps, stepLen, helix, positions) {
+  let [x, y, z] = snapToIso(field, nx, ny, nz, iso, origin, cs, sx, sy, sz);
+  let px = x, py = y, pz = z;
+  const up = [0, 1, 0];
+
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    let [gnx, gny, gnz] = fieldGradient(field, nx, ny, nz, origin, cs, x, y, z);
+    let [tx, ty, tz] = cross3(gnx, gny, gnz, up[0], up[1], up[2]);
+    let tlen = Math.hypot(tx, ty, tz);
+    if (tlen < 0.02) {
+      [tx, ty, tz] = cross3(gnx, gny, gnz, 1, 0, 0);
+      tlen = Math.hypot(tx, ty, tz) || 1;
+    }
+    tx /= tlen; ty /= tlen; tz /= tlen;
+
+    const phase = helix * TAU * t;
+    const rtx = tx * Math.cos(phase) - gnx * Math.sin(phase) * 0.08;
+    const rty = ty * Math.cos(phase) - gny * Math.sin(phase) * 0.08;
+    const rtz = tz * Math.cos(phase) - gnz * Math.sin(phase) * 0.08;
+    const climb = helix * 0.42;
+
+    x += (rtx + up[0] * climb) * stepLen;
+    y += (rty + up[1] * climb) * stepLen;
+    z += (rtz + up[2] * climb) * stepLen;
+    [x, y, z] = snapToIso(field, nx, ny, nz, iso, origin, cs, x, y, z);
+    pushSeg(positions, px, py, pz, x, y, z);
+    px = x; py = y; pz = z;
+  }
+}
+
+function walkMeridianFiber(field, nx, ny, nz, iso, origin, cs, lon, steps, positions, forge) {
+  let prev = null;
+  for (let s = 0; s <= steps; s++) {
+    const t = s / steps;
+    const wy = lerp(-0.92, 0.92, t) * (0.35 + forge * 0.65);
+    const belt = Math.sin(t * Math.PI);
+    const r = 0.18 + belt * 0.42;
+    let x = Math.cos(lon) * r;
+    let z = Math.sin(lon) * r;
+    let y = wy;
+    [x, y, z] = snapToIso(field, nx, ny, nz, iso, origin, cs, x, y, z);
+    if (prev) pushSeg(positions, prev[0], prev[1], prev[2], x, y, z);
+    prev = [x, y, z];
+  }
+}
+
+/** Fibre avvolgenti stile stampa 3D / sacco di filamenti */
+export function extractFiberWrap(field, nx, ny, nz, iso, origin, cellSize, opts = {}) {
+  const fiberCount = opts.fiberCount ?? 56;
+  const dense = opts.dense ?? false;
+  const steps = opts.stepsPerFiber ?? (dense ? 110 : 88);
+  const seed = opts.seed ?? 42;
+  const forge = clamp(opts.forgeAmount ?? 1, 0, 1);
+  const spine = opts.spine ?? [];
+  const bins = opts.spectrum ?? null;
+  const positions = [];
+
+  for (let i = 1; i < spine.length; i++) {
+    const a = spine[i - 1], b = spine[i];
+    const sub = 8;
+    let prev = null;
+    for (let s = 0; s <= sub; s++) {
+      const t = s / sub;
+      let x = lerp(a.x, b.x, t);
+      let y = lerp(a.y, b.y, t);
+      let z = lerp(a.z, b.z, t);
+      [x, y, z] = snapToIso(field, nx, ny, nz, iso, origin, cellSize, x, y, z);
+      if (prev) pushSeg(positions, prev[0], prev[1], prev[2], x, y, z);
+      prev = [x, y, z];
+    }
+  }
+
+  const meridians = dense ? 18 : 12;
+  for (let m = 0; m < meridians; m++) {
+    walkMeridianFiber(field, nx, ny, nz, iso, origin, cellSize,
+      m / meridians * TAU + seed * 0.11, steps, positions, forge);
+  }
+
+  for (let f = 0; f < fiberCount; f++) {
+    const phase = (f / fiberCount) * TAU + seed * 0.31;
+    const band = bins ? bins[Math.min(bins.length - 1, Math.floor(f / fiberCount * bins.length))] : 0.5;
+    const helix = 1.6 + (f % 9) * 0.22 + band * 1.4;
+    const stepLen = cellSize * (0.38 + band * 0.12);
+    for (let ring = 0; ring < (dense ? 2 : 1); ring++) {
+      const y0 = lerp(-0.75, 0.75, (f + ring * 0.37) / fiberCount) * forge;
+      const r0 = 0.22 + 0.28 * Math.sin((f + ring) * 0.41 + seed) + band * 0.14;
+      const sx = Math.cos(phase + ring * 0.8) * r0;
+      const sz = Math.sin(phase + ring * 0.8) * r0;
+      walkWrapFiber(field, nx, ny, nz, iso, origin, cellSize, sx, y0, sz, steps, stepLen, helix, positions);
+    }
+  }
+
+  return { positions: new Float32Array(positions), segmentCount: positions.length / 6 | 0 };
+}
+
 export class ScalarField {
   constructor(resolution = 56) {
+    this.spine = [];
+    this.lastBins = null;
     this.setResolution(resolution);
-    this.sculpt = null;
-    this.origin = [-1, -1, -1];
-    this.cellSize = 2 / (resolution - 1);
   }
 
   setResolution(res) {
@@ -217,6 +375,7 @@ export class ScalarField {
     this.sculpt = new Float32Array(this.field.length);
     this.cellSize = 2 / (this.n - 1);
     this.origin = [-1, -1, -1];
+    this.spine = [];
   }
 
   clearSculpt() {
@@ -268,6 +427,7 @@ export class ScalarField {
     const activeBins = Math.max(3, Math.floor(n * forge));
     const scale = 0.92;
     const positions = [];
+    this.lastBins = bins;
 
     for (let i = 0; i < activeBins; i++) {
       const e = Math.pow(bins[i] * p.gain, 1.35);
@@ -319,12 +479,28 @@ export class ScalarField {
         }
       }
     }
+    this.spine = positions.slice();
   }
 
   extractMesh(iso) {
     return extractSurfaceNet(
       this.field, this.n, this.n, this.n,
       iso, this.origin, this.cellSize
+    );
+  }
+
+  extractFibers(iso, params, dense = false) {
+    return extractFiberWrap(
+      this.field, this.n, this.n, this.n,
+      iso, this.origin, this.cellSize,
+      {
+        fiberCount: dense ? 88 : 56,
+        dense,
+        seed: params.seed,
+        forgeAmount: params.forgeAmount,
+        spine: this.spine,
+        spectrum: this.lastBins,
+      }
     );
   }
 }

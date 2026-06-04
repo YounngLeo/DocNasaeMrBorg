@@ -121,11 +121,11 @@ input[type=file] { display: none; }
   <div>
     <div style="font-size:10px;color:var(--fg-dim);margin-bottom:4px"><a href="../#bio-mesh">← tools_index</a> / bio_mesh / forge</div>
     <h1>[ BIO_MESH :: MUSEUM FORGE ]</h1>
-    <div class="sub">spettro audio → campo 3D ad alta risoluzione · scultura isosuperficie · sculpt metaball</div>
+    <div class="sub">spettro audio → campo 3D · solido a fibre avvolgenti · sculpt</div>
   </div>
   <div class="meta">
-    <b id="mRes">56³</b> voxel · <b id="mTris">—</b> tris<br>
-    <b>v2.0.0</b> · surface nets
+    <b id="mRes">56³</b> voxel · <b id="mTris">—</b> fibre<br>
+    <b>v2.1.0</b> · fibre wrap
   </div>
 </header>
 
@@ -198,8 +198,8 @@ input[type=file] { display: none; }
       <div class="wp-block">
         <div class="wp-title">// VISTA · EXPORT</div>
         <div class="wp-btns">
-          <button type="button" class="wp-btn on" id="btnMuseum">MUSEO</button>
-          <button type="button" class="wp-btn" id="btnWire">WIRE</button>
+          <button type="button" class="wp-btn" id="btnMuseum">MUSEO</button>
+          <button type="button" class="wp-btn" id="btnWire">+ FIBRE</button>
         </div>
         <div class="wp-btns">
           <button type="button" class="wp-btn" id="btnRotate">↻ TURNTABLE</button>
@@ -209,9 +209,9 @@ input[type=file] { display: none; }
       </div>
 
       <div class="wp-note">
-        La traccia viene analizzata in <b>180 bande FFT</b> che modulano metaball, tubi e armoniche 3D.
-        <b>FORGIA</b> costruisce l'opera progressivamente; in <b>PLAY</b> la scultura respira col suono.
-        Scolpisci il campo come nella simulazione vapore — <b>+ / −</b> sulla mesh.
+        La traccia viene analizzata in <b>180 bande FFT</b> che modulano metaball, tubi e fibre avvolgenti 3D.
+        Il solido è solo <b>linee</b> — sacchi di filamenti come stampa 3D. <b>MUSEO</b> aggiunge riempimento opaco.
+        <b>FORGIA</b> costruisce l'opera progressivamente; in <b>PLAY</b> le fibre respirano col suono.
       </div>
     </aside>
   </div>
@@ -247,7 +247,7 @@ let bakedSpectrum = null;
 let forgeAmount = 1;
 let forging = false;
 let liveMode = true;
-let museumMode = true;
+let museumMode = false;
 let wireMode = false;
 let turntable = true;
 let sculptSubtract = true;
@@ -256,7 +256,9 @@ let brushPow = 0.28;
 let sculpting = false;
 
 let meshSolid = null;
-let meshWire = null;
+let meshHit = null;
+let meshFibers = null;
+let meshFibersGlow = null;
 let rebuildPending = false;
 let lastRebuild = 0;
 
@@ -309,7 +311,9 @@ const matMuseum = new THREE.MeshPhysicalMaterial({
   color: 0xe8ece8, metalness: 0.08, roughness: 0.42, clearcoat: 0.35,
   clearcoatRoughness: 0.2, sheen: 0.4, sheenRoughness: 0.5, sheenColor: new THREE.Color(0x5eff7e)
 });
-const matWire = new THREE.MeshBasicMaterial({ color: 0x4af6ff, wireframe: true, transparent: true, opacity: 0.35 });
+const matHit = new THREE.MeshBasicMaterial({ visible: false });
+const matFiber = new THREE.LineBasicMaterial({ color: 0x5eff7e, transparent: true, opacity: 0.88 });
+const matFiberGlow = new THREE.LineBasicMaterial({ color: 0xd8ffe2, transparent: true, opacity: 0.22 });
 
 // spec viz bars
 const specViz = document.getElementById('specViz');
@@ -367,38 +371,53 @@ function rebuildMesh() {
   params.forgeAmount = forgeAmount;
   scalarField.buildFromSpectrum(useSpec, params);
   const { positions, normals, indices } = scalarField.extractMesh(params.iso);
+  const fibers = scalarField.extractFibers(params.iso, params, wireMode);
 
   while (sculpture.children.length) sculpture.remove(sculpture.children[0]);
+  meshSolid = null;
+  meshHit = null;
+  meshFibers = null;
+  meshFibersGlow = null;
 
-  if (positions.length < 9) {
+  if (positions.length < 9 && fibers.positions.length < 6) {
     readout.textContent = 'FORGE · campo vuoto — alza gain o abbassa iso';
     document.getElementById('mTris').textContent = '0';
-    document.getElementById('stats').textContent = 'vert 0 · forge ' + Math.round(forgeAmount * 100) + '%';
+    document.getElementById('stats').textContent = 'fibre 0 · forge ' + Math.round(forgeAmount * 100) + '%';
     return;
   }
 
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-  geo.setIndex(new THREE.BufferAttribute(indices, 1));
-  geo.computeBoundingSphere();
+  if (positions.length >= 9) {
+    const geoHit = new THREE.BufferGeometry();
+    geoHit.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geoHit.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+    geoHit.setIndex(new THREE.BufferAttribute(indices, 1));
+    geoHit.computeBoundingSphere();
+    meshHit = new THREE.Mesh(geoHit, matHit);
+    sculpture.add(meshHit);
 
-  if (museumMode) {
-    meshSolid = new THREE.Mesh(geo, matMuseum);
-    sculpture.add(meshSolid);
-  }
-  if (wireMode || !museumMode) {
-    meshWire = new THREE.Mesh(geo, matWire);
-    sculpture.add(meshWire);
+    if (museumMode) {
+      meshSolid = new THREE.Mesh(geoHit.clone(), matMuseum);
+      sculpture.add(meshSolid);
+    }
   }
 
-  const triCount = (indices.length / 3) | 0;
-  document.getElementById('mTris').textContent = triCount.toLocaleString();
+  if (fibers.positions.length >= 6) {
+    const geoFiber = new THREE.BufferGeometry();
+    geoFiber.setAttribute('position', new THREE.BufferAttribute(fibers.positions, 3));
+    geoFiber.computeBoundingSphere();
+    meshFibers = new THREE.LineSegments(geoFiber, matFiber);
+    meshFibersGlow = new THREE.LineSegments(geoFiber.clone(), matFiberGlow);
+    sculpture.add(meshFibersGlow);
+    sculpture.add(meshFibers);
+  }
+
+  const segCount = fibers.segmentCount | 0;
+  document.getElementById('mTris').textContent = segCount.toLocaleString();
   document.getElementById('stats').textContent =
-    'vert ' + (positions.length / 3 | 0).toLocaleString() + ' · forge ' + Math.round(forgeAmount * 100) + '% · iso ' + params.iso.toFixed(2);
+    'fibre ' + segCount.toLocaleString() + ' · forge ' + Math.round(forgeAmount * 100) + '% · iso ' + params.iso.toFixed(2);
   readout.textContent = forging
-    ? 'FORGE · ' + Math.round(forgeAmount * 100) + '% · ' + triCount + ' tris'
-    : (isPlaying ? 'RISONANZA · live' : 'FORGE · ' + triCount + ' tris');
+    ? 'FORGE · ' + Math.round(forgeAmount * 100) + '% · ' + segCount + ' fibre'
+    : (isPlaying ? 'RISONANZA · live' : 'FORGE · ' + segCount + ' fibre');
 }
 
 async function ensureAudio() {
@@ -514,10 +533,12 @@ document.getElementById('btnRotate').onclick = () => {
 };
 
 document.getElementById('btnExport').onclick = () => {
-  if (!meshSolid && !meshWire) return;
-  const m = meshSolid || meshWire;
-  m.name = 'bio_mesh_sculpture';
-  const text = new OBJExporter().parse(m);
+  if (!meshFibers && !meshSolid) return;
+  const root = new THREE.Group();
+  root.name = 'bio_mesh_sculpture';
+  if (meshFibers) root.add(meshFibers.clone());
+  if (meshSolid) root.add(meshSolid.clone());
+  const text = new OBJExporter().parse(root);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
   a.download = 'bio_mesh_forge_' + new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-') + '.obj';
@@ -536,7 +557,7 @@ function sculptAtEvent(e) {
   pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
-  const targets = sculpture.children.filter(c => c.isMesh);
+  const targets = sculpture.children.filter(c => c.isMesh && c !== meshSolid);
   if (!targets.length) return;
   const hits = raycaster.intersectObjects(targets, false);
   if (!hits.length) return;
