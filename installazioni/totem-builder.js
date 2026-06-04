@@ -286,7 +286,7 @@
   function updateReadout() {
     var el = document.getElementById('tm-readout');
     var recipe = document.getElementById('tm-recipe');
-    if (el) el.textContent = 'TOTEM · ' + magnets.length + ' MAGNETI · ERBARIO ×92';
+    if (el) el.textContent = 'TOTEM · ' + magnets.length + ' MAGNETI · ERBARIO ×108';
     if (recipe) {
       if (!magnets.length) {
         recipe.textContent = '// composizione: —';
