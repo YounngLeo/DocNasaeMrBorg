@@ -1030,10 +1030,24 @@ button.section-card {
   border-bottom: 2px solid var(--line);
   position: relative;
 }
-.inv-img img, .inv-img svg {
+.inv-img img, .inv-img svg, .inv-img video {
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
+}
+.inv-img.inv-img-video { cursor: default; }
+.inv-img .video-flag {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  padding: 2px 7px;
+  background: var(--bg);
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  z-index: 2;
+  pointer-events: none;
 }
 .inv-img .placeholder {
   color: var(--fg-fade);
