@@ -496,28 +496,44 @@
   function emitTrace(splatBuf, x, y, ang, rad, type) {
     var perpX = -Math.sin(ang);
     var perpY = Math.cos(ang);
-    for (var k = -2; k <= 2; k++) {
-      var off = k * rad * 0.26 + (Math.random() - 0.5) * rad * 0.12;
-      var fall = 1 - Math.abs(k) * 0.22;
+    var k, off, fall;
+    for (k = -3; k <= 3; k++) {
+      off = k * rad * 0.22 + (Math.random() - 0.5) * rad * 0.1;
+      fall = 1 - Math.abs(k) * 0.16;
       pushSplat(splatBuf, {
         x: x + perpX * off,
         y: y + perpY * off,
-        size: rad * 0.92 * (0.32 + Math.random() * 1.55),
-        alpha: 0.4 * fall,
+        size: rad * 0.75 * (0.35 + Math.random() * 1.2),
+        alpha: 0.52 * fall,
         ang: ang,
         mode: 8,
-        sharp: 0.95,
-        seed: type * 7 + (k + 2) * 11 + Math.random() * 3,
+        sharp: 0.97,
+        seed: type * 7 + (k + 3) * 11 + Math.random() * 3,
         kind: type
       });
     }
+  }
+
+  // wide soft under-layer (preview: thick stroke beneath bright ribbon)
+  function emitGlowBase(splatBuf, px, py, ang, rad, mode, pow, thick) {
+    var bodyMul = mode === 1 ? 3.4 : (mode === 7 ? 2.6 : 2.2);
+    pushSplat(splatBuf, {
+      x: px, y: py,
+      size: rad * bodyMul * thick,
+      alpha: (0.1 + pow * 0.14) * (mode === 1 ? 1.35 : 1.0),
+      ang: ang,
+      mode: mode,
+      sharp: mode === 1 ? 0.12 : 0.18,
+      seed: Math.random() * 50,
+      kind: 3
+    });
   }
 
   function emitTrail(a, t, pow, splatBuf, sparks, intensityPow) {
     var dx = a.x - a.px;
     var dy = a.y - a.py;
     var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-    var steps = Math.max(1, dist > 0.2 ? Math.min(46, Math.ceil(dist / 0.8)) : 1);
+    var steps = Math.max(1, dist > 0.15 ? Math.min(64, Math.ceil(dist / 0.42)) : 1);
     var radBase = a.radius * (0.62 + pow * 0.42);
     var rad = radBase;
     var m = a.type;
@@ -574,37 +590,27 @@
       var thick = 0.12 + 3.4 * (thWave * 0.5 + 0.5);
       rad = radBase * thick;
 
+      if (m === 1 || m === 4 || m === 5 || m === 6 || m === 7) {
+        emitGlowBase(splatBuf, px, py, ang, rad, m, pow, thick);
+      }
       emitTrace(splatBuf, px, py, ang, rad, m);
 
       if (m === 1) {
         var curl = Math.sin(a.tendril + t * 1.5 + u * 4) * 0.5;
         var perpX1 = -Math.sin(ang);
         var perpY1 = Math.cos(ang);
-        if (Math.random() < 0.45) {
-          pushSplat(splatBuf, {
-            x: px + (Math.random() - 0.5) * rad,
-            y: py + (Math.random() - 0.5) * rad,
-            size: rad * (2.6 + pow * 0.8),
-            alpha: (0.13 + pow * 0.16),
-            ang: ang,
-            mode: 1,
-            sharp: 0.2,
-            seed: Math.random() * 90,
-            kind: 3
-          });
-        }
         var wk;
-        for (wk = -1; wk <= 1; wk++) {
-          var woff = wk * rad * (0.7 + Math.random() * 0.4);
+        for (wk = -2; wk <= 2; wk++) {
+          var woff = wk * rad * (0.65 + Math.random() * 0.45);
           pushSplat(splatBuf, {
             x: px + perpX1 * woff,
             y: py + perpY1 * woff,
-            size: rad * (2.3 + pow * 0.7) * (0.28 + Math.random() * 1.75),
-            alpha: (0.15 + pow * 0.22) * (0.85 + Math.random() * 0.15),
-            ang: ang + curl + wk * 0.18 + (Math.random() - 0.5) * 0.3,
+            size: rad * (2.5 + pow * 0.75) * (0.35 + Math.random() * 1.6),
+            alpha: (0.18 + pow * 0.26) * (0.88 + Math.random() * 0.12),
+            ang: ang + curl + wk * 0.16 + (Math.random() - 0.5) * 0.28,
             mode: 1,
-            sharp: 0.45 + Math.random() * 0.3,
-            seed: Math.random() * 90,
+            sharp: 0.42 + Math.random() * 0.28,
+            seed: Math.random() * 90 + wk,
             kind: 1
           });
         }
@@ -613,15 +619,15 @@
         ang = Math.atan2(vy + fw.vy * 2.5, vx + fw.vx * 2.5);
         pushSplat(splatBuf, {
           x: px, y: py,
-          size: rad * (1.6 + spd * 0.1) * 1.2 * (0.28 + Math.random() * 1.75),
-          alpha: (0.14 + pow * 0.22),
+          size: rad * (1.75 + spd * 0.12) * 1.35 * (0.32 + Math.random() * 1.65),
+          alpha: (0.2 + pow * 0.28),
           ang: ang,
           mode: 7,
-          sharp: 0.35 + Math.random() * 0.4,
+          sharp: 0.32 + Math.random() * 0.38,
           seed: Math.random() * 60,
           kind: 1
         });
-        if (Math.random() < 0.5) {
+        if (Math.random() < 0.72) {
           var wperp = ang + Math.PI * 0.5;
           var woff = (Math.random() - 0.5) * rad * 1.3;
           pushSplat(splatBuf, {
@@ -636,12 +642,12 @@
             kind: 5
           });
         }
-        if (thick > 1.15 && Math.random() < 0.72) {
+        if (thick > 0.95 && Math.random() < 0.82) {
           pushSplat(splatBuf, {
             x: px + (Math.random() - 0.5) * rad * 0.4,
             y: py + (Math.random() - 0.5) * rad * 0.4,
-            size: rad * (0.55 + Math.random() * 0.45),
-            alpha: (0.18 + pow * 0.28),
+            size: rad * (0.6 + Math.random() * 0.5),
+            alpha: (0.24 + pow * 0.34),
             ang: ang + (Math.random() - 0.5) * 0.2,
             mode: 7,
             sharp: 0.92,
@@ -649,12 +655,12 @@
             kind: 2
           });
         }
-        if (thick > 1.35 && Math.random() < 0.55) {
+        if (thick > 1.2 && Math.random() < 0.68) {
           pushSplat(splatBuf, {
             x: px + (Math.random() - 0.5) * rad * 0.6,
             y: py + (Math.random() - 0.5) * rad * 0.6,
-            size: rad * (0.45 + Math.random() * 0.35),
-            alpha: (0.2 + pow * 0.3),
+            size: rad * (0.5 + Math.random() * 0.4),
+            alpha: (0.26 + pow * 0.36),
             ang: ang,
             mode: 7,
             sharp: 0.96,
@@ -742,16 +748,16 @@
         var eperpY = Math.cos(ang);
         var eang = ang + eswirl;
         var ek, eoff;
-        for (ek = -1; ek <= 1; ek++) {
-          eoff = ek * rad * (0.6 + Math.random() * 0.35);
+        for (ek = -2; ek <= 2; ek++) {
+          eoff = ek * rad * (0.55 + Math.random() * 0.32);
           pushSplat(splatBuf, {
             x: px + eperpX * eoff,
             y: py + eperpY * eoff,
-            size: rad * (2.0 + pow * 0.55) * (0.28 + Math.random() * 1.7),
-            alpha: (0.13 + pow * 0.22) * (ek === 0 ? 1.0 : 0.72),
-            ang: eang + ek * 0.2 + (Math.random() - 0.5) * 0.35,
+            size: rad * (2.15 + pow * 0.6) * (0.32 + Math.random() * 1.55),
+            alpha: (0.17 + pow * 0.28) * (ek === 0 ? 1.0 : 0.68),
+            ang: eang + ek * 0.18 + (Math.random() - 0.5) * 0.32,
             mode: 6,
-            sharp: 0.48 + Math.random() * 0.22,
+            sharp: 0.44 + Math.random() * 0.2,
             seed: Math.random() * 80 + ek * 13,
             kind: 1
           });

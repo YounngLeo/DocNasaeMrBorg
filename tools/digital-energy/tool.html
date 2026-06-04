@@ -120,7 +120,7 @@
   <div class="back"><a href="../#digital-energy">← tools_index</a> / digital_energy / tool</div>
   <h1>[ DIGITAL_ENERGY :: AGENTI ]</h1>
   <div class="sub">cursed energy · fondo scuro · glow anime</div>
-  <div class="ver">v2.7.1 — fix shader · preview tools</div>
+  <div class="ver">v2.8.0 — scie stile preview</div>
 </div>
 
 <div class="actions">
@@ -229,7 +229,7 @@
 
   var TYPE_NAMES = ['luce', 'ombra', 'ghiaccio', 'elettricità', 'sangue', 'fuoco', 'energia', 'acqua'];
   var MAX_AGENTS = 32;
-  var MAX_SPLATS = 1500;
+  var MAX_SPLATS = 2200;
   var MAX_SPARKS = 360;
   var SHOW_AGENTS = true;
   var SMOKE_SCALE = 1.0;
@@ -309,7 +309,7 @@
     '  vec2 c = (aPos / uRes) * 2.0 - 1.0;',
     '  c.y = -c.y;',
     '  gl_Position = vec4(c, 0.0, 1.0);',
-    '  gl_PointSize = max(2.5, aSize);',
+    '  gl_PointSize = max(2.0, aSize);',
     '  vAlpha = aAlpha; vAngle = aAngle; vMode = aMode; vSharp = aSharp; vSeed = aSeed; vKind = aKind;',
     '}'
   ].join('\n');
@@ -418,14 +418,15 @@
     '  float r = length(p);',
     '  float n = fbm(vec2(ang * (4.0 + float(mode) * 0.5), seed * 0.17));',
     '  float rad = 0.42 + n * 0.11;',
-    '  if (mode == 1) rad = 0.28 + n * 0.16;',
+    '  if (mode == 1) rad = 0.32 + n * 0.14;',
     '  else if (mode == 3) rad = 0.36 + n * 0.07;',
-    '  else if (mode == 7) rad = 0.38 + n * 0.08;',
+    '  else if (mode == 7) rad = 0.44 + n * 0.06;',
+    '  else if (mode == 6) rad = 0.4 + n * 0.08;',
     '  else if (mode == 2) rad = 0.34 + n * 0.12;',
-    '  if (kind == 1) rad *= 1.18;',
-    '  if (kind == 2) rad *= 0.88;',
-    '  if (kind == 3) rad = 0.22 + n * 0.08;',
-    '  return 1.0 - smoothstep(rad, rad + 0.025, r);',
+    '  if (kind == 1) rad *= 1.22;',
+    '  if (kind == 2) rad *= 0.92;',
+    '  if (kind == 3) rad = 0.28 + n * 0.1;',
+    '  return 1.0 - smoothstep(rad, rad + 0.04, r);',
     '}',
     'void main(){',
     '  int mode = int(vMode + 0.5);',
@@ -466,21 +467,23 @@
     '    if (kind == 3) {',
     // soft dark volumetric body — occludes the background (shadow mass)
     '      float d = fbm(nUv * 1.6 + sm);',
-    '      float body = exp(-r2 * mix(1.2, 2.4, d)) * smoothstep(0.62, 0.04, r - d * 0.16);',
-    '      m = body * vAlpha;',
-    '      col = vec3(0.012, 0.016, 0.03);',
+    '      float body = exp(-r2 * mix(1.0, 2.0, d)) * smoothstep(0.68, 0.02, r - d * 0.14);',
+    '      m = body * vAlpha * 1.15;',
+    '      col = vec3(0.008, 0.01, 0.022);',
     '    } else {',
     // Solo Leveling: black liquid smoky curls that OCCLUDE, with only a thin glowing rim
     '      float w1 = wispOrganic(q, seed, uTime);',
-    '      float w2 = wispOrganic(q + vec2(0.13, 0.0), seed + 9.0, uTime * 1.2) * 0.9;',
-    '      float w3 = wispOrganic(q - vec2(0.15, 0.0), seed + 21.0, uTime * 0.85) * 0.78;',
-    '      float strands = max(w1, max(w2, w3));',
-    '      float rim = smoothstep(0.1, 0.34, strands) * (1.0 - smoothstep(0.34, 0.62, strands));',
-    '      m = (strands * 1.45 + rim * 0.12) * vAlpha;',
-    '      vec3 darkInk = vec3(0.005, 0.007, 0.014);',
-    '      vec3 rimCol = vec3(0.16, 0.22, 0.3);',
+    '      float w2 = wispOrganic(q + vec2(0.13, 0.0), seed + 9.0, uTime * 1.2) * 0.92;',
+    '      float w3 = wispOrganic(q - vec2(0.15, 0.0), seed + 21.0, uTime * 0.85) * 0.82;',
+    '      float w4 = wispOrganic(q + vec2(0.08, 0.04), seed + 33.0, uTime * 0.95) * 0.68;',
+    '      float w5 = wispOrganic(q - vec2(0.1, -0.03), seed + 44.0, uTime * 1.05) * 0.58;',
+    '      float strands = max(w1, max(w2, max(w3, max(w4, w5))));',
+    '      float rim = smoothstep(0.08, 0.3, strands) * (1.0 - smoothstep(0.3, 0.58, strands));',
+    '      m = (strands * 1.65 + rim * 0.18) * vAlpha;',
+    '      vec3 darkInk = vec3(0.003, 0.005, 0.01);',
+    '      vec3 rimCol = vec3(0.12, 0.16, 0.22);',
     '      col = darkInk;',
-    '      col += rimCol * rim * 0.3;',
+    '      col += rimCol * rim * 0.22;',
     '    }',
     '  } else if (mode == 2) {',
     // ice (Pakku): visible crystalline shards (~50% cross-section), pale blue body, white on edges only
@@ -591,25 +594,26 @@
     '    float c3 = exp(-abs(yy - 0.3 * tvar) * cW * 0.82) * along;',
     '    float crest = max(c1, max(c2 * 0.85, c3 * 0.72));',
     '    float pulse = 0.85 + 0.15 * sin(uTime * 8.0 + seed * 2.0);',
-    '    m = (volm * 0.32 + strands * 1.05 + spokes * 0.55 + core * 0.88 + crest * 0.5) * vAlpha * pulse;',
-    '    vec3 deep = vec3(0.14, 0.0, 0.32);',
-    '    vec3 violet = vec3(0.52, 0.1, 0.92);',
-    '    vec3 magenta = vec3(0.82, 0.22, 0.98);',
-    '    col = mix(deep, violet, clamp(strands * 1.15, 0.0, 1.0));',
-    '    col = mix(col, magenta, strands * strands * 0.85);',
-    '    col += vec3(0.95, 0.82, 1.0) * (core * 0.9 + crest * 0.45);',
-    '    col += violet * volm * 0.22;',
+    '    m = (volm * 0.42 + strands * 1.22 + spokes * 0.62 + core * 1.05 + crest * 0.62) * vAlpha * pulse;',
+    '    vec3 deep = vec3(0.1, 0.0, 0.26);',
+    '    vec3 violet = vec3(0.42, 0.08, 0.72);',
+    '    vec3 magenta = vec3(0.72, 0.18, 0.95);',
+    '    col = mix(deep, violet, clamp(strands * 1.25, 0.0, 1.0));',
+    '    col = mix(col, magenta, strands * strands * 0.95);',
+    '    col += vec3(1.0, 0.92, 1.0) * (core * 1.05 + crest * 0.55);',
+    '    col += violet * volm * 0.32;',
     '  } else if (mode == 8) {',
     // thin tapered flow line tracing the path (long light fibers over every element)
     '    float w = fbm(vec2(q.y * 2.2 + seed, uTime * 0.2 + seed));',
     '    float xc = q.x + (w - 0.5) * 0.12 + sin(q.y * 5.0 + seed) * 0.02;',
     '    float lvar = flowThick(q, seed, uTime);',
-    '    float lw = mix(0.007, 0.022, 1.0 - vSharp) * lvar;',
+    '    float lw = mix(0.006, 0.018, 1.0 - vSharp) * lvar;',
     '    float line = smoothstep(lw, 0.0, abs(xc));',
-    '    float tap = smoothstep(0.64, -0.04, abs(q.y));',
-    '    m = line * tap * vAlpha;',
+    '    float tap = smoothstep(0.66, -0.02, abs(q.y));',
+    '    float hot = exp(-abs(xc) * mix(80.0, 140.0, vSharp));',
+    '    m = (line * 1.15 + hot * 0.45) * tap * vAlpha;',
     '    col = traceColor(kind);',
-    '    col += vec3(1.0) * line * line * 0.35;',
+    '    col += vec3(1.0) * (line * line * 0.55 + hot * 0.65);',
     '  } else {',
     // water (Korra): translucent blue ribbon with a bright white crest along the leading edge
     '    float flow = fbm(nUv * 0.9 + vec2(uTime * 0.18, 0.0));',
@@ -630,16 +634,16 @@
     '    float c5 = exp(-abs(yy + 0.1 + sin(fq.x * 5.0 + flow * 4.0) * 0.08) * cW * 0.95) * along;',
     '    float c6 = exp(-abs(yy - 0.48 * tvar) * cW * 0.88) * along * smoothstep(0.5, 0.95, fbm(nUv * 0.9 + vec2(uTime * 0.1, 0.0)));',
     '    float crest = max(c1, max(c2, max(c3, max(c4, max(c5 * 0.9, c6 * 0.75)))));',
-    '    m = (band * 0.75 + gloss * 0.38 + crest * 1.55) * vAlpha;',
-    '    vec3 deep = vec3(0.04, 0.32, 0.78);',
-    '    vec3 lite = vec3(0.45, 0.82, 1.0);',
-    '    col = mix(deep, lite, cel(band, 4.0));',
-    '    col += vec3(0.95, 0.99, 1.0) * (crest * 1.45 + gloss * 0.45);',
+    '    m = (band * 0.82 + gloss * 0.48 + crest * 1.75) * vAlpha;',
+    '    vec3 deep = vec3(0.03, 0.28, 0.72);',
+    '    vec3 lite = vec3(0.38, 0.78, 1.0);',
+    '    col = mix(deep, lite, smoothstep(0.0, 0.85, band));',
+    '    col += vec3(0.98, 1.0, 1.0) * (crest * 1.65 + gloss * 0.55);',
     '  }',
-  '  col *= 1.45;',
+  '  col *= 1.72;',
   '  m *= pointMask;',
   '  if (m < 0.001) discard;',
-  '  outColor = vec4(col * m, min(m * 1.05, 1.0));',
+  '  outColor = vec4(col * m, min(m * 1.12, 1.0));',
     '}'
   ].join('\n');
 
@@ -657,14 +661,15 @@
     '  vec2 t = uTexel;',
     '  vec4 c = texture(uTex, vUv);',
     // soft bloom (energy glow halo)
-    '  vec4 acc = c * 0.4;',
-    '  float wsum = 0.4;',
+    '  vec4 acc = c * 0.35;',
+    '  float wsum = 0.35;',
     '  for (int i = 0; i < 8; i++) {',
     '    float a = float(i) * 0.7853981;',
     '    vec2 d = vec2(cos(a), sin(a));',
-    '    acc += texture(uTex, vUv + d * t * 2.4) * 0.085;',
-    '    acc += texture(uTex, vUv + d * t * 5.5) * 0.045;',
-    '    wsum += 0.13;',
+    '    acc += texture(uTex, vUv + d * t * 2.2) * 0.1;',
+    '    acc += texture(uTex, vUv + d * t * 5.0) * 0.055;',
+    '    acc += texture(uTex, vUv + d * t * 9.5) * 0.028;',
+    '    wsum += 0.183;',
     '  }',
     '  vec4 soft = acc / wsum;',
     '  float dens = c.a;',
@@ -674,7 +679,7 @@
     // glowing contour from density gradient (cursed-energy line art)
     '  float ax = sampA(vUv + vec2(t.x, 0.0)) - sampA(vUv - vec2(t.x, 0.0));',
     '  float ay = sampA(vUv + vec2(0.0, t.y)) - sampA(vUv - vec2(0.0, t.y));',
-    '  float rim = smoothstep(0.1, 0.5, length(vec2(ax, ay)) * 8.0);',
+    '  float rim = smoothstep(0.06, 0.42, length(vec2(ax, ay)) * 9.5);',
     // dark dramatic background (deep slate, subtle radial + vignette)
     '  vec2 pp = vUv - 0.5;',
     '  float vig = 1.0 - dot(pp, pp) * 0.95;',
@@ -682,16 +687,16 @@
     '  bg *= vig;',
     '  bg += vec3(0.03, 0.035, 0.06) * pow(max(0.0, 1.0 - length(pp) * 1.5), 2.0) * 0.5;',
     // dark dense low-luma trails occlude the bg (smoke / shadow silhouette)
-    '  float body = coverage * (1.0 - clamp(hl * 2.4, 0.0, 1.0));',
+    '  float body = coverage * (1.0 - clamp(hl * 2.1, 0.0, 1.0));',
     // bright-colored trails emit light (additive glow)
-    '  vec3 glow = hue * coverage * (0.55 + rim * 1.2);',
-    '  glow += soft.rgb * 1.25;',
-    '  glow += hue * rim * 1.1;',
+    '  vec3 glow = hue * coverage * (0.62 + rim * 1.45);',
+    '  glow += soft.rgb * 1.45;',
+    '  glow += hue * rim * 1.35;',
     // gentle anime banding on the emission only
     '  float gv = dot(glow, vec3(0.299, 0.587, 0.114));',
-    '  glow = glow / max(gv, 0.001) * mix(gv, cel(gv, 8.0), 0.4);',
-    '  vec3 final = bg * (1.0 - body * 0.96) + glow * 1.55;',
-    '  final = final / (final + vec3(0.7)) * 1.6;',
+    '  glow = glow / max(gv, 0.001) * mix(gv, cel(gv, 8.0), 0.32);',
+    '  vec3 final = bg * (1.0 - body * 0.98) + glow * 1.72;',
+    '  final = final / (final + vec3(0.62)) * 1.72;',
     '  outColor = vec4(final, 1.0);',
     '}'
   ].join('\n');
