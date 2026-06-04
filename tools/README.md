@@ -19,8 +19,12 @@ tools/
 ├── fluid-vessel/
 │   ├── tool.html           ← membrana PBD · Three.js
 │   └── preview.svg
-└── digital-energy/
-    ├── tool.html           ← scie VFX anime · WebGL2
+├── digital-energy/
+│   ├── tool.html           ← scie VFX anime · WebGL2
+│   └── preview.svg
+└── bio-mesh/
+    ├── tool.html           ← mesh biomorfa da spettro audio · Three.js
+    ├── mesh-core.js
     └── preview.svg
 ```
 

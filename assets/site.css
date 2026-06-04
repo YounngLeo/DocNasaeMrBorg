@@ -136,6 +136,7 @@ a:hover { color: var(--acc); }
 .nav-dd-menu a.blue:hover  { color: var(--blue);  background: rgba(74,246,255,0.06); }
 .nav-dd-menu a.gold:hover  { color: var(--gold);  background: rgba(255,240,58,0.06); }
 .nav-dd-menu a.purple:hover { color: var(--purple); background: rgba(198,120,255,0.08); }
+.nav-dd-menu a.mesh:hover { color: #e8e8e8; background: rgba(232,232,232,0.06); }
 .nav-dd-menu a.all { color: var(--acc); border-top: 1px solid var(--line-h); }
 
 /* ============================================================

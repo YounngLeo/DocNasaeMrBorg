@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>BIO_MESH // AUDIO POLYSURFACE</title>
+<style>
+:root {
+  --bg: #050505;
+  --fg: #e8e8e8;
+  --dim: #555;
+  --mid: #333;
+  --acc: #ffffff;
+  --mono: 'Courier New', Courier, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: var(--bg); color: var(--fg);
+  font-family: var(--mono); font-size: 12px;
+}
+::selection { background: var(--acc); color: var(--bg); }
+canvas { display: block; touch-action: none; }
+
+.title {
+  position: fixed; top: 22px; left: 24px; z-index: 10;
+  pointer-events: none; user-select: none;
+}
+.title .back { font-size: 10px; letter-spacing: 0.12em; color: var(--dim); margin-bottom: 6px; pointer-events: auto; }
+.title .back a { color: var(--dim); text-decoration: none; border-bottom: 1px dotted var(--mid); }
+.title .back a:hover { color: var(--acc); }
+.title h1 { font-size: 14px; font-weight: normal; letter-spacing: 0.18em; color: var(--acc); }
+.title .sub { margin-top: 6px; font-size: 10px; letter-spacing: 0.12em; color: var(--dim); }
+.title .ver { margin-top: 4px; font-size: 9px; color: #444; }
+
+.panel {
+  position: fixed; top: 22px; right: 22px; z-index: 10;
+  width: 280px; max-height: calc(100vh - 44px); overflow-y: auto;
+  background: rgba(5, 5, 5, 0.88); border: 1px solid var(--mid);
+}
+.panel::-webkit-scrollbar { width: 5px; }
+.panel::-webkit-scrollbar-thumb { background: var(--mid); }
+.box { padding: 12px 14px; border-bottom: 1px solid var(--mid); }
+.box:last-child { border-bottom: none; }
+.box .lab {
+  font-size: 9px; letter-spacing: 0.16em; color: var(--dim);
+  margin-bottom: 10px; display: flex; justify-content: space-between;
+}
+.box .lab .v { color: var(--acc); }
+.row { margin-bottom: 9px; }
+.row label {
+  display: flex; justify-content: space-between; font-size: 10px;
+  color: var(--fg); margin-bottom: 4px; letter-spacing: 0.06em;
+}
+.row label span:last-child { color: var(--acc); font-variant-numeric: tabular-nums; }
+input[type=range] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 14px;
+  background: transparent; cursor: pointer;
+}
+input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--mid); }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 10px; background: var(--acc);
+  border: 0; margin-top: -4.5px;
+}
+input[type=file] { display: none; }
+.btn {
+  display: block; width: 100%; background: transparent; color: var(--fg);
+  border: 1px solid var(--mid); padding: 8px 10px; font-family: inherit;
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: pointer; text-align: left; margin-bottom: 6px;
+}
+.btn:last-child { margin-bottom: 0; }
+.btn:hover { border-color: var(--acc); color: var(--acc); }
+.btn.pri { border-color: var(--fg); }
+.btn.on { background: var(--acc); color: var(--bg); border-color: var(--acc); }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.btn-row .btn { margin: 0; text-align: center; }
+.audio-bar {
+  height: 4px; background: var(--mid); margin-top: 8px; position: relative; overflow: hidden;
+}
+.audio-bar i {
+  display: block; height: 100%; width: 0%; background: var(--acc);
+  transition: width 0.08s linear;
+}
+.status {
+  position: fixed; bottom: 22px; left: 24px; z-index: 10;
+  font-size: 9px; color: var(--dim); letter-spacing: 0.12em; line-height: 1.8;
+  pointer-events: none;
+}
+.status b { color: var(--acc); font-weight: normal; }
+.hint {
+  position: fixed; bottom: 22px; right: 310px; z-index: 10;
+  font-size: 9px; color: var(--dim); letter-spacing: 0.08em;
+  pointer-events: none; text-align: right; line-height: 1.7;
+}
+.corner {
+  position: fixed; width: 14px; height: 14px; z-index: 9;
+  border-color: rgba(255,255,255,0.22); pointer-events: none;
+}
+.corner.tl { top: 10px; left: 10px; border-top: 1px solid; border-left: 1px solid; }
+.corner.tr { top: 10px; right: 10px; border-top: 1px solid; border-right: 1px solid; }
+.corner.bl { bottom: 10px; left: 10px; border-bottom: 1px solid; border-left: 1px solid; }
+.corner.br { bottom: 10px; right: 10px; border-bottom: 1px solid; border-right: 1px solid; }
+@media (max-width: 900px) {
+  .panel { width: calc(100vw - 44px); max-height: 42vh; top: auto; bottom: 12px; right: 22px; }
+  .hint { display: none; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div class="title">
+  <div class="back"><a href="../#bio-mesh">← tools_index</a> / bio_mesh / tool</div>
+  <h1>[ BIO_MESH :: POLYSURFACE ]</h1>
+  <div class="sub">spettro audio → mesh biomorfa · contorni · export obj</div>
+  <div class="ver">v1.0.0 — audio spectrum driver</div>
+</div>
+
+<aside class="panel">
+  <div class="box">
+    <div class="lab">AUDIO <span class="v" id="audioName">—</span></div>
+    <input type="file" id="audioFile" accept="audio/*">
+    <button type="button" class="btn pri" id="btnLoad">↑ Carica traccia</button>
+    <div class="btn-row">
+      <button type="button" class="btn" id="btnPlay">▶ Play</button>
+      <button type="button" class="btn" id="btnBake">⧗ Analizza</button>
+    </div>
+    <div class="audio-bar"><i id="audioProg"></i></div>
+    <button type="button" class="btn on" id="btnLive">● LIVE spettro</button>
+  </div>
+
+  <div class="box">
+    <div class="lab">POLYSURFACES <span class="v" id="polyCount">6</span></div>
+    <div class="row">
+      <label><span>// count</span><span id="vCount">6</span></label>
+      <input type="range" id="pCount" min="1" max="12" value="6" step="1">
+    </div>
+    <div class="row">
+      <label><span>// colonne griglia</span><span id="vCols">2</span></label>
+      <input type="range" id="pCols" min="1" max="4" value="2" step="1">
+    </div>
+    <div class="row">
+      <label><span>// spacing</span><span id="vSpace">2.35</span></label>
+      <input type="range" id="pSpace" min="1.2" max="4" value="2.35" step="0.05">
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="lab">FORMA · SPETTRO</div>
+    <div class="row">
+      <label><span>// raggio base</span><span id="vRad">0.72</span></label>
+      <input type="range" id="pRad" min="0.3" max="1.4" value="0.72" step="0.02">
+    </div>
+    <div class="row">
+      <label><span>// bulge (bassi)</span><span id="vBulge">0.55</span></label>
+      <input type="range" id="pBulge" min="0" max="1.2" value="0.55" step="0.02">
+    </div>
+    <div class="row">
+      <label><span>// pinch (alti)</span><span id="vPinch">0.42</span></label>
+      <input type="range" id="pPinch" min="0" max="1" value="0.42" step="0.02">
+    </div>
+    <div class="row">
+      <label><span>// tunnel (medi)</span><span id="vTunnel">0.28</span></label>
+      <input type="range" id="pTunnel" min="0" max="0.8" value="0.28" step="0.02">
+    </div>
+    <div class="row">
+      <label><span>// noise / fbm</span><span id="vNoise">0.38</span></label>
+      <input type="range" id="pNoise" min="0" max="1" value="0.38" step="0.02">
+    </div>
+    <div class="row">
+      <label><span>// gain spettro</span><span id="vGain">1.00</span></label>
+      <input type="range" id="pGain" min="0.2" max="2.5" value="1" step="0.05">
+    </div>
+    <div class="row">
+      <label><span>// lobes</span><span id="vLobes">3.5</span></label>
+      <input type="range" id="pLobes" min="1" max="8" value="3.5" step="0.1">
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="lab">VISTA · EXPORT</div>
+    <div class="btn-row">
+      <button type="button" class="btn on" id="btnContours">Contorni</button>
+      <button type="button" class="btn" id="btnWire">Wire</button>
+    </div>
+    <button type="button" class="btn" id="btnRegen">↻ Rigenera</button>
+    <button type="button" class="btn pri" id="btnExport">↓ Esporta .obj</button>
+  </div>
+</aside>
+
+<div class="status">
+  <b id="stPolys">6</b> polysuperfici · <b id="stVerts">—</b> vert · <b id="stMode">CONTORNI</b><br>
+  sorgente: <b id="stSrc">parametrico</b>
+</div>
+<div class="hint">orbit · scroll zoom<br>analizza = mesh da tutta la traccia<br>live = deformazione in play</div>
+
+<div class="corner tl"></div><div class="corner tr"></div>
+<div class="corner bl"></div><div class="corner br"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+import {
+  analyzeAudioBuffer, bandsFromAnalyser, buildSceneData,
+  defaultParams, neutralBands
+} from './mesh-core.js';
+
+const canvas = document.getElementById('scene');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x050505);
+
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.05, 200);
+camera.position.set(0, 0.2, 7.5);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.target.set(0, 0, 0);
+
+const meshGroup = new THREE.Group();
+const lineGroup = new THREE.Group();
+scene.add(meshGroup, lineGroup);
+
+const lineMat = new THREE.LineBasicMaterial({ color: 0xe8e8e8, transparent: true, opacity: 0.92 });
+const wireMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.45 });
+
+let params = defaultParams();
+let bands = neutralBands(params.count).bands;
+let profiles = neutralBands(params.count).profiles;
+let bakedBands = null;
+let bakedProfiles = null;
+let showContours = true;
+let showWire = false;
+let liveSpectrum = true;
+
+let audioCtx = null;
+let analyser = null;
+let audioBuf = null;
+let isPlaying = false;
+let audioEl = null;
+let mediaSource = null;
+let liveRebuildAcc = 0;
+
+function syncParamsFromUI() {
+  params.count = +document.getElementById('pCount').value;
+  params.cols = +document.getElementById('pCols').value;
+  params.spacing = +document.getElementById('pSpace').value;
+  params.radius = +document.getElementById('pRad').value;
+  params.bulge = +document.getElementById('pBulge').value;
+  params.pinch = +document.getElementById('pPinch').value;
+  params.tunnel = +document.getElementById('pTunnel').value;
+  params.noise = +document.getElementById('pNoise').value;
+  params.gain = +document.getElementById('pGain').value;
+  params.lobes = +document.getElementById('pLobes').value;
+  document.getElementById('vCount').textContent = params.count;
+  document.getElementById('vCols').textContent = params.cols;
+  document.getElementById('vSpace').textContent = params.spacing.toFixed(2);
+  document.getElementById('vRad').textContent = params.radius.toFixed(2);
+  document.getElementById('vBulge').textContent = params.bulge.toFixed(2);
+  document.getElementById('vPinch').textContent = params.pinch.toFixed(2);
+  document.getElementById('vTunnel').textContent = params.tunnel.toFixed(2);
+  document.getElementById('vNoise').textContent = params.noise.toFixed(2);
+  document.getElementById('vGain').textContent = params.gain.toFixed(2);
+  document.getElementById('vLobes').textContent = params.lobes.toFixed(1);
+  document.getElementById('polyCount').textContent = params.count;
+  document.getElementById('stPolys').textContent = params.count;
+}
+
+function resizeBands(count) {
+  const n = neutralBands(count);
+  const nb = new Float32Array(count);
+  const np = Array.from({ length: count }, (_, i) => new Float32Array(8));
+  for (let i = 0; i < count; i++) {
+    nb[i] = bands[i] ?? n.bands[i];
+    np[i] = profiles[i] ? profiles[i] : n.profiles[i];
+    if (!profiles[i]) np[i] = n.profiles[i];
+    else for (let s = 0; s < 8; s++) np[i][s] = profiles[i][s] ?? n.profiles[i][s];
+  }
+  bands = nb;
+  profiles = np;
+}
+
+function rebuildMesh() {
+  syncParamsFromUI();
+  resizeBands(params.count);
+
+  let useBands = bands;
+  let useProfiles = profiles;
+  if (!liveSpectrum && bakedBands) {
+    useBands = bakedBands;
+    useProfiles = bakedProfiles;
+  }
+
+  const { allVerts, allIdx, contours } = buildSceneData(useBands, useProfiles, params);
+
+  while (meshGroup.children.length) meshGroup.remove(meshGroup.children[0]);
+  while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(allVerts, 3));
+  geo.setIndex(allIdx);
+  geo.computeVertexNormals();
+
+  if (showWire) {
+    const wire = new THREE.WireframeGeometry(geo);
+    meshGroup.add(new THREE.LineSegments(wire, wireMat));
+  }
+
+  if (showContours) {
+    for (const seg of contours) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(seg, 3));
+      lineGroup.add(new THREE.Line(g, lineMat));
+    }
+  }
+
+  document.getElementById('stVerts').textContent = (allVerts.length / 3) | 0;
+  document.getElementById('stMode').textContent = showContours && showWire ? 'MIX' : showContours ? 'CONTORNI' : 'WIRE';
+}
+
+async function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!analyser) {
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.65;
+    analyser.connect(audioCtx.destination);
+  }
+}
+
+document.getElementById('btnLoad').addEventListener('click', () => document.getElementById('audioFile').click());
+
+document.getElementById('audioFile').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  await ensureAudio();
+  const ab = await file.arrayBuffer();
+  audioBuf = await audioCtx.decodeAudioData(ab);
+  document.getElementById('audioName').textContent = file.name.slice(0, 22);
+  bakedBands = null;
+  document.getElementById('stSrc').textContent = 'file loaded';
+  if (!audioEl) {
+    audioEl = new Audio();
+    audioEl.addEventListener('timeupdate', () => {
+      if (audioEl.duration) {
+        document.getElementById('audioProg').style.width = (100 * audioEl.currentTime / audioEl.duration) + '%';
+      }
+    });
+    audioEl.addEventListener('ended', () => {
+      isPlaying = false;
+      document.getElementById('btnPlay').textContent = '▶ Play';
+    });
+  }
+  audioEl.src = URL.createObjectURL(file);
+});
+
+document.getElementById('btnPlay').addEventListener('click', async () => {
+  if (!audioEl?.src) return;
+  await ensureAudio();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  if (isPlaying) {
+    audioEl.pause();
+    isPlaying = false;
+    document.getElementById('btnPlay').textContent = '▶ Play';
+    return;
+  }
+  if (!mediaSource) {
+    mediaSource = audioCtx.createMediaElementSource(audioEl);
+    mediaSource.connect(analyser);
+  }
+  audioEl.play();
+  isPlaying = true;
+  liveSpectrum = true;
+  document.getElementById('btnLive').classList.add('on');
+  document.getElementById('btnPlay').textContent = '■ Stop';
+  document.getElementById('stSrc').textContent = 'live play';
+});
+
+document.getElementById('btnBake').addEventListener('click', async () => {
+  if (!audioBuf) return;
+  syncParamsFromUI();
+  const result = analyzeAudioBuffer(audioBuf, params.count);
+  bakedBands = result.bands;
+  bakedProfiles = result.profiles;
+  bands = bakedBands;
+  profiles = bakedProfiles;
+  liveSpectrum = false;
+  document.getElementById('btnLive').classList.remove('on');
+  document.getElementById('stSrc').textContent = 'analisi FFT';
+  rebuildMesh();
+});
+
+document.getElementById('btnLive').addEventListener('click', () => {
+  liveSpectrum = !liveSpectrum;
+  document.getElementById('btnLive').classList.toggle('on', liveSpectrum);
+  document.getElementById('stSrc').textContent = liveSpectrum ? 'live/param' : 'baked/static';
+  if (!liveSpectrum && bakedBands) {
+    bands = bakedBands;
+    profiles = bakedProfiles;
+    rebuildMesh();
+  }
+});
+
+document.getElementById('btnContours').addEventListener('click', () => {
+  showContours = !showContours;
+  document.getElementById('btnContours').classList.toggle('on', showContours);
+  rebuildMesh();
+});
+
+document.getElementById('btnWire').addEventListener('click', () => {
+  showWire = !showWire;
+  document.getElementById('btnWire').classList.toggle('on', showWire);
+  rebuildMesh();
+});
+
+document.getElementById('btnRegen').addEventListener('click', () => {
+  params.seed = (Math.random() * 9999) | 0;
+  if (!liveSpectrum && !bakedBands) {
+    const n = neutralBands(params.count);
+    bands = n.bands;
+    profiles = n.profiles;
+  }
+  rebuildMesh();
+});
+
+document.getElementById('btnExport').addEventListener('click', () => {
+  syncParamsFromUI();
+  resizeBands(params.count);
+  const useBands = (!liveSpectrum && bakedBands) ? bakedBands : bands;
+  const useProfiles = (!liveSpectrum && bakedProfiles) ? bakedProfiles : profiles;
+  const { allVerts, allIdx } = buildSceneData(useBands, useProfiles, params);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(allVerts, 3));
+  geo.setIndex(allIdx);
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo);
+  mesh.name = 'bio_mesh_polysurfaces';
+  const text = new OBJExporter().parse(mesh);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  a.download = 'bio_mesh_' + new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-') + '.obj';
+  a.click();
+});
+
+['pCount','pCols','pSpace','pRad','pBulge','pPinch','pTunnel','pNoise','pGain','pLobes'].forEach(id => {
+  document.getElementById(id).addEventListener('input', rebuildMesh);
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+rebuildMesh();
+
+function animate(time) {
+  if (liveSpectrum && analyser && isPlaying) {
+    liveRebuildAcc += 16;
+    if (liveRebuildAcc > 120) {
+      liveRebuildAcc = 0;
+      const live = bandsFromAnalyser(analyser, params.count);
+      bands = live.bands;
+      profiles = live.profiles;
+      rebuildMesh();
+    }
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>

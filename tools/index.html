@@ -143,6 +143,8 @@
   .nav-list a.gold-link:hover { background: rgba(255,240,58,0.06); }
   .nav-list a.purple-link { color: var(--purple); }
   .nav-list a.purple-link:hover { background: rgba(198,120,255,0.08); }
+  .nav-list a.mesh-link { color: #e8e8e8; }
+  .nav-list a.mesh-link:hover { background: rgba(232,232,232,0.06); }
 
   /* === SECTIONS === */
   .section {
@@ -212,6 +214,7 @@
   .tool-header.blue  { border-bottom-color: var(--blue); }
   .tool-header.gold  { border-bottom-color: #fff03a; }
   .tool-header.purple { border-bottom-color: var(--purple); }
+  .tool-header.mesh { border-bottom-color: #e8e8e8; }
 
   .tool-meta {
     display: flex;
@@ -247,6 +250,8 @@
   .tool-header.gold  .right b { color: #fff03a; }
   .tool-header.purple .name { color: var(--purple); }
   .tool-header.purple .right b { color: var(--purple); }
+  .tool-header.mesh .name { color: #e8e8e8; }
+  .tool-header.mesh .right b { color: #e8e8e8; }
   .section.gold .section-title { color: #fff03a; }
   .section.purple { border-color: var(--purple); }
   .section.purple .section-title { color: var(--purple); }
@@ -255,6 +260,11 @@
   .launch-btn.gold:hover { background: #fff03a; color: var(--bg); }
   .launch-btn.purple { border-color: var(--purple); color: var(--purple); }
   .launch-btn.purple:hover { background: var(--purple); color: var(--bg); }
+  .launch-btn.mesh { border-color: #e8e8e8; color: #e8e8e8; }
+  .launch-btn.mesh:hover { background: #e8e8e8; color: var(--bg); }
+  .section.mesh { border-color: #666; }
+  .section.mesh .section-title { color: #e8e8e8; }
+  .section.mesh ul li b { color: #e8e8e8; font-weight: normal; letter-spacing: 1px; }
 
   /* === LAUNCH BAR === */
   .launch-bar {
@@ -468,7 +478,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 04 active</div>
+    <div class="nav-progress" id="navProgress">// 05 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -487,6 +497,10 @@
       <span><span class="marker">▸</span>DIGITAL_ENERGY</span>
       <span class="num">TOOL_04 · VFX</span>
     </a>
+    <a href="#bio-mesh" class="mesh-link" data-nav="bio-mesh">
+      <span><span class="marker">▸</span>BIO_MESH</span>
+      <span class="num">TOOL_05 · MESH</span>
+    </a>
   </div>
 </nav>
 
@@ -495,7 +509,7 @@
 <!-- ============================ -->
 <section class="section">
   <div class="section-title">// SYSTEM_STATUS</div>
-  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">04 / 04</span></div>
+  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">05 / 05</span></div>
   <div class="row"><span class="label">STUDIO</span><span class="value">DOCTNASA&MRBORG</span></div>
   <div class="row"><span class="label">YEAR</span><span class="value">2026</span></div>
   <div class="row"><span class="label">ACCESS</span><span class="value">CLOUDFLARE.ACCESS</span></div>
@@ -870,6 +884,79 @@
 
 </div>
 
+<div class="divider">— — — — — — — —</div>
+
+<!-- ============================ -->
+<!-- TOOL_05 :: BIO_MESH          -->
+<!-- ============================ -->
+<div class="tool-block" id="bio-mesh" data-section="bio-mesh">
+
+  <div class="tool-header mesh">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_05 :: MESH</div>
+        <div class="name">BIO_MESH</div>
+        <div class="sub">spettro audio → polysuperfici biomorfiche · contorni · obj</div>
+      </div>
+      <div class="right">
+        <b>v1.0</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <picture>
+      <source srcset="bio-mesh/preview.png" type="image/png">
+      <img src="bio-mesh/preview.svg" width="320" height="200" alt="Anteprima Bio Mesh: wireframe biomorfico su fondo nero">
+    </picture>
+  </div>
+
+  <div class="launch-bar">
+    <a href="bio-mesh/tool.html" class="launch-btn mesh">▶ LAUNCH</a>
+    <a href="bio-mesh/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section mesh">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Carica una traccia audio: lo <b>spettro FFT</b> (bande logaritmiche) guida ogni <b>polysuperficie</b> — bassi → bulge, medi → tunnel, alti → pinch e lobature. Vista a <b>contorni</b> stile disegno tecnico su fondo nero, parametri manuali + modalità live in play.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">// CONTROLLI</div>
+        <ul>
+          <li><b>ANALIZZA</b> · mesh baked da tutta la traccia</li>
+          <li><b>LIVE</b> · deformazione durante la riproduzione</li>
+          <li>Count · spacing · raggio · noise · gain spettro</li>
+          <li>Export <b>OBJ</b> multi-polysurface</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section mesh">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>Three.js r160 · FFT custom</dd>
+          <dt>INPUT</dt><dd>audio file · parametri</dd>
+          <dt>OUTPUT</dt><dd>OBJ · viewport contorni</dd>
+          <dt>TAGS</dt><dd>mesh · audio · biomorf</dd>
+        </dl>
+      </section>
+      <section class="section">
+        <div class="section-title">// PIPELINE</div>
+        <ul>
+          <li>FFT log-spaced → N bande = N polysuperfici</li>
+          <li>Profilo 8 tap per dettaglio locale</li>
+          <li>Deformazione sferica + FBM + tunnel</li>
+          <li>Griglia 2×3 (default 6 forme)</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
   <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.3</span>
   <span>END_OF_INDEX</span>
@@ -929,10 +1016,11 @@
                   id === 'barene-frame'  ? '// viewing BARENE_FRAME' :
                   id === 'fluid-vessel'  ? '// viewing FLUID_VESSEL' :
                   id === 'digital-energy' ? '// viewing DIGITAL_ENERGY' :
-                  '// 04 active';
+                  id === 'bio-mesh' ? '// viewing BIO_MESH' :
+                  '// 05 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 04 active';
+      navProgress.textContent = '// 05 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });

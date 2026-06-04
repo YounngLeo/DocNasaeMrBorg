@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <rect width="320" height="200" fill="#050505"/>
+  <g stroke="#e8e8e8" stroke-width="0.65" opacity="0.92">
+    <ellipse cx="85" cy="58" rx="34" ry="28"/>
+    <path d="M85 30 C70 40 58 58 62 78 C66 98 85 108 85 108"/>
+    <path d="M85 30 C100 42 112 58 108 76"/>
+    <ellipse cx="235" cy="58" rx="30" ry="26"/>
+    <path d="M235 32 C220 48 215 62 228 82"/>
+    <ellipse cx="85" cy="142" rx="36" ry="30"/>
+    <path d="M55 142 C70 120 100 118 115 142"/>
+    <ellipse cx="235" cy="142" rx="32" ry="34"/>
+    <path d="M235 108 C250 125 252 148 235 162"/>
+  </g>
+  <text x="12" y="16" fill="#666" font-family="Courier New,monospace" font-size="8" letter-spacing="2">BIO_MESH</text>
+  <text x="12" y="192" fill="#444" font-family="Courier New,monospace" font-size="7" letter-spacing="1">AUDIO ’ POLYSURFACE</text>
+</svg>
