@@ -1,114 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
-  <rect width="320" height="200" fill="#050805"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200">
+  <rect width="320" height="200" fill="#080808"/>
+  <rect x="8" y="8" width="304" height="184" fill="none" stroke="#1f3a25" stroke-width="0.5" stroke-dasharray="3,3"/>
 
-  <!-- cornice tecnica -->
-  <rect x="8" y="8" width="304" height="184" stroke="#2a2f2a" stroke-width="0.5" stroke-dasharray="3,3"/>
-  <g stroke="#2a2f2a" stroke-width="0.5">
-    <path d="M8 50 L14 50 M8 100 L14 100 M8 150 L14 150"/>
-    <path d="M312 50 L306 50 M312 100 L306 100 M312 150 L306 150"/>
+  <g opacity="0.14">
+    <line x1="0" y1="25" x2="320" y2="25" stroke="#00ff41" stroke-width="0.4"/>
+    <line x1="0" y1="50" x2="320" y2="50" stroke="#00ff41" stroke-width="0.4"/>
+    <line x1="0" y1="75" x2="320" y2="75" stroke="#00ff41" stroke-width="0.4"/>
+    <line x1="0" y1="100" x2="320" y2="100" stroke="#00ff41" stroke-width="0.4"/>
+    <line x1="0" y1="125" x2="320" y2="125" stroke="#00ff41" stroke-width="0.4"/>
+    <line x1="0" y1="150" x2="320" y2="150" stroke="#00ff41" stroke-width="0.4"/>
+    <line x1="0" y1="175" x2="320" y2="175" stroke="#00ff41" stroke-width="0.4"/>
   </g>
 
-  <!-- griglia di riferimento -->
-  <g stroke="#1a221a" stroke-width="0.35" opacity="0.65">
+  <text x="14" y="24" fill="#e8e8e8" font-family="Courier New,monospace" font-size="11" letter-spacing="2">BIO_MESH</text>
+  <text x="14" y="38" fill="#4a8a5e" font-family="Courier New,monospace" font-size="8" letter-spacing="1">FFT · FORGE 3D · ISOSUPERFicie</text>
+
+  <g stroke="#1a221a" stroke-width="0.35" opacity="0.8">
     <path d="M108 14v172 M212 14v172"/>
     <path d="M14 68h292 M14 132h292"/>
   </g>
 
-  <defs>
-    <marker id="ah-w" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-      <path d="M0 0 L5 2.5 L0 5 Z" fill="#8a8a8a"/>
-    </marker>
-  </defs>
-
-  <!-- PS_01 -->
-  <g stroke="#e8e8e8" stroke-width="0.55" opacity="0.9">
-    <ellipse cx="62" cy="52" rx="28" ry="22"/>
-    <path d="M62 30 C48 38 38 52 42 68 C46 82 62 88 62 88"/>
-    <path d="M62 30 C76 38 86 52 82 66"/>
-    <path d="M34 52 C42 44 52 40 62 42"/>
-    <path d="M90 52 C82 44 72 40 62 42"/>
-    <path d="M62 74 C52 78 44 72 40 62"/>
-  </g>
-  <text x="62" y="96" fill="#4a504a" font-family="Courier New,monospace" font-size="5.5" text-anchor="middle" letter-spacing="1">PS_01</text>
-
-  <!-- PS_02 -->
-  <g stroke="#e8e8e8" stroke-width="0.55" opacity="0.88">
-    <ellipse cx="160" cy="52" rx="26" ry="24"/>
-    <path d="M160 28 C144 36 132 52 136 70 C140 84 160 90 160 90"/>
-    <path d="M134 54 C148 48 158 46 168 52"/>
-    <path d="M186 54 C172 48 162 46 152 52"/>
-    <ellipse cx="160" cy="54" rx="10" ry="8" stroke-width="0.35" opacity="0.5"/>
-  </g>
-  <text x="160" y="96" fill="#4a504a" font-family="Courier New,monospace" font-size="5.5" text-anchor="middle" letter-spacing="1">PS_02</text>
-
-  <!-- PS_03 -->
-  <g stroke="#e8e8e8" stroke-width="0.55" opacity="0.86">
-    <ellipse cx="258" cy="52" rx="30" ry="22"/>
-    <path d="M258 30 C242 40 228 54 234 72 C240 86 258 92 258 92"/>
-    <path d="M228 50 C244 44 256 42 268 48"/>
-    <path d="M288 50 C272 44 260 42 248 48"/>
-    <path d="M258 70 C248 76 238 72 232 62" stroke-dasharray="2,2"/>
-  </g>
-  <text x="258" y="96" fill="#4a504a" font-family="Courier New,monospace" font-size="5.5" text-anchor="middle" letter-spacing="1">PS_03</text>
-
-  <!-- PS_04 -->
-  <g stroke="#e8e8e8" stroke-width="0.55" opacity="0.9">
-    <ellipse cx="62" cy="148" rx="32" ry="26"/>
-    <path d="M30 148 C44 128 72 124 92 148"/>
-    <path d="M62 122 C48 132 40 148 44 164"/>
-    <path d="M62 122 C76 132 84 148 80 164"/>
-    <path d="M62 170 C52 166 46 158 44 148"/>
-  </g>
-  <text x="62" y="182" fill="#4a504a" font-family="Courier New,monospace" font-size="5.5" text-anchor="middle" letter-spacing="1">PS_04</text>
-
-  <!-- PS_05 -->
-  <g stroke="#e8e8e8" stroke-width="0.55" opacity="0.88">
-    <ellipse cx="160" cy="148" rx="28" ry="30"/>
-    <path d="M132 148 C142 128 158 124 172 136 C186 148 178 168 160 172"/>
-    <path d="M160 118 C148 128 140 144 144 160"/>
-    <path d="M160 118 C172 128 180 144 176 160"/>
-    <circle cx="160" cy="148" r="6" stroke-width="0.4" opacity="0.45"/>
-  </g>
-  <text x="160" y="182" fill="#4a504a" font-family="Courier New,monospace" font-size="5.5" text-anchor="middle" letter-spacing="1">PS_05</text>
-
-  <!-- PS_06 -->
-  <g stroke="#e8e8e8" stroke-width="0.55" opacity="0.86">
-    <ellipse cx="258" cy="148" rx="30" ry="28"/>
-    <path d="M258 120 C242 132 232 148 240 166 C248 178 258 182 258 182"/>
-    <path d="M228 148 C244 140 256 138 268 144"/>
-    <path d="M288 148 C272 140 260 138 248 144"/>
-    <path d="M258 120 L258 176" stroke-width="0.35" opacity="0.4"/>
-  </g>
-  <text x="258" y="182" fill="#4a504a" font-family="Courier New,monospace" font-size="5.5" text-anchor="middle" letter-spacing="1">PS_06</text>
-
-  <!-- spettro FFT ? bande (pannello sx) -->
-  <g font-family="Courier New,monospace" font-size="5" fill="#4a504a" letter-spacing="0.8">
-    <text x="14" y="22">// FFT LOG-SPACED</text>
-  </g>
-  <g fill="#3a403a" opacity="0.85">
-    <rect x="14" y="28" width="4" height="22"/><rect x="20" y="32" width="4" height="18"/>
-    <rect x="26" y="26" width="4" height="24"/><rect x="32" y="30" width="4" height="20"/>
-    <rect x="38" y="24" width="4" height="26"/><rect x="44" y="34" width="4" height="16"/>
-  </g>
-  <g stroke="#6a706a" stroke-width="0.45" fill="none" opacity="0.6">
-    <path d="M48 38 L58 52 M48 34 L58 52 M48 42 L58 52"/>
-    <path d="M48 38 L58 148 M48 34 L58 148"/>
+  <!-- scultura 3D schematica (2x3) -->
+  <g stroke="#5eff7e" stroke-width="0.75" fill="none" opacity="0.92">
+    <ellipse cx="62" cy="52" rx="26" ry="20"/>
+    <path d="M62 32 C48 40 40 54 44 68 C48 80 62 86 62 86"/>
+    <path d="M62 32 C76 40 84 54 80 66"/>
+    <ellipse cx="160" cy="52" rx="24" ry="22"/>
+    <path d="M160 30 C146 38 136 54 140 70 C144 82 160 88 160 88"/>
+    <ellipse cx="258" cy="52" rx="26" ry="20"/>
+    <path d="M258 32 C244 42 232 56 238 72 C244 84 258 90 258 90"/>
+    <ellipse cx="62" cy="148" rx="28" ry="24"/>
+    <path d="M34 148 C48 128 76 124 90 148"/>
+    <ellipse cx="160" cy="148" rx="26" ry="28"/>
+    <path d="M134 148 C144 128 160 124 174 136 C188 148 180 168 160 172"/>
+    <ellipse cx="258" cy="148" rx="28" ry="26"/>
+    <path d="M258 122 C242 134 232 150 240 166 C248 178 258 182 258 182"/>
   </g>
 
-  <!-- legenda pipeline -->
-  <g font-family="Courier New,monospace" font-size="5" fill="#5a605a" letter-spacing="0.6">
-    <text x="268" y="22" text-anchor="end">SEC. A–A</text>
-    <text x="268" y="30" text-anchor="end">6 POLYSURF</text>
+  <!-- FFT bars -->
+  <g fill="#3a7a48" opacity="0.9">
+    <rect x="14" y="30" width="3" height="18"/><rect x="19" y="34" width="3" height="14"/>
+    <rect x="24" y="28" width="3" height="20"/><rect x="29" y="32" width="3" height="16"/>
+    <rect x="34" y="26" width="3" height="22"/><rect x="39" y="36" width="3" height="12"/>
+  </g>
+  <path d="M44 38 L54 52 M44 34 L54 52 M44 42 L54 52" stroke="#5eff7e" stroke-width="0.5" opacity="0.55"/>
+
+  <g fill="#4a8a5e" font-family="Courier New,monospace" font-size="5.5" text-anchor="middle">
+    <text x="62" y="98">PS_01</text>
+    <text x="160" y="98">PS_02</text>
+    <text x="258" y="98">PS_03</text>
+    <text x="62" y="182">PS_04</text>
+    <text x="160" y="182">PS_05</text>
+    <text x="258" y="182">PS_06</text>
   </g>
 
-  <!-- quota spacing -->
-  <g stroke="#6a706a" stroke-width="0.5" opacity="0.7">
-    <path d="M62 102 L160 102" marker-start="url(#ah-w)" marker-end="url(#ah-w)"/>
-    <path d="M160 102 L258 102"/>
-  </g>
-  <text x="160" y="108" fill="#4a504a" font-family="Courier New,monospace" font-size="5.5" text-anchor="middle">pitch ×2.35</text>
-
-  <!-- etichette -->
-  <text x="14" y="192" fill="#4a504a" font-family="Courier New,monospace" font-size="6" letter-spacing="1.2">AUDIO ? MESH · OBJ EXPORT</text>
-  <text x="160" y="192" fill="#e8e8e8" font-family="Courier New,monospace" font-size="8" text-anchor="middle" letter-spacing="2.5">BIO_MESH</text>
+  <text x="160" y="192" fill="#e8e8e8" font-family="Courier New,monospace" font-size="8" text-anchor="middle" letter-spacing="2.5">BIO_MESH · FORGE 3D</text>
 </svg>
