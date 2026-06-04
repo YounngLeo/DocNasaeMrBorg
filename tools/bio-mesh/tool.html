@@ -4,380 +4,438 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
-<title>BIO_MESH // AUDIO POLYSURFACE</title>
+<title>BIO_MESH // FORGE 3D</title>
 <style>
 :root {
   --bg: #050505;
-  --fg: #e8e8e8;
-  --dim: #555;
-  --mid: #333;
-  --acc: #ffffff;
+  --bg-soft: #0a0a0a;
+  --bg-card: #080808;
+  --fg: #d8ffe2;
+  --fg-dim: #4a8a5e;
+  --fg-fade: #294029;
+  --acc: #5eff7e;
+  --acc-dim: #3a7a48;
+  --cyan: #4af6ff;
+  --line-h: #1f3a25;
   --mono: 'Courier New', Courier, monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
-  width: 100%; height: 100%; overflow: hidden;
-  background: var(--bg); color: var(--fg);
-  font-family: var(--mono); font-size: 12px;
+  min-height: 100%; background: var(--bg); color: var(--fg);
+  font-family: var(--mono); font-size: 12px; line-height: 1.5;
 }
 ::selection { background: var(--acc); color: var(--bg); }
-canvas { display: block; touch-action: none; }
+a { color: var(--fg-dim); text-decoration: none; border-bottom: 1px dotted var(--line-h); }
+a:hover { color: var(--acc); }
 
-.title {
-  position: fixed; top: 22px; left: 24px; z-index: 10;
-  pointer-events: none; user-select: none;
+.app { max-width: 1480px; margin: 0 auto; padding: 16px 18px 40px; }
+.head {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 20px;
+  border-bottom: 1px solid var(--line-h); padding-bottom: 10px; margin-bottom: 14px; flex-wrap: wrap;
 }
-.title .back { font-size: 10px; letter-spacing: 0.12em; color: var(--dim); margin-bottom: 6px; pointer-events: auto; }
-.title .back a { color: var(--dim); text-decoration: none; border-bottom: 1px dotted var(--mid); }
-.title .back a:hover { color: var(--acc); }
-.title h1 { font-size: 14px; font-weight: normal; letter-spacing: 0.18em; color: var(--acc); }
-.title .sub { margin-top: 6px; font-size: 10px; letter-spacing: 0.12em; color: var(--dim); }
-.title .ver { margin-top: 4px; font-size: 9px; color: #444; }
+.head h1 { font-size: 14px; font-weight: normal; letter-spacing: 0.18em; color: var(--acc); }
+.head .sub { color: var(--fg-dim); font-size: 10px; letter-spacing: 0.1em; margin-top: 4px; }
+.head .meta { color: var(--fg-dim); font-size: 10px; text-align: right; letter-spacing: 0.08em; }
+.head .meta b { color: var(--fg); font-weight: normal; }
 
-.panel {
-  position: fixed; top: 22px; right: 22px; z-index: 10;
-  width: 280px; max-height: calc(100vh - 44px); overflow-y: auto;
-  background: rgba(5, 5, 5, 0.88); border: 1px solid var(--mid);
+.bm-module {
+  border: 1px solid var(--line-h); background: var(--bg-soft); position: relative; margin-bottom: 12px;
 }
-.panel::-webkit-scrollbar { width: 5px; }
-.panel::-webkit-scrollbar-thumb { background: var(--mid); }
-.box { padding: 12px 14px; border-bottom: 1px solid var(--mid); }
-.box:last-child { border-bottom: none; }
-.box .lab {
-  font-size: 9px; letter-spacing: 0.16em; color: var(--dim);
-  margin-bottom: 10px; display: flex; justify-content: space-between;
+.bm-module::before {
+  content: '// FORGE 3D · SPETTRO FFT → CAMPO METABALL · ISOSUPERFicie · SCULPT';
+  position: absolute; top: -1px; left: -1px; right: -1px;
+  background: var(--bg); border: 1px solid var(--acc);
+  color: var(--acc); font-size: 9px; letter-spacing: 2px; padding: 5px 12px; z-index: 2;
 }
-.box .lab .v { color: var(--acc); }
-.row { margin-bottom: 9px; }
-.row label {
-  display: flex; justify-content: space-between; font-size: 10px;
-  color: var(--fg); margin-bottom: 4px; letter-spacing: 0.06em;
+.wall-grid {
+  display: grid; grid-template-columns: 1fr 300px; gap: 0;
+  margin-top: 26px; min-height: 560px;
 }
-.row label span:last-child { color: var(--acc); font-variant-numeric: tabular-nums; }
+.wall-stage {
+  position: relative; background: #050608; border-right: 1px solid var(--line-h);
+  min-height: 560px; overflow: hidden;
+}
+.wall-stage canvas { display: block; width: 100%; height: 100%; min-height: 560px; touch-action: none; cursor: crosshair; }
+.ws-corner {
+  position: absolute; font-size: 9px; letter-spacing: 1px; color: var(--fg-fade);
+  pointer-events: none; z-index: 2;
+}
+.ws-corner.tl { top: 8px; left: 10px; }
+.ws-corner.tr { top: 8px; right: 10px; }
+.ws-corner.bl { bottom: 8px; left: 10px; }
+.ws-corner.br { bottom: 8px; right: 10px; }
+.ws-readout {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; letter-spacing: 2px; color: var(--acc);
+  background: rgba(5, 5, 5, 0.75); padding: 3px 10px; border: 1px solid var(--line-h); z-index: 2;
+}
+.wall-panel {
+  background: var(--bg-card); padding: 14px; display: flex; flex-direction: column;
+  gap: 14px; max-height: calc(100vh - 80px); overflow-y: auto;
+}
+.wp-block { display: flex; flex-direction: column; gap: 10px; }
+.wp-block + .wp-block { border-top: 1px dotted var(--line-h); padding-top: 12px; }
+.wp-title { font-size: 9px; letter-spacing: 2px; color: var(--fg-dim); text-transform: uppercase; }
+.wp-row { display: flex; flex-direction: column; gap: 4px; }
+.wp-row-head { display: flex; justify-content: space-between; font-size: 10px; color: var(--fg); }
+.wp-row-head .vv { color: var(--acc); font-variant-numeric: tabular-nums; }
+.wp-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.wp-btn {
+  font-family: inherit; font-size: 10px; letter-spacing: 1.2px; background: transparent;
+  color: var(--fg); border: 1px solid var(--line-h); padding: 7px 8px; cursor: pointer;
+  text-align: center; text-transform: uppercase;
+}
+.wp-btn:hover { border-color: var(--acc); color: var(--acc); }
+.wp-btn.pri { border-color: var(--acc-dim); color: var(--acc); }
+.wp-btn.pri:hover, .wp-btn.on { background: var(--acc); color: var(--bg); border-color: var(--acc); }
+.wp-btn.full { grid-column: 1 / -1; }
+.wp-note { font-size: 9px; color: var(--fg-dim); line-height: 1.55; }
+.wp-note b { color: var(--acc); font-weight: normal; }
 input[type=range] {
-  -webkit-appearance: none; appearance: none; width: 100%; height: 14px;
-  background: transparent; cursor: pointer;
+  -webkit-appearance: none; appearance: none; width: 100%; height: 14px; background: transparent; cursor: pointer;
 }
-input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--mid); }
+input[type=range]::-webkit-slider-runnable-track { height: 1px; background: var(--line-h); }
 input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 10px; height: 10px; background: var(--acc);
-  border: 0; margin-top: -4.5px;
+  -webkit-appearance: none; width: 10px; height: 10px; background: var(--acc); border: 0; margin-top: -4.5px;
 }
 input[type=file] { display: none; }
-.btn {
-  display: block; width: 100%; background: transparent; color: var(--fg);
-  border: 1px solid var(--mid); padding: 8px 10px; font-family: inherit;
-  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-  cursor: pointer; text-align: left; margin-bottom: 6px;
+.spec-viz { display: flex; align-items: flex-end; gap: 1px; height: 36px; margin-top: 4px; }
+.spec-viz i {
+  flex: 1; min-width: 1px; background: var(--acc); opacity: 0.55;
+  transition: height 0.06s linear;
 }
-.btn:last-child { margin-bottom: 0; }
-.btn:hover { border-color: var(--acc); color: var(--acc); }
-.btn.pri { border-color: var(--fg); }
-.btn.on { background: var(--acc); color: var(--bg); border-color: var(--acc); }
-.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.btn-row .btn { margin: 0; text-align: center; }
-.audio-bar {
-  height: 4px; background: var(--mid); margin-top: 8px; position: relative; overflow: hidden;
-}
-.audio-bar i {
-  display: block; height: 100%; width: 0%; background: var(--acc);
-  transition: width 0.08s linear;
-}
-.status {
-  position: fixed; bottom: 22px; left: 24px; z-index: 10;
-  font-size: 9px; color: var(--dim); letter-spacing: 0.12em; line-height: 1.8;
-  pointer-events: none;
-}
-.status b { color: var(--acc); font-weight: normal; }
-.hint {
-  position: fixed; bottom: 22px; right: 310px; z-index: 10;
-  font-size: 9px; color: var(--dim); letter-spacing: 0.08em;
-  pointer-events: none; text-align: right; line-height: 1.7;
-}
-.corner {
-  position: fixed; width: 14px; height: 14px; z-index: 9;
-  border-color: rgba(255,255,255,0.22); pointer-events: none;
-}
-.corner.tl { top: 10px; left: 10px; border-top: 1px solid; border-left: 1px solid; }
-.corner.tr { top: 10px; right: 10px; border-top: 1px solid; border-right: 1px solid; }
-.corner.bl { bottom: 10px; left: 10px; border-bottom: 1px solid; border-left: 1px solid; }
-.corner.br { bottom: 10px; right: 10px; border-bottom: 1px solid; border-right: 1px solid; }
+.audio-bar { height: 3px; background: var(--line-h); margin-top: 6px; overflow: hidden; }
+.audio-bar i { display: block; height: 100%; width: 0%; background: var(--cyan); transition: width 0.08s linear; }
+.bm-stats { font-size: 9px; color: var(--fg-dim); letter-spacing: 0.8px; line-height: 1.7; }
 @media (max-width: 900px) {
-  .panel { width: calc(100vw - 44px); max-height: 42vh; top: auto; bottom: 12px; right: 22px; }
-  .hint { display: none; }
+  .wall-grid { grid-template-columns: 1fr; }
+  .wall-stage { border-right: none; border-bottom: 1px solid var(--line-h); min-height: 380px; }
+  .wall-stage canvas { min-height: 380px; }
 }
 </style>
 </head>
 <body>
+<div class="app">
 
-<canvas id="scene"></canvas>
+<header class="head">
+  <div>
+    <div style="font-size:10px;color:var(--fg-dim);margin-bottom:4px"><a href="../#bio-mesh">← tools_index</a> / bio_mesh / forge</div>
+    <h1>[ BIO_MESH :: MUSEUM FORGE ]</h1>
+    <div class="sub">spettro audio → campo 3D ad alta risoluzione · scultura isosuperficie · sculpt metaball</div>
+  </div>
+  <div class="meta">
+    <b id="mRes">56³</b> voxel · <b id="mTris">—</b> tris<br>
+    <b>v2.0.0</b> · surface nets
+  </div>
+</header>
 
-<div class="title">
-  <div class="back"><a href="../#bio-mesh">← tools_index</a> / bio_mesh / tool</div>
-  <h1>[ BIO_MESH :: POLYSURFACE ]</h1>
-  <div class="sub">spettro audio → mesh biomorfa · contorni · export obj</div>
-  <div class="ver">v1.0.0 — audio spectrum driver</div>
+<div class="bm-module">
+  <div class="wall-grid">
+    <div class="wall-stage" id="stage">
+      <canvas id="scene"></canvas>
+      <div class="ws-corner tl">[ ORBIT · SCROLL ]</div>
+      <div class="ws-corner tr">[ SCULPT · TRASCINA ]</div>
+      <div class="ws-corner bl">[ CAMPO METABALL 3D ]</div>
+      <div class="ws-corner br">[ FORGE · AUDIO ]</div>
+      <div class="ws-readout" id="readout">FORGE · idle</div>
+    </div>
+
+    <aside class="wall-panel">
+      <div class="wp-block">
+        <div class="wp-title">// AUDIO · SPETTRO</div>
+        <input type="file" id="audioFile" accept="audio/*">
+        <button type="button" class="wp-btn pri full" id="btnLoad">↑ CARICA TRACCIA</button>
+        <div class="spec-viz" id="specViz"></div>
+        <div class="audio-bar"><i id="audioProg"></i></div>
+        <div class="wp-btns">
+          <button type="button" class="wp-btn" id="btnPlay">▶ PLAY</button>
+          <button type="button" class="wp-btn pri" id="btnForge">⧗ FORGIA</button>
+        </div>
+        <button type="button" class="wp-btn on full" id="btnLive">● LIVE · RISONANZA</button>
+      </div>
+
+      <div class="wp-block">
+        <div class="wp-title">// SCULPT · CAMPO 3D</div>
+        <div class="wp-btns">
+          <button type="button" class="wp-btn" id="btnAdd">+ AGGIUNGI</button>
+          <button type="button" class="wp-btn pri on" id="btnSub">− SCAVA</button>
+        </div>
+        <div class="wp-row">
+          <div class="wp-row-head"><span>// pennello</span><span class="vv" id="vBrush">0.12</span></div>
+          <input type="range" id="pBrush" min="4" max="28" value="12" step="1">
+        </div>
+        <div class="wp-row">
+          <div class="wp-row-head"><span>// intensità</span><span class="vv" id="vPow">28%</span></div>
+          <input type="range" id="pPow" min="8" max="60" value="28" step="1">
+        </div>
+        <button type="button" class="wp-btn full" id="btnClearSculpt">SVUOTA SCULPT</button>
+      </div>
+
+      <div class="wp-block">
+        <div class="wp-title">// RISOLUZIONE · DETTAGLIO</div>
+        <div class="wp-row">
+          <div class="wp-row-head"><span>// voxel grid</span><span class="vv" id="vRes">56</span></div>
+          <input type="range" id="pRes" min="40" max="72" value="56" step="4">
+        </div>
+        <div class="wp-row">
+          <div class="wp-row-head"><span>// isosuperficie</span><span class="vv" id="vIso">0.38</span></div>
+          <input type="range" id="pIso" min="18" max="62" value="38" step="1">
+        </div>
+        <div class="wp-row">
+          <div class="wp-row-head"><span>// dettaglio spettro</span><span class="vv" id="vDet">1.15</span></div>
+          <input type="range" id="pDet" min="60" max="180" value="115" step="1">
+        </div>
+        <div class="wp-row">
+          <div class="wp-row-head"><span>// gain audio</span><span class="vv" id="vGain">1.00</span></div>
+          <input type="range" id="pGain" min="20" max="250" value="100" step="5">
+        </div>
+        <div class="wp-row">
+          <div class="wp-row-head"><span>// noise · armoniche</span><span class="vv" id="vNoise">0.42</span></div>
+          <input type="range" id="pNoise" min="0" max="100" value="42" step="1">
+        </div>
+      </div>
+
+      <div class="wp-block">
+        <div class="wp-title">// VISTA · EXPORT</div>
+        <div class="wp-btns">
+          <button type="button" class="wp-btn on" id="btnMuseum">MUSEO</button>
+          <button type="button" class="wp-btn" id="btnWire">WIRE</button>
+        </div>
+        <div class="wp-btns">
+          <button type="button" class="wp-btn" id="btnRotate">↻ TURNTABLE</button>
+          <button type="button" class="wp-btn pri" id="btnExport">↓ OBJ</button>
+        </div>
+        <div class="bm-stats" id="stats">vert — · forge 100%</div>
+      </div>
+
+      <div class="wp-note">
+        La traccia viene analizzata in <b>180 bande FFT</b> che modulano metaball, tubi e armoniche 3D.
+        <b>FORGIA</b> costruisce l'opera progressivamente; in <b>PLAY</b> la scultura respira col suono.
+        Scolpisci il campo come nella simulazione vapore — <b>+ / −</b> sulla mesh.
+      </div>
+    </aside>
+  </div>
 </div>
 
-<aside class="panel">
-  <div class="box">
-    <div class="lab">AUDIO <span class="v" id="audioName">—</span></div>
-    <input type="file" id="audioFile" accept="audio/*">
-    <button type="button" class="btn pri" id="btnLoad">↑ Carica traccia</button>
-    <div class="btn-row">
-      <button type="button" class="btn" id="btnPlay">▶ Play</button>
-      <button type="button" class="btn" id="btnBake">⧗ Analizza</button>
-    </div>
-    <div class="audio-bar"><i id="audioProg"></i></div>
-    <button type="button" class="btn on" id="btnLive">● LIVE spettro</button>
-  </div>
-
-  <div class="box">
-    <div class="lab">POLYSURFACES <span class="v" id="polyCount">6</span></div>
-    <div class="row">
-      <label><span>// count</span><span id="vCount">6</span></label>
-      <input type="range" id="pCount" min="1" max="12" value="6" step="1">
-    </div>
-    <div class="row">
-      <label><span>// colonne griglia</span><span id="vCols">2</span></label>
-      <input type="range" id="pCols" min="1" max="4" value="2" step="1">
-    </div>
-    <div class="row">
-      <label><span>// spacing</span><span id="vSpace">2.35</span></label>
-      <input type="range" id="pSpace" min="1.2" max="4" value="2.35" step="0.05">
-    </div>
-  </div>
-
-  <div class="box">
-    <div class="lab">FORMA · SPETTRO</div>
-    <div class="row">
-      <label><span>// raggio base</span><span id="vRad">0.72</span></label>
-      <input type="range" id="pRad" min="0.3" max="1.4" value="0.72" step="0.02">
-    </div>
-    <div class="row">
-      <label><span>// bulge (bassi)</span><span id="vBulge">0.55</span></label>
-      <input type="range" id="pBulge" min="0" max="1.2" value="0.55" step="0.02">
-    </div>
-    <div class="row">
-      <label><span>// pinch (alti)</span><span id="vPinch">0.42</span></label>
-      <input type="range" id="pPinch" min="0" max="1" value="0.42" step="0.02">
-    </div>
-    <div class="row">
-      <label><span>// tunnel (medi)</span><span id="vTunnel">0.28</span></label>
-      <input type="range" id="pTunnel" min="0" max="0.8" value="0.28" step="0.02">
-    </div>
-    <div class="row">
-      <label><span>// noise / fbm</span><span id="vNoise">0.38</span></label>
-      <input type="range" id="pNoise" min="0" max="1" value="0.38" step="0.02">
-    </div>
-    <div class="row">
-      <label><span>// gain spettro</span><span id="vGain">1.00</span></label>
-      <input type="range" id="pGain" min="0.2" max="2.5" value="1" step="0.05">
-    </div>
-    <div class="row">
-      <label><span>// lobes</span><span id="vLobes">3.5</span></label>
-      <input type="range" id="pLobes" min="1" max="8" value="3.5" step="0.1">
-    </div>
-  </div>
-
-  <div class="box">
-    <div class="lab">VISTA · EXPORT</div>
-    <div class="btn-row">
-      <button type="button" class="btn on" id="btnContours">Contorni</button>
-      <button type="button" class="btn" id="btnWire">Wire</button>
-    </div>
-    <button type="button" class="btn" id="btnRegen">↻ Rigenera</button>
-    <button type="button" class="btn pri" id="btnExport">↓ Esporta .obj</button>
-  </div>
-</aside>
-
-<div class="status">
-  <b id="stPolys">6</b> polysuperfici · <b id="stVerts">—</b> vert · <b id="stMode">CONTORNI</b><br>
-  sorgente: <b id="stSrc">parametrico</b>
 </div>
-<div class="hint">orbit · scroll zoom<br>analizza = mesh da tutta la traccia<br>live = deformazione in play</div>
-
-<div class="corner tl"></div><div class="corner tr"></div>
-<div class="corner bl"></div><div class="corner br"></div>
 
 <script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-  }
-}
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
 </script>
 
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import {
-  analyzeAudioBuffer, bandsFromAnalyser, buildSceneData,
-  defaultParams, neutralBands
+  ScalarField, defaultParams, analyzeAudioBufferFull, spectrumFromAnalyser,
+  neutralSpectrum, clamp
 } from './mesh-core.js';
 
 const canvas = document.getElementById('scene');
+const stage = document.getElementById('stage');
+const readout = document.getElementById('readout');
+
+let params = defaultParams();
+let scalarField = new ScalarField(params.resolution);
+let spectrum = neutralSpectrum(params.spectralBins);
+let bakedSpectrum = null;
+let forgeAmount = 1;
+let forging = false;
+let liveMode = true;
+let museumMode = true;
+let wireMode = false;
+let turntable = true;
+let sculptSubtract = true;
+let brushR = 0.12;
+let brushPow = 0.28;
+let sculpting = false;
+
+let meshSolid = null;
+let meshWire = null;
+let rebuildPending = false;
+let lastRebuild = 0;
+
+let audioCtx = null, analyser = null, audioBuf = null, audioEl = null, mediaSource = null;
+let isPlaying = false;
+
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050505);
+scene.background = new THREE.Color(0x050608);
+scene.fog = new THREE.FogExp2(0x050608, 0.08);
 
-const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.05, 200);
-camera.position.set(0, 0.2, 7.5);
+const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100);
+camera.position.set(0, 0.4, 3.2);
 
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setSize(innerWidth, innerHeight);
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.target.set(0, 0, 0);
+controls.minDistance = 1.2;
+controls.maxDistance = 8;
 
-const meshGroup = new THREE.Group();
-const lineGroup = new THREE.Group();
-scene.add(meshGroup, lineGroup);
+scene.add(new THREE.AmbientLight(0x1a221a, 0.35));
+const key = new THREE.DirectionalLight(0xfff8e8, 1.1);
+key.position.set(2, 3, 4);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x4af6ff, 0.45);
+rim.position.set(-3, 1, -2);
+scene.add(rim);
+const fill = new THREE.DirectionalLight(0x5eff7e, 0.25);
+fill.position.set(0, -2, 2);
+scene.add(fill);
 
-const lineMat = new THREE.LineBasicMaterial({ color: 0xe8e8e8, transparent: true, opacity: 0.92 });
-const wireMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.45 });
+const sculpture = new THREE.Group();
+scene.add(sculpture);
 
-let params = defaultParams();
-let bands = neutralBands(params.count).bands;
-let profiles = neutralBands(params.count).profiles;
-let bakedBands = null;
-let bakedProfiles = null;
-let showContours = true;
-let showWire = false;
-let liveSpectrum = true;
+const pedestal = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.05, 1.15, 0.08, 48),
+  new THREE.MeshStandardMaterial({ color: 0x0a0c0a, metalness: 0.2, roughness: 0.85 })
+);
+pedestal.position.y = -1.05;
+scene.add(pedestal);
 
-let audioCtx = null;
-let analyser = null;
-let audioBuf = null;
-let isPlaying = false;
-let audioEl = null;
-let mediaSource = null;
-let liveRebuildAcc = 0;
+const matMuseum = new THREE.MeshPhysicalMaterial({
+  color: 0xe8ece8, metalness: 0.08, roughness: 0.42, clearcoat: 0.35,
+  clearcoatRoughness: 0.2, sheen: 0.4, sheenRoughness: 0.5, sheenColor: new THREE.Color(0x5eff7e)
+});
+const matWire = new THREE.MeshBasicMaterial({ color: 0x4af6ff, wireframe: true, transparent: true, opacity: 0.35 });
 
-function syncParamsFromUI() {
-  params.count = +document.getElementById('pCount').value;
-  params.cols = +document.getElementById('pCols').value;
-  params.spacing = +document.getElementById('pSpace').value;
-  params.radius = +document.getElementById('pRad').value;
-  params.bulge = +document.getElementById('pBulge').value;
-  params.pinch = +document.getElementById('pPinch').value;
-  params.tunnel = +document.getElementById('pTunnel').value;
-  params.noise = +document.getElementById('pNoise').value;
-  params.gain = +document.getElementById('pGain').value;
-  params.lobes = +document.getElementById('pLobes').value;
-  document.getElementById('vCount').textContent = params.count;
-  document.getElementById('vCols').textContent = params.cols;
-  document.getElementById('vSpace').textContent = params.spacing.toFixed(2);
-  document.getElementById('vRad').textContent = params.radius.toFixed(2);
-  document.getElementById('vBulge').textContent = params.bulge.toFixed(2);
-  document.getElementById('vPinch').textContent = params.pinch.toFixed(2);
-  document.getElementById('vTunnel').textContent = params.tunnel.toFixed(2);
-  document.getElementById('vNoise').textContent = params.noise.toFixed(2);
-  document.getElementById('vGain').textContent = params.gain.toFixed(2);
-  document.getElementById('vLobes').textContent = params.lobes.toFixed(1);
-  document.getElementById('polyCount').textContent = params.count;
-  document.getElementById('stPolys').textContent = params.count;
+// spec viz bars
+const specViz = document.getElementById('specViz');
+const bars = [];
+for (let i = 0; i < 48; i++) {
+  const b = document.createElement('i');
+  specViz.appendChild(b);
+  bars.push(b);
 }
 
-function resizeBands(count) {
-  const n = neutralBands(count);
-  const nb = new Float32Array(count);
-  const np = Array.from({ length: count }, (_, i) => new Float32Array(8));
-  for (let i = 0; i < count; i++) {
-    nb[i] = bands[i] ?? n.bands[i];
-    np[i] = profiles[i] ? profiles[i] : n.profiles[i];
-    if (!profiles[i]) np[i] = n.profiles[i];
-    else for (let s = 0; s < 8; s++) np[i][s] = profiles[i][s] ?? n.profiles[i][s];
+function syncParams() {
+  params.resolution = +document.getElementById('pRes').value;
+  params.iso = +document.getElementById('pIso').value / 100;
+  params.detail = +document.getElementById('pDet').value / 100;
+  params.gain = +document.getElementById('pGain').value / 100;
+  params.noiseGain = +document.getElementById('pNoise').value / 100;
+  params.forgeAmount = forgeAmount;
+  params.time = performance.now() * 0.001;
+  brushR = +document.getElementById('pBrush').value / 100;
+  brushPow = +document.getElementById('pPow').value / 100;
+  document.getElementById('vRes').textContent = params.resolution;
+  document.getElementById('vIso').textContent = params.iso.toFixed(2);
+  document.getElementById('vDet').textContent = params.detail.toFixed(2);
+  document.getElementById('vGain').textContent = params.gain.toFixed(2);
+  document.getElementById('vNoise').textContent = params.noiseGain.toFixed(2);
+  document.getElementById('vBrush').textContent = brushR.toFixed(2);
+  document.getElementById('vPow').textContent = Math.round(brushPow * 100) + '%';
+  document.getElementById('mRes').textContent = params.resolution + '³';
+}
+
+function updateSpecViz(spec) {
+  const step = Math.max(1, Math.floor(spec.length / bars.length));
+  for (let i = 0; i < bars.length; i++) {
+    bars[i].style.height = (4 + spec[i * step] * 32) + 'px';
   }
-  bands = nb;
-  profiles = np;
+}
+
+function requestRebuild() {
+  if (rebuildPending) return;
+  rebuildPending = true;
+  requestAnimationFrame(() => {
+    rebuildPending = false;
+    const now = performance.now();
+    if (now - lastRebuild < 80 && isPlaying) return;
+    lastRebuild = now;
+    rebuildMesh();
+  });
 }
 
 function rebuildMesh() {
-  syncParamsFromUI();
-  resizeBands(params.count);
+  syncParams();
+  if (scalarField.n !== params.resolution) scalarField.setResolution(params.resolution);
 
-  let useBands = bands;
-  let useProfiles = profiles;
-  if (!liveSpectrum && bakedBands) {
-    useBands = bakedBands;
-    useProfiles = bakedProfiles;
+  const useSpec = (!liveMode && bakedSpectrum) ? bakedSpectrum : spectrum;
+  params.forgeAmount = forgeAmount;
+  scalarField.buildFromSpectrum(useSpec, params);
+  const { positions, normals, indices } = scalarField.extractMesh(params.iso);
+
+  while (sculpture.children.length) sculpture.remove(sculpture.children[0]);
+
+  if (positions.length < 9) {
+    readout.textContent = 'FORGE · campo vuoto — alza gain o abbassa iso';
+    document.getElementById('mTris').textContent = '0';
+    document.getElementById('stats').textContent = 'vert 0 · forge ' + Math.round(forgeAmount * 100) + '%';
+    return;
   }
-
-  const { allVerts, allIdx, contours } = buildSceneData(useBands, useProfiles, params);
-
-  while (meshGroup.children.length) meshGroup.remove(meshGroup.children[0]);
-  while (lineGroup.children.length) lineGroup.remove(lineGroup.children[0]);
 
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(allVerts, 3));
-  geo.setIndex(allIdx);
-  geo.computeVertexNormals();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+  geo.setIndex(new THREE.BufferAttribute(indices, 1));
+  geo.computeBoundingSphere();
 
-  if (showWire) {
-    const wire = new THREE.WireframeGeometry(geo);
-    meshGroup.add(new THREE.LineSegments(wire, wireMat));
+  if (museumMode) {
+    meshSolid = new THREE.Mesh(geo, matMuseum);
+    sculpture.add(meshSolid);
+  }
+  if (wireMode || !museumMode) {
+    meshWire = new THREE.Mesh(geo, matWire);
+    sculpture.add(meshWire);
   }
 
-  if (showContours) {
-    for (const seg of contours) {
-      const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(seg, 3));
-      lineGroup.add(new THREE.Line(g, lineMat));
-    }
-  }
-
-  document.getElementById('stVerts').textContent = (allVerts.length / 3) | 0;
-  document.getElementById('stMode').textContent = showContours && showWire ? 'MIX' : showContours ? 'CONTORNI' : 'WIRE';
+  const triCount = (indices.length / 3) | 0;
+  document.getElementById('mTris').textContent = triCount.toLocaleString();
+  document.getElementById('stats').textContent =
+    'vert ' + (positions.length / 3 | 0).toLocaleString() + ' · forge ' + Math.round(forgeAmount * 100) + '% · iso ' + params.iso.toFixed(2);
+  readout.textContent = forging
+    ? 'FORGE · ' + Math.round(forgeAmount * 100) + '% · ' + triCount + ' tris'
+    : (isPlaying ? 'RISONANZA · live' : 'FORGE · ' + triCount + ' tris');
 }
 
 async function ensureAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (!analyser) {
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048;
-    analyser.smoothingTimeConstant = 0.65;
+    analyser.fftSize = 4096;
+    analyser.smoothingTimeConstant = 0.72;
     analyser.connect(audioCtx.destination);
   }
 }
 
-document.getElementById('btnLoad').addEventListener('click', () => document.getElementById('audioFile').click());
-
-document.getElementById('audioFile').addEventListener('change', async (e) => {
+document.getElementById('btnLoad').onclick = () => document.getElementById('audioFile').click();
+document.getElementById('audioFile').onchange = async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
   await ensureAudio();
-  const ab = await file.arrayBuffer();
-  audioBuf = await audioCtx.decodeAudioData(ab);
-  document.getElementById('audioName').textContent = file.name.slice(0, 22);
-  bakedBands = null;
-  document.getElementById('stSrc').textContent = 'file loaded';
+  audioBuf = await audioCtx.decodeAudioData(await file.arrayBuffer());
   if (!audioEl) {
     audioEl = new Audio();
     audioEl.addEventListener('timeupdate', () => {
-      if (audioEl.duration) {
-        document.getElementById('audioProg').style.width = (100 * audioEl.currentTime / audioEl.duration) + '%';
-      }
+      if (audioEl.duration) document.getElementById('audioProg').style.width = (100 * audioEl.currentTime / audioEl.duration) + '%';
     });
-    audioEl.addEventListener('ended', () => {
-      isPlaying = false;
-      document.getElementById('btnPlay').textContent = '▶ Play';
-    });
+    audioEl.addEventListener('ended', () => { isPlaying = false; document.getElementById('btnPlay').textContent = '▶ PLAY'; });
   }
   audioEl.src = URL.createObjectURL(file);
-});
+  readout.textContent = 'FORGE · ' + file.name.slice(0, 24);
+};
 
-document.getElementById('btnPlay').addEventListener('click', async () => {
+document.getElementById('btnPlay').onclick = async () => {
   if (!audioEl?.src) return;
   await ensureAudio();
   if (audioCtx.state === 'suspended') await audioCtx.resume();
   if (isPlaying) {
     audioEl.pause();
     isPlaying = false;
-    document.getElementById('btnPlay').textContent = '▶ Play';
+    document.getElementById('btnPlay').textContent = '▶ PLAY';
     return;
   }
   if (!mediaSource) {
@@ -386,101 +444,133 @@ document.getElementById('btnPlay').addEventListener('click', async () => {
   }
   audioEl.play();
   isPlaying = true;
-  liveSpectrum = true;
+  liveMode = true;
   document.getElementById('btnLive').classList.add('on');
-  document.getElementById('btnPlay').textContent = '■ Stop';
-  document.getElementById('stSrc').textContent = 'live play';
-});
+  document.getElementById('btnPlay').textContent = '■ STOP';
+};
 
-document.getElementById('btnBake').addEventListener('click', async () => {
+document.getElementById('btnForge').onclick = async () => {
   if (!audioBuf) return;
-  syncParamsFromUI();
-  const result = analyzeAudioBuffer(audioBuf, params.count);
-  bakedBands = result.bands;
-  bakedProfiles = result.profiles;
-  bands = bakedBands;
-  profiles = bakedProfiles;
-  liveSpectrum = false;
+  syncParams();
+  bakedSpectrum = analyzeAudioBufferFull(audioBuf, 4096);
+  spectrum = bakedSpectrum;
+  liveMode = false;
   document.getElementById('btnLive').classList.remove('on');
-  document.getElementById('stSrc').textContent = 'analisi FFT';
-  rebuildMesh();
-});
-
-document.getElementById('btnLive').addEventListener('click', () => {
-  liveSpectrum = !liveSpectrum;
-  document.getElementById('btnLive').classList.toggle('on', liveSpectrum);
-  document.getElementById('stSrc').textContent = liveSpectrum ? 'live/param' : 'baked/static';
-  if (!liveSpectrum && bakedBands) {
-    bands = bakedBands;
-    profiles = bakedProfiles;
-    rebuildMesh();
-  }
-});
-
-document.getElementById('btnContours').addEventListener('click', () => {
-  showContours = !showContours;
-  document.getElementById('btnContours').classList.toggle('on', showContours);
-  rebuildMesh();
-});
-
-document.getElementById('btnWire').addEventListener('click', () => {
-  showWire = !showWire;
-  document.getElementById('btnWire').classList.toggle('on', showWire);
-  rebuildMesh();
-});
-
-document.getElementById('btnRegen').addEventListener('click', () => {
-  params.seed = (Math.random() * 9999) | 0;
-  if (!liveSpectrum && !bakedBands) {
-    const n = neutralBands(params.count);
-    bands = n.bands;
-    profiles = n.profiles;
-  }
-  rebuildMesh();
-});
-
-document.getElementById('btnExport').addEventListener('click', () => {
-  syncParamsFromUI();
-  resizeBands(params.count);
-  const useBands = (!liveSpectrum && bakedBands) ? bakedBands : bands;
-  const useProfiles = (!liveSpectrum && bakedProfiles) ? bakedProfiles : profiles;
-  const { allVerts, allIdx } = buildSceneData(useBands, useProfiles, params);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(allVerts, 3));
-  geo.setIndex(allIdx);
-  geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo);
-  mesh.name = 'bio_mesh_polysurfaces';
-  const text = new OBJExporter().parse(mesh);
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
-  a.download = 'bio_mesh_' + new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-') + '.obj';
-  a.click();
-});
-
-['pCount','pCols','pSpace','pRad','pBulge','pPinch','pTunnel','pNoise','pGain','pLobes'].forEach(id => {
-  document.getElementById(id).addEventListener('input', rebuildMesh);
-});
-
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-
-rebuildMesh();
-
-function animate(time) {
-  if (liveSpectrum && analyser && isPlaying) {
-    liveRebuildAcc += 16;
-    if (liveRebuildAcc > 120) {
-      liveRebuildAcc = 0;
-      const live = bandsFromAnalyser(analyser, params.count);
-      bands = live.bands;
-      profiles = live.profiles;
-      rebuildMesh();
+  forging = true;
+  forgeAmount = 0;
+  readout.textContent = 'FORGE · 0%';
+  const dur = Math.min(audioBuf.duration, 24);
+  const t0 = performance.now();
+  function stepForge() {
+    const t = (performance.now() - t0) / 1000;
+    forgeAmount = clamp(t / Math.max(0.5, dur * 0.85), 0, 1);
+    requestRebuild();
+    if (forgeAmount < 1) requestAnimationFrame(stepForge);
+    else {
+      forging = false;
+      forgeAmount = 1;
+      requestRebuild();
+      readout.textContent = 'FORGE · completa · opera pronta';
     }
   }
+  stepForge();
+};
+
+document.getElementById('btnLive').onclick = () => {
+  liveMode = !liveMode;
+  document.getElementById('btnLive').classList.toggle('on', liveMode);
+  if (!liveMode && bakedSpectrum) { spectrum = bakedSpectrum; requestRebuild(); }
+};
+
+document.getElementById('btnAdd').onclick = () => {
+  sculptSubtract = false;
+  document.getElementById('btnAdd').classList.add('on');
+  document.getElementById('btnSub').classList.remove('on');
+};
+document.getElementById('btnSub').onclick = () => {
+  sculptSubtract = true;
+  document.getElementById('btnSub').classList.add('on');
+  document.getElementById('btnAdd').classList.remove('on');
+};
+
+document.getElementById('btnClearSculpt').onclick = () => {
+  scalarField.clearSculpt();
+  requestRebuild();
+};
+
+document.getElementById('btnMuseum').onclick = () => {
+  museumMode = !museumMode;
+  document.getElementById('btnMuseum').classList.toggle('on', museumMode);
+  requestRebuild();
+};
+document.getElementById('btnWire').onclick = () => {
+  wireMode = !wireMode;
+  document.getElementById('btnWire').classList.toggle('on', wireMode);
+  requestRebuild();
+};
+document.getElementById('btnRotate').onclick = () => {
+  turntable = !turntable;
+  document.getElementById('btnRotate').classList.toggle('on', turntable);
+};
+
+document.getElementById('btnExport').onclick = () => {
+  if (!meshSolid && !meshWire) return;
+  const m = meshSolid || meshWire;
+  m.name = 'bio_mesh_sculpture';
+  const text = new OBJExporter().parse(m);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  a.download = 'bio_mesh_forge_' + new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-') + '.obj';
+  a.click();
+};
+
+['pRes','pIso','pDet','pGain','pNoise','pBrush','pPow'].forEach(id => {
+  document.getElementById(id).addEventListener('input', requestRebuild);
+});
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+function sculptAtEvent(e) {
+  const rect = canvas.getBoundingClientRect();
+  pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const targets = sculpture.children.filter(c => c.isMesh);
+  if (!targets.length) return;
+  const hits = raycaster.intersectObjects(targets, false);
+  if (!hits.length) return;
+  const p = hits[0].point;
+  scalarField.sculptSphere(p.x, p.y, p.z, brushR, brushPow, sculptSubtract);
+  requestRebuild();
+}
+
+canvas.addEventListener('pointerdown', (e) => { sculpting = true; sculptAtEvent(e); });
+canvas.addEventListener('pointermove', (e) => { if (sculpting) sculptAtEvent(e); });
+window.addEventListener('pointerup', () => { sculpting = false; });
+
+function resize() {
+  const rect = stage.getBoundingClientRect();
+  const w = Math.max(320, rect.width | 0);
+  const h = Math.max(380, rect.height | 0);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h, false);
+}
+window.addEventListener('resize', resize);
+resize();
+
+updateSpecViz(spectrum);
+requestRebuild();
+
+function animate() {
+  params.time = performance.now() * 0.001;
+  if (liveMode && analyser && isPlaying) {
+    spectrum = spectrumFromAnalyser(analyser);
+    updateSpecViz(spectrum);
+    requestRebuild();
+  }
+  if (turntable && !sculpting) sculpture.rotation.y += 0.0025;
   controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);

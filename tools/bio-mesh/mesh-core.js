@@ -1,12 +1,14 @@
 /**
- * BIO_MESH · spettro audio → polysuperfici biomorfiche
- * analisi FFT log-spaced · deformazione sferica parametrica · linee di contorno
+ * BIO_MESH v2 · campo scalare 3D · spettro FFT → scultura isosuperficie
  */
 
-const TAU = Math.PI * 2;
+import { extractSurfaceNet } from './marching-cubes.js';
 
-function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-function lerp(a, b, t) { return a + (b - a) * t; }
+const TAU = Math.PI * 2;
+const PHI = (1 + Math.sqrt(5)) * 0.5;
+
+export function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+export function lerp(a, b, t) { return a + (b - a) * t; }
 
 function hash3(x, y, z) {
   const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453;
@@ -32,19 +34,18 @@ function noise3(x, y, z) {
   return lerp(x0, x1, uz) * 2 - 1;
 }
 
-function fbm3(x, y, z, oct = 4) {
+export function fbm3(x, y, z, oct = 5) {
   let amp = 0.5, freq = 1, sum = 0, norm = 0;
   for (let i = 0; i < oct; i++) {
     sum += noise3(x * freq, y * freq, z * freq) * amp;
     norm += amp;
-    amp *= 0.5;
-    freq *= 2.1;
+    amp *= 0.52;
+    freq *= 2.05;
   }
   return sum / norm;
 }
 
-/** Radix-2 FFT magnitudes (real input, power-of-two length). */
-function fftMagnitudes(samples) {
+export function fftMagnitudes(samples) {
   const n = samples.length;
   const re = new Float32Array(n);
   const im = new Float32Array(n);
@@ -53,9 +54,7 @@ function fftMagnitudes(samples) {
     let bit = n >> 1;
     for (; j & bit; bit >>= 1) j ^= bit;
     j ^= bit;
-    if (i < j) {
-      const tr = re[i]; re[i] = re[j]; re[j] = tr;
-    }
+    if (i < j) { const tr = re[i]; re[i] = re[j]; re[j] = tr; }
   }
   for (let len = 2; len <= n; len <<= 1) {
     const ang = (-2 * Math.PI) / len;
@@ -64,8 +63,7 @@ function fftMagnitudes(samples) {
     for (let i = 0; i < n; i += len) {
       let wRe = 1, wIm = 0;
       for (let j = 0; j < len / 2; j++) {
-        const uRe = re[i + j];
-        const uIm = im[i + j];
+        const uRe = re[i + j], uIm = im[i + j];
         const vRe = re[i + j + len / 2] * wRe - im[i + j + len / 2] * wIm;
         const vIm = re[i + j + len / 2] * wIm + im[i + j + len / 2] * wRe;
         re[i + j] = uRe + vRe;
@@ -84,34 +82,12 @@ function fftMagnitudes(samples) {
   return mag;
 }
 
-function logBandRanges(sampleRate, fftSize, bandCount) {
-  const nyquist = sampleRate * 0.5;
-  const minF = 30;
-  const ranges = [];
-  for (let b = 0; b < bandCount; b++) {
-    const t0 = b / bandCount;
-    const t1 = (b + 1) / bandCount;
-    const f0 = minF * Math.pow(nyquist / minF, t0);
-    const f1 = minF * Math.pow(nyquist / minF, t1);
-    const i0 = Math.max(1, Math.floor((f0 / nyquist) * halfBin(fftSize)));
-    const i1 = Math.max(i0 + 1, Math.ceil((f1 / nyquist) * halfBin(fftSize)));
-    ranges.push({ f0, f1, i0, i1 });
-  }
-  return ranges;
-}
-
-function halfBin(fftSize) { return fftSize >> 1; }
-
-/** Analizza buffer audio → energia per banda (N polysuperfici) + profilo interno 8 tap. */
-export function analyzeAudioBuffer(buffer, bandCount, fftSize = 2048) {
+export function analyzeAudioBufferFull(buffer, fftSize = 2048) {
   const ch = buffer.getChannelData(0);
-  const sr = buffer.sampleRate;
-  const ranges = logBandRanges(sr, fftSize, bandCount);
-  const bands = new Float32Array(bandCount);
-  const profiles = Array.from({ length: bandCount }, () => new Float32Array(8));
   const hop = fftSize >> 1;
+  const half = fftSize >> 1;
+  const acc = new Float32Array(half);
   let windows = 0;
-
   for (let off = 0; off + fftSize < ch.length; off += hop) {
     const win = new Float32Array(fftSize);
     for (let i = 0; i < fftSize; i++) {
@@ -119,240 +95,244 @@ export function analyzeAudioBuffer(buffer, bandCount, fftSize = 2048) {
       win[i] = ch[off + i] * w;
     }
     const mag = fftMagnitudes(win);
+    for (let i = 0; i < half; i++) acc[i] += mag[i] * mag[i];
     windows++;
-    for (let b = 0; b < bandCount; b++) {
-      const { i0, i1 } = ranges[b];
-      let e = 0;
-      for (let i = i0; i < i1; i++) e += mag[i] * mag[i];
-      bands[b] += e;
-      const span = i1 - i0;
-      for (let s = 0; s < 8; s++) {
-        const a = i0 + Math.floor((span * s) / 8);
-        const c = i0 + Math.floor((span * (s + 1)) / 8);
-        let se = 0;
-        for (let i = a; i < c; i++) se += mag[i] * mag[i];
-        profiles[b][s] += se;
-      }
-    }
   }
-
   if (windows < 1) windows = 1;
-  let maxB = 1e-9;
-  for (let b = 0; b < bandCount; b++) {
-    bands[b] = Math.sqrt(bands[b] / windows);
-    maxB = Math.max(maxB, bands[b]);
-    let maxP = 1e-9;
-    for (let s = 0; s < 8; s++) maxP = Math.max(maxP, profiles[b][s]);
-    for (let s = 0; s < 8; s++) profiles[b][s] = Math.sqrt(profiles[b][s] / windows) / maxP;
+  let max = 1e-9;
+  for (let i = 0; i < half; i++) {
+    acc[i] = Math.sqrt(acc[i] / windows);
+    max = Math.max(max, acc[i]);
   }
-  for (let b = 0; b < bandCount; b++) bands[b] /= maxB;
-
-  return { bands, profiles, ranges };
+  for (let i = 0; i < half; i++) acc[i] /= max;
+  return acc;
 }
 
-/** Mappa AnalyserNode frequency data → bande normalizzate. */
-export function bandsFromAnalyser(analyser, bandCount) {
+export function spectrumFromAnalyser(analyser) {
   const data = new Float32Array(analyser.frequencyBinCount);
   analyser.getFloatFrequencyData(data);
-  const sr = analyser.context.sampleRate;
-  const fftSize = analyser.fftSize;
-  const ranges = logBandRanges(sr, fftSize, bandCount);
-  const bands = new Float32Array(bandCount);
-  const profiles = Array.from({ length: bandCount }, () => new Float32Array(8));
-  let maxB = -120;
+  const out = new Float32Array(data.length);
+  let max = 1e-9;
+  for (let i = 0; i < data.length; i++) {
+    out[i] = Math.pow(10, data[i] / 20);
+    max = Math.max(max, out[i]);
+  }
+  for (let i = 0; i < out.length; i++) out[i] /= max;
+  return out;
+}
 
-  for (let b = 0; b < bandCount; b++) {
-    const { i0, i1 } = ranges[b];
-    let e = 0, n = 0;
-    for (let i = i0; i < i1; i++) {
-      const db = data[i];
-      const lin = Math.pow(10, db / 20);
-      e += lin * lin;
-      n++;
-    }
-    bands[b] = n ? Math.sqrt(e / n) : 0;
-    maxB = Math.max(maxB, bands[b]);
-    const span = i1 - i0;
-    for (let s = 0; s < 8; s++) {
-      const a = i0 + Math.floor((span * s) / 8);
-      const c = i0 + Math.floor((span * (s + 1)) / 8);
-      let se = 0, sn = 0;
-      for (let i = a; i < c; i++) {
-        const lin = Math.pow(10, data[i] / 20);
-        se += lin * lin;
-        sn++;
-      }
-      profiles[b][s] = sn ? Math.sqrt(se / sn) : 0;
-    }
+export function downsampleSpectrum(spec, targetBins) {
+  const out = new Float32Array(targetBins);
+  const n = spec.length;
+  for (let b = 0; b < targetBins; b++) {
+    const i0 = Math.floor((b / targetBins) * n);
+    const i1 = Math.max(i0 + 1, Math.floor(((b + 1) / targetBins) * n));
+    let s = 0;
+    for (let i = i0; i < i1; i++) s += spec[i];
+    out[b] = s / (i1 - i0);
   }
-  for (let b = 0; b < bandCount; b++) {
-    bands[b] = maxB > 1e-9 ? bands[b] / maxB : 0;
-    let maxP = 1e-9;
-    for (let s = 0; s < 8; s++) maxP = Math.max(maxP, profiles[b][s]);
-    for (let s = 0; s < 8; s++) profiles[b][s] /= maxP;
-  }
-  return { bands, profiles };
+  let max = 1e-9;
+  for (let i = 0; i < targetBins; i++) max = Math.max(max, out[i]);
+  for (let i = 0; i < targetBins; i++) out[i] /= max;
+  return out;
 }
 
 export function defaultParams() {
   return {
-    count: 6,
-    cols: 2,
-    spacing: 2.35,
-    radius: 0.72,
-    noise: 0.38,
-    bulge: 0.55,
-    pinch: 0.42,
-    tunnel: 0.28,
-    lobes: 3.5,
-    stretch: 0.35,
+    resolution: 56,
+    iso: 0.38,
+    detail: 1.15,
+    metaballGain: 1.05,
+    noiseGain: 0.42,
+    harmonicGain: 0.55,
+    tubeGain: 0.48,
+    cavityGain: 0.22,
     gain: 1.0,
     seed: 42,
-    uSeg: 36,
-    vSeg: 28,
-    contourU: 14,
-    contourV: 10,
+    spectralBins: 180,
+    forgeAmount: 1.0,
+    time: 0,
   };
 }
 
-function gridPos(index, count, cols, spacing) {
-  const rows = Math.ceil(count / cols);
-  const col = index % cols;
-  const row = Math.floor(index / cols);
+function binPosition(i, n, seed, scale) {
+  const t = i / Math.max(1, n - 1);
+  const theta = i * TAU / PHI + seed * 0.17;
+  const phi = Math.acos(clamp(1 - 2 * t, -1, 1));
+  const r = scale * (0.22 + 0.78 * Math.pow(t, 0.72));
+  const wobble = fbm3(i * 0.07 + seed, t * 3.1, seed * 0.5, 3) * 0.14 * scale;
   return {
-    x: (col - (cols - 1) * 0.5) * spacing,
-    y: ((rows - 1) * 0.5 - row) * spacing * 0.92,
-    z: 0,
+    x: Math.cos(theta) * Math.sin(phi) * (r + wobble),
+    y: (t - 0.5) * scale * 1.35 + fbm3(seed, i * 0.11, t * 2, 2) * 0.12 * scale,
+    z: Math.sin(theta) * Math.sin(phi) * (r + wobble)
   };
 }
 
-function deformPoint(theta, phi, idx, band, profile, p) {
-  const seed = p.seed + idx * 19.17;
-  let nx = Math.cos(phi) * Math.cos(theta);
-  let ny = Math.sin(phi);
-  let nz = Math.cos(phi) * Math.sin(theta);
-
-  const n1 = fbm3(nx * 1.4 + seed, ny * 1.4, nz * 1.4, 4);
-  const n2 = fbm3(nx * 3.1 + seed * 0.3, ny * 2.7, nz * 3.3, 3);
-
-  const bass = band * p.gain;
-  const mid = profile[3] * p.gain;
-  const treble = profile[6] * p.gain;
-  const detail = profile[1] * 0.6 + profile[5] * 0.4;
-
-  const lobePhase = theta * p.lobes + phi * (1.2 + detail) + seed;
-  const pinchAmt = 1 - p.pinch * (0.35 + treble * 0.65) * (0.55 + 0.45 * Math.abs(Math.sin(lobePhase)));
-  const tunnel = p.tunnel * (0.25 + mid * 0.75) * (0.5 + 0.5 * Math.sin(phi * (2 + idx * 0.17) + seed));
-  const bulge = p.bulge * (0.2 + bass * 0.8) + p.noise * (n1 * 0.65 + n2 * 0.35);
-
-  nx *= 1 + p.stretch * (bass - 0.35) * 0.9;
-  ny *= 1 + p.stretch * (mid - 0.35) * 1.1;
-  nz *= 1 + p.stretch * (treble - 0.35) * 0.8;
-
-  const len = Math.hypot(nx, ny, nz) || 1;
-  nx /= len; ny /= len; nz /= len;
-
-  let r = p.radius * (1 + bulge) * pinchAmt;
-  r -= tunnel * Math.abs(Math.sin(theta * 0.5 + seed)) * (0.35 + 0.65 * Math.abs(nz));
-  r += detail * p.noise * 0.12 * n2;
-
-  return [nx * r, ny * r, nz * r];
+function addMetaball(field, nx, ny, nz, px, py, pz, radius, strength, origin, cellSize) {
+  const ox = origin[0], oy = origin[1], oz = origin[2];
+  const r2 = radius * radius;
+  const x0 = Math.max(0, Math.floor((px - radius - ox) / cellSize));
+  const x1 = Math.min(nx - 1, Math.ceil((px + radius - ox) / cellSize));
+  const y0 = Math.max(0, Math.floor((py - radius - oy) / cellSize));
+  const y1 = Math.min(ny - 1, Math.ceil((py + radius - oy) / cellSize));
+  const z0 = Math.max(0, Math.floor((pz - radius - oz) / cellSize));
+  const z1 = Math.min(nz - 1, Math.ceil((pz + radius - oz) / cellSize));
+  const idx = (x, y, z) => x + y * nx + z * nx * ny;
+  for (let z = z0; z <= z1; z++) {
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const wx = ox + x * cellSize;
+        const wy = oy + y * cellSize;
+        const wz = oz + z * cellSize;
+        const dx = wx - px, dy = wy - py, dz = wz - pz;
+        const d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 > r2 * 2.5) continue;
+        field[idx(x, y, z)] += strength * Math.exp(-d2 / (r2 * 0.55 + 0.001));
+      }
+    }
+  }
 }
 
-/** Genera vertici/indici per una polysuperficie. */
-export function buildPolysurfaceGeometry(idx, band, profile, params) {
-  const pos = gridPos(idx, params.count, params.cols, params.spacing);
-  const uSeg = params.uSeg | 0;
-  const vSeg = params.vSeg | 0;
-  const verts = [];
-  const indices = [];
+function addTube(field, nx, ny, nz, ax, ay, az, bx, by, bz, radius, strength, origin, cellSize, steps) {
+  for (let s = 0; s <= steps; s++) {
+    const t = s / steps;
+    addMetaball(field, nx, ny, nz,
+      lerp(ax, bx, t), lerp(ay, by, t), lerp(az, bz, t),
+      radius, strength * 0.55, origin, cellSize);
+  }
+}
 
-  for (let vi = 0; vi <= vSeg; vi++) {
-    const v = vi / vSeg;
-    const phi = (v - 0.5) * Math.PI;
-    for (let ui = 0; ui <= uSeg; ui++) {
-      const u = ui / uSeg;
-      const theta = u * TAU;
-      const [lx, ly, lz] = deformPoint(theta, phi, idx, band, profile, params);
-      verts.push(pos.x + lx, pos.y + ly, pos.z + lz);
+export class ScalarField {
+  constructor(resolution = 56) {
+    this.setResolution(resolution);
+    this.sculpt = null;
+    this.origin = [-1, -1, -1];
+    this.cellSize = 2 / (resolution - 1);
+  }
+
+  setResolution(res) {
+    this.res = res | 0;
+    this.n = this.res;
+    this.field = new Float32Array(this.n * this.n * this.n);
+    this.sculpt = new Float32Array(this.field.length);
+    this.cellSize = 2 / (this.n - 1);
+    this.origin = [-1, -1, -1];
+  }
+
+  clearSculpt() {
+    this.sculpt.fill(0);
+  }
+
+  sculptSphere(wx, wy, wz, radius, strength, subtract = false) {
+    const ox = this.origin[0], oy = this.origin[1], oz = this.origin[2];
+    const cs = this.cellSize;
+    const nx = this.n, ny = this.n, nz = this.n;
+    const x0 = Math.max(0, Math.floor((wx - radius - ox) / cs));
+    const x1 = Math.min(nx - 1, Math.ceil((wx + radius - ox) / cs));
+    const y0 = Math.max(0, Math.floor((wy - radius - oy) / cs));
+    const y1 = Math.min(ny - 1, Math.ceil((wy + radius - oy) / cs));
+    const z0 = Math.max(0, Math.floor((wz - radius - oz) / cs));
+    const z1 = Math.min(nz - 1, Math.ceil((wz + radius - oz) / cs));
+    const r2 = radius * radius;
+    const idx = (x, y, z) => x + y * nx + z * nx * ny;
+    for (let z = z0; z <= z1; z++) {
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          const px = ox + x * cs;
+          const py = oy + y * cs;
+          const pz = oz + z * cs;
+          const d2 = (px - wx) ** 2 + (py - wy) ** 2 + (pz - wz) ** 2;
+          if (d2 > r2) continue;
+          const t = 1 - d2 / r2;
+          const w = t * t * strength;
+          const i = idx(x, y, z);
+          if (subtract) this.sculpt[i] -= w;
+          else this.sculpt[i] += w;
+        }
+      }
     }
   }
 
-  const row = uSeg + 1;
-  for (let vi = 0; vi < vSeg; vi++) {
-    for (let ui = 0; ui < uSeg; ui++) {
-      const a = vi * row + ui;
-      const b = a + 1;
-      const c = a + row;
-      const d = c + 1;
-      indices.push(a, c, b, b, c, d);
+  buildFromSpectrum(spectrum, params) {
+    const p = params;
+    const nx = this.n, ny = this.n, nz = this.n;
+    const field = this.field;
+    field.fill(0);
+    const idx = (x, y, z) => x + y * nx + z * nx * ny;
+    const bins = downsampleSpectrum(spectrum, p.spectralBins | 0);
+    const n = bins.length;
+    const origin = this.origin;
+    const cs = this.cellSize;
+    const seed = p.seed;
+    const forge = clamp(p.forgeAmount, 0, 1);
+    const activeBins = Math.max(3, Math.floor(n * forge));
+    const scale = 0.92;
+    const positions = [];
+
+    for (let i = 0; i < activeBins; i++) {
+      const e = Math.pow(bins[i] * p.gain, 1.35);
+      const pos = binPosition(i, n, seed, scale);
+      positions.push(pos);
+      const rad = 0.04 + e * 0.11 * p.metaballGain * p.detail;
+      const str = 0.15 + e * 0.85 * p.metaballGain;
+      addMetaball(field, nx, ny, nz, pos.x, pos.y, pos.z, rad, str, origin, cs);
+      if (i > 0 && p.tubeGain > 0) {
+        const prev = positions[i - 1];
+        const tubeR = 0.025 + ((e + bins[i - 1]) * 0.5) * 0.06 * p.tubeGain;
+        addTube(field, nx, ny, nz,
+          prev.x, prev.y, prev.z, pos.x, pos.y, pos.z,
+          tubeR, str * p.tubeGain, origin, cs, 6);
+      }
+    }
+
+    const bass = bins.slice(0, Math.floor(n * 0.12)).reduce((a, b) => a + b, 0) / Math.max(1, Math.floor(n * 0.12));
+    const mid = bins.slice(Math.floor(n * 0.12), Math.floor(n * 0.45)).reduce((a, b) => a + b, 0) / Math.max(1, Math.floor(n * 0.33));
+    const treble = bins.slice(Math.floor(n * 0.45)).reduce((a, b) => a + b, 0) / Math.max(1, n - Math.floor(n * 0.45));
+
+    for (let z = 0; z < nz; z++) {
+      for (let y = 0; y < ny; y++) {
+        for (let x = 0; x < nx; x++) {
+          const wx = origin[0] + x * cs;
+          const wy = origin[1] + y * cs;
+          const wz = origin[2] + z * cs;
+          const r = Math.hypot(wx, wy * 0.85, wz);
+          const forgeMask = clamp((forge * 1.35 - r * 0.55) * 2.2, 0, 1);
+          if (forgeMask <= 0) continue;
+
+          let harm = 0;
+          for (let h = 0; h < 7; h++) {
+            const freq = 0.8 + h * 1.6 + bass * 2;
+            harm += Math.sin(wx * freq + seed + p.time * (0.4 + h * 0.08)) *
+                    Math.cos(wy * (freq * 0.9) + p.time * 0.3) *
+                    Math.sin(wz * (freq * 1.1) + h) * (0.12 / (h + 1));
+          }
+          harm *= p.harmonicGain * mid;
+
+          const n1 = fbm3(wx * 2.1 + seed, wy * 2.0, wz * 2.2 + p.time * 0.15, 5);
+          const n2 = fbm3(wx * 5.5, wy * 4.8, wz * 5.2, 4);
+          const noiseVal = (n1 * 0.65 + n2 * 0.35) * p.noiseGain * (0.35 + treble * 0.65);
+          const cavity = Math.exp(-r * r * (2.5 - bass * 1.2)) * p.cavityGain * treble;
+
+          let v = field[idx(x, y, z)] + (harm + noiseVal) * forgeMask - cavity * forgeMask;
+          v += this.sculpt[idx(x, y, z)];
+          field[idx(x, y, z)] = v;
+        }
+      }
     }
   }
 
-  return { verts, indices, position: pos };
+  extractMesh(iso) {
+    return extractSurfaceNet(
+      this.field, this.n, this.n, this.n,
+      iso, this.origin, this.cellSize
+    );
+  }
 }
 
-/** Linee di contorno stile disegno tecnico (meridiani + paralleli). */
-export function buildContourLines(idx, band, profile, params) {
-  const pos = gridPos(idx, params.count, params.cols, params.spacing);
-  const lines = [];
-  const cu = params.contourU | 0;
-  const cv = params.contourV | 0;
-
-  for (let i = 0; i <= cu; i++) {
-    const u = i / cu;
-    const theta = u * TAU;
-    const seg = [];
-    for (let j = 0; j <= cv; j++) {
-      const v = j / cv;
-      const phi = (v - 0.5) * Math.PI;
-      const [x, y, z] = deformPoint(theta, phi, idx, band, profile, params);
-      seg.push(pos.x + x, pos.y + y, pos.z + z);
-    }
-    lines.push(seg);
+export function neutralSpectrum(bins = 180) {
+  const s = new Float32Array(bins);
+  for (let i = 0; i < bins; i++) {
+    s[i] = 0.15 + 0.85 * Math.pow(Math.sin(i * 0.08) * 0.5 + 0.5, 1.6) * Math.exp(-i / bins * 0.8);
   }
-  for (let j = 1; j < cv; j++) {
-    const v = j / cv;
-    const phi = (v - 0.5) * Math.PI;
-    const seg = [];
-    for (let i = 0; i <= cu; i++) {
-      const u = i / cu;
-      const theta = u * TAU;
-      const [x, y, z] = deformPoint(theta, phi, idx, band, profile, params);
-      seg.push(pos.x + x, pos.y + y, pos.z + z);
-    }
-    lines.push(seg);
-  }
-  return lines;
-}
-
-export function buildSceneData(bands, profiles, params) {
-  const count = params.count | 0;
-  const allVerts = [];
-  const allIdx = [];
-  const contours = [];
-  let vOff = 0;
-
-  for (let i = 0; i < count; i++) {
-    const band = bands[i] ?? 0.35;
-    const profile = profiles[i] ?? new Float32Array(8);
-    const { verts, indices } = buildPolysurfaceGeometry(i, band, profile, params);
-    for (let k = 0; k < indices.length; k++) allIdx.push(indices[k] + vOff);
-    for (let k = 0; k < verts.length; k++) allVerts.push(verts[k]);
-    vOff += verts.length / 3;
-    contours.push(...buildContourLines(i, band, profile, params));
-  }
-
-  return { allVerts, allIdx, contours };
-}
-
-export function neutralBands(count) {
-  const bands = new Float32Array(count);
-  const profiles = Array.from({ length: count }, (_, i) => {
-    const p = new Float32Array(8);
-    for (let s = 0; s < 8; s++) p[s] = 0.35 + 0.15 * Math.sin(i * 0.9 + s * 0.7);
-    return p;
-  });
-  for (let i = 0; i < count; i++) bands[i] = 0.35 + 0.25 * Math.sin(i * 1.1);
-  return { bands, profiles };
+  return s;
 }
