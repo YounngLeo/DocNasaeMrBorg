@@ -75,6 +75,8 @@
   let wsReady = false;
   let wsReconnectTimer = null;
   let wsClientId = '';
+  let portalWsBaseUrl = '';
+  let portalWsConfigPromise = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -158,20 +160,32 @@
     try { return JSON.stringify(msg); } catch (e) { return null; }
   }
 
+  function loadPortalWsConfig() {
+    if (portalWsConfigPromise) return portalWsConfigPromise;
+    portalWsConfigPromise = fetch('/tools/cuore-statico/portal-ws.json?t=' + Date.now())
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        if (j && j.wsBase) portalWsBaseUrl = String(j.wsBase).trim().replace(/\/$/, '');
+        return portalWsBaseUrl;
+      })
+      .catch(function () { return ''; });
+    return portalWsConfigPromise;
+  }
+
   function portalWsBase() {
     const meta = document.querySelector('meta[name="portal-ws"]');
     if (meta && meta.content && meta.content.trim()) return meta.content.trim().replace(/\/$/, '');
-    if (location.protocol === 'https:') return 'wss://' + location.host;
-    if (location.protocol === 'http:') return 'ws://' + location.host;
+    if (portalWsBaseUrl) return portalWsBaseUrl;
     return '';
   }
 
   function buildWsUrl() {
-    const base = portalWsBase();
+    let base = portalWsBase();
     if (!base || !roomCode) return '';
+    if (!/\/ws$/i.test(base)) base += '/ws';
     const peer = encodeURIComponent(myId || wsClientId || 'pending');
     const name = encodeURIComponent(myName || 'OP');
-    return base + '/portal/ws?room=' + encodeURIComponent(roomCode.toUpperCase()) +
+    return base + '?room=' + encodeURIComponent(roomCode.toUpperCase()) +
       '&peer=' + peer + '&name=' + name + '&host=' + (isHost ? '1' : '0');
   }
 
@@ -230,41 +244,45 @@
 
   function connectPortalWs() {
     if (!portalOpen || !roomCode) return;
-    if (!wsClientId) wsClientId = 'ws-' + randCode() + randCode();
-    const url = buildWsUrl();
-    if (!url) {
-      console.warn('portal: URL WebSocket non configurata');
-      return;
-    }
-    disconnectPortalWs(false);
-    try {
-      portalWs = new WebSocket(url);
-    } catch (e) {
-      console.warn('portal ws connect', e);
-      scheduleWsReconnect();
-      return;
-    }
-    portalWs.onopen = function () {
-      wsReady = true;
-      setStatus('// WS · room ' + roomCode);
-      onWsReady();
-    };
-    portalWs.onmessage = function (ev) {
-      const msg = parseData(ev.data);
-      if (!msg || msg.type === 'ws-join') return;
-      handleData(msg, msg.from || msg.id || 'ws');
-    };
-    portalWs.onclose = function () {
-      wsReady = false;
-      renderPeerList();
-      if (portalOpen) {
-        setStatus('// WS OFF · riconnessione…');
-        scheduleWsReconnect();
+    loadPortalWsConfig().then(function () {
+      if (!portalOpen || !roomCode) return;
+      if (!wsClientId) wsClientId = 'ws-' + randCode() + randCode();
+      const url = buildWsUrl();
+      if (!url) {
+        console.warn('portal: configura portal-ws.json (wsBase)');
+        setStatus('// WS · config mancante · portal-ws.json');
+        return;
       }
-    };
-    portalWs.onerror = function () {
-      console.warn('portal ws error — verifica deploy Functions su Cloudflare');
-    };
+      disconnectPortalWs(false);
+      try {
+        portalWs = new WebSocket(url);
+      } catch (e) {
+        console.warn('portal ws connect', e);
+        scheduleWsReconnect();
+        return;
+      }
+      portalWs.onopen = function () {
+        wsReady = true;
+        setStatus('// WS · room ' + roomCode);
+        onWsReady();
+      };
+      portalWs.onmessage = function (ev) {
+        const msg = parseData(ev.data);
+        if (!msg || msg.type === 'ws-join') return;
+        handleData(msg, msg.from || msg.id || 'ws');
+      };
+      portalWs.onclose = function () {
+        wsReady = false;
+        renderPeerList();
+        if (portalOpen) {
+          setStatus('// WS OFF · riconnessione…');
+          scheduleWsReconnect();
+        }
+      };
+      portalWs.onerror = function () {
+        console.warn('portal ws error — verifica relay cuore-portal-relay su Cloudflare Workers');
+      };
+    });
   }
 
   function connSend(conn, msg) {
@@ -583,7 +601,7 @@
     if (syncEl) {
       syncEl.textContent = '// ws:' + (wsReady ? 'on' : 'off') +
         ' · rx:' + trailRxCount + '/' + dataRxCount +
-        ' · portal.js v10';
+        ' · portal.js v11';
     }
   }
 
@@ -1474,7 +1492,7 @@ async function joinPortal(code) {
     window.dispatchEvent(new Event('resize'));
     wireBpmSlider();
     const syncEl = $('portalSyncLine');
-    if (syncEl) syncEl.textContent = '// portal.js v10 · CREA o ENTRA per attivare ws';
+    if (syncEl) syncEl.textContent = '// portal.js v11 · CREA o ENTRA · relay Workers';
   }
 
   global.CuorePortal = {

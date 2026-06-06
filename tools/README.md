@@ -38,12 +38,21 @@ ogni tool è un file `tool.html` autonomo. Per aggiornarne uno:
 
 ### PORTAL sync (CUORE_STATICO)
 
-Trail e BPM usano **WebSocket** su `/portal/ws` (Cloudflare Pages Functions + Durable Object).
+Trail e BPM usano **WebSocket** via Worker dedicato `cuore-portal-relay` (non Pages Functions).
 
-- `wrangler.toml` in root: il campo `name` deve coincidere con il **nome progetto Pages** in dashboard.
-- Al primo deploy con DO, Cloudflare applica la migration `PortalRoom` automaticamente.
-- In UI: `ws:on` = sync attiva · `rx` che sale = messaggi ricevuti.
-- Audio resta su PeerJS/WebRTC.
+1. **Secrets GitHub** (Settings → Secrets → Actions):
+   - `CLOUDFLARE_API_TOKEN` — token con permesso Workers + Durable Objects
+   - `CLOUDFLARE_ACCOUNT_ID` — ID account Cloudflare
+2. Push su `main` → workflow `.github/workflows/deploy-portal-relay.yml` deploya il Worker.
+3. Verifica relay: `https://cuore-portal-relay.<tuo-subdomain>.workers.dev/ws?room=TEST` → JSON `{ok:true,...}`.
+4. Aggiorna `tools/cuore-statico/portal-ws.json` con il tuo `wsBase` (es. `wss://cuore-portal-relay.younngleo.workers.dev`).
+5. In UI: riga **SYNC** → `ws:on` · `portal.js v11`. Audio resta su PeerJS.
+
+Deploy manuale Worker (alternativa):
+
+```bash
+cd workers/cuore-portal-relay && npx wrangler deploy
+```
 
 ## aggiungere un terzo tool
 

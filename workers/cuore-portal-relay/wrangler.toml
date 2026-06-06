@@ -1,0 +1,11 @@
+name = "cuore-portal-relay"
+main = "src/index.js"
+compatibility_date = "2024-04-03"
+
+[[durable_objects.bindings]]
+name = "PORTAL_ROOM"
+class_name = "PortalRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["PortalRoom"]
