@@ -284,6 +284,7 @@
     flex-shrink: 0;
   }
   .tab.active { opacity: 1; border-bottom-color: var(--fg); }
+  .tab.purple.active { border-bottom-color: var(--purple); color: var(--purple); }
 
   .tabpanel { display: none; }
   .tabpanel.active { display: block; animation: fade 0.3s; }
@@ -367,6 +368,73 @@
   }
   .banner.show { display: block; animation: blink 1.5s infinite; }
 
+  .studio-layout {
+    display: block;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .studio-layout.portal-open {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 14px;
+    max-width: 1280px;
+    align-items: start;
+  }
+  .studio-main { min-width: 0; }
+  .portal-rail {
+    position: sticky;
+    top: 12px;
+    border: 1px solid var(--purple);
+    background: rgba(8, 8, 8, 0.96);
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+  }
+  .portal-rail-head {
+    padding: 10px 12px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--purple);
+    border-bottom: 1px solid var(--dim);
+  }
+  #portalCanvas {
+    display: block;
+    width: 100%;
+    flex: 1;
+    min-height: 360px;
+    background: #050605;
+  }
+  .portal-peers {
+    border-top: 1px solid var(--dim);
+    padding: 8px 10px;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 9px;
+  }
+  .portal-peer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    letter-spacing: 1px;
+  }
+  .portal-peer i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .portal-room-code {
+    font-size: 22px;
+    letter-spacing: 6px;
+    color: var(--purple);
+    margin: 8px 0;
+  }
+  @media (max-width: 960px) {
+    .studio-layout.portal-open { grid-template-columns: 1fr; }
+    .portal-rail { position: relative; top: 0; }
+  }
+
   main { animation: fade 0.6s ease; }
 </style>
 </head>
@@ -376,6 +444,8 @@
   src="data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"
   style="display:none"></audio>
 
+<div class="studio-layout" id="studioLayout">
+<div class="studio-main">
 <main>
 
 <div class="breadcrumb">
@@ -389,7 +459,7 @@
 <header>
   <div class="brand">DOCTNASA&MRBORG // STUDIO_v05</div>
   <div class="title">CUORE_STATICO</div>
-  <div class="subtitle">synth.sampler.recorder.dub_engine</div>
+  <div class="subtitle">synth.sampler.recorder.dub_engine · portal_lan</div>
 </header>
 
 <div id="resumeBanner" class="banner">⚠ AUDIO SOSPESO — TOCCA QUI PER RIAVVIARE</div>
@@ -426,6 +496,7 @@
   <button class="tab"        data-tab="sampler">SAMPLER</button>
   <button class="tab"        data-tab="pattern">PATTERN</button>
   <button class="tab"        data-tab="fx">FX</button>
+  <button class="tab purple" data-tab="portal">PORTAL</button>
   <button class="tab"        data-tab="rec">REC</button>
 </div>
 
@@ -895,6 +966,48 @@
   </section>
 </div>
 
+<!-- ============== TAB: PORTAL ============== -->
+<div class="tabpanel" id="tab-portal">
+
+  <section class="section purple">
+    <div class="section-title">// PORTAL CONdiviso · LAN / RETE</div>
+    <p style="font-size:10px;line-height:1.65;opacity:0.85;margin-bottom:10px">
+      Ogni partecipante suona il proprio <b>CUORE_STATICO</b>; i mix si <b>sommano</b> in tempo reale.
+      La colonna laterale traccia le <b>strade sonore</b> — ogni utente lascia un percorso nello spazio colore
+      guidato dallo spettro del proprio pattern.
+    </p>
+    <div class="slider-block">
+      <div class="row"><span class="label">NOME_OPERATORE</span></div>
+      <input type="text" id="portalName" maxlength="16" placeholder="OP_001"
+        style="width:100%;font-family:inherit;background:#080808;border:1px solid var(--dim);color:var(--fg);padding:8px;letter-spacing:2px">
+    </div>
+    <div class="slider-block" style="margin-top:10px">
+      <div class="row"><span class="label">CODICE_STANZA</span><span class="value" id="portalStatus">// OFFLINE</span></div>
+      <input type="text" id="portalJoinCode" maxlength="8" placeholder="XXXX"
+        style="width:100%;font-family:inherit;background:#080808;border:1px solid var(--dim);color:var(--purple);padding:8px;letter-spacing:4px;text-transform:uppercase">
+    </div>
+    <div id="portalRoomWrap" hidden style="margin-top:10px">
+      <div class="row"><span class="label">STANZA</span></div>
+      <div class="portal-room-code" id="portalRoomCode">----</div>
+      <div style="font-size:9px;opacity:0.55;letter-spacing:1px">Condividi il codice con chi è sulla stessa rete</div>
+    </div>
+  </section>
+
+  <section class="section purple">
+    <div class="section-title">// CONNESSIONE</div>
+    <div class="grid-2" style="margin-bottom:8px">
+      <button id="portalHostBtn" class="purple">◆ CREA PORTAL</button>
+      <button id="portalJoinBtn" class="purple">→ ENTRA</button>
+    </div>
+    <button id="portalLeaveBtn" class="small full" style="margin-top:6px">⎋ ESCI DAL PORTAL</button>
+    <div style="font-size:9px;opacity:0.55;line-height:1.6;margin-top:10px">
+      Usa <b>CREA</b> sul dispositivo host (primo della sessione). Gli altri inseriscono il codice e premo <b>ENTRA</b>.
+      Richiede rete locale o internet · segnale via WebRTC (PeerJS).
+    </div>
+  </section>
+
+</div>
+
 <!-- ============== TAB: REC ============== -->
 <div class="tabpanel" id="tab-rec">
 
@@ -929,7 +1042,16 @@
 </footer>
 
 </main>
+</div>
 
+<aside class="portal-rail" id="portalRail" hidden>
+  <div class="portal-rail-head">// PORTAL · TRACCE CONDIVISE · SPAZIO COLORE</div>
+  <canvas id="portalCanvas" width="340" height="640"></canvas>
+  <div class="portal-peers" id="portalPeers"></div>
+</aside>
+</div>
+
+<script src="portal.js"></script>
 <script>
 'use strict';
 
@@ -1841,6 +1963,12 @@ async function initAudio() {
   const recTap = new Tone.Gain(1);
   master.connect(recTap);
   recTap.connect(recDest);
+  const portalSend = Tone.context.createMediaStreamDestination();
+  const portalTap = new Tone.Gain(1);
+  master.connect(portalTap);
+  portalTap.connect(portalSend);
+  const portalAna = new Tone.Analyser('fft', 32);
+  master.connect(portalAna);
 
   const reverb = new Tone.Freeverb({ roomSize: 0.92, dampening: 3000, wet: 1 }).connect(master);
   const dubDelay = new Tone.FeedbackDelay({ delayTime: '8n.', feedback: 0.65, wet: 1 }).connect(master);
@@ -1904,7 +2032,7 @@ async function initAudio() {
   noiseNodes.last.connect(noiseGain);
 
   A = {
-    limiter, meter, master, recDest, recTap,
+    limiter, meter, master, recDest, recTap, portalSend, portalTap, portalAna,
     reverb, dubDelay, dubFilter, delayIn, filterIn, reverbIn,
     fxTrackSends,
     padGain, leadGain, noiseGain, sampleGain, bassGain, drumsGain,
@@ -2141,6 +2269,13 @@ async function togglePlay() {
   const btn = $('playBtn');
   btn.textContent = isPlaying ? '◼ STOP' : '▶ PLAY';
   btn.classList.toggle('playing', isPlaying);
+  if (window.CuorePortal && CuorePortal.isOpen()) {
+    CuorePortal.onTransportChange({
+      playing: isPlaying,
+      beat16: beat16,
+      bpm: parseFloat($('bpm').value) || 76
+    });
+  }
 }
 $('playBtn').addEventListener('click', togglePlay);
 
@@ -3112,6 +3247,53 @@ loadSynthParamsToUI();
 refreshPresetList();
 loadRecordings();
 renderPatternGrid();
+
+function applyPortalTransport(msg) {
+  if (!msg) return;
+  if (msg.bpm && $('bpm')) $('bpm').value = msg.bpm;
+  if (msg.playing && !isPlaying) {
+    beat16 = msg.beat16 || 0;
+    chordIdx = 0;
+    bassIdx = 0;
+    isPlaying = true;
+    startTicker();
+    $('stateVal').textContent = '▶ TRANSMITTING';
+    $('playBtn').textContent = '◼ STOP';
+    $('playBtn').classList.add('playing');
+  } else if (!msg.playing && isPlaying) {
+    isPlaying = false;
+    stopTicker();
+    $('chordVal').textContent = '---';
+    $('stateVal').textContent = '◼ STBY';
+    $('playBtn').textContent = '▶ PLAY';
+    $('playBtn').classList.remove('playing');
+  } else if (msg.playing && isPlaying && typeof msg.beat16 === 'number') {
+    beat16 = msg.beat16;
+    updatePatternPlayhead();
+  }
+}
+
+if (window.CuorePortal) {
+  CuorePortal.bind({
+    Tone: Tone,
+    initAudio: initAudio,
+    get master() { return A ? A.master : null; },
+    getSendStream: function () { return A && A.portalSend ? A.portalSend.stream : null; },
+    getSpectrum: function () { return A && A.portalAna ? A.portalAna.getValue() : new Float32Array(32); },
+    getActiveLayers: function () {
+      return Object.keys(layers).filter(function (k) { return layers[k]; });
+    },
+    isPlaying: function () { return isPlaying; },
+    getTransportState: function () {
+      return {
+        playing: isPlaying,
+        beat16: beat16,
+        bpm: parseFloat($('bpm').value) || 76
+      };
+    },
+    applyTransport: applyPortalTransport
+  });
+}
 
 </script>
 </body>
