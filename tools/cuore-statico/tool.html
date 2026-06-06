@@ -1093,7 +1093,7 @@
 </aside>
 </div>
 
-<script src="portal.js?v=4"></script>
+<script src="portal.js?v=5"></script>
 <script>
 'use strict';
 
@@ -2096,6 +2096,14 @@ async function initAudio() {
   ensureSampleVoicePool();
   applyAllSliders();
   applyFxTrackSendsAll();
+}
+
+function refreshPortalSendStream() {
+  if (!A || !A.portalTap) return null;
+  try { A.portalTap.disconnect(); } catch (e) {}
+  A.portalSend = Tone.context.createMediaStreamDestination();
+  A.portalTap.connect(A.portalSend);
+  return A.portalSend.stream;
 }
 
 function buildPadSynth() {
@@ -3374,6 +3382,7 @@ if (window.CuorePortal) {
     get limiter() { return A ? A.limiter : null; },
     get portalRemoteIn() { return A ? A.portalRemoteIn : null; },
     get master() { return A ? A.master : null; },
+    refreshPortalSendStream: refreshPortalSendStream,
     getSendStream: function () {
       if (A && A.portalSend && A.portalSend.stream) return A.portalSend.stream;
       if (A && A.recDest && A.recDest.stream) return A.recDest.stream;

@@ -65,6 +65,8 @@
   let animId = null;
   let trailTimer = null;
   let selfTrail = null;
+  let trailRxCount = 0;
+  let syncPulseCount = 0;
   const peerReadyWaiters = [];
   const pendingData = [];
 
@@ -72,7 +74,15 @@
 
   function parseData(raw) {
     if (!raw) return null;
-    if (typeof raw === 'object') return raw;
+    if (typeof raw === 'object' && !(raw instanceof ArrayBuffer) && !(raw instanceof Uint8Array) && raw.type) {
+      return raw;
+    }
+    if (raw instanceof ArrayBuffer) {
+      try { return JSON.parse(new TextDecoder().decode(raw)); } catch (e) { return null; }
+    }
+    if (raw instanceof Uint8Array) {
+      try { return JSON.parse(new TextDecoder().decode(raw)); } catch (e) { return null; }
+    }
     if (typeof raw === 'string') {
       try { return JSON.parse(raw); } catch (e) { return null; }
     }
@@ -160,7 +170,7 @@
     if (!peer || !peerId || peerId === myId || peerId !== hostPeerId()) return;
     if (dataConns.has(peerId)) return;
     try {
-      setupDataConn(peer.connect(peerId, { reliable: true, serialization: 'json' }));
+      setupDataConn(peer.connect(peerId, { reliable: true }));
     } catch (e) {
       console.warn('connectDataTo', peerId, e);
     }
@@ -210,9 +220,13 @@
     if (bpmSyncTimer) clearInterval(bpmSyncTimer);
     bpmSyncTimer = setInterval(function () {
       if (!portalOpen || !myId) return;
-      if (isHost) pushAuthoritativeBpm(portalBpmNow(), true);
-      else requestBpmSync();
-    }, 1500);
+      if (isHost) {
+        pushAuthoritativeBpm(portalBpmNow(), true);
+        sendRoster();
+      } else {
+        requestBpmSync();
+      }
+    }, 2000);
   }
 
   function requestBpmSync() {
@@ -476,7 +490,8 @@
         p.name + local + aud + '</div>';
     }).join('') +
       '<div class="portal-peer" style="opacity:0.55;margin-top:6px">// stream attivi: ' +
-      sessionStreamCount() + ' · operatori: ' + rows.length + ' · data: ' + dataConns.size + '</div>';
+      sessionStreamCount() + ' · operatori: ' + rows.length + ' · data: ' + dataConns.size +
+      ' · rx:' + trailRxCount + '</div>';
   }
 
   function sendRoster() {
@@ -501,12 +516,24 @@
     u.playing = !!msg.playing;
     if (msg.entryAngle != null) u.entryAngle = msg.entryAngle;
     if (msg.hasAudio != null) u.hasAudio = !!msg.hasAudio;
-    const bins = new Float32Array(msg.bins || []);
-    const pos = (msg.x != null && msg.y != null)
-      ? { x: msg.x, y: msg.y, z: msg.z }
-      : null;
-    advanceTrail(u, bins, msg.layers || [], pos);
+    if (msg.trailTail && msg.trailTail.length) {
+      u.trail = msg.trailTail.slice(-TRAIL_MAX);
+      if (msg.x != null) u.x = msg.x;
+      if (msg.y != null) u.y = msg.y;
+      if (msg.z != null) u.z = msg.z;
+    } else if (msg.x != null && msg.y != null) {
+      const bins = new Float32Array(msg.bins || []);
+      advanceTrail(u, bins, msg.layers || [], { x: msg.x, y: msg.y, z: msg.z });
+    }
     u.lastSeen = Date.now();
+    trailRxCount++;
+  }
+
+  function applySyncMessage(msg) {
+    applyTrailMessage(msg);
+    if (msg.bpm != null && Math.round(msg.bpm) !== portalBpmNow()) {
+      applyRemoteBpm(msg.bpm);
+    }
   }
 
   function handleData(msg, fromId) {
@@ -551,8 +578,9 @@
       return;
     }
 
-    if (msg.type === 'trail') {
-      applyTrailMessage(msg);
+    if (msg.type === 'trail' || msg.type === 'sync') {
+      if (msg.type === 'sync') applySyncMessage(msg);
+      else applyTrailMessage(msg);
       if (isHost) fanout(msg, fromId);
       renderPeerList();
       return;
@@ -743,16 +771,12 @@
   }
 
   function hardReconnectAllAudio() {
-    const ids = Array.from(remoteStreams.keys());
-    ids.forEach(removeRemotePeer);
-    mediaCalls.forEach(function (call) {
-      try { call.close(); } catch (e) {}
-    });
-    mediaCalls.clear();
-    activeCalls.clear();
+    replaceSendTracks();
     if (isHost) {
-      peers.forEach(function (_, id) { forceMeshCall(id); });
-    } else {
+      peers.forEach(function (_, id) {
+        if (!hasLiveRemoteStream(id)) forceMeshCall(id);
+      });
+    } else if (!hasLiveRemoteStream(hostPeerId())) {
       meshCall(hostPeerId());
     }
   }
@@ -772,19 +796,12 @@
     remoteStreams.set(peerId, stream);
     stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
 
-    try {
-      const route = routeRemoteStream(stream);
-      if (route) remoteGains.set(peerId, route);
-    } catch (e) {
-      console.warn('portal routeRemoteStream', e);
-    }
-
     const aud = document.createElement('audio');
     aud.autoplay = true;
     aud.playsInline = true;
     aud.setAttribute('playsinline', '');
     aud.volume = 1;
-    aud.muted = true;
+    aud.muted = false;
     aud.srcObject = stream;
     aud.id = 'portal-aud-' + String(peerId).slice(-8);
     aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
@@ -845,9 +862,7 @@
   function sendBpm(bpm) {
     const v = Math.round(bpm);
     if (isHost) pushAuthoritativeBpm(v, true);
-    else dataConns.forEach(function (conn) {
-      if (conn.open) try { conn.send({ type: 'bpm-relay', bpm: v, from: myId }); } catch (e) {}
-    });
+    else sendData({ type: 'bpm-relay', bpm: v, from: myId });
   }
 
   function wireBpmSlider() {
@@ -989,6 +1004,7 @@
   async function ensureLocalStream() {
     if (studio.unlockAudio) await studio.unlockAudio();
     await studio.initAudio();
+    if (studio.refreshPortalSendStream) studio.refreshPortalSendStream();
     const s = studio.getSendStream && studio.getSendStream();
     if (!s) return null;
     localStream = s;
@@ -1067,7 +1083,7 @@ async function joinPortal(code) {
       whenPeerReady(function () {
         if (selfTrail) selfTrail.id = myId;
         const hid = hostPeerId();
-        setupDataConn(peer.connect(hid, { reliable: true, serialization: 'json' }));
+        setupDataConn(peer.connect(hid, { reliable: true }));
         meshCall(hid);
         setStatus('// JOIN · ' + code);
         setTimeout(function () { meshCall(hid); }, 800);
@@ -1120,30 +1136,34 @@ async function joinPortal(code) {
     renderPeerList();
   }
 
+  function buildSyncPayload() {
+    return {
+      type: 'sync',
+      id: myId,
+      name: myName,
+      hue: myHue,
+      entryAngle: selfTrail.entryAngle,
+      x: selfTrail.x,
+      y: selfTrail.y,
+      z: selfTrail.z,
+      trailTail: selfTrail.trail.slice(-32),
+      playing: studio.isPlaying ? studio.isPlaying() : false,
+      hasAudio: !!selfTrail.hasAudio,
+      bpm: portalBpmNow()
+    };
+  }
+
   function startTrailSync() {
     stopTrailSync();
     trailTimer = setInterval(function () {
-      if (!portalOpen || !selfTrail || !myId) return;
+      if (!portalOpen || !selfTrail || !myId || !studio) return;
       const bins = binsFromStudio();
       const active = studio.getActiveLayers ? studio.getActiveLayers() : [];
       advanceTrail(selfTrail, bins, active);
       updateSelfAudioFlag();
-      const payload = {
-        type: 'trail',
-        id: myId,
-        name: myName,
-        hue: myHue,
-        entryAngle: selfTrail.entryAngle,
-        x: selfTrail.x,
-        y: selfTrail.y,
-        z: selfTrail.z,
-        bins: Array.from(bins),
-        layers: active,
-        playing: studio.isPlaying ? studio.isPlaying() : false,
-        hasAudio: !!selfTrail.hasAudio
-      };
-      sendData(payload);
-    }, 66);
+      syncPulseCount++;
+      sendData(buildSyncPayload());
+    }, 120);
   }
 
   function stopTrailSync() {
