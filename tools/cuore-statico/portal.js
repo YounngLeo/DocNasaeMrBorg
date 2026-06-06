@@ -652,53 +652,57 @@
     setupPeerHandlers();
   }
 
-  async function hostPortal(code) {
-    setStatus('// AVVIO PORTAL…');
-    try {
-      await loadPeerJS();
-      await ensureLocalStream();
-      roomCode = (code || randCode()).trim().toUpperCase();
-      isHost = true;
-      hostIdRetry = false;
-      selfTrail = mkTrailUser('local-' + roomCode, myName, myHue, 0);
-      beginSessionUI();
-      setStatus('// CONNESSIONE PEER…');
+async function hostPortal(code) {
+  roomCode = (code || randCode()).trim().toUpperCase();
+  isHost = true;
+  hostIdRetry = false;
+  myName = ($('portalName') && $('portalName').value.trim()) || myName;
+  myHue = hashHue(myName);
+  selfTrail = mkTrailUser('local-' + roomCode, myName, myHue, 0);
+  beginSessionUI();
+  setStatus('// AVVIO PORTAL…');
+  try {
+    await loadPeerJS();
+    await ensureLocalStream();
 
-      const hostId = 'cuore-host-' + roomCode.toLowerCase();
-      createHostPeer(hostId);
+    const hostId = 'cuore-host-' + roomCode.toLowerCase();
+    createHostPeer(hostId);
 
-      whenPeerReady(function () {
-        if (selfTrail) selfTrail.id = myId;
-        setStatus('// HOST · room ' + roomCode);
-      });
+    whenPeerReady(function () {
+      if (selfTrail) selfTrail.id = myId;
+      setStatus('// HOST · room ' + roomCode);
+    });
 
-      setTimeout(function () {
-        if (!peerReady && portalOpen) {
-          setStatus('// ATTERRAGGIO LENTO · verifica rete');
-        }
-      }, 10000);
-    } catch (e) {
-      console.error('hostPortal', e);
-      setStatus('// ERR · ' + (e.message || 'avvio portal'));
-    }
+    setTimeout(function () {
+      if (!peerReady && portalOpen) {
+        setStatus('// ATTERRAGGIO LENTO · verifica rete');
+      }
+    }, 10000);
+  } catch (e) {
+    console.error('hostPortal', e);
+    setStatus('// ERR · ' + (e.message || 'avvio portal'));
   }
+}
 
-  async function joinPortal(code) {
-    code = (code || '').trim().toUpperCase();
-    if (!code) { setStatus('// INSERISCI CODICE'); return; }
-    setStatus('// AVVIO PORTAL…');
-    try {
-      await loadPeerJS();
-      await ensureLocalStream();
-      roomCode = code;
-      isHost = false;
-      selfTrail = mkTrailUser('local-' + code, myName, myHue, Math.random() * Math.PI * 2);
-      beginSessionUI();
-      setStatus('// CONNESSIONE PEER…');
+async function joinPortal(code) {
+  code = (code || '').trim().toUpperCase();
+  if (!code) { setStatus('// INSERISCI CODICE'); return; }
+  roomCode = code;
+  isHost = false;
+  myName = ($('portalName') && $('portalName').value.trim()) || myName;
+  myHue = hashHue(myName);
+  selfTrail = mkTrailUser('local-' + code, myName, myHue, Math.random() * Math.PI * 2);
+  beginSessionUI();
+  setStatus('// AVVIO PORTAL…');
+  try {
+    await loadPeerJS();
+    await ensureLocalStream();
 
-      peerReady = false;
-      peer = new Peer(undefined, PEER_OPTS);
-      setupPeerHandlers();
+    peerReady = false;
+    peer = new Peer(undefined, PEER_OPTS);
+    setupPeerHandlers();
+
+    setStatus('// CONNESSIONE PEER…');
 
       whenPeerReady(function () {
         if (selfTrail) selfTrail.id = myId;

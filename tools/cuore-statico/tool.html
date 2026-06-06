@@ -125,16 +125,24 @@
     font-size: 9px;
   }
 
-  /* Pattern sequencer */
+  /* Pattern sequencer — 64 step = 4 righe × 16 colonne */
+  .pat-sequencer-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 8px;
+    padding-bottom: 4px;
+  }
   .pat-steps {
     display: grid;
-    grid-template-columns: repeat(16, 1fr);
+    grid-template-columns: repeat(16, minmax(24px, 1fr));
+    grid-auto-rows: minmax(28px, auto);
     gap: 3px;
-    margin-top: 8px;
+    min-width: 480px;
   }
   .pat-step {
     aspect-ratio: 1;
     min-height: 28px;
+    min-width: 24px;
     font-size: 8px;
     letter-spacing: 0;
     padding: 2px 0;
@@ -168,13 +176,14 @@
   .drum-voice-controls .row-mini select { padding: 4px 6px; font-size: 9px; }
   .pat-step-nums {
     display: grid;
-    grid-template-columns: repeat(16, 1fr);
+    grid-template-columns: repeat(16, minmax(24px, 1fr));
     gap: 3px;
     font-size: 7px;
     opacity: 0.45;
     letter-spacing: 0;
     text-align: center;
     margin-top: 4px;
+    min-width: 480px;
   }
   .pat-num { text-align: center; }
   .pat-info {
@@ -864,8 +873,10 @@
       <span class="label">EDITING</span>
       <span class="value" id="patEditingVal">BASS</span>
     </div>
-    <div class="pat-steps" id="patGrid"></div>
-    <div class="pat-step-nums" id="patNums"></div>
+    <div class="pat-sequencer-wrap">
+      <div class="pat-steps" id="patGrid"></div>
+      <div class="pat-step-nums" id="patNums"></div>
+    </div>
     <div class="pat-info" id="patHint">BASS — click step: REST → note MIDI. Tieni premuto SHIFT per indietro.</div>
     <div class="grid-3" style="margin-top: 10px">
       <button id="patClearBtn" class="small">CLEAR ROW</button>
@@ -1085,6 +1096,15 @@
 <script src="portal.js"></script>
 <script>
 'use strict';
+
+const $ = (id) => document.getElementById(id);
+function $on(id, ev, fn) {
+  const el = typeof id === 'string' ? $(id) : id;
+  if (el) el.addEventListener(ev, fn);
+  else console.warn('cuore: elemento mancante', id);
+  return el;
+}
+const CUORE = { portalSyncLock: false, bpmMaxNormal: 140 };
 
 // ============================================================
 // PERSISTENT STORAGE (localStorage + IndexedDB)
@@ -1836,7 +1856,6 @@ function tickPattern() {
   }
 }
 
-const $ = (id) => document.getElementById(id);
 function midiToFreq(m) { return Tone.Frequency(m, 'midi').toFrequency(); }
 function chordName(c) {
   if (!c || c.length < 3) return '---';
@@ -2584,19 +2603,25 @@ const mixLabel = {
 };
 function bindMix(id) {
   const el = $(id);
+  const lab = mixLabel[id] ? $(mixLabel[id]) : null;
+  if (!el || !lab || !mixFmt[id]) return;
   const update = () => {
     const v = parseFloat(el.value);
-    $(mixLabel[id]).textContent = mixFmt[id](v);
+    lab.textContent = mixFmt[id](v);
     mixApply[id](v);
-    if (id === 'bpm' && !portalSyncLock && window.CuorePortal && CuorePortal.isOpen()) {
+    if (id === 'bpm' && !CUORE.portalSyncLock && window.CuorePortal && CuorePortal.isOpen()) {
       CuorePortal.onBpmChange(Math.round(v));
     }
   };
   el.addEventListener('input', update);
   update();
 }
-if ($('bassOct')) $('bassOct').value = String(bassOctave);
-Object.keys(mixApply).forEach(bindMix);
+function initMixSliders() {
+  if ($('bassOct')) $('bassOct').value = String(bassOctave);
+  Object.keys(mixApply).forEach(function (id) {
+    try { bindMix(id); } catch (e) { console.error('bindMix', id, e); }
+  });
+}
 function applyAllSliders() { Object.keys(mixApply).forEach(id => mixApply[id](parseFloat($(id).value))); }
 
 function applyFxTrackSend(track, key) {
@@ -2734,6 +2759,7 @@ document.querySelectorAll('.synth-target').forEach(btn => {
 function loadSynthParamsToUI() {
   if (synthEditTarget === 'noise') {
     const p = synthParams.noise;
+    if (!$('noiseTypeSelect')) return;
     $('noiseTypeSelect').value = p.type;     $('noiseTypeVal').textContent = p.type;
     $('noiseFiltTypeSelect').value = p.filtType; $('noiseFiltTypeVal').textContent = p.filtType;
     $('noiseFiltHz').value = p.filtHz;       $('noiseFiltHzVal').textContent = p.filtHz;
@@ -3163,135 +3189,138 @@ $('resetBtn').addEventListener('click', () => {
 // ============================================================
 // PATTERN SEQUENCER
 // ============================================================
-document.querySelectorAll('.pat-target').forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    document.querySelectorAll('.pat-target').forEach(function (b) { b.classList.remove('on'); });
-    btn.classList.add('on');
-    patternEditTarget = btn.dataset.player;
-    renderPatternGrid();
-  });
-});
-
 function syncPatModeBtn() {
   const btn = $('patModeBtn');
   if (!btn) return;
   btn.textContent = usePatternMode ? 'PATTERN: ON' : 'PATTERN: OFF';
   btn.classList.toggle('on', usePatternMode);
 }
-syncPatModeBtn();
 
-$('patModeBtn').addEventListener('click', function () {
-  usePatternMode = !usePatternMode;
+function initPatternSequencer() {
+  document.querySelectorAll('.pat-target').forEach(function (btn) {
+    if (btn.dataset.patBound) return;
+    btn.dataset.patBound = '1';
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.pat-target').forEach(function (b) { b.classList.remove('on'); });
+      btn.classList.add('on');
+      patternEditTarget = btn.dataset.player;
+      renderPatternGrid();
+    });
+  });
+
   syncPatModeBtn();
-  persistPatterns();
-});
 
-$('patLegacyBtn').addEventListener('click', importLegacyPatterns);
+  $on('patModeBtn', 'click', function () {
+    usePatternMode = !usePatternMode;
+    syncPatModeBtn();
+    persistPatterns();
+  });
+  $on('patLegacyBtn', 'click', importLegacyPatterns);
 
-document.querySelectorAll('.drum-kit').forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    drumKit = btn.dataset.kit;
-    syncDrumKitUI();
-    rebuildDrumKit();
+  document.querySelectorAll('.drum-kit').forEach(function (btn) {
+    if (btn.dataset.kitBound) return;
+    btn.dataset.kitBound = '1';
+    btn.addEventListener('click', function () {
+      drumKit = btn.dataset.kit;
+      syncDrumKitUI();
+      rebuildDrumKit();
+      persistPatterns();
+      renderPatternGrid();
+    });
+  });
+
+  $on('patDrumPresetBtn', 'click', function () {
+    patterns.drums = defaultDrumPatterns(drumKit);
     persistPatterns();
     renderPatternGrid();
   });
-});
+  $on('patClearBtn', 'click', function () {
+    const layer = patternEditTarget;
+    if (layer === 'drums') patterns.drums[patternEditDrumVoice] = mkPatternRow(0);
+    else patterns[layer] = layer === 'bass' || layer === 'lead'
+      ? mkPatternRow(null) : mkPatternRow(0);
+    persistPatterns();
+    renderPatternGrid();
+  });
+  $on('patFillBtn', 'click', function () {
+    const layer = patternEditTarget;
+    for (let i = 0; i < PAT_LEN; i++) {
+      if (i % 2 !== 1) continue;
+      if (layer === 'bass') patterns.bass[i] = 47;
+      else if (layer === 'pad') patterns.pad[i] = 5;
+      else if (layer === 'lead') patterns.lead[i] = 4;
+      else if (layer === 'drums') patterns.drums[patternEditDrumVoice][i] = 1;
+      else patterns[layer][i] = 1;
+    }
+    persistPatterns();
+    renderPatternGrid();
+  });
+  $on('patCopyBtn', 'click', function () {
+    patternClipboard = getPatternRow(patternEditTarget).slice();
+  });
+  $on('patRandDens', 'input', function () {
+    const el = $('patRandDens');
+    const val = $('patRandDensVal');
+    if (el && val) val.textContent = parseFloat(el.value).toFixed(2);
+  });
+  $on('patRandAllBtn', 'click', function () {
+    randomizePatterns({ density: getPatRandDensity(), drums: true });
+  });
+  $on('patRandRowBtn', 'click', function () {
+    randomizePatternRow(patternEditTarget);
+  });
+  $on('patBars', 'input', function () {
+    const el = $('patBars');
+    const val = $('patBarsVal');
+    if (el && val) val.textContent = el.value;
+  });
+  $on('patGenBtn', 'click', function () { generateTrackFromPatterns(); });
+  $on('patPlayBtn', 'click', async function () {
+    usePatternMode = true;
+    syncPatModeBtn();
+    persistPatterns();
+    await togglePlay();
+  });
+  $on('patExportBtn', 'click', function () {
+    const comp = buildCompositionObject();
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    downloadText('cuore_composition_' + stamp + '.json', JSON.stringify(comp, null, 2), 'application/json');
+  });
+  $on('patScoreBtn', 'click', function () {
+    const el = $('patScore');
+    if (!el) return;
+    const comp = buildCompositionObject();
+    el.textContent = compositionToScore(comp);
+    el.hidden = !el.hidden;
+  });
 
-$('patDrumPresetBtn').addEventListener('click', function () {
-  patterns.drums = defaultDrumPatterns(drumKit);
-  persistPatterns();
-  renderPatternGrid();
-});
-
-$('patClearBtn').addEventListener('click', function () {
-  const layer = patternEditTarget;
-  if (layer === 'drums') patterns.drums[patternEditDrumVoice] = mkPatternRow(0);
-  else patterns[layer] = layer === 'bass' || layer === 'lead'
-    ? mkPatternRow(null) : mkPatternRow(0);
-  persistPatterns();
-  renderPatternGrid();
-});
-
-$('patFillBtn').addEventListener('click', function () {
-  const layer = patternEditTarget;
-  for (let i = 0; i < PAT_LEN; i++) {
-    if (i % 2 !== 1) continue;
-    if (layer === 'bass') patterns.bass[i] = 47;
-    else if (layer === 'pad') patterns.pad[i] = 5;
-    else if (layer === 'lead') patterns.lead[i] = 4;
-    else if (layer === 'drums') patterns.drums[patternEditDrumVoice][i] = 1;
-    else patterns[layer][i] = 1;
+  if (!document.body.dataset.patKeyBound) {
+    document.body.dataset.patKeyBound = '1';
+    document.addEventListener('keydown', function (e) {
+      if (!e.ctrlKey && !e.metaKey) return;
+      if (e.key !== 'v' && e.key !== 'V') return;
+      const panel = $('tab-pattern');
+      if (!panel || !panel.classList.contains('active')) return;
+      if (!patternClipboard) return;
+      const layer = patternEditTarget;
+      if (layer === 'drums') patterns.drums[patternEditDrumVoice] = patternClipboard.slice();
+      else patterns[layer] = patternClipboard.slice();
+      persistPatterns();
+      renderPatternGrid();
+    });
   }
-  persistPatterns();
+
   renderPatternGrid();
-});
-
-$('patCopyBtn').addEventListener('click', function () {
-  patternClipboard = getPatternRow(patternEditTarget).slice();
-});
-
-$('patRandDens').addEventListener('input', function () {
-  $('patRandDensVal').textContent = parseFloat($('patRandDens').value).toFixed(2);
-});
-
-$('patRandAllBtn').addEventListener('click', function () {
-  randomizePatterns({ density: getPatRandDensity(), drums: true });
-});
-
-$('patRandRowBtn').addEventListener('click', function () {
-  randomizePatternRow(patternEditTarget);
-});
-
-document.addEventListener('keydown', function (e) {
-  if (!e.ctrlKey && !e.metaKey) return;
-  if (e.key !== 'v' && e.key !== 'V') return;
-  const panel = $('tab-pattern');
-  if (!panel || !panel.classList.contains('active')) return;
-  if (!patternClipboard) return;
-  const layer = patternEditTarget;
-  if (layer === 'drums') patterns.drums[patternEditDrumVoice] = patternClipboard.slice();
-  else patterns[layer] = patternClipboard.slice();
-  persistPatterns();
-  renderPatternGrid();
-});
-
-$('patBars').addEventListener('input', function () {
-  $('patBarsVal').textContent = $('patBars').value;
-});
-
-$('patGenBtn').addEventListener('click', function () { generateTrackFromPatterns(); });
-
-$('patPlayBtn').addEventListener('click', async function () {
-  usePatternMode = true;
-  syncPatModeBtn();
-  persistPatterns();
-  await togglePlay();
-});
-
-$('patExportBtn').addEventListener('click', function () {
-  const comp = buildCompositionObject();
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  downloadText('cuore_composition_' + stamp + '.json', JSON.stringify(comp, null, 2), 'application/json');
-});
-
-$('patScoreBtn').addEventListener('click', function () {
-  const el = $('patScore');
-  const comp = buildCompositionObject();
-  el.textContent = compositionToScore(comp);
-  el.hidden = !el.hidden;
-});
+}
 
 // ============================================================
 // INIT UI
 // ============================================================
-loadSynthParamsToUI();
-refreshPresetList();
-loadRecordings();
-renderPatternGrid();
-
-let portalSyncLock = false;
-let bpmMaxNormal = 140;
+try { initMixSliders(); } catch (e) { console.error('mix sliders', e); }
+try { initPatternSequencer(); } catch (e) { console.error('pattern init', e); }
+try { loadSynthParamsToUI(); } catch (e) { console.error('synth ui', e); }
+try { refreshPresetList(); } catch (e) { console.error('presets', e); }
+try { loadRecordings(); } catch (e) { console.error('recordings', e); }
 
 function portalUnlockPlayback() {
   if (window.CuorePortal && CuorePortal.isOpen()) CuorePortal.unlockPlayback();
@@ -3299,12 +3328,12 @@ function portalUnlockPlayback() {
 
 function applyPortalBpm(bpm) {
   if (!$('bpm')) return;
-  portalSyncLock = true;
+  CUORE.portalSyncLock = true;
   const v = Math.max(50, Math.min(parseFloat($('bpm').max) || 140, Math.round(bpm)));
   $('bpm').value = v;
   $('bpmVal').textContent = String(v);
   mixApply.bpm(v);
-  portalSyncLock = false;
+  CUORE.portalSyncLock = false;
 }
 
 function applyPortalTransport(msg) {
@@ -3364,6 +3393,16 @@ if (window.CuorePortal) {
       };
     },
     applyTransport: applyPortalTransport
+  });
+} else {
+  console.error('cuore: portal.js non caricato');
+  $on('portalHostBtn', 'click', function () {
+    const st = $('portalStatus');
+    if (st) st.textContent = '// ERR · portal.js mancante';
+  });
+  $on('portalJoinBtn', 'click', function () {
+    const st = $('portalStatus');
+    if (st) st.textContent = '// ERR · portal.js mancante';
   });
 }
 
