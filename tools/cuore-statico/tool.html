@@ -2324,6 +2324,7 @@ async function togglePlay() {
   btn.classList.toggle('playing', isPlaying);
   portalUnlockPlayback();
   if (window.CuorePortal && CuorePortal.isOpen()) {
+    CuorePortal.refreshMeshAudio && CuorePortal.refreshMeshAudio();
     CuorePortal.onTransportChange({
       playing: isPlaying,
       beat16: beat16,
