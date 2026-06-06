@@ -257,7 +257,10 @@
     portalWs.onclose = function () {
       wsReady = false;
       renderPeerList();
-      if (portalOpen) scheduleWsReconnect();
+      if (portalOpen) {
+        setStatus('// WS OFF · riconnessione…');
+        scheduleWsReconnect();
+      }
     };
     portalWs.onerror = function () {
       console.warn('portal ws error — verifica deploy Functions su Cloudflare');
@@ -570,7 +573,18 @@
 
   function setStatus(msg) {
     const el = $('portalStatus');
-    if (el) el.textContent = msg;
+    if (!el) return;
+    if (portalOpen && msg.indexOf('ws:') < 0) {
+      msg += ' · ws:' + (wsReady ? 'on' : 'off') +
+        ' · rx:' + trailRxCount + '/' + dataRxCount;
+    }
+    el.textContent = msg;
+    const syncEl = $('portalSyncLine');
+    if (syncEl) {
+      syncEl.textContent = '// ws:' + (wsReady ? 'on' : 'off') +
+        ' · rx:' + trailRxCount + '/' + dataRxCount +
+        ' · portal.js v10';
+    }
   }
 
   function fanout(msg, exceptId) {
@@ -1459,6 +1473,8 @@ async function joinPortal(code) {
     });
     window.dispatchEvent(new Event('resize'));
     wireBpmSlider();
+    const syncEl = $('portalSyncLine');
+    if (syncEl) syncEl.textContent = '// portal.js v10 · CREA o ENTRA per attivare ws';
   }
 
   global.CuorePortal = {
