@@ -3277,9 +3277,16 @@ if (window.CuorePortal) {
   CuorePortal.bind({
     Tone: Tone,
     initAudio: initAudio,
+    unlockAudio: unlockAudio,
+    get limiter() { return A ? A.limiter : null; },
     get master() { return A ? A.master : null; },
     getSendStream: function () { return A && A.portalSend ? A.portalSend.stream : null; },
     getSpectrum: function () { return A && A.portalAna ? A.portalAna.getValue() : new Float32Array(32); },
+    getMeterLevel: function () {
+      if (!A || !A.meter) return 0;
+      const db = A.meter.getValue();
+      return Math.max(0, Math.min(1, (db + 48) / 48));
+    },
     getActiveLayers: function () {
       return Object.keys(layers).filter(function (k) { return layers[k]; });
     },
