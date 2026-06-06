@@ -7,6 +7,10 @@
 
   const PEER_CDN = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
   const PEER_OPTS = {
+    host: '0.peerjs.com',
+    port: 443,
+    path: '/',
+    secure: true,
     config: {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -33,6 +37,7 @@
   let portalOpen = false;
   let localStream = null;
   let peerReady = false;
+  let hostIdRetry = false;
   const dataConns = new Map();
   const remoteStreams = new Map();
   const remoteGains = new Map();
@@ -521,7 +526,7 @@
   }
 
   function syncBpmOut() {
-    if (!portalOpen || !studio || !studio.getBpm) return;
+    if (!portalOpen || !studio || !studio.getBpm || !myId) return;
     const bpm = Math.round(studio.getBpm());
     const msg = { type: 'bpm', bpm: bpm, from: myId };
     if (isHost) broadcast(msg);
@@ -604,8 +609,16 @@
     });
 
     peer.on('error', function (err) {
-      setStatus('// ERR · ' + (err.type || err.message || 'peer'));
+      const typ = err.type || err.message || 'peer';
+      setStatus('// ERR · ' + typ);
       console.warn('portal peer err', err);
+      if (isHost && typ === 'unavailable-id' && !hostIdRetry) {
+        hostIdRetry = true;
+        roomCode = randCode();
+        if ($('portalRoomCode')) $('portalRoomCode').textContent = roomCode;
+        setStatus('// CODICE OCCUPATO · nuovo ' + roomCode);
+        createHostPeer('cuore-host-' + roomCode.toLowerCase());
+      }
     });
 
     peer.on('disconnected', function () {
@@ -625,56 +638,90 @@
   }
 
   function beginSessionUI() {
-    $('portalRoomCode').textContent = roomCode;
-    $('portalRoomWrap').hidden = false;
-    if (!selfTrail) selfTrail = mkTrailUser(myId, myName, myHue, 0);
-    else { selfTrail.id = myId; selfTrail.name = myName; selfTrail.hue = myHue; }
-    openPortalUI();
+    if ($('portalRoomCode')) $('portalRoomCode').textContent = roomCode;
+    if ($('portalRoomWrap')) $('portalRoomWrap').hidden = false;
+    if (!selfTrail) selfTrail = mkTrailUser(myId || ('local-' + roomCode), myName, myHue, 0);
+    else { selfTrail.id = myId || selfTrail.id; selfTrail.name = myName; selfTrail.hue = myHue; }
+    if (!portalOpen) openPortalUI();
+  }
+
+  function createHostPeer(hostId) {
+    if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
+    peerReady = false;
+    peer = new Peer(hostId, PEER_OPTS);
+    setupPeerHandlers();
   }
 
   async function hostPortal(code) {
-    await loadPeerJS();
-    await ensureLocalStream();
-    roomCode = (code || randCode()).trim().toUpperCase();
-    isHost = true;
-    peerReady = false;
-    const hostId = 'cuore-host-' + roomCode.toLowerCase();
-    peer = new Peer(hostId, PEER_OPTS);
-    setupPeerHandlers();
-    whenPeerReady(function () {
-      selfTrail = mkTrailUser(myId, myName, myHue, 0);
-      setStatus('// HOST · room ' + roomCode);
+    setStatus('// AVVIO PORTAL…');
+    try {
+      await loadPeerJS();
+      await ensureLocalStream();
+      roomCode = (code || randCode()).trim().toUpperCase();
+      isHost = true;
+      hostIdRetry = false;
+      selfTrail = mkTrailUser('local-' + roomCode, myName, myHue, 0);
       beginSessionUI();
-    });
+      setStatus('// CONNESSIONE PEER…');
+
+      const hostId = 'cuore-host-' + roomCode.toLowerCase();
+      createHostPeer(hostId);
+
+      whenPeerReady(function () {
+        if (selfTrail) selfTrail.id = myId;
+        setStatus('// HOST · room ' + roomCode);
+      });
+
+      setTimeout(function () {
+        if (!peerReady && portalOpen) {
+          setStatus('// ATTERRAGGIO LENTO · verifica rete');
+        }
+      }, 10000);
+    } catch (e) {
+      console.error('hostPortal', e);
+      setStatus('// ERR · ' + (e.message || 'avvio portal'));
+    }
   }
 
   async function joinPortal(code) {
     code = (code || '').trim().toUpperCase();
     if (!code) { setStatus('// INSERISCI CODICE'); return; }
-    await loadPeerJS();
-    await ensureLocalStream();
-    roomCode = code;
-    isHost = false;
-    peerReady = false;
-    peer = new Peer(undefined, PEER_OPTS);
-    setupPeerHandlers();
-    whenPeerReady(function () {
-      const hostId = 'cuore-host-' + code.toLowerCase();
-      setupDataConn(peer.connect(hostId));
-      meshCall(hostId);
-      selfTrail = mkTrailUser(myId, myName, myHue, Math.random() * Math.PI * 2);
-      setStatus('// JOIN · ' + code);
+    setStatus('// AVVIO PORTAL…');
+    try {
+      await loadPeerJS();
+      await ensureLocalStream();
+      roomCode = code;
+      isHost = false;
+      selfTrail = mkTrailUser('local-' + code, myName, myHue, Math.random() * Math.PI * 2);
       beginSessionUI();
-      setTimeout(function () { meshCall(hostId); }, 800);
-    });
+      setStatus('// CONNESSIONE PEER…');
+
+      peerReady = false;
+      peer = new Peer(undefined, PEER_OPTS);
+      setupPeerHandlers();
+
+      whenPeerReady(function () {
+        if (selfTrail) selfTrail.id = myId;
+        const hostId = 'cuore-host-' + code.toLowerCase();
+        setupDataConn(peer.connect(hostId));
+        meshCall(hostId);
+        setStatus('// JOIN · ' + code);
+        setTimeout(function () { meshCall(hostId); }, 800);
+      });
+    } catch (e) {
+      console.error('joinPortal', e);
+      setStatus('// ERR · ' + (e.message || 'join portal'));
+    }
   }
 
   function openPortalUI() {
     portalOpen = true;
-    $('studioLayout').classList.add('portal-open');
-    $('portalRail').hidden = false;
+    const layout = $('studioLayout');
+    const rail = $('portalRail');
+    if (layout) layout.classList.add('portal-open');
+    if (rail) rail.hidden = false;
     enterPortalBoost();
-    if (!animId) drawPortal();
+    if (!animId && canvas && ctx) drawPortal();
     startTrailSync();
     unlockPlayback();
   }
@@ -692,6 +739,7 @@
     if (peer) { peer.destroy(); peer = null; }
     peerReady = false;
     myId = '';
+    hostIdRetry = false;
     localStream = null;
     selfTrail = null;
     $('studioLayout').classList.remove('portal-open');
@@ -745,19 +793,34 @@
     myHue = hashHue(myName);
     if (nameInput && !nameInput.value) nameInput.value = myName;
 
-    $('portalHostBtn').addEventListener('click', function () {
-      myName = ($('portalName').value.trim() || myName);
-      myHue = hashHue(myName);
-      hostPortal($('portalJoinCode').value.trim().toUpperCase() || null);
-    });
+    const hostBtn = $('portalHostBtn');
+    const joinBtn = $('portalJoinBtn');
+    const leaveBtn = $('portalLeaveBtn');
 
-    $('portalJoinBtn').addEventListener('click', function () {
-      myName = ($('portalName').value.trim() || myName);
-      myHue = hashHue(myName);
-      joinPortal($('portalJoinCode').value.trim());
-    });
+    if (hostBtn) {
+      hostBtn.addEventListener('click', function () {
+        myName = ($('portalName') && $('portalName').value.trim()) || myName;
+        myHue = hashHue(myName);
+        const code = $('portalJoinCode') ? $('portalJoinCode').value.trim().toUpperCase() : '';
+        hostPortal(code || null).catch(function (e) {
+          console.error(e);
+          setStatus('// ERR · ' + (e.message || 'crea portal'));
+        });
+      });
+    }
 
-    $('portalLeaveBtn').addEventListener('click', leavePortal);
+    if (joinBtn) {
+      joinBtn.addEventListener('click', function () {
+        myName = ($('portalName') && $('portalName').value.trim()) || myName;
+        myHue = hashHue(myName);
+        joinPortal($('portalJoinCode') ? $('portalJoinCode').value.trim() : '').catch(function (e) {
+          console.error(e);
+          setStatus('// ERR · ' + (e.message || 'entra portal'));
+        });
+      });
+    }
+
+    if (leaveBtn) leaveBtn.addEventListener('click', leavePortal);
 
     window.addEventListener('resize', function () {
       if (!canvas) return;
