@@ -17,6 +17,9 @@
   };
   const TRAIL_MAX = 220;
   const SUB_TRAIL_MAX = 120;
+  const TRAIL_BX = 118;
+  const TRAIL_BY = 92;
+  let bpmMaxSaved = 140;
   const LAYER_KEYS = ['pad', 'bass', 'lead', 'drums', 'noise', 'sample'];
   const LAYER_BRANCH = { pad: 0, bass: 1, lead: 2, drums: 3, noise: 4, sample: 5 };
 
@@ -123,12 +126,35 @@
     return out;
   }
 
+  function clampTrailPoint(x, y) {
+    return [
+      Math.max(-TRAIL_BX, Math.min(TRAIL_BX, x)),
+      Math.max(-TRAIL_BY, Math.min(TRAIL_BY, y))
+    ];
+  }
+
+  function trailScale(w, h) {
+    return {
+      sx: (w * 0.4) / TRAIL_BX,
+      sy: (h * 0.4) / TRAIL_BY
+    };
+  }
+
+  function toScreen(x, y, z, cx, cy, sc) {
+    return [cx + x * sc.sx, cy + y * sc.sy - z * 6];
+  }
+
   function advanceTrail(user, bins, activeLayers) {
     const energy = bins.reduce(function (a, b) { return a + b; }, 0) / bins.length;
-    const spread = (bins[2] - bins[0]) * 14 + Math.cos(user.entryAngle) * (2 + energy * 6);
-    const lift = (bins[6] - bins[4]) * 12 + Math.sin(user.entryAngle) * (2 + energy * 5);
+    const spread = ((bins[2] - bins[0]) * 9 + Math.cos(user.entryAngle) * (1.2 + energy * 3.5)) * 0.65;
+    const lift = ((bins[6] - bins[4]) * 7 + Math.sin(user.entryAngle) * (1.2 + energy * 3)) * 0.65;
     user.x += spread;
     user.y += lift;
+    user.x *= 0.985;
+    user.y *= 0.985;
+    const c = clampTrailPoint(user.x, user.y);
+    user.x = c[0];
+    user.y = c[1];
     user.z = user.z * 0.92 + bins[7] * 0.08;
     user.trail.push({ x: user.x, y: user.y, z: user.z, e: energy });
     if (user.trail.length > TRAIL_MAX) user.trail.shift();
@@ -138,10 +164,12 @@
       if (!branch) return;
       const li = LAYER_BRANCH[layer] || 0;
       const ang = user.entryAngle + li * 1.05 + user.trail.length * 0.018;
-      const rad = 16 + bins[li % 16] * 42 + li * 4;
+      const rad = 6 + bins[li % 16] * 18 + li * 2;
+      let bx = user.x + Math.cos(ang) * rad;
+      let by = user.y + Math.sin(ang) * rad;
+      const bc = clampTrailPoint(bx, by);
       branch.push({
-        x: user.x + Math.cos(ang) * rad,
-        y: user.y + Math.sin(ang) * rad,
+        x: bc[0], y: bc[1],
         z: user.z + bins[(li + 3) % 16] * 0.5
       });
       if (branch.length > SUB_TRAIL_MAX) branch.shift();
@@ -155,11 +183,12 @@
     const h = canvas.height;
     const cx = w * 0.5;
     const cy = h * 0.52;
+    const sc = trailScale(w, h);
 
-    ctx.fillStyle = 'rgba(5,8,5,0.32)';
+    ctx.fillStyle = 'rgba(10,5,8,0.45)';
     ctx.fillRect(0, 0, w, h);
 
-    ctx.strokeStyle = 'rgba(0,255,65,0.08)';
+    ctx.strokeStyle = 'rgba(198,120,255,0.07)';
     ctx.lineWidth = 1;
     for (let gy = 0; gy < h; gy += 28) {
       ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(w, gy); ctx.stroke();
@@ -168,29 +197,36 @@
       ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, h); ctx.stroke();
     }
 
+    ctx.strokeStyle = 'rgba(255,43,74,0.2)';
+    ctx.setLineDash([4, 4]);
+    const bx = TRAIL_BX * sc.sx;
+    const by = TRAIL_BY * sc.sy;
+    ctx.strokeRect(cx - bx, cy - by, bx * 2, by * 2);
+    ctx.setLineDash([]);
+
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.strokeStyle = 'rgba(0,255,65,0.35)';
+    ctx.strokeStyle = 'rgba(255,43,74,0.45)';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(0, 0, 28, 0, Math.PI * 2);
+    ctx.arc(0, 0, 22, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.fillStyle = 'rgba(0,255,65,0.06)';
+    ctx.fillStyle = 'rgba(198,120,255,0.08)';
     ctx.fill();
     ctx.font = '9px Courier New';
-    ctx.fillStyle = 'rgba(0,255,65,0.55)';
+    ctx.fillStyle = 'rgba(198,120,255,0.65)';
     ctx.textAlign = 'center';
     ctx.fillText('PORTAL', 0, 4);
     ctx.restore();
 
     const all = [selfTrail].concat(Array.from(peers.values())).filter(Boolean);
     all.sort(function (a, b) { return (a.z || 0) - (b.z || 0); });
-    all.forEach(function (user) { if (user) drawUserStreets(user, cx, cy); });
+    all.forEach(function (user) { if (user) drawUserStreets(user, cx, cy, sc); });
 
     animId = requestAnimationFrame(drawPortal);
   }
 
-  function drawUserStreets(user, cx, cy) {
+  function drawUserStreets(user, cx, cy, sc) {
     const hue = user.hue;
 
     LAYER_KEYS.forEach(function (layer) {
@@ -200,10 +236,9 @@
       ctx.strokeStyle = hsl(hue, 55, 42 + LAYER_BRANCH[layer] * 4, 0.35);
       ctx.beginPath();
       branch.forEach(function (p, i) {
-        const px = cx + p.x * 0.85;
-        const py = cy + p.y * 0.85 - p.z * 18;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
+        const pt = toScreen(p.x, p.y, p.z, cx, cy, sc);
+        if (i === 0) ctx.moveTo(pt[0], pt[1]);
+        else ctx.lineTo(pt[0], pt[1]);
       });
       ctx.stroke();
     });
@@ -215,26 +250,27 @@
       const p0 = trail[i - 1];
       const p1 = trail[i];
       const t = i / trail.length;
+      const a = toScreen(p0.x, p0.y, p0.z, cx, cy, sc);
+      const b = toScreen(p1.x, p1.y, p1.z, cx, cy, sc);
       ctx.lineWidth = 1.2 + p1.e * 2.5;
       ctx.strokeStyle = hsl(hue, 72, 38 + t * 28, 0.25 + t * 0.65);
       ctx.beginPath();
-      ctx.moveTo(cx + p0.x * 0.85, cy + p0.y * 0.85 - p0.z * 18);
-      ctx.lineTo(cx + p1.x * 0.85, cy + p1.y * 0.85 - p1.z * 18);
+      ctx.moveTo(a[0], a[1]);
+      ctx.lineTo(b[0], b[1]);
       ctx.stroke();
     }
 
     const head = trail[trail.length - 1];
-    const hx = cx + head.x * 0.85;
-    const hy = cy + head.y * 0.85 - head.z * 18;
+    const ht = toScreen(head.x, head.y, head.z, cx, cy, sc);
     ctx.fillStyle = hsl(hue, 85, 62, 0.95);
     ctx.beginPath();
-    ctx.arc(hx, hy, 3 + head.e * 4, 0, Math.PI * 2);
+    ctx.arc(ht[0], ht[1], 3 + head.e * 4, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.font = '8px Courier New';
     ctx.fillStyle = hsl(hue, 60, 70, 0.85);
     ctx.textAlign = 'left';
-    ctx.fillText(user.name.slice(0, 12) + (user.hasAudio ? ' ♪' : ''), hx + 8, hy - 6);
+    ctx.fillText(user.name.slice(0, 12) + (user.hasAudio ? ' ♪' : ''), ht[0] + 8, ht[1] - 6);
   }
 
   function setStatus(msg) {
@@ -343,6 +379,19 @@
       });
       return;
     }
+
+    if (msg.type === 'bpm') {
+      if (msg.from === myId) return;
+      if (studio && studio.applyPortalBpm) studio.applyPortalBpm(msg.bpm);
+      if (isHost) broadcast(msg, fromId);
+      return;
+    }
+
+    if (msg.type === 'bpm-relay' && isHost) {
+      broadcast({ type: 'bpm', bpm: msg.bpm, from: msg.from });
+      if (studio && studio.applyPortalBpm && msg.from !== myId) studio.applyPortalBpm(msg.bpm);
+      return;
+    }
   }
 
   function sendHello(conn) {
@@ -372,19 +421,51 @@
     if (conn.open) {
       sendHello(conn);
       if (isHost) sendRoster();
+      syncBpmOut();
     } else {
       conn.on('open', function () {
         sendHello(conn);
         if (isHost) sendRoster();
+        syncBpmOut();
       });
     }
+  }
+
+  function routeRemoteStream(stream) {
+    const ctx = studio.Tone.context.rawContext;
+    const source = ctx.createMediaStreamSource(stream);
+    const gain = ctx.createGain();
+    gain.gain.value = 1.35;
+    source.connect(gain);
+
+    const bus = studio.portalRemoteIn;
+    if (bus && bus.input) {
+      gain.connect(bus.input);
+    } else if (bus) {
+      try { studio.Tone.connect(gain, bus); } catch (e) { gain.connect(ctx.destination); }
+    } else {
+      gain.connect(ctx.destination);
+    }
+
+    return {
+      source: source,
+      gain: gain,
+      dispose: function () {
+        try { source.disconnect(); gain.disconnect(); } catch (e) {}
+      }
+    };
   }
 
   function removeRemotePeer(peerId) {
     activeCalls.delete(peerId);
     remoteStreams.delete(peerId);
     const g = remoteGains.get(peerId);
-    if (g) { try { g.dispose(); } catch (e) {} }
+    if (g) {
+      try {
+        if (g.dispose) g.dispose();
+        else if (g.disconnect) g.disconnect();
+      } catch (e) {}
+    }
     remoteGains.delete(peerId);
     const aud = remoteAudioEls.get(peerId);
     if (aud) { aud.srcObject = null; aud.remove(); }
@@ -400,26 +481,26 @@
     removeRemotePeer(peerId);
     remoteStreams.set(peerId, stream);
 
-    const out = studio.limiter || studio.master;
-    if (out) {
-      try {
-        const src = studio.Tone.context.createMediaStreamSource(stream);
-        const vol = new studio.Tone.Volume(-2);
-        studio.Tone.connect(src, vol);
-        vol.connect(out);
-        remoteGains.set(peerId, vol);
-      } catch (e) { console.warn('portal tone route', e); }
-    }
+    stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
 
     const aud = document.createElement('audio');
     aud.autoplay = true;
     aud.playsInline = true;
     aud.setAttribute('playsinline', '');
+    aud.muted = false;
+    aud.volume = 1;
     aud.srcObject = stream;
-    aud.style.cssText = 'position:fixed;opacity:0;pointer-events:none;width:0;height:0';
+    aud.id = 'portal-aud-' + String(peerId).slice(-8);
+    aud.style.cssText = 'position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none';
     document.body.appendChild(aud);
-    try { await aud.play(); } catch (e) { /* gesture may unlock later */ }
     remoteAudioEls.set(peerId, aud);
+
+    try {
+      await aud.play();
+    } catch (e) {
+      const route = routeRemoteStream(stream);
+      remoteGains.set(peerId, route);
+    }
 
     if (meta && meta.name) {
       if (!peers.has(peerId)) {
@@ -430,6 +511,52 @@
     if (pu) pu.hasAudio = true;
     renderPeerList();
     setStatus('// AUDIO · ' + audioPeerCount() + ' remoti');
+  }
+
+  function unlockPlayback() {
+    if (studio && studio.unlockAudio) studio.unlockAudio();
+    remoteAudioEls.forEach(function (aud) {
+      if (aud.srcObject) aud.play().catch(function () {});
+    });
+  }
+
+  function syncBpmOut() {
+    if (!portalOpen || !studio || !studio.getBpm) return;
+    const bpm = Math.round(studio.getBpm());
+    const msg = { type: 'bpm', bpm: bpm, from: myId };
+    if (isHost) broadcast(msg);
+    else dataConns.forEach(function (conn) {
+      if (conn.open) try { conn.send({ type: 'bpm-relay', bpm: bpm, from: myId }); } catch (e) {}
+    });
+  }
+
+  function onBpmChange(bpm) {
+    if (!portalOpen) return;
+    const msg = { type: 'bpm', bpm: Math.round(bpm), from: myId };
+    if (isHost) broadcast(msg);
+    else dataConns.forEach(function (conn) {
+      if (conn.open) try { conn.send({ type: 'bpm-relay', bpm: msg.bpm, from: myId }); } catch (e) {}
+    });
+  }
+
+  function enterPortalBoost() {
+    document.body.classList.add('portal-boost');
+    const bpmEl = $('bpm');
+    if (bpmEl) {
+      bpmMaxSaved = parseFloat(bpmEl.max) || 140;
+      bpmEl.max = 170;
+    }
+    const tag = $('bpmPortalTag');
+    if (tag) tag.textContent = ' · SYNC · MAX170';
+    syncBpmOut();
+  }
+
+  function leavePortalBoost() {
+    document.body.classList.remove('portal-boost');
+    const bpmEl = $('bpm');
+    if (bpmEl) bpmEl.max = bpmMaxSaved || 140;
+    const tag = $('bpmPortalTag');
+    if (tag) tag.textContent = '';
   }
 
   function meshCall(remoteId) {
@@ -464,17 +591,16 @@
     peer.on('connection', setupDataConn);
 
     peer.on('call', function (call) {
-      if (!localStream) {
-        call.close();
-        return;
-      }
-      call.answer(localStream);
-      call.on('stream', function (stream) {
-        addRemoteAudio(stream, call.peer, call.metadata || {});
+      ensureLocalStream().then(function () {
+        if (!localStream) { call.close(); return; }
+        call.answer(localStream);
+        call.on('stream', function (stream) {
+          addRemoteAudio(stream, call.peer, call.metadata || {});
+        });
+        activeCalls.add(call.peer);
+        call.on('close', function () { activeCalls.delete(call.peer); });
+        if (!dataConns.has(call.peer)) setupDataConn(peer.connect(call.peer));
       });
-      activeCalls.add(call.peer);
-      call.on('close', function () { activeCalls.delete(call.peer); });
-      if (!dataConns.has(call.peer)) setupDataConn(peer.connect(call.peer));
     });
 
     peer.on('error', function (err) {
@@ -491,13 +617,10 @@
   async function ensureLocalStream() {
     if (studio.unlockAudio) await studio.unlockAudio();
     await studio.initAudio();
-    if (localStream && localStream.active) return localStream;
     const s = studio.getSendStream && studio.getSendStream();
     if (!s) return null;
     localStream = s;
-    if (!s.getAudioTracks().length) {
-      console.warn('portal: nessuna traccia audio nel send stream');
-    }
+    s.getAudioTracks().forEach(function (t) { t.enabled = true; });
     return localStream;
   }
 
@@ -550,12 +673,15 @@
     portalOpen = true;
     $('studioLayout').classList.add('portal-open');
     $('portalRail').hidden = false;
+    enterPortalBoost();
     if (!animId) drawPortal();
     startTrailSync();
+    unlockPlayback();
   }
 
   function leavePortal() {
     portalOpen = false;
+    leavePortalBoost();
     stopTrailSync();
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     Array.from(remoteGains.keys()).forEach(removeRemotePeer);
@@ -645,6 +771,8 @@
   global.CuorePortal = {
     bind: bind,
     onTransportChange: onTransportChange,
+    onBpmChange: onBpmChange,
+    unlockPlayback: unlockPlayback,
     isOpen: function () { return portalOpen; },
     isHost: function () { return isHost; }
   };

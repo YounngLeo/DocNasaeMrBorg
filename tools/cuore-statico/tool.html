@@ -435,6 +435,37 @@
     .portal-rail { position: relative; top: 0; }
   }
 
+  /* === PORTAL BOOST (viola · rosso scuro) === */
+  body.portal-boost {
+    --bg: #0a0508;
+    --fg: #c678ff;
+    --dim: #4a1a3a;
+    --mid: #2a0a1a;
+    background-image: repeating-linear-gradient(0deg, transparent 0, transparent 2px,
+      rgba(198,120,255,0.04) 2px, rgba(198,120,255,0.04) 3px),
+      radial-gradient(ellipse at 50% 0%, rgba(255,43,74,0.12) 0%, transparent 55%);
+  }
+  body.portal-boost .title { color: #ff2b4a; text-shadow: 0 0 24px rgba(255,43,74,0.35); }
+  body.portal-boost .subtitle { color: #c678ff; opacity: 0.75; }
+  body.portal-boost header { border-bottom-color: #4a1a3a; }
+  body.portal-boost .section { border-color: #4a1a3a; }
+  body.portal-boost .section-title { color: #c678ff; }
+  body.portal-boost button { border-color: #c678ff; color: #c678ff; }
+  body.portal-boost button.on,
+  body.portal-boost button:active { background: #ff2b4a; border-color: #ff2b4a; color: #0a0508; }
+  body.portal-boost button.big.playing { background: #ff2b4a; color: #0a0508; border-color: #ff2b4a; }
+  body.portal-boost .meter-bar { background: linear-gradient(90deg, #4a1a3a, #c678ff, #ff2b4a); }
+  body.portal-boost .heart { color: #ff2b4a; }
+  body.portal-boost .tabs { border-color: #c678ff; }
+  body.portal-boost .tab.active { border-bottom-color: #ff2b4a; color: #ff2b4a; }
+  body.portal-boost .portal-rail {
+    border-color: #ff2b4a;
+    box-shadow: 0 0 28px rgba(255,43,74,0.12);
+  }
+  body.portal-boost .portal-rail-head { color: #ff2b4a; border-bottom-color: #4a1a3a; }
+  body.portal-boost #portalCanvas { background: #0a0508; }
+  body.portal-boost .breadcrumb a { color: #c678ff; }
+
   main { animation: fade 0.6s ease; }
 </style>
 </head>
@@ -570,7 +601,7 @@
   <section class="section">
     <div class="section-title">// RHYTHM</div>
     <div class="slider-block">
-      <div class="row"><span class="label">BPM</span><span class="value" id="bpmVal">76</span></div>
+      <div class="row"><span class="label">BPM</span><span class="value" id="bpmVal">76</span><span class="value" id="bpmPortalTag" style="opacity:0.45;font-size:9px"></span></div>
       <input type="range" id="bpm" min="50" max="140" step="1" value="76">
     </div>
     <div class="slider-block">
@@ -1967,6 +1998,8 @@ async function initAudio() {
   const portalTap = new Tone.Gain(1);
   master.connect(portalTap);
   portalTap.connect(portalSend);
+  const portalRemoteIn = new Tone.Gain(1.15);
+  portalRemoteIn.connect(limiter);
   const portalAna = new Tone.Analyser('fft', 32);
   master.connect(portalAna);
 
@@ -2032,7 +2065,7 @@ async function initAudio() {
   noiseNodes.last.connect(noiseGain);
 
   A = {
-    limiter, meter, master, recDest, recTap, portalSend, portalTap, portalAna,
+    limiter, meter, master, recDest, recTap, portalSend, portalTap, portalRemoteIn, portalAna,
     reverb, dubDelay, dubFilter, delayIn, filterIn, reverbIn,
     fxTrackSends,
     padGain, leadGain, noiseGain, sampleGain, bassGain, drumsGain,
@@ -2269,6 +2302,7 @@ async function togglePlay() {
   const btn = $('playBtn');
   btn.textContent = isPlaying ? '◼ STOP' : '▶ PLAY';
   btn.classList.toggle('playing', isPlaying);
+  portalUnlockPlayback();
   if (window.CuorePortal && CuorePortal.isOpen()) {
     CuorePortal.onTransportChange({
       playing: isPlaying,
@@ -2281,16 +2315,21 @@ $('playBtn').addEventListener('click', togglePlay);
 
 $('beepBtn').addEventListener('click', async () => {
   await unlockAudio();
+  await initAudio();
+  portalUnlockPlayback();
   const beep = new Tone.Synth({
     oscillator: { type: 'sine' },
     envelope: { attack: 0.005, decay: 0.3, sustain: 0, release: 0.05 },
     volume: -8
-  }).toDestination();
+  });
+  if (window.CuorePortal && CuorePortal.isOpen() && A) beep.connect(A.master);
+  else beep.toDestination();
   beep.triggerAttackRelease('A4', 0.25);
   setTimeout(() => beep.dispose(), 800);
 });
 $('strikeBtn').addEventListener('click', async () => {
   await initAudio();
+  portalUnlockPlayback();
   const t = Tone.now() + 0.05;
   const c = PROGS[currentProg][0].map(n => n + currentKey);
   A.pad.triggerAttackRelease(c.map(midiToFreq), 4, t, 0.8);
@@ -2549,6 +2588,9 @@ function bindMix(id) {
     const v = parseFloat(el.value);
     $(mixLabel[id]).textContent = mixFmt[id](v);
     mixApply[id](v);
+    if (id === 'bpm' && !portalSyncLock && window.CuorePortal && CuorePortal.isOpen()) {
+      CuorePortal.onBpmChange(Math.round(v));
+    }
   };
   el.addEventListener('input', update);
   update();
@@ -3248,9 +3290,26 @@ refreshPresetList();
 loadRecordings();
 renderPatternGrid();
 
+let portalSyncLock = false;
+let bpmMaxNormal = 140;
+
+function portalUnlockPlayback() {
+  if (window.CuorePortal && CuorePortal.isOpen()) CuorePortal.unlockPlayback();
+}
+
+function applyPortalBpm(bpm) {
+  if (!$('bpm')) return;
+  portalSyncLock = true;
+  const v = Math.max(50, Math.min(parseFloat($('bpm').max) || 140, Math.round(bpm)));
+  $('bpm').value = v;
+  $('bpmVal').textContent = String(v);
+  mixApply.bpm(v);
+  portalSyncLock = false;
+}
+
 function applyPortalTransport(msg) {
   if (!msg) return;
-  if (msg.bpm && $('bpm')) $('bpm').value = msg.bpm;
+  if (msg.bpm != null) applyPortalBpm(msg.bpm);
   if (msg.playing && !isPlaying) {
     beat16 = msg.beat16 || 0;
     chordIdx = 0;
@@ -3278,9 +3337,15 @@ if (window.CuorePortal) {
     Tone: Tone,
     initAudio: initAudio,
     unlockAudio: unlockAudio,
+    applyPortalBpm: applyPortalBpm,
+    getBpm: function () { return parseFloat($('bpm').value) || 76; },
     get limiter() { return A ? A.limiter : null; },
+    get portalRemoteIn() { return A ? A.portalRemoteIn : null; },
     get master() { return A ? A.master : null; },
-    getSendStream: function () { return A && A.portalSend ? A.portalSend.stream : null; },
+    getSendStream: function () {
+      if (A && A.recDest && A.recDest.stream) return A.recDest.stream;
+      return A && A.portalSend ? A.portalSend.stream : null;
+    },
     getSpectrum: function () { return A && A.portalAna ? A.portalAna.getValue() : new Float32Array(32); },
     getMeterLevel: function () {
       if (!A || !A.meter) return 0;
