@@ -546,12 +546,12 @@
   <section class="section">
     <div class="section-title">// LAYERS</div>
     <div class="grid-6">
-      <button class="layer on" data-layer="pad">PAD</button>
-      <button class="layer on" data-layer="bass">BASS</button>
-      <button class="layer on" data-layer="lead">LEAD</button>
-      <button class="layer on" data-layer="drums">DRUMS</button>
-      <button class="layer on" data-layer="noise">NSE</button>
-      <button class="layer on" data-layer="sample">SMP</button>
+      <button class="layer" data-layer="pad">PAD</button>
+      <button class="layer" data-layer="bass">BASS</button>
+      <button class="layer" data-layer="lead">LEAD</button>
+      <button class="layer" data-layer="drums">DRUMS</button>
+      <button class="layer" data-layer="noise">NSE</button>
+      <button class="layer" data-layer="sample">SMP</button>
     </div>
   </section>
 
@@ -1093,7 +1093,7 @@
 </aside>
 </div>
 
-<script src="portal.js?v=5"></script>
+<script src="portal.js?v=6"></script>
 <script>
 'use strict';
 
@@ -1184,7 +1184,7 @@ let playInterval = null;
 let beat16 = 0, chordIdx = 0, bassIdx = 0, trigCount = 0;
 let currentKey = 0, currentProg = 'EMO';
 let density = 0.50, noiseAmt = 0.50;
-let layers = { pad: 1, bass: 1, lead: 1, drums: 1, noise: 1, sample: 1 };
+let layers = { pad: 0, bass: 0, lead: 0, drums: 0, noise: 0, sample: 0 };
 
 // Synth editor state (loaded from storage if present)
 let synthEditTarget = 'pad';
@@ -1286,16 +1286,21 @@ function mkPatternRow(val) {
   return Array(PAT_LEN).fill(val);
 }
 
-const defaultPatterns = {
-  bass:   normalizePatternRow([47, 47, null, 47, 47, 42, null, 45, null, null, null, null, null, null, null, null], null),
-  pad:    normalizePatternRow([5, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0], 0),
-  lead:   normalizePatternRow([null, null, null, null, 4, null, null, null, null, null, null, null, 7, null, null, null], null),
-  noise:  normalizePatternRow([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], 0),
-  sample: mkPatternRow(0),
-  drums:  defaultDrumPatterns('808')
-};
+function blankPatterns() {
+  const drums = {};
+  DRUM_VOICES.forEach(function (v) { drums[v] = mkPatternRow(0); });
+  return {
+    bass: mkPatternRow(null),
+    pad: mkPatternRow(0),
+    lead: mkPatternRow(null),
+    noise: mkPatternRow(0),
+    sample: mkPatternRow(0),
+    drums: drums
+  };
+}
 
-let patterns = JSON.parse(JSON.stringify(defaultPatterns));
+const defaultPatterns = blankPatterns();
+let patterns = blankPatterns();
 let patternEditTarget = 'bass';
 let patternEditDrumVoice = 'kick';
 let drumKit = '808';
@@ -1315,24 +1320,13 @@ function mkFxSends() {
   return s;
 }
 let fxSends = mkFxSends();
-let usePatternMode = true;
+let usePatternMode = false;
 let patternGenTimer = null;
 let patternClipboard = null;
 
-if (storedState.patterns) {
-  for (const k of ['bass', 'pad', 'lead', 'noise', 'sample']) {
-    const fill = (k === 'bass' || k === 'lead') ? null : 0;
-    if (Array.isArray(storedState.patterns[k])) patterns[k] = normalizePatternRow(storedState.patterns[k], fill);
-  }
-  if (storedState.patterns.drums && typeof storedState.patterns.drums === 'object') {
-    patterns.drums = defaultDrumPatterns('808');
-    DRUM_VOICES.forEach(function (v) {
-      if (Array.isArray(storedState.patterns.drums[v])) patterns.drums[v] = normalizePatternRow(storedState.patterns.drums[v], 0);
-    });
-  }
-}
+// Pattern/layer: foglio bianco all'apertura (non ripristinare da localStorage)
+// Synth, FX e preset restano salvati.
 if (storedState.drumKit === '808' || storedState.drumKit === '909') drumKit = storedState.drumKit;
-if (typeof storedState.usePatternMode === 'boolean') usePatternMode = storedState.usePatternMode;
 if (Number.isFinite(storedState.bassOctave)) bassOctave = Math.max(-2, Math.min(1, Math.round(storedState.bassOctave)));
 if (storedState.fxTargetTrack && TRACKS.includes(storedState.fxTargetTrack)) fxTargetTrack = storedState.fxTargetTrack;
 if (storedState.drumVoiceConfig && typeof storedState.drumVoiceConfig === 'object') {
@@ -2096,6 +2090,7 @@ async function initAudio() {
   ensureSampleVoicePool();
   applyAllSliders();
   applyFxTrackSendsAll();
+  applyLayerMutes();
 }
 
 function refreshPortalSendStream() {
@@ -2516,22 +2511,31 @@ document.querySelectorAll('.tab').forEach(t => {
 // ============================================================
 // LAYERS / KEY / PROG
 // ============================================================
+function syncLayerButtonsUI() {
+  document.querySelectorAll('.layer').forEach(function (btn) {
+    btn.classList.toggle('on', !!layers[btn.dataset.layer]);
+  });
+}
+
+function applyLayerMutes() {
+  if (!A) return;
+  A.padGain.mute = !layers.pad;
+  A.bassGain.mute = !layers.bass;
+  A.leadGain.mute = !layers.lead;
+  A.drumsGain.mute = !layers.drums;
+  A.noiseGain.mute = !layers.noise;
+  A.sampleGain.mute = !layers.sample;
+}
+
 document.querySelectorAll('.layer').forEach(btn => {
   btn.addEventListener('click', () => {
     const layer = btn.dataset.layer;
     layers[layer] = layers[layer] ? 0 : 1;
     btn.classList.toggle('on', !!layers[layer]);
-    if (!A) return;
-    const node =
-      layer === 'pad'    ? A.padGain    :
-      layer === 'bass'   ? A.bassGain   :
-      layer === 'lead'   ? A.leadGain   :
-      layer === 'drums'  ? A.drumsGain  :
-      layer === 'sample' ? A.sampleGain :
-      A.noiseGain;
-    node.mute = !layers[layer];
+    applyLayerMutes();
   });
 });
+syncLayerButtonsUI();
 document.querySelectorAll('.key').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.key').forEach(b => b.classList.remove('on'));

@@ -66,6 +66,7 @@
   let trailTimer = null;
   let selfTrail = null;
   let trailRxCount = 0;
+  let dataRxCount = 0;
   let syncPulseCount = 0;
   const peerReadyWaiters = [];
   const pendingData = [];
@@ -73,9 +74,9 @@
   function $(id) { return document.getElementById(id); }
 
   function parseData(raw) {
-    if (!raw) return null;
-    if (typeof raw === 'object' && !(raw instanceof ArrayBuffer) && !(raw instanceof Uint8Array) && raw.type) {
-      return raw;
+    if (raw == null) return null;
+    if (typeof raw === 'string') {
+      try { return JSON.parse(raw); } catch (e) { return null; }
     }
     if (raw instanceof ArrayBuffer) {
       try { return JSON.parse(new TextDecoder().decode(raw)); } catch (e) { return null; }
@@ -83,10 +84,8 @@
     if (raw instanceof Uint8Array) {
       try { return JSON.parse(new TextDecoder().decode(raw)); } catch (e) { return null; }
     }
-    if (typeof raw === 'string') {
-      try { return JSON.parse(raw); } catch (e) { return null; }
-    }
-    return null;
+    if (typeof raw === 'object' && raw.type) return raw;
+    try { return JSON.parse(JSON.stringify(raw)); } catch (e) { return null; }
   }
 
   function loadPeerJS() {
@@ -141,17 +140,25 @@
     return false;
   }
 
+  function encodeMsg(msg) {
+    try { return JSON.stringify(msg); } catch (e) { return null; }
+  }
+
   function sendData(msg) {
+    const raw = encodeMsg(msg);
+    if (!raw) return;
     if (isHost) {
-      fanout(msg);
+      dataConns.forEach(function (conn) {
+        if (conn.open) try { conn.send(raw); } catch (e) {}
+      });
       return;
     }
     const hid = hostPeerId();
     const conn = dataConns.get(hid);
     if (conn && conn.open) {
-      try { conn.send(msg); return; } catch (e) { console.warn('sendData', e); }
+      try { conn.send(raw); return; } catch (e) { console.warn('sendData', e); }
     }
-    if (pendingData.length < 80) pendingData.push(msg);
+    if (pendingData.length < 80) pendingData.push(raw);
   }
 
   function flushPendingData() {
@@ -221,12 +228,13 @@
     bpmSyncTimer = setInterval(function () {
       if (!portalOpen || !myId) return;
       if (isHost) {
+        sendData({ type: 'ping', from: myId, t: Date.now() });
         pushAuthoritativeBpm(portalBpmNow(), true);
         sendRoster();
       } else {
-        requestBpmSync();
+        sendData({ type: 'bpm-request' });
       }
-    }, 2000);
+    }, 1500);
   }
 
   function requestBpmSync() {
@@ -234,9 +242,7 @@
       pushAuthoritativeBpm(portalBpmNow(), true);
       return;
     }
-    dataConns.forEach(function (conn) {
-      if (conn.open) try { conn.send({ type: 'bpm-request' }); } catch (e) {}
-    });
+    sendData({ type: 'bpm-request' });
   }
 
   function stopBpmSync() {
@@ -443,9 +449,11 @@
   }
 
   function fanout(msg, exceptId) {
+    const raw = typeof msg === 'string' ? msg : encodeMsg(msg);
+    if (!raw) return;
     dataConns.forEach(function (conn, id) {
       if (exceptId && id === exceptId) return;
-      if (conn.open) try { conn.send(msg); } catch (e) {}
+      if (conn.open) try { conn.send(raw); } catch (e) {}
     });
   }
 
@@ -491,7 +499,7 @@
     }).join('') +
       '<div class="portal-peer" style="opacity:0.55;margin-top:6px">// stream attivi: ' +
       sessionStreamCount() + ' · operatori: ' + rows.length + ' · data: ' + dataConns.size +
-      ' · rx:' + trailRxCount + '</div>';
+      ' · rx:' + trailRxCount + '/' + dataRxCount + '</div>';
   }
 
   function sendRoster() {
@@ -538,6 +546,17 @@
 
   function handleData(msg, fromId) {
     if (!msg || !msg.type) return;
+    dataRxCount++;
+
+    if (msg.type === 'ping') {
+      trailRxCount++;
+      if (!isHost) sendData({ type: 'pong', from: myId, t: Date.now() });
+      return;
+    }
+    if (msg.type === 'pong') {
+      trailRxCount++;
+      return;
+    }
 
     if (msg.type === 'hello') {
       if (msg.id === myId) return;
@@ -624,7 +643,7 @@
 
   function sendHello(conn) {
     if (!conn.open) return;
-    conn.send({
+    const raw = encodeMsg({
       type: 'hello',
       id: myId,
       name: myName,
@@ -632,6 +651,7 @@
       entryAngle: selfTrail ? selfTrail.entryAngle : 0,
       bpm: portalBpmNow()
     });
+    if (raw) try { conn.send(raw); } catch (e) {}
   }
 
   function syncBpmOut() {
@@ -1137,6 +1157,9 @@ async function joinPortal(code) {
   }
 
   function buildSyncPayload() {
+    const tail = selfTrail.trail.slice(-16).map(function (p) {
+      return { x: p.x, y: p.y, z: p.z, e: p.e || 0 };
+    });
     return {
       type: 'sync',
       id: myId,
@@ -1146,7 +1169,7 @@ async function joinPortal(code) {
       x: selfTrail.x,
       y: selfTrail.y,
       z: selfTrail.z,
-      trailTail: selfTrail.trail.slice(-32),
+      trailTail: tail,
       playing: studio.isPlaying ? studio.isPlaying() : false,
       hasAudio: !!selfTrail.hasAudio,
       bpm: portalBpmNow()
