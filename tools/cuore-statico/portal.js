@@ -94,6 +94,9 @@
       flushPendingData();
       requestBpmSync();
     }
+    ensureLocalStream().then(function () {
+      meshAllAudioPeers();
+    });
     renderPeerList();
   }
 
@@ -274,6 +277,7 @@
     wsSend({
       type: 'hello',
       id: portalPeerId(),
+      peerJsId: myId || '',
       name: myName,
       hue: myHue,
       entryAngle: selfTrail ? selfTrail.entryAngle : 0,
@@ -374,19 +378,51 @@
     }
   }
 
+  function peerJsTarget(msg) {
+    if (!msg) return null;
+    if (msg.peerJsId && msg.peerJsId !== myId) return msg.peerJsId;
+    const id = msg.id;
+    if (!id || id === myId) return null;
+    if (String(id).indexOf('ws-') === 0) return null;
+    return id;
+  }
+
+  function notePeerJsId(msg) {
+    const t = peerJsTarget(msg);
+    if (!t || !msg.id || msg.id === portalPeerId()) return;
+    let u = peers.get(msg.id);
+    if (!u && msg.name) {
+      u = mkTrailUser(msg.id, msg.name, msg.hue != null ? msg.hue : hashHue(msg.id), msg.entryAngle || 0);
+      peers.set(msg.id, u);
+    }
+    if (u) u.peerJsId = t;
+  }
+
+  function meshPeerJsTarget(p) {
+    if (!p) return null;
+    if (p.peerJsId && p.peerJsId !== myId) return p.peerJsId;
+    if (p.id && String(p.id).indexOf('ws-') !== 0 && p.id !== myId) return p.id;
+    return null;
+  }
+
+  function meshAllAudioPeers() {
+    if (!peer || !myId) return;
+    if (!isHost) {
+      meshCall(hostPeerId());
+      return;
+    }
+    peers.forEach(function (p) {
+      const t = meshPeerJsTarget(p);
+      if (t && !hasLiveRemoteStream(t)) meshCall(t);
+    });
+  }
+
   function meshAllKnownPeers() {
     if (!peer || !myId) return;
     ensureLocalStream().then(function (stream) {
       if (!stream || !peer) return;
-      if (!isHost && roomCode) {
-        connectDataTo(hostPeerId());
-        meshCall(hostPeerId());
-      }
-      if (isHost) {
-        peers.forEach(function (_, id) {
-          if (!hasLiveRemoteStream(id)) meshCall(id);
-        });
-      }
+      if (!isHost && roomCode) connectDataTo(hostPeerId());
+      meshAllAudioPeers();
     });
   }
 
@@ -394,6 +430,9 @@
   let bpmSyncTimer = null;
   let lastBpmSeq = 0;
   let lastSentBpm = -1;
+  let lastAppliedBpmSeq = 0;
+  let bpmSendTimer = null;
+  let bpmPendingVal = null;
 
   function hasLiveRemoteStream(peerId) {
     const s = remoteStreams.get(peerId);
@@ -417,14 +456,8 @@
     if (bpmSyncTimer) clearInterval(bpmSyncTimer);
     bpmSyncTimer = setInterval(function () {
       if (!portalOpen || !portalPeerId()) return;
-      if (isHost) {
-        sendData({ type: 'ping', from: myId, t: Date.now() });
-        pushAuthoritativeBpm(portalBpmNow(), true);
-        sendRoster();
-      } else {
-        sendData({ type: 'bpm-request' });
-      }
-    }, 1500);
+      if (isHost) pushAuthoritativeBpm(portalBpmNow(), false);
+    }, 5000);
   }
 
   function requestBpmSync() {
@@ -645,7 +678,7 @@
     if (syncEl) {
       syncEl.textContent = '// ws:' + (wsReady ? 'on' : 'off') +
         ' · rx:' + trailRxCount + '/' + dataRxCount +
-        ' · portal.js v12';
+        ' · portal.js v13';
     }
   }
 
@@ -711,9 +744,9 @@
 
   function sendRoster() {
     if (!isHost) return;
-    const list = [{ id: myId, name: myName, hue: myHue }];
+    const list = [{ id: portalPeerId(), peerJsId: myId || '', name: myName, hue: myHue }];
     peers.forEach(function (p, id) {
-      list.push({ id: id, name: p.name, hue: p.hue });
+      list.push({ id: id, peerJsId: p.peerJsId || meshPeerJsTarget(p) || '', name: p.name, hue: p.hue });
     });
     lastBpmSeq++;
     broadcast({ type: 'roster', peers: list, bpm: portalBpmNow(), seq: lastBpmSeq });
@@ -746,9 +779,6 @@
 
   function applySyncMessage(msg) {
     applyTrailMessage(msg);
-    if (msg.bpm != null && Math.round(msg.bpm) !== portalBpmNow()) {
-      applyRemoteBpm(msg.bpm);
-    }
   }
 
   function handleData(msg, fromId) {
@@ -768,21 +798,26 @@
 
     if (msg.type === 'hello') {
       if (msg.id === portalPeerId()) return;
+      notePeerJsId(msg);
       if (!peers.has(msg.id)) {
         peers.set(msg.id, mkTrailUser(msg.id, msg.name, msg.hue, msg.entryAngle));
       }
-      if (!isHost && msg.bpm != null) applyRemoteBpm(msg.bpm);
+      if (!isHost && msg.bpm != null) applyRemoteBpm(msg.bpm, msg.seq);
       if (isHost) {
         sendRoster();
         fanout({
-          type: 'hello', id: myId, name: myName, hue: myHue,
+          type: 'hello', id: portalPeerId(), peerJsId: myId || '',
+          name: myName, hue: myHue,
           entryAngle: selfTrail ? selfTrail.entryAngle : 0,
           bpm: portalBpmNow()
         }, msg.id);
-        meshCall(msg.id);
-        setTimeout(function () { forceMeshCall(msg.id); }, 1200);
-        setTimeout(function () { forceMeshCall(msg.id); }, 4000);
-      } else if (msg.id === hostPeerId() || String(msg.id).indexOf('cuore-host-') === 0) {
+        const t = peerJsTarget(msg);
+        if (t) {
+          meshCall(t);
+          setTimeout(function () { forceMeshCall(t); }, 800);
+          setTimeout(function () { forceMeshCall(t); }, 3000);
+        }
+      } else {
         meshCall(hostPeerId());
       }
       renderPeerList();
@@ -790,24 +825,33 @@
     }
 
     if (msg.type === 'roster') {
-      const validIds = [myId];
+      const validIds = [myId, portalPeerId()];
       (msg.peers || []).forEach(function (p, i) {
-        if (p.id === myId) return;
+        if (p.id === myId || p.id === portalPeerId()) return;
         validIds.push(p.id);
         if (!peers.has(p.id)) {
           peers.set(p.id, mkTrailUser(p.id, p.name, p.hue, (i * 2.39996) % (Math.PI * 2)));
         }
+        if (p.peerJsId) {
+          const u = peers.get(p.id);
+          if (u) u.peerJsId = p.peerJsId;
+        }
       });
       pruneStaleRemotePeers(validIds);
-      if (!isHost && msg.bpm != null) applyRemoteBpm(msg.bpm);
+      if (!isHost && msg.bpm != null) applyRemoteBpm(msg.bpm, msg.seq);
       if (!isHost) meshCall(hostPeerId());
+      else meshAllAudioPeers();
       renderPeerList();
       return;
     }
 
     if (msg.type === 'trail' || msg.type === 'sync') {
+      notePeerJsId(msg);
       if (msg.type === 'sync') applySyncMessage(msg);
       else applyTrailMessage(msg);
+      if (isHost && msg.peerJsId && !hasLiveRemoteStream(msg.peerJsId)) {
+        meshCall(msg.peerJsId);
+      }
       if (isHost && !wsReady) fanout(msg, fromId);
       renderPeerList();
       return;
@@ -830,7 +874,7 @@
     }
 
     if (msg.type === 'bpm-set') {
-      applyRemoteBpm(msg.bpm);
+      applyRemoteBpm(msg.bpm, msg.seq);
       return;
     }
 
@@ -841,9 +885,8 @@
 
     if (msg.type === 'bpm-relay') {
       if (isHost) {
-        const v = Math.round(msg.bpm);
-        studio.applyPortalBpm(v);
-        pushAuthoritativeBpm(v, true);
+        applyRemoteBpm(msg.bpm);
+        pushAuthoritativeBpm(Math.round(msg.bpm), true);
       }
       return;
     }
@@ -958,7 +1001,7 @@
   }
 
   function syncBpmOut() {
-    if (!portalOpen || !studio || !myId) return;
+    if (!portalOpen || !studio || !portalPeerId()) return;
     if (isHost) pushAuthoritativeBpm(portalBpmNow());
   }
 
@@ -1070,13 +1113,17 @@
   }
 
   function hardReconnectAllAudio() {
+    if (studio && studio.refreshPortalSendStream) studio.refreshPortalSendStream();
+    localStream = studio.getSendStream && studio.getSendStream();
     replaceSendTracks();
+    meshAllAudioPeers();
     if (isHost) {
-      peers.forEach(function (_, id) {
-        if (!hasLiveRemoteStream(id)) forceMeshCall(id);
+      peers.forEach(function (p) {
+        const t = meshPeerJsTarget(p);
+        if (t && !hasLiveRemoteStream(t)) forceMeshCall(t);
       });
     } else if (!hasLiveRemoteStream(hostPeerId())) {
-      meshCall(hostPeerId());
+      forceMeshCall(hostPeerId());
     }
   }
 
@@ -1095,22 +1142,22 @@
     remoteStreams.set(peerId, stream);
     stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
 
-    const aud = document.createElement('audio');
-    aud.autoplay = true;
-    aud.playsInline = true;
-    aud.setAttribute('playsinline', '');
-    aud.volume = 1;
-    aud.muted = false;
-    aud.srcObject = stream;
-    aud.id = 'portal-aud-' + String(peerId).slice(-8);
-    aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
-    document.body.appendChild(aud);
-    remoteAudioEls.set(peerId, aud);
-
-    try {
-      await aud.play();
-    } catch (e) {
-      console.warn('portal aud play', e);
+    const routed = routeRemoteStream(stream);
+    if (routed) {
+      remoteGains.set(peerId, routed);
+    } else {
+      const aud = document.createElement('audio');
+      aud.autoplay = true;
+      aud.playsInline = true;
+      aud.setAttribute('playsinline', '');
+      aud.volume = 1;
+      aud.muted = false;
+      aud.srcObject = stream;
+      aud.id = 'portal-aud-' + String(peerId).slice(-8);
+      aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
+      document.body.appendChild(aud);
+      remoteAudioEls.set(peerId, aud);
+      try { await aud.play(); } catch (e) { console.warn('portal aud play', e); }
     }
 
     if (meta && meta.name) {
@@ -1140,14 +1187,17 @@
     return Math.round(studio.getBpm());
   }
 
-  function applyRemoteBpm(bpm) {
+  function applyRemoteBpm(bpm, seq) {
     if (!studio || !studio.applyPortalBpm) return;
     const v = Math.round(bpm);
-    if (v === portalBpmNow()) return;
+    if (seq != null && seq <= lastAppliedBpmSeq) return;
+    if (v === portalBpmNow()) {
+      if (seq != null) lastAppliedBpmSeq = seq;
+      return;
+    }
+    if (seq != null) lastAppliedBpmSeq = seq;
     lastSentBpm = v;
     studio.applyPortalBpm(v);
-    const st = $('portalStatus');
-    if (st && portalOpen) st.textContent = '// BPM SYNC · ' + v;
   }
 
   function pushAuthoritativeBpm(bpm, force) {
@@ -1155,13 +1205,23 @@
     if (!force && v === lastSentBpm) return;
     lastSentBpm = v;
     lastBpmSeq++;
-    broadcast({ type: 'bpm-set', bpm: v, seq: lastBpmSeq, from: myId });
+    broadcast({ type: 'bpm-set', bpm: v, seq: lastBpmSeq, from: portalPeerId() });
+  }
+
+  function sendBpmNow(bpm) {
+    const v = Math.round(bpm);
+    if (isHost) pushAuthoritativeBpm(v, true);
+    else sendData({ type: 'bpm-relay', bpm: v, from: portalPeerId() });
   }
 
   function sendBpm(bpm) {
-    const v = Math.round(bpm);
-    if (isHost) pushAuthoritativeBpm(v, true);
-    else sendData({ type: 'bpm-relay', bpm: v, from: myId });
+    bpmPendingVal = Math.round(bpm);
+    if (bpmSendTimer) return;
+    bpmSendTimer = setTimeout(function () {
+      bpmSendTimer = null;
+      if (bpmPendingVal != null) sendBpmNow(bpmPendingVal);
+      bpmPendingVal = null;
+    }, 80);
   }
 
   function wireBpmSlider() {
@@ -1171,7 +1231,13 @@
     el.addEventListener('input', function () {
       if (global.CUORE && CUORE.portalSyncLock) return;
       if (!portalOpen) return;
-      onBpmChange(parseInt(el.value, 10) || 76);
+      sendBpm(parseInt(el.value, 10) || 76);
+    });
+    el.addEventListener('change', function () {
+      if (global.CUORE && CUORE.portalSyncLock) return;
+      if (!portalOpen) return;
+      if (bpmSendTimer) { clearTimeout(bpmSendTimer); bpmSendTimer = null; }
+      sendBpmNow(parseInt(el.value, 10) || 76);
     });
   }
 
@@ -1455,6 +1521,7 @@ async function joinPortal(code) {
     return {
       type: 'sync',
       id: portalPeerId(),
+      peerJsId: myId || '',
       name: myName,
       hue: myHue,
       entryAngle: selfTrail.entryAngle,
@@ -1542,7 +1609,7 @@ async function joinPortal(code) {
     window.dispatchEvent(new Event('resize'));
     wireBpmSlider();
     const syncEl = $('portalSyncLine');
-    if (syncEl) syncEl.textContent = '// portal.js v12 · CREA o ENTRA · relay Workers';
+    if (syncEl) syncEl.textContent = '// portal.js v13 · CREA o ENTRA · relay Workers';
   }
 
   global.CuorePortal = {

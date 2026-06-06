@@ -1094,7 +1094,7 @@
 </aside>
 </div>
 
-<script src="portal.js?v=12"></script>
+<script src="portal.js?v=13"></script>
 <script>
 'use strict';
 
@@ -2013,7 +2013,7 @@ async function initAudio() {
   const portalTap = new Tone.Gain(1);
   master.connect(portalTap);
   portalTap.connect(portalSend);
-  const portalRemoteIn = new Tone.Gain(1.55);
+  const portalRemoteIn = new Tone.Gain(1.85);
   portalRemoteIn.connect(limiter);
   const portalAna = new Tone.Analyser('fft', 32);
   master.connect(portalAna);
@@ -3348,7 +3348,6 @@ function applyPortalBpm(bpm) {
   $('bpm').value = String(v);
   $('bpmVal').textContent = String(v);
   mixApply.bpm(v);
-  if (isPlaying) startTicker();
   CUORE.portalSyncLock = false;
 }
 
