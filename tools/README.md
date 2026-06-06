@@ -34,7 +34,16 @@ ogni tool è un file `tool.html` autonomo. Per aggiornarne uno:
 
 1. modifica `tools/<slug>/tool.html`
 2. aggiorna versione in `info.html` e nel `changelog`
-3. push su git → cloudflare ridepoya in 30s
+3. push su git → cloudflare rideploya in 30s
+
+### PORTAL sync (CUORE_STATICO)
+
+Trail e BPM usano **WebSocket** su `/portal/ws` (Cloudflare Pages Functions + Durable Object).
+
+- `wrangler.toml` in root: il campo `name` deve coincidere con il **nome progetto Pages** in dashboard.
+- Al primo deploy con DO, Cloudflare applica la migration `PortalRoom` automaticamente.
+- In UI: `ws:on` = sync attiva · `rx` che sale = messaggi ricevuti.
+- Audio resta su PeerJS/WebRTC.
 
 ## aggiungere un terzo tool
 

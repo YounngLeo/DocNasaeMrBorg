@@ -71,6 +71,10 @@
   let syncPulseCount = 0;
   const peerReadyWaiters = [];
   const pendingData = [];
+  let portalWs = null;
+  let wsReady = false;
+  let wsReconnectTimer = null;
+  let wsClientId = '';
 
   function $(id) { return document.getElementById(id); }
 
@@ -154,6 +158,112 @@
     try { return JSON.stringify(msg); } catch (e) { return null; }
   }
 
+  function portalWsBase() {
+    const meta = document.querySelector('meta[name="portal-ws"]');
+    if (meta && meta.content && meta.content.trim()) return meta.content.trim().replace(/\/$/, '');
+    if (location.protocol === 'https:') return 'wss://' + location.host;
+    if (location.protocol === 'http:') return 'ws://' + location.host;
+    return '';
+  }
+
+  function buildWsUrl() {
+    const base = portalWsBase();
+    if (!base || !roomCode) return '';
+    const peer = encodeURIComponent(myId || wsClientId || 'pending');
+    const name = encodeURIComponent(myName || 'OP');
+    return base + '/portal/ws?room=' + encodeURIComponent(roomCode.toUpperCase()) +
+      '&peer=' + peer + '&name=' + name + '&host=' + (isHost ? '1' : '0');
+  }
+
+  function scheduleWsReconnect() {
+    if (wsReconnectTimer || !portalOpen) return;
+    wsReconnectTimer = setTimeout(function () {
+      wsReconnectTimer = null;
+      if (portalOpen) connectPortalWs();
+    }, 2200);
+  }
+
+  function disconnectPortalWs(clearTimer) {
+    if (clearTimer !== false && wsReconnectTimer) {
+      clearTimeout(wsReconnectTimer);
+      wsReconnectTimer = null;
+    }
+    wsReady = false;
+    if (portalWs) {
+      try { portalWs.onopen = portalWs.onmessage = portalWs.onclose = portalWs.onerror = null; portalWs.close(); } catch (e) {}
+      portalWs = null;
+    }
+  }
+
+  function wsSend(msg) {
+    if (!portalWs || portalWs.readyState !== WebSocket.OPEN) return false;
+    const raw = encodeMsg(msg);
+    if (!raw) return false;
+    try {
+      portalWs.send(raw);
+      return true;
+    } catch (e) {
+      console.warn('portal ws send', e);
+      return false;
+    }
+  }
+
+  function onWsReady() {
+    sendHelloWs();
+    if (isHost) sendRoster();
+    syncBpmOut();
+    requestBpmSync();
+    flushPendingData();
+    renderPeerList();
+  }
+
+  function sendHelloWs() {
+    wsSend({
+      type: 'hello',
+      id: myId || wsClientId,
+      name: myName,
+      hue: myHue,
+      entryAngle: selfTrail ? selfTrail.entryAngle : 0,
+      bpm: portalBpmNow()
+    });
+  }
+
+  function connectPortalWs() {
+    if (!portalOpen || !roomCode) return;
+    if (!wsClientId) wsClientId = 'ws-' + randCode() + randCode();
+    const url = buildWsUrl();
+    if (!url) {
+      console.warn('portal: URL WebSocket non configurata');
+      return;
+    }
+    disconnectPortalWs(false);
+    try {
+      portalWs = new WebSocket(url);
+    } catch (e) {
+      console.warn('portal ws connect', e);
+      scheduleWsReconnect();
+      return;
+    }
+    portalWs.onopen = function () {
+      wsReady = true;
+      setStatus('// WS · room ' + roomCode);
+      onWsReady();
+    };
+    portalWs.onmessage = function (ev) {
+      const msg = parseData(ev.data);
+      if (!msg || msg.type === 'ws-join') return;
+      handleData(msg, msg.from || msg.id || 'ws');
+    };
+    portalWs.onclose = function () {
+      wsReady = false;
+      renderPeerList();
+      if (portalOpen) scheduleWsReconnect();
+    };
+    portalWs.onerror = function () {
+      console.warn('portal ws error — verifica deploy Functions su Cloudflare');
+    };
+  }
+
   function connSend(conn, msg) {
     if (!conn || !conn.open) return false;
     try {
@@ -166,6 +276,7 @@
   }
 
   function sendData(msg) {
+    if (wsSend(msg)) return;
     if (isHost) {
       dataConns.forEach(function (conn) { connSend(conn, msg); });
       return;
@@ -177,12 +288,14 @@
   }
 
   function flushPendingData() {
-    if (isHost) return;
-    const hid = hostPeerId();
-    const conn = dataConns.get(hid);
-    if (!conn || !conn.open) return;
     while (pendingData.length) {
-      if (!connSend(conn, pendingData.shift())) break;
+      if (wsSend(pendingData[0])) pendingData.shift();
+      else if (!isHost) {
+        const hid = hostPeerId();
+        const conn = dataConns.get(hid);
+        if (conn && conn.open && connSend(conn, pendingData[0])) pendingData.shift();
+        else break;
+      } else break;
     }
   }
 
@@ -461,6 +574,7 @@
   }
 
   function fanout(msg, exceptId) {
+    if (wsSend(msg)) return;
     dataConns.forEach(function (conn, id) {
       if (exceptId && id === exceptId) return;
       connSend(conn, msg);
@@ -508,7 +622,7 @@
         p.name + local + aud + '</div>';
     }).join('') +
       '<div class="portal-peer" style="opacity:0.55;margin-top:6px">// stream attivi: ' +
-      sessionStreamCount() + ' · operatori: ' + rows.length + ' · dc: ' + dataConnOpenCount() +
+      sessionStreamCount() + ' · operatori: ' + rows.length + ' · ws:' + (wsReady ? 'on' : 'off') +
       ' · rx:' + trailRxCount + '/' + dataRxCount + '</div>';
   }
 
@@ -616,7 +730,7 @@
     if (msg.type === 'trail' || msg.type === 'sync') {
       if (msg.type === 'sync') applySyncMessage(msg);
       else applyTrailMessage(msg);
-      if (isHost) fanout(msg, fromId);
+      if (isHost && !wsReady) fanout(msg, fromId);
       renderPeerList();
       return;
     }
@@ -658,6 +772,7 @@
   }
 
   function sendHello(peerId) {
+    sendHelloWs();
     const conn = dataConns.get(peerId);
     if (!conn || !conn.open) return;
     connSend(conn, {
@@ -1044,6 +1159,7 @@
       if (selfTrail) selfTrail.id = id;
       flushPeerReady();
       setStatus('// ONLINE · ' + id.slice(-8));
+      connectPortalWs();
       startTrailSync();
       syncBpmOut();
       meshAllKnownPeers();
@@ -1126,6 +1242,7 @@
     if (!selfTrail) selfTrail = mkTrailUser(myId || ('local-' + roomCode), myName, myHue, 0);
     else { selfTrail.id = myId || selfTrail.id; selfTrail.name = myName; selfTrail.hue = myHue; }
     if (!portalOpen) openPortalUI();
+    connectPortalWs();
   }
 
   function createHostPeer(hostId) {
@@ -1222,6 +1339,7 @@ async function joinPortal(code) {
     stopTrailSync();
     stopMeshRetry();
     stopBpmSync();
+    disconnectPortalWs(true);
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     Array.from(remoteGains.keys()).forEach(removeRemotePeer);
     mediaCalls.clear();
@@ -1242,6 +1360,7 @@ async function joinPortal(code) {
     trailRxCount = 0;
     dataRxCount = 0;
     pendingData.length = 0;
+    wsClientId = '';
     $('studioLayout').classList.remove('portal-open');
     $('portalRail').hidden = true;
     $('portalRoomWrap').hidden = true;
