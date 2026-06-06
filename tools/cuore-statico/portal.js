@@ -53,6 +53,7 @@
   let peerReady = false;
   let hostIdRetry = false;
   const dataConns = new Map();
+  const rtcDataChannels = new Map();
   const remoteStreams = new Map();
   const remoteGains = new Map();
   const remoteAudioEls = new Map();
@@ -75,17 +76,26 @@
 
   function parseData(raw) {
     if (raw == null) return null;
+    if (typeof raw === 'object' && raw.type) return raw;
     if (typeof raw === 'string') {
-      try { return JSON.parse(raw); } catch (e) { return null; }
+      try {
+        let v = JSON.parse(raw);
+        if (typeof v === 'string') {
+          try { v = JSON.parse(v); } catch (e2) { return null; }
+        }
+        return v && v.type ? v : null;
+      } catch (e) { return null; }
     }
     if (raw instanceof ArrayBuffer) {
-      try { return JSON.parse(new TextDecoder().decode(raw)); } catch (e) { return null; }
+      try { return parseData(new TextDecoder().decode(raw)); } catch (e) { return null; }
     }
     if (raw instanceof Uint8Array) {
-      try { return JSON.parse(new TextDecoder().decode(raw)); } catch (e) { return null; }
+      try { return parseData(new TextDecoder().decode(raw)); } catch (e) { return null; }
     }
-    if (typeof raw === 'object' && raw.type) return raw;
-    try { return JSON.parse(JSON.stringify(raw)); } catch (e) { return null; }
+    try {
+      const v = JSON.parse(JSON.stringify(raw));
+      return v && v.type ? v : null;
+    } catch (e) { return null; }
   }
 
   function loadPeerJS() {
@@ -144,21 +154,26 @@
     try { return JSON.stringify(msg); } catch (e) { return null; }
   }
 
+  function connSend(conn, msg) {
+    if (!conn || !conn.open) return false;
+    try {
+      conn.send(msg);
+      return true;
+    } catch (e) {
+      console.warn('connSend', e);
+      return false;
+    }
+  }
+
   function sendData(msg) {
-    const raw = encodeMsg(msg);
-    if (!raw) return;
     if (isHost) {
-      dataConns.forEach(function (conn) {
-        if (conn.open) try { conn.send(raw); } catch (e) {}
-      });
+      dataConns.forEach(function (conn) { connSend(conn, msg); });
       return;
     }
     const hid = hostPeerId();
     const conn = dataConns.get(hid);
-    if (conn && conn.open) {
-      try { conn.send(raw); return; } catch (e) { console.warn('sendData', e); }
-    }
-    if (pendingData.length < 80) pendingData.push(raw);
+    if (connSend(conn, msg)) return;
+    if (pendingData.length < 80) pendingData.push(msg);
   }
 
   function flushPendingData() {
@@ -167,17 +182,15 @@
     const conn = dataConns.get(hid);
     if (!conn || !conn.open) return;
     while (pendingData.length) {
-      try { conn.send(pendingData.shift()); } catch (e) { break; }
+      if (!connSend(conn, pendingData.shift())) break;
     }
   }
 
-  /** Star: solo il guest apre il canale dati verso l'host. */
   function connectDataTo(peerId) {
-    if (isHost) return;
-    if (!peer || !peerId || peerId === myId || peerId !== hostPeerId()) return;
+    if (isHost || !peer || !peerId || peerId === myId || peerId !== hostPeerId()) return;
     if (dataConns.has(peerId)) return;
     try {
-      setupDataConn(peer.connect(peerId, { reliable: true }));
+      setupPeerDataConn(peer.connect(peerId, { reliable: true, serialization: 'json' }));
     } catch (e) {
       console.warn('connectDataTo', peerId, e);
     }
@@ -188,9 +201,8 @@
     ensureLocalStream().then(function (stream) {
       if (!stream || !peer) return;
       if (!isHost && roomCode) {
-        const hid = hostPeerId();
-        connectDataTo(hid);
-        meshCall(hid);
+        connectDataTo(hostPeerId());
+        meshCall(hostPeerId());
       }
       if (isHost) {
         peers.forEach(function (_, id) {
@@ -449,11 +461,9 @@
   }
 
   function fanout(msg, exceptId) {
-    const raw = typeof msg === 'string' ? msg : encodeMsg(msg);
-    if (!raw) return;
     dataConns.forEach(function (conn, id) {
       if (exceptId && id === exceptId) return;
-      if (conn.open) try { conn.send(raw); } catch (e) {}
+      connSend(conn, msg);
     });
   }
 
@@ -498,8 +508,14 @@
         p.name + local + aud + '</div>';
     }).join('') +
       '<div class="portal-peer" style="opacity:0.55;margin-top:6px">// stream attivi: ' +
-      sessionStreamCount() + ' · operatori: ' + rows.length + ' · data: ' + dataConns.size +
+      sessionStreamCount() + ' · operatori: ' + rows.length + ' · dc: ' + dataConnOpenCount() +
       ' · rx:' + trailRxCount + '/' + dataRxCount + '</div>';
+  }
+
+  function dataConnOpenCount() {
+    let n = 0;
+    dataConns.forEach(function (c) { if (c.open) n++; });
+    return n;
   }
 
   function sendRoster() {
@@ -641,9 +657,10 @@
     }
   }
 
-  function sendHello(conn) {
-    if (!conn.open) return;
-    const raw = encodeMsg({
+  function sendHello(peerId) {
+    const conn = dataConns.get(peerId);
+    if (!conn || !conn.open) return;
+    connSend(conn, {
       type: 'hello',
       id: myId,
       name: myName,
@@ -651,7 +668,100 @@
       entryAngle: selfTrail ? selfTrail.entryAngle : 0,
       bpm: portalBpmNow()
     });
-    if (raw) try { conn.send(raw); } catch (e) {}
+  }
+
+  function onDataChannelReady(peerId) {
+    sendHello(peerId);
+    if (isHost) sendRoster();
+    syncBpmOut();
+    requestBpmSync();
+    flushPendingData();
+    renderPeerList();
+  }
+
+  function registerSyncChannel(peerId, channel) {
+    if (!channel || channel.__cuoreBound) return;
+    channel.__cuoreBound = true;
+    const existing = dataConns.get(peerId);
+    if (existing && existing._peerJsConn) {
+      try { existing._peerJsConn.close(); } catch (e) {}
+    }
+    rtcDataChannels.set(peerId, channel);
+    const wrapper = {
+      peer: peerId,
+      get open() {
+        if (channel.readyState != null) return channel.readyState === 'open';
+        return !!channel.open;
+      },
+      send: function (msg) {
+        if (channel.readyState != null) {
+          if (channel.readyState !== 'open') return;
+          const raw = encodeMsg(msg);
+          if (raw) channel.send(raw);
+        }
+      }
+    };
+    dataConns.set(peerId, wrapper);
+
+    channel.addEventListener('open', function () { onDataChannelReady(peerId); });
+    channel.addEventListener('message', function (e) {
+      const msg = parseData(e.data);
+      if (msg) handleData(msg, peerId);
+    });
+    channel.addEventListener('close', function () {
+      if (rtcDataChannels.get(peerId) === channel) rtcDataChannels.delete(peerId);
+      if (dataConns.get(peerId) === wrapper) dataConns.delete(peerId);
+      renderPeerList();
+    });
+    if (wrapper.open) onDataChannelReady(peerId);
+  }
+
+  /** Canale dati già negoziato da PeerJS sulla stessa call dell'audio. */
+  function wireCallSyncChannel(remoteId, call) {
+    if (!call || call.__cuoreSyncWired) return;
+    call.__cuoreSyncWired = true;
+
+    function tryBind() {
+      if (call.dataChannel) registerSyncChannel(remoteId, call.dataChannel);
+    }
+
+    if (call.on) call.on('willCloseOnRemote', tryBind);
+    tryBind();
+    const tick = setInterval(function () {
+      tryBind();
+      if (rtcDataChannels.has(remoteId)) clearInterval(tick);
+    }, 40);
+    setTimeout(function () { clearInterval(tick); }, 20000);
+  }
+
+  function setupPeerDataConn(conn) {
+    if (!conn) return;
+    const pid = conn.peer;
+    if (rtcDataChannels.has(pid)) return;
+    const existing = dataConns.get(pid);
+    if (existing && existing._peerJsConn === conn) return;
+    if (existing && existing._peerJsConn) {
+      try { existing._peerJsConn.close(); } catch (e) {}
+    }
+    const wrapper = {
+      peer: pid,
+      _peerJsConn: conn,
+      get open() { return conn.open; },
+      send: function (msg) { conn.send(msg); }
+    };
+    dataConns.set(pid, wrapper);
+    conn.on('data', function (data) {
+      const msg = parseData(data);
+      if (msg) handleData(msg, pid);
+    });
+    conn.on('close', function () {
+      if (dataConns.get(pid) === wrapper) dataConns.delete(pid);
+      renderPeerList();
+    });
+    conn.on('error', function (err) { console.warn('portal data err', err); });
+    function onConnOpen() { onDataChannelReady(pid); }
+    if (conn.open) onConnOpen();
+    else conn.on('open', onConnOpen);
   }
 
   function syncBpmOut() {
@@ -662,33 +772,6 @@
   function onBpmChange(bpm) {
     if (!portalOpen) return;
     sendBpm(bpm);
-  }
-
-  function setupDataConn(conn) {
-    if (!conn) return;
-    const pid = conn.peer;
-    const existing = dataConns.get(pid);
-    if (existing && existing !== conn) {
-      try { existing.close(); } catch (e) {}
-    }
-    dataConns.set(pid, conn);
-    conn.on('data', function (data) {
-      const msg = parseData(data);
-      if (msg) handleData(msg, pid);
-    });
-    conn.on('close', function () {
-      if (dataConns.get(pid) === conn) dataConns.delete(pid);
-    });
-    conn.on('error', function (err) { console.warn('portal data err', err); });
-    function onConnOpen() {
-      sendHello(conn);
-      if (isHost) sendRoster();
-      syncBpmOut();
-      requestBpmSync();
-      flushPendingData();
-    }
-    if (conn.open) onConnOpen();
-    else conn.on('open', onConnOpen);
   }
 
   function routeRemoteStream(stream) {
@@ -720,6 +803,7 @@
     if (!call) return;
     mediaCalls.set(remoteId, call);
     activeCalls.add(remoteId);
+    wireCallSyncChannel(remoteId, call);
     call.on('stream', function (remoteStream) {
       const meta = metaHint || call.metadata || {};
       addRemoteAudio(remoteId, remoteStream, meta);
@@ -774,6 +858,8 @@
   function removeRemotePeer(peerId) {
     activeCalls.delete(peerId);
     mediaCalls.delete(peerId);
+    rtcDataChannels.delete(peerId);
+    dataConns.delete(peerId);
     remoteStreams.delete(peerId);
     const g = remoteGains.get(peerId);
     if (g) {
@@ -964,7 +1050,7 @@
       renderPeerList();
     });
 
-    peer.on('connection', setupDataConn);
+    peer.on('connection', setupPeerDataConn);
 
     peer.on('call', function (call) {
       const pid = call.peer;
@@ -973,6 +1059,7 @@
       if (prev && prev !== call) {
         try { prev.close(); } catch (e) {}
       }
+      wireCallSyncChannel(pid, call);
       call.on('stream', function (stream) {
         addRemoteAudio(pid, stream, call.metadata || {});
       });
@@ -991,7 +1078,7 @@
       function answerCall() {
         if (!localStream) return false;
         call.answer(localStream);
-        if (!dataConns.has(pid)) connectDataTo(pid);
+        if (!isHost && !dataConns.has(hostPeerId())) connectDataTo(hostPeerId());
         return true;
       }
 
@@ -1103,7 +1190,7 @@ async function joinPortal(code) {
       whenPeerReady(function () {
         if (selfTrail) selfTrail.id = myId;
         const hid = hostPeerId();
-        setupDataConn(peer.connect(hid, { reliable: true }));
+        connectDataTo(hid);
         meshCall(hid);
         setStatus('// JOIN · ' + code);
         setTimeout(function () { meshCall(hid); }, 800);
@@ -1138,7 +1225,10 @@ async function joinPortal(code) {
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     Array.from(remoteGains.keys()).forEach(removeRemotePeer);
     mediaCalls.clear();
-    dataConns.forEach(function (c) { try { c.close(); } catch (e) {} });
+    rtcDataChannels.clear();
+    dataConns.forEach(function (c) {
+      if (c._peerJsConn) try { c._peerJsConn.close(); } catch (e) {}
+    });
     dataConns.clear();
     peers.clear();
     activeCalls.clear();
@@ -1149,6 +1239,9 @@ async function joinPortal(code) {
     localStream = null;
     selfTrail = null;
     lastBpmSeq = 0;
+    trailRxCount = 0;
+    dataRxCount = 0;
+    pendingData.length = 0;
     $('studioLayout').classList.remove('portal-open');
     $('portalRail').hidden = true;
     $('portalRoomWrap').hidden = true;
@@ -1197,9 +1290,7 @@ async function joinPortal(code) {
     if (!portalOpen) return;
     refreshMeshAudio();
     if (isHost) broadcast(Object.assign({ type: 'transport' }, state));
-    else dataConns.forEach(function (conn) {
-      if (conn.open) try { conn.send(Object.assign({ type: 'transport-relay' }, state)); } catch (e) {}
-    });
+    else sendData(Object.assign({ type: 'transport-relay' }, state));
   }
 
   function bind(api) {
