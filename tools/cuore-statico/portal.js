@@ -15,7 +15,21 @@
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:global.stun.twilio.com:3478' }
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        }
       ]
     }
   };
@@ -97,11 +111,23 @@
     return roomCode ? 'cuore-host-' + roomCode.toLowerCase() : '';
   }
 
-  /** Guest → host only (1 call bidirezionale per coppia; l'host risponde). */
+  /** Chi non ha ancora lo stream remoto può chiamare (host→guest o guest→host). */
   function shouldInitiateCall(remoteId) {
     if (!myId || !remoteId || remoteId === myId) return false;
-    if (isHost) return false;
-    return remoteId === hostPeerId();
+    if (hasLiveRemoteStream(remoteId)) return false;
+    const hid = hostPeerId();
+    if (!isHost && remoteId === hid) return true;
+    if (isHost && remoteId !== hid) return true;
+    return false;
+  }
+
+  function sendData(msg) {
+    if (isHost) {
+      fanout(msg);
+      return;
+    }
+    const conn = dataConns.get(hostPeerId());
+    if (conn && conn.open) try { conn.send(msg); } catch (e) {}
   }
 
   function connectDataTo(peerId) {
@@ -124,6 +150,11 @@
         const hid = hostPeerId();
         connectDataTo(hid);
         meshCall(hid);
+      }
+      if (isHost) {
+        peers.forEach(function (_, id) {
+          if (!hasLiveRemoteStream(id)) meshCall(id);
+        });
       }
     });
   }
@@ -155,9 +186,9 @@
     if (bpmSyncTimer) clearInterval(bpmSyncTimer);
     bpmSyncTimer = setInterval(function () {
       if (!portalOpen || !myId) return;
-      if (isHost) pushAuthoritativeBpm(portalBpmNow(), false);
+      if (isHost) pushAuthoritativeBpm(portalBpmNow(), true);
       else requestBpmSync();
-    }, 1000);
+    }, 1500);
   }
 
   function requestBpmSync() {
@@ -452,9 +483,6 @@
       : null;
     advanceTrail(u, bins, msg.layers || [], pos);
     u.lastSeen = Date.now();
-    if (msg.bpm != null && Math.round(msg.bpm) !== lastSentBpm) {
-      applyRemoteBpm(msg.bpm, msg.bpmSeq || 0);
-    }
   }
 
   function handleData(msg, fromId) {
@@ -466,8 +494,8 @@
         peers.set(msg.id, mkTrailUser(msg.id, msg.name, msg.hue, msg.entryAngle));
       }
       connectDataTo(msg.id);
-      if (!isHost) meshCall(msg.id);
-      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm, msg.seq || 0);
+      meshCall(msg.id);
+      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm);
       if (isHost) {
         sendRoster();
         connectDataTo(msg.id);
@@ -494,10 +522,10 @@
           peers.set(p.id, mkTrailUser(p.id, p.name, p.hue, (i * 2.39996) % (Math.PI * 2)));
         }
         connectDataTo(p.id);
-        if (!isHost) meshCall(p.id);
+        meshCall(p.id);
       });
       pruneStaleRemotePeers(validIds);
-      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm, msg.seq || 0);
+      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm);
       renderPeerList();
       meshAllKnownPeers();
       return;
@@ -505,7 +533,7 @@
 
     if (msg.type === 'trail') {
       applyTrailMessage(msg);
-      fanout(msg, fromId);
+      if (isHost) fanout(msg, fromId);
       renderPeerList();
       return;
     }
@@ -527,17 +555,21 @@
     }
 
     if (msg.type === 'bpm-set') {
-      applyRemoteBpm(msg.bpm, msg.seq);
+      if (!isHost || msg.from !== myId) applyRemoteBpm(msg.bpm);
       return;
     }
 
-    if (msg.type === 'bpm-request' && isHost) {
-      pushAuthoritativeBpm(portalBpmNow(), true);
+    if (msg.type === 'bpm-request') {
+      if (isHost) pushAuthoritativeBpm(portalBpmNow(), true);
       return;
     }
 
-    if (msg.type === 'bpm-relay' && isHost) {
-      pushAuthoritativeBpm(Math.round(msg.bpm), true);
+    if (msg.type === 'bpm-relay') {
+      if (isHost) {
+        const v = Math.round(msg.bpm);
+        studio.applyPortalBpm(v);
+        pushAuthoritativeBpm(v, true);
+      }
       return;
     }
   }
@@ -594,21 +626,25 @@
 
   function routeRemoteStream(stream) {
     const Tone = studio.Tone;
+    if (!Tone) return null;
     const ctx = Tone.context.rawContext;
     const source = ctx.createMediaStreamSource(stream);
+    const gain = ctx.createGain();
+    gain.gain.value = 1.35;
+    source.connect(gain);
     const remoteIn = studio.portalRemoteIn;
-    if (remoteIn) {
-      Tone.connect(source, remoteIn);
+    if (remoteIn && remoteIn.input) {
+      gain.connect(remoteIn.input);
+    } else if (remoteIn) {
+      Tone.connect(gain, remoteIn);
     } else {
-      const gain = ctx.createGain();
-      gain.gain.value = 1.2;
-      source.connect(gain);
       gain.connect(ctx.destination);
     }
     return {
       source: source,
+      gain: gain,
       dispose: function () {
-        try { source.disconnect(); } catch (e) {}
+        try { source.disconnect(); gain.disconnect(); } catch (e) {}
       }
     };
   }
@@ -696,19 +732,12 @@
     remoteStreams.set(peerId, stream);
     stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
 
-    try {
-      const route = routeRemoteStream(stream);
-      remoteGains.set(peerId, route);
-    } catch (e) {
-      console.warn('portal routeRemoteStream', e);
-    }
-
     const aud = document.createElement('audio');
     aud.autoplay = true;
     aud.playsInline = true;
     aud.setAttribute('playsinline', '');
     aud.volume = 1;
-    aud.muted = true;
+    aud.muted = false;
     aud.srcObject = stream;
     aud.id = 'portal-aud-' + String(peerId).slice(-8);
     aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
@@ -719,6 +748,12 @@
       await aud.play();
     } catch (e) {
       console.warn('portal aud play', e);
+      try {
+        const route = routeRemoteStream(stream);
+        if (route) remoteGains.set(peerId, route);
+      } catch (e2) {
+        console.warn('portal routeRemoteStream fallback', e2);
+      }
     }
 
     if (meta && meta.name) {
@@ -748,11 +783,11 @@
     return Math.round(studio.getBpm());
   }
 
-  function applyRemoteBpm(bpm, seq) {
+  function applyRemoteBpm(bpm) {
     if (!studio || !studio.applyPortalBpm) return;
     const v = Math.round(bpm);
-    if (v === lastSentBpm && seq && seq <= lastBpmSeq) return;
-    if (seq) lastBpmSeq = Math.max(lastBpmSeq, seq);
+    const local = portalBpmNow();
+    if (v === local && v === lastSentBpm) return;
     lastSentBpm = v;
     studio.applyPortalBpm(v);
     const st = $('portalStatus');
@@ -764,8 +799,7 @@
     if (!force && v === lastSentBpm) return;
     lastSentBpm = v;
     lastBpmSeq++;
-    broadcast({ type: 'bpm-set', bpm: v, seq: lastBpmSeq, from: 'host' });
-    applyRemoteBpm(v, lastBpmSeq);
+    broadcast({ type: 'bpm-set', bpm: v, seq: lastBpmSeq, from: myId });
   }
 
   function sendBpm(bpm) {
@@ -871,6 +905,10 @@
     peer.on('call', function (call) {
       const pid = call.peer;
       callAttemptAt.set(pid, Date.now());
+      const prev = mediaCalls.get(pid);
+      if (prev && prev !== call) {
+        try { prev.close(); } catch (e) {}
+      }
       call.on('stream', function (stream) {
         addRemoteAudio(pid, stream, call.metadata || {});
       });
@@ -1073,11 +1111,9 @@ async function joinPortal(code) {
         bins: Array.from(bins),
         layers: active,
         playing: studio.isPlaying ? studio.isPlaying() : false,
-        hasAudio: !!selfTrail.hasAudio,
-        bpm: portalBpmNow(),
-        bpmSeq: lastBpmSeq
+        hasAudio: !!selfTrail.hasAudio
       };
-      fanout(payload);
+      sendData(payload);
     }, 66);
   }
 
