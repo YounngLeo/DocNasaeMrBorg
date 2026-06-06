@@ -77,6 +77,45 @@
   let wsClientId = '';
   let portalWsBaseUrl = '';
   let portalWsConfigPromise = null;
+  let wsLastRx = 0;
+  let wsKeepaliveTimer = null;
+  let syncTxCount = 0;
+
+  function portalPeerId() {
+    return myId || wsClientId || '';
+  }
+
+  function announcePortalIdentity() {
+    if (!portalOpen) return;
+    if (selfTrail) selfTrail.id = portalPeerId();
+    if (wsReady) {
+      sendHelloWs();
+      sendData(buildSyncPayload());
+      flushPendingData();
+      requestBpmSync();
+    }
+    renderPeerList();
+  }
+
+  function startWsKeepalive() {
+    stopWsKeepalive();
+    wsLastRx = Date.now();
+    wsKeepaliveTimer = setInterval(function () {
+      if (!portalOpen) return;
+      if (wsReady && portalWs && portalWs.readyState === WebSocket.OPEN) {
+        if (Date.now() - wsLastRx > 12000) {
+          setStatus('// WS STALE · riconnessione…');
+          connectPortalWs(true);
+          return;
+        }
+        wsSend({ type: 'ws-ping', id: portalPeerId(), t: Date.now() });
+      }
+    }, 4000);
+  }
+
+  function stopWsKeepalive() {
+    if (wsKeepaliveTimer) { clearInterval(wsKeepaliveTimer); wsKeepaliveTimer = null; }
+  }
 
   function $(id) { return document.getElementById(id); }
 
@@ -183,7 +222,7 @@
     let base = portalWsBase();
     if (!base || !roomCode) return '';
     if (!/\/ws$/i.test(base)) base += '/ws';
-    const peer = encodeURIComponent(myId || wsClientId || 'pending');
+    const peer = encodeURIComponent(portalPeerId() || 'pending');
     const name = encodeURIComponent(myName || 'OP');
     return base + '?room=' + encodeURIComponent(roomCode.toUpperCase()) +
       '&peer=' + peer + '&name=' + name + '&host=' + (isHost ? '1' : '0');
@@ -234,7 +273,7 @@
   function sendHelloWs() {
     wsSend({
       type: 'hello',
-      id: myId || wsClientId,
+      id: portalPeerId(),
       name: myName,
       hue: myHue,
       entryAngle: selfTrail ? selfTrail.entryAngle : 0,
@@ -242,8 +281,9 @@
     });
   }
 
-  function connectPortalWs() {
+  function connectPortalWs(force) {
     if (!portalOpen || !roomCode) return;
+    if (!force && portalWs && wsReady && portalWs.readyState === WebSocket.OPEN) return;
     loadPortalWsConfig().then(function () {
       if (!portalOpen || !roomCode) return;
       if (!wsClientId) wsClientId = 'ws-' + randCode() + randCode();
@@ -263,16 +303,20 @@
       }
       portalWs.onopen = function () {
         wsReady = true;
+        wsLastRx = Date.now();
+        startWsKeepalive();
         setStatus('// WS · room ' + roomCode);
         onWsReady();
       };
       portalWs.onmessage = function (ev) {
+        wsLastRx = Date.now();
         const msg = parseData(ev.data);
         if (!msg || msg.type === 'ws-join') return;
         handleData(msg, msg.from || msg.id || 'ws');
       };
       portalWs.onclose = function () {
         wsReady = false;
+        stopWsKeepalive();
         renderPeerList();
         if (portalOpen) {
           setStatus('// WS OFF · riconnessione…');
@@ -372,7 +416,7 @@
   function startBpmSync() {
     if (bpmSyncTimer) clearInterval(bpmSyncTimer);
     bpmSyncTimer = setInterval(function () {
-      if (!portalOpen || !myId) return;
+      if (!portalOpen || !portalPeerId()) return;
       if (isHost) {
         sendData({ type: 'ping', from: myId, t: Date.now() });
         pushAuthoritativeBpm(portalBpmNow(), true);
@@ -601,7 +645,7 @@
     if (syncEl) {
       syncEl.textContent = '// ws:' + (wsReady ? 'on' : 'off') +
         ' · rx:' + trailRxCount + '/' + dataRxCount +
-        ' · portal.js v11';
+        ' · portal.js v12';
     }
   }
 
@@ -655,7 +699,8 @@
     }).join('') +
       '<div class="portal-peer" style="opacity:0.55;margin-top:6px">// stream attivi: ' +
       sessionStreamCount() + ' · operatori: ' + rows.length + ' · ws:' + (wsReady ? 'on' : 'off') +
-      ' · rx:' + trailRxCount + '/' + dataRxCount + '</div>';
+      ' · rx:' + trailRxCount + '/' + dataRxCount +
+      ' · tx:' + syncTxCount + '</div>';
   }
 
   function dataConnOpenCount() {
@@ -675,7 +720,7 @@
   }
 
   function applyTrailMessage(msg) {
-    if (!msg || msg.id === myId) return;
+    if (!msg || !msg.id || msg.id === portalPeerId()) return;
     let u = peers.get(msg.id);
     if (!u) {
       u = mkTrailUser(msg.id, msg.name || msg.id.slice(0, 6), msg.hue != null ? msg.hue : hashHue(msg.id), msg.entryAngle || 0);
@@ -710,18 +755,19 @@
     if (!msg || !msg.type) return;
     dataRxCount++;
 
-    if (msg.type === 'ping') {
+    if (msg.type === 'ping' || msg.type === 'ws-ping') {
       trailRxCount++;
-      if (!isHost) sendData({ type: 'pong', from: myId, t: Date.now() });
+      if (!isHost && msg.type === 'ping') sendData({ type: 'pong', from: portalPeerId(), t: Date.now() });
+      else if (msg.type === 'ws-ping') wsSend({ type: 'ws-pong', id: portalPeerId(), t: Date.now() });
       return;
     }
-    if (msg.type === 'pong') {
+    if (msg.type === 'pong' || msg.type === 'ws-pong') {
       trailRxCount++;
       return;
     }
 
     if (msg.type === 'hello') {
-      if (msg.id === myId) return;
+      if (msg.id === portalPeerId()) return;
       if (!peers.has(msg.id)) {
         peers.set(msg.id, mkTrailUser(msg.id, msg.name, msg.hue, msg.entryAngle));
       }
@@ -1188,10 +1234,10 @@
   function setupPeerHandlers() {
     peer.on('open', function (id) {
       myId = id;
-      if (selfTrail) selfTrail.id = id;
+      if (selfTrail) selfTrail.id = portalPeerId();
       flushPeerReady();
       setStatus('// ONLINE · ' + id.slice(-8));
-      connectPortalWs();
+      announcePortalIdentity();
       startTrailSync();
       syncBpmOut();
       meshAllKnownPeers();
@@ -1371,6 +1417,7 @@ async function joinPortal(code) {
     stopTrailSync();
     stopMeshRetry();
     stopBpmSync();
+    stopWsKeepalive();
     disconnectPortalWs(true);
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     Array.from(remoteGains.keys()).forEach(removeRemotePeer);
@@ -1392,6 +1439,7 @@ async function joinPortal(code) {
     trailRxCount = 0;
     dataRxCount = 0;
     pendingData.length = 0;
+    syncTxCount = 0;
     wsClientId = '';
     $('studioLayout').classList.remove('portal-open');
     $('portalRail').hidden = true;
@@ -1406,7 +1454,7 @@ async function joinPortal(code) {
     });
     return {
       type: 'sync',
-      id: myId,
+      id: portalPeerId(),
       name: myName,
       hue: myHue,
       entryAngle: selfTrail.entryAngle,
@@ -1423,14 +1471,16 @@ async function joinPortal(code) {
   function startTrailSync() {
     stopTrailSync();
     trailTimer = setInterval(function () {
-      if (!portalOpen || !selfTrail || !myId || !studio) return;
+      if (!portalOpen || !selfTrail || !portalPeerId() || !studio) return;
       const bins = binsFromStudio();
       const active = studio.getActiveLayers ? studio.getActiveLayers() : [];
       advanceTrail(selfTrail, bins, active);
       updateSelfAudioFlag();
       syncPulseCount++;
+      syncTxCount++;
       sendData(buildSyncPayload());
-    }, 120);
+      if (syncPulseCount % 10 === 0) renderPeerList();
+    }, 150);
   }
 
   function stopTrailSync() {
@@ -1492,7 +1542,7 @@ async function joinPortal(code) {
     window.dispatchEvent(new Event('resize'));
     wireBpmSlider();
     const syncEl = $('portalSyncLine');
-    if (syncEl) syncEl.textContent = '// portal.js v11 · CREA o ENTRA · relay Workers';
+    if (syncEl) syncEl.textContent = '// portal.js v12 · CREA o ENTRA · relay Workers';
   }
 
   global.CuorePortal = {
