@@ -3333,6 +3333,7 @@ function applyPortalBpm(bpm) {
   $('bpm').value = v;
   $('bpmVal').textContent = String(v);
   mixApply.bpm(v);
+  if (isPlaying) startTicker();
   CUORE.portalSyncLock = false;
 }
 
@@ -3372,8 +3373,9 @@ if (window.CuorePortal) {
     get portalRemoteIn() { return A ? A.portalRemoteIn : null; },
     get master() { return A ? A.master : null; },
     getSendStream: function () {
+      if (A && A.portalSend && A.portalSend.stream) return A.portalSend.stream;
       if (A && A.recDest && A.recDest.stream) return A.recDest.stream;
-      return A && A.portalSend ? A.portalSend.stream : null;
+      return null;
     },
     getSpectrum: function () { return A && A.portalAna ? A.portalAna.getValue() : new Float32Array(32); },
     getMeterLevel: function () {

@@ -95,6 +95,42 @@
     return myId && remoteId && myId < remoteId;
   }
 
+  function connectDataTo(peerId) {
+    if (!peer || !peerId || peerId === myId || dataConns.has(peerId)) return;
+    try {
+      setupDataConn(peer.connect(peerId, { reliable: true }));
+    } catch (e) {
+      console.warn('connectDataTo', peerId, e);
+    }
+  }
+
+  function meshAllKnownPeers() {
+    if (!peer || !localStream || !myId) return;
+    peers.forEach(function (_, id) {
+      connectDataTo(id);
+      meshCall(id);
+    });
+    if (!isHost && roomCode) {
+      const hostId = 'cuore-host-' + roomCode.toLowerCase();
+      connectDataTo(hostId);
+      meshCall(hostId);
+    }
+  }
+
+  let meshRetryTimer = null;
+  function startMeshRetry() {
+    if (meshRetryTimer) clearInterval(meshRetryTimer);
+    meshRetryTimer = setInterval(function () {
+      if (!portalOpen) return;
+      ensureLocalStream().then(function () { meshAllKnownPeers(); });
+    }, 2500);
+  }
+
+  function stopMeshRetry() {
+    if (meshRetryTimer) { clearInterval(meshRetryTimer); meshRetryTimer = null; }
+  }
+
+
   function mkTrailUser(id, name, hue, entryAngle) {
     const sub = {};
     LAYER_KEYS.forEach(function (k) { sub[k] = []; });
@@ -314,7 +350,7 @@
     peers.forEach(function (p, id) {
       list.push({ id: id, name: p.name, hue: p.hue });
     });
-    broadcast({ type: 'roster', peers: list });
+    broadcast({ type: 'roster', peers: list, bpm: portalBpmNow() });
   }
 
   function applyTrailMessage(msg) {
@@ -337,15 +373,20 @@
       if (!peers.has(msg.id)) {
         peers.set(msg.id, mkTrailUser(msg.id, msg.name, msg.hue, msg.entryAngle));
       }
+      connectDataTo(msg.id);
       meshCall(msg.id);
+      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm);
       if (isHost) {
         sendRoster();
+        connectDataTo(msg.id);
         broadcast({
           type: 'hello', id: myId, name: myName, hue: myHue,
-          entryAngle: selfTrail ? selfTrail.entryAngle : 0
+          entryAngle: selfTrail ? selfTrail.entryAngle : 0,
+          bpm: portalBpmNow()
         }, msg.id);
       }
       renderPeerList();
+      meshAllKnownPeers();
       return;
     }
 
@@ -355,9 +396,12 @@
         if (!peers.has(p.id)) {
           peers.set(p.id, mkTrailUser(p.id, p.name, p.hue, (i * 2.39996) % (Math.PI * 2)));
         }
+        connectDataTo(p.id);
         meshCall(p.id);
       });
+      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm);
       renderPeerList();
+      meshAllKnownPeers();
       return;
     }
 
@@ -386,15 +430,15 @@
     }
 
     if (msg.type === 'bpm') {
-      if (msg.from === myId) return;
-      if (studio && studio.applyPortalBpm) studio.applyPortalBpm(msg.bpm);
+      applyRemoteBpm(msg.bpm);
       if (isHost) broadcast(msg, fromId);
       return;
     }
 
     if (msg.type === 'bpm-relay' && isHost) {
-      broadcast({ type: 'bpm', bpm: msg.bpm, from: msg.from });
-      if (studio && studio.applyPortalBpm && msg.from !== myId) studio.applyPortalBpm(msg.bpm);
+      const bpm = Math.round(msg.bpm);
+      broadcast({ type: 'bpm', bpm: bpm, from: 'host-sync' });
+      applyRemoteBpm(bpm);
       return;
     }
   }
@@ -406,8 +450,19 @@
       id: myId,
       name: myName,
       hue: myHue,
-      entryAngle: selfTrail ? selfTrail.entryAngle : 0
+      entryAngle: selfTrail ? selfTrail.entryAngle : 0,
+      bpm: portalBpmNow()
     });
+  }
+
+  function syncBpmOut() {
+    if (!portalOpen || !studio || !myId) return;
+    sendBpm(portalBpmNow(), isHost ? 'host-sync' : myId);
+  }
+
+  function onBpmChange(bpm) {
+    if (!portalOpen) return;
+    sendBpm(bpm, isHost ? 'host-sync' : myId);
   }
 
   function setupDataConn(conn) {
@@ -437,17 +492,16 @@
   }
 
   function routeRemoteStream(stream) {
-    const ctx = studio.Tone.context.rawContext;
+    const Tone = studio.Tone;
+    const ctx = Tone.context.rawContext;
     const source = ctx.createMediaStreamSource(stream);
     const gain = ctx.createGain();
-    gain.gain.value = 1.35;
+    gain.gain.value = 1.45;
     source.connect(gain);
 
-    const bus = studio.portalRemoteIn;
-    if (bus && bus.input) {
-      gain.connect(bus.input);
-    } else if (bus) {
-      try { studio.Tone.connect(gain, bus); } catch (e) { gain.connect(ctx.destination); }
+    const remoteIn = studio.portalRemoteIn;
+    if (remoteIn) {
+      Tone.connect(gain, remoteIn);
     } else {
       gain.connect(ctx.destination);
     }
@@ -482,30 +536,30 @@
   async function addRemoteAudio(stream, peerId, meta) {
     if (!studio || !studio.Tone || !stream) return;
     if (studio.unlockAudio) await studio.unlockAudio();
+    if (studio.initAudio) await studio.initAudio();
 
     removeRemotePeer(peerId);
     remoteStreams.set(peerId, stream);
-
     stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
+
+    try {
+      const route = routeRemoteStream(stream);
+      remoteGains.set(peerId, route);
+    } catch (e) {
+      console.warn('portal routeRemoteStream', e);
+    }
 
     const aud = document.createElement('audio');
     aud.autoplay = true;
     aud.playsInline = true;
     aud.setAttribute('playsinline', '');
-    aud.muted = false;
-    aud.volume = 1;
+    aud.muted = true;
     aud.srcObject = stream;
     aud.id = 'portal-aud-' + String(peerId).slice(-8);
-    aud.style.cssText = 'position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none';
+    aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
     document.body.appendChild(aud);
     remoteAudioEls.set(peerId, aud);
-
-    try {
-      await aud.play();
-    } catch (e) {
-      const route = routeRemoteStream(stream);
-      remoteGains.set(peerId, route);
-    }
+    aud.play().catch(function () {});
 
     if (meta && meta.name) {
       if (!peers.has(peerId)) {
@@ -516,6 +570,7 @@
     if (pu) pu.hasAudio = true;
     renderPeerList();
     setStatus('// AUDIO · ' + audioPeerCount() + ' remoti');
+    unlockPlayback();
   }
 
   function unlockPlayback() {
@@ -525,24 +580,24 @@
     });
   }
 
-  function syncBpmOut() {
-    if (!portalOpen || !studio || !studio.getBpm || !myId) return;
-    const bpm = Math.round(studio.getBpm());
-    const msg = { type: 'bpm', bpm: bpm, from: myId };
-    if (isHost) broadcast(msg);
-    else dataConns.forEach(function (conn) {
-      if (conn.open) try { conn.send({ type: 'bpm-relay', bpm: bpm, from: myId }); } catch (e) {}
-    });
+  function portalBpmNow() {
+    if (!studio || !studio.getBpm) return 76;
+    return Math.round(studio.getBpm());
   }
 
-  function onBpmChange(bpm) {
-    if (!portalOpen) return;
-    const msg = { type: 'bpm', bpm: Math.round(bpm), from: myId };
+  function applyRemoteBpm(bpm) {
+    if (!studio || !studio.applyPortalBpm) return;
+    studio.applyPortalBpm(bpm);
+  }
+
+  function sendBpm(bpm, fromId) {
+    const msg = { type: 'bpm', bpm: Math.round(bpm), from: fromId || myId };
     if (isHost) broadcast(msg);
     else dataConns.forEach(function (conn) {
       if (conn.open) try { conn.send({ type: 'bpm-relay', bpm: msg.bpm, from: myId }); } catch (e) {}
     });
   }
+
 
   function enterPortalBoost() {
     document.body.classList.add('portal-boost');
@@ -589,8 +644,13 @@
   function setupPeerHandlers() {
     peer.on('open', function (id) {
       myId = id;
+      if (selfTrail) selfTrail.id = id;
       flushPeerReady();
       setStatus('// ONLINE · ' + id.slice(-8));
+      startTrailSync();
+      syncBpmOut();
+      meshAllKnownPeers();
+      renderPeerList();
     });
 
     peer.on('connection', setupDataConn);
@@ -727,6 +787,7 @@ async function joinPortal(code) {
     enterPortalBoost();
     if (!animId && canvas && ctx) drawPortal();
     startTrailSync();
+    startMeshRetry();
     unlockPlayback();
   }
 
@@ -734,6 +795,7 @@ async function joinPortal(code) {
     portalOpen = false;
     leavePortalBoost();
     stopTrailSync();
+    stopMeshRetry();
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     Array.from(remoteGains.keys()).forEach(removeRemotePeer);
     dataConns.forEach(function (c) { try { c.close(); } catch (e) {} });
