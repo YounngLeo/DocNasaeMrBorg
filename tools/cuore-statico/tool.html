@@ -1093,7 +1093,7 @@
 </aside>
 </div>
 
-<script src="portal.js?v=3"></script>
+<script src="portal.js?v=4"></script>
 <script>
 'use strict';
 
@@ -2018,7 +2018,7 @@ async function initAudio() {
   const portalTap = new Tone.Gain(1);
   master.connect(portalTap);
   portalTap.connect(portalSend);
-  const portalRemoteIn = new Tone.Gain(1.15);
+  const portalRemoteIn = new Tone.Gain(1.55);
   portalRemoteIn.connect(limiter);
   const portalAna = new Tone.Analyser('fft', 32);
   master.connect(portalAna);

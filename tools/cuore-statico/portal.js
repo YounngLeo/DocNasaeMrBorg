@@ -66,8 +66,18 @@
   let trailTimer = null;
   let selfTrail = null;
   const peerReadyWaiters = [];
+  const pendingData = [];
 
   function $(id) { return document.getElementById(id); }
+
+  function parseData(raw) {
+    if (!raw) return null;
+    if (typeof raw === 'object') return raw;
+    if (typeof raw === 'string') {
+      try { return JSON.parse(raw); } catch (e) { return null; }
+    }
+    return null;
+  }
 
   function loadPeerJS() {
     if (global.Peer) return Promise.resolve();
@@ -126,14 +136,31 @@
       fanout(msg);
       return;
     }
-    const conn = dataConns.get(hostPeerId());
-    if (conn && conn.open) try { conn.send(msg); } catch (e) {}
+    const hid = hostPeerId();
+    const conn = dataConns.get(hid);
+    if (conn && conn.open) {
+      try { conn.send(msg); return; } catch (e) { console.warn('sendData', e); }
+    }
+    if (pendingData.length < 80) pendingData.push(msg);
   }
 
+  function flushPendingData() {
+    if (isHost) return;
+    const hid = hostPeerId();
+    const conn = dataConns.get(hid);
+    if (!conn || !conn.open) return;
+    while (pendingData.length) {
+      try { conn.send(pendingData.shift()); } catch (e) { break; }
+    }
+  }
+
+  /** Star: solo il guest apre il canale dati verso l'host. */
   function connectDataTo(peerId) {
-    if (!peer || !peerId || peerId === myId || dataConns.has(peerId)) return;
+    if (isHost) return;
+    if (!peer || !peerId || peerId === myId || peerId !== hostPeerId()) return;
+    if (dataConns.has(peerId)) return;
     try {
-      setupDataConn(peer.connect(peerId, { reliable: true }));
+      setupDataConn(peer.connect(peerId, { reliable: true, serialization: 'json' }));
     } catch (e) {
       console.warn('connectDataTo', peerId, e);
     }
@@ -143,9 +170,6 @@
     if (!peer || !myId) return;
     ensureLocalStream().then(function (stream) {
       if (!stream || !peer) return;
-      peers.forEach(function (_, id) {
-        connectDataTo(id);
-      });
       if (!isHost && roomCode) {
         const hid = hostPeerId();
         connectDataTo(hid);
@@ -493,23 +517,21 @@
       if (!peers.has(msg.id)) {
         peers.set(msg.id, mkTrailUser(msg.id, msg.name, msg.hue, msg.entryAngle));
       }
-      connectDataTo(msg.id);
-      meshCall(msg.id);
-      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm);
+      if (!isHost && msg.bpm != null) applyRemoteBpm(msg.bpm);
       if (isHost) {
         sendRoster();
-        connectDataTo(msg.id);
-        broadcast({
+        fanout({
           type: 'hello', id: myId, name: myName, hue: myHue,
           entryAngle: selfTrail ? selfTrail.entryAngle : 0,
-          bpm: portalBpmNow(),
-          seq: lastBpmSeq
+          bpm: portalBpmNow()
         }, msg.id);
-        setTimeout(function () { forceMeshCall(msg.id); }, 1500);
-        setTimeout(function () { forceMeshCall(msg.id); }, 4500);
+        meshCall(msg.id);
+        setTimeout(function () { forceMeshCall(msg.id); }, 1200);
+        setTimeout(function () { forceMeshCall(msg.id); }, 4000);
+      } else if (msg.id === hostPeerId() || String(msg.id).indexOf('cuore-host-') === 0) {
+        meshCall(hostPeerId());
       }
       renderPeerList();
-      meshAllKnownPeers();
       return;
     }
 
@@ -521,13 +543,11 @@
         if (!peers.has(p.id)) {
           peers.set(p.id, mkTrailUser(p.id, p.name, p.hue, (i * 2.39996) % (Math.PI * 2)));
         }
-        connectDataTo(p.id);
-        meshCall(p.id);
       });
       pruneStaleRemotePeers(validIds);
-      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm);
+      if (!isHost && msg.bpm != null) applyRemoteBpm(msg.bpm);
+      if (!isHost) meshCall(hostPeerId());
       renderPeerList();
-      meshAllKnownPeers();
       return;
     }
 
@@ -555,7 +575,7 @@
     }
 
     if (msg.type === 'bpm-set') {
-      if (!isHost || msg.from !== myId) applyRemoteBpm(msg.bpm);
+      applyRemoteBpm(msg.bpm);
       return;
     }
 
@@ -604,24 +624,23 @@
       try { existing.close(); } catch (e) {}
     }
     dataConns.set(pid, conn);
-    conn.on('data', function (data) { handleData(data, pid); });
+    conn.on('data', function (data) {
+      const msg = parseData(data);
+      if (msg) handleData(msg, pid);
+    });
     conn.on('close', function () {
       if (dataConns.get(pid) === conn) dataConns.delete(pid);
     });
     conn.on('error', function (err) { console.warn('portal data err', err); });
-    if (conn.open) {
+    function onConnOpen() {
       sendHello(conn);
       if (isHost) sendRoster();
       syncBpmOut();
       requestBpmSync();
-    } else {
-      conn.on('open', function () {
-        sendHello(conn);
-        if (isHost) sendRoster();
-        syncBpmOut();
-        requestBpmSync();
-      });
+      flushPendingData();
     }
+    if (conn.open) onConnOpen();
+    else conn.on('open', onConnOpen);
   }
 
   function routeRemoteStream(stream) {
@@ -723,21 +742,49 @@
     if (p) p.hasAudio = false;
   }
 
+  function hardReconnectAllAudio() {
+    const ids = Array.from(remoteStreams.keys());
+    ids.forEach(removeRemotePeer);
+    mediaCalls.forEach(function (call) {
+      try { call.close(); } catch (e) {}
+    });
+    mediaCalls.clear();
+    activeCalls.clear();
+    if (isHost) {
+      peers.forEach(function (_, id) { forceMeshCall(id); });
+    } else {
+      meshCall(hostPeerId());
+    }
+  }
+
   async function addRemoteAudio(peerId, stream, meta) {
     if (!studio || !stream || !peerId || peerId === myId) return;
     if (studio.unlockAudio) await studio.unlockAudio();
     if (studio.initAudio) await studio.initAudio();
+    if (studio.Tone) {
+      try { await studio.Tone.start(); } catch (e) {}
+      if (studio.Tone.context.state !== 'running') {
+        try { await studio.Tone.context.resume(); } catch (e) {}
+      }
+    }
 
     removeRemotePeer(peerId);
     remoteStreams.set(peerId, stream);
     stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
+
+    try {
+      const route = routeRemoteStream(stream);
+      if (route) remoteGains.set(peerId, route);
+    } catch (e) {
+      console.warn('portal routeRemoteStream', e);
+    }
 
     const aud = document.createElement('audio');
     aud.autoplay = true;
     aud.playsInline = true;
     aud.setAttribute('playsinline', '');
     aud.volume = 1;
-    aud.muted = false;
+    aud.muted = true;
     aud.srcObject = stream;
     aud.id = 'portal-aud-' + String(peerId).slice(-8);
     aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
@@ -748,12 +795,6 @@
       await aud.play();
     } catch (e) {
       console.warn('portal aud play', e);
-      try {
-        const route = routeRemoteStream(stream);
-        if (route) remoteGains.set(peerId, route);
-      } catch (e2) {
-        console.warn('portal routeRemoteStream fallback', e2);
-      }
     }
 
     if (meta && meta.name) {
@@ -786,8 +827,7 @@
   function applyRemoteBpm(bpm) {
     if (!studio || !studio.applyPortalBpm) return;
     const v = Math.round(bpm);
-    const local = portalBpmNow();
-    if (v === local && v === lastSentBpm) return;
+    if (v === portalBpmNow()) return;
     lastSentBpm = v;
     studio.applyPortalBpm(v);
     const st = $('portalStatus');
@@ -872,18 +912,7 @@
     ensureLocalStream().then(function (s) {
       if (!s) return;
       replaceSendTracks();
-      if (isHost) {
-        peers.forEach(function (_, id) {
-          if (!hasLiveRemoteStream(id)) forceMeshCall(id);
-        });
-      } else {
-        const hid = hostPeerId();
-        if (!hasLiveRemoteStream(hid)) {
-          activeCalls.delete(hid);
-          mediaCalls.delete(hid);
-          meshCall(hid);
-        }
-      }
+      hardReconnectAllAudio();
       unlockPlayback();
     });
   }
@@ -1038,7 +1067,7 @@ async function joinPortal(code) {
       whenPeerReady(function () {
         if (selfTrail) selfTrail.id = myId;
         const hid = hostPeerId();
-        setupDataConn(peer.connect(hid));
+        setupDataConn(peer.connect(hid, { reliable: true, serialization: 'json' }));
         meshCall(hid);
         setStatus('// JOIN · ' + code);
         setTimeout(function () { meshCall(hid); }, 800);
