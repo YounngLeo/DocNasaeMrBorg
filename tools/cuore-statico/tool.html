@@ -3331,7 +3331,6 @@ function portalUnlockPlayback() {
 function applyPortalBpm(bpm) {
   if (!$('bpm')) return;
   const v = Math.max(50, Math.min(parseFloat($('bpm').max) || 140, Math.round(bpm)));
-  if (parseInt($('bpm').value, 10) === v && $('bpmVal').textContent === String(v)) return;
   CUORE.portalSyncLock = true;
   $('bpm').value = String(v);
   $('bpmVal').textContent = String(v);

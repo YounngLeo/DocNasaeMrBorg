@@ -44,6 +44,7 @@
   const remoteAudioEls = new Map();
   const activeCalls = new Set();
   const callAttemptAt = new Map();
+  const mediaCalls = new Map();
   const peers = new Map();
   let canvas = null;
   let ctx = null;
@@ -152,11 +153,21 @@
 
   function startBpmSync() {
     if (bpmSyncTimer) clearInterval(bpmSyncTimer);
-    if (!isHost) return;
     bpmSyncTimer = setInterval(function () {
       if (!portalOpen || !myId) return;
+      if (isHost) pushAuthoritativeBpm(portalBpmNow(), false);
+      else requestBpmSync();
+    }, 1000);
+  }
+
+  function requestBpmSync() {
+    if (isHost) {
       pushAuthoritativeBpm(portalBpmNow(), true);
-    }, 800);
+      return;
+    }
+    dataConns.forEach(function (conn) {
+      if (conn.open) try { conn.send({ type: 'bpm-request' }); } catch (e) {}
+    });
   }
 
   function stopBpmSync() {
@@ -441,6 +452,9 @@
       : null;
     advanceTrail(u, bins, msg.layers || [], pos);
     u.lastSeen = Date.now();
+    if (msg.bpm != null && Math.round(msg.bpm) !== lastSentBpm) {
+      applyRemoteBpm(msg.bpm, msg.bpmSeq || 0);
+    }
   }
 
   function handleData(msg, fromId) {
@@ -460,8 +474,11 @@
         broadcast({
           type: 'hello', id: myId, name: myName, hue: myHue,
           entryAngle: selfTrail ? selfTrail.entryAngle : 0,
-          bpm: portalBpmNow()
+          bpm: portalBpmNow(),
+          seq: lastBpmSeq
         }, msg.id);
+        setTimeout(function () { forceMeshCall(msg.id); }, 1500);
+        setTimeout(function () { forceMeshCall(msg.id); }, 4500);
       }
       renderPeerList();
       meshAllKnownPeers();
@@ -514,6 +531,11 @@
       return;
     }
 
+    if (msg.type === 'bpm-request' && isHost) {
+      pushAuthoritativeBpm(portalBpmNow(), true);
+      return;
+    }
+
     if (msg.type === 'bpm-relay' && isHost) {
       pushAuthoritativeBpm(Math.round(msg.bpm), true);
       return;
@@ -559,11 +581,13 @@
       sendHello(conn);
       if (isHost) sendRoster();
       syncBpmOut();
+      requestBpmSync();
     } else {
       conn.on('open', function () {
         sendHello(conn);
         if (isHost) sendRoster();
         syncBpmOut();
+        requestBpmSync();
       });
     }
   }
@@ -572,33 +596,81 @@
     const Tone = studio.Tone;
     const ctx = Tone.context.rawContext;
     const source = ctx.createMediaStreamSource(stream);
-    const gain = ctx.createGain();
-    gain.gain.value = 1.5;
-    source.connect(gain);
-
     const remoteIn = studio.portalRemoteIn;
     if (remoteIn) {
-      const dest = remoteIn.input || remoteIn;
-      try {
-        gain.connect(dest);
-      } catch (e) {
-        Tone.connect(gain, remoteIn);
-      }
+      Tone.connect(source, remoteIn);
     } else {
+      const gain = ctx.createGain();
+      gain.gain.value = 1.2;
+      source.connect(gain);
       gain.connect(ctx.destination);
     }
-
     return {
       source: source,
-      gain: gain,
       dispose: function () {
-        try { source.disconnect(); gain.disconnect(); } catch (e) {}
+        try { source.disconnect(); } catch (e) {}
       }
     };
   }
 
+  function wireMediaCall(remoteId, call, metaHint) {
+    if (!call) return;
+    mediaCalls.set(remoteId, call);
+    activeCalls.add(remoteId);
+    call.on('stream', function (remoteStream) {
+      const meta = metaHint || call.metadata || {};
+      addRemoteAudio(remoteId, remoteStream, meta);
+    });
+    call.on('close', function () {
+      activeCalls.delete(remoteId);
+      mediaCalls.delete(remoteId);
+      removeRemotePeer(remoteId);
+    });
+    call.on('error', function () {
+      activeCalls.delete(remoteId);
+      mediaCalls.delete(remoteId);
+    });
+  }
+
+  function replaceSendTracks() {
+    if (!localStream) return;
+    const track = localStream.getAudioTracks()[0];
+    if (!track) return;
+    mediaCalls.forEach(function (call) {
+      if (!call || !call.peerConnection) return;
+      call.peerConnection.getSenders().forEach(function (sender) {
+        if (sender.track && sender.track.kind === 'audio') {
+          sender.replaceTrack(track).catch(function () {});
+        }
+      });
+    });
+  }
+
+  function forceMeshCall(remoteId) {
+    if (!peer || !remoteId || remoteId === myId) return;
+    if (hasLiveRemoteStream(remoteId)) return;
+    if (activeCalls.has(remoteId)) {
+      const t0 = callAttemptAt.get(remoteId) || 0;
+      if (Date.now() - t0 < 6000) return;
+      activeCalls.delete(remoteId);
+      mediaCalls.delete(remoteId);
+    }
+    ensureLocalStream().then(function (stream) {
+      if (!stream || !peer || hasLiveRemoteStream(remoteId)) return;
+      callAttemptAt.set(remoteId, Date.now());
+      try {
+        wireMediaCall(remoteId, peer.call(remoteId, localStream, {
+          metadata: { id: myId, name: myName, hue: myHue }
+        }));
+      } catch (e) {
+        console.warn('forceMeshCall', e);
+      }
+    });
+  }
+
   function removeRemotePeer(peerId) {
     activeCalls.delete(peerId);
+    mediaCalls.delete(peerId);
     remoteStreams.delete(peerId);
     const g = remoteGains.get(peerId);
     if (g) {
@@ -624,12 +696,19 @@
     remoteStreams.set(peerId, stream);
     stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
 
+    try {
+      const route = routeRemoteStream(stream);
+      remoteGains.set(peerId, route);
+    } catch (e) {
+      console.warn('portal routeRemoteStream', e);
+    }
+
     const aud = document.createElement('audio');
     aud.autoplay = true;
     aud.playsInline = true;
     aud.setAttribute('playsinline', '');
     aud.volume = 1;
-    aud.muted = false;
+    aud.muted = true;
     aud.srcObject = stream;
     aud.id = 'portal-aud-' + String(peerId).slice(-8);
     aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
@@ -672,8 +751,8 @@
   function applyRemoteBpm(bpm, seq) {
     if (!studio || !studio.applyPortalBpm) return;
     const v = Math.round(bpm);
-    if (seq && seq <= lastBpmSeq && v === lastSentBpm) return;
-    if (seq) lastBpmSeq = seq;
+    if (v === lastSentBpm && seq && seq <= lastBpmSeq) return;
+    if (seq) lastBpmSeq = Math.max(lastBpmSeq, seq);
     lastSentBpm = v;
     studio.applyPortalBpm(v);
     const st = $('portalStatus');
@@ -737,32 +816,18 @@
       const t0 = callAttemptAt.get(remoteId) || 0;
       if (Date.now() - t0 < 5000) return;
       activeCalls.delete(remoteId);
+      mediaCalls.delete(remoteId);
     }
 
     ensureLocalStream().then(function (stream) {
       if (!stream || !peer || hasLiveRemoteStream(remoteId)) return;
-      activeCalls.add(remoteId);
       callAttemptAt.set(remoteId, Date.now());
       try {
-        const call = peer.call(remoteId, localStream, {
+        const pm = peers.get(remoteId);
+        wireMediaCall(remoteId, peer.call(remoteId, localStream, {
           metadata: { id: myId, name: myName, hue: myHue }
-        });
-        if (!call) { activeCalls.delete(remoteId); return; }
-        call.on('stream', function (remoteStream) {
-          activeCalls.delete(remoteId);
-          const pm = peers.get(remoteId);
-          addRemoteAudio(remoteId, remoteStream, pm
-            ? { id: remoteId, name: pm.name, hue: pm.hue }
-            : (call.metadata || {}));
-        });
-        call.on('close', function () {
-          activeCalls.delete(remoteId);
-        });
-        call.on('error', function () {
-          activeCalls.delete(remoteId);
-        });
+        }), pm ? { id: remoteId, name: pm.name, hue: pm.hue } : null);
       } catch (e) {
-        activeCalls.delete(remoteId);
         console.warn('meshCall', e);
       }
     });
@@ -772,10 +837,18 @@
     if (!portalOpen || !peer) return;
     ensureLocalStream().then(function (s) {
       if (!s) return;
-      if (!isHost) {
+      replaceSendTracks();
+      if (isHost) {
+        peers.forEach(function (_, id) {
+          if (!hasLiveRemoteStream(id)) forceMeshCall(id);
+        });
+      } else {
         const hid = hostPeerId();
-        activeCalls.delete(hid);
-        meshCall(hid);
+        if (!hasLiveRemoteStream(hid)) {
+          activeCalls.delete(hid);
+          mediaCalls.delete(hid);
+          meshCall(hid);
+        }
       }
       unlockPlayback();
     });
@@ -797,23 +870,34 @@
 
     peer.on('call', function (call) {
       const pid = call.peer;
-      ensureLocalStream().then(function () {
-        if (!localStream) { call.close(); return; }
-        call.answer(localStream);
-        call.on('stream', function (stream) {
-          addRemoteAudio(pid, stream, call.metadata || {});
-        });
-        activeCalls.add(pid);
-        call.on('close', function () {
-          activeCalls.delete(pid);
-          removeRemotePeer(pid);
-        });
-        call.on('error', function () {
-          activeCalls.delete(pid);
-          removeRemotePeer(pid);
-        });
-        if (!dataConns.has(pid)) connectDataTo(pid);
+      callAttemptAt.set(pid, Date.now());
+      call.on('stream', function (stream) {
+        addRemoteAudio(pid, stream, call.metadata || {});
       });
+      call.on('close', function () {
+        activeCalls.delete(pid);
+        mediaCalls.delete(pid);
+        removeRemotePeer(pid);
+      });
+      call.on('error', function () {
+        activeCalls.delete(pid);
+        mediaCalls.delete(pid);
+      });
+      mediaCalls.set(pid, call);
+      activeCalls.add(pid);
+
+      function answerCall() {
+        if (!localStream) return false;
+        call.answer(localStream);
+        if (!dataConns.has(pid)) connectDataTo(pid);
+        return true;
+      }
+
+      if (!answerCall()) {
+        ensureLocalStream().then(function () {
+          if (!answerCall()) call.close();
+        });
+      }
     });
 
     peer.on('error', function (err) {
@@ -950,6 +1034,7 @@ async function joinPortal(code) {
     stopBpmSync();
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     Array.from(remoteGains.keys()).forEach(removeRemotePeer);
+    mediaCalls.clear();
     dataConns.forEach(function (c) { try { c.close(); } catch (e) {} });
     dataConns.clear();
     peers.clear();
@@ -988,7 +1073,9 @@ async function joinPortal(code) {
         bins: Array.from(bins),
         layers: active,
         playing: studio.isPlaying ? studio.isPlaying() : false,
-        hasAudio: !!selfTrail.hasAudio
+        hasAudio: !!selfTrail.hasAudio,
+        bpm: portalBpmNow(),
+        bpmSeq: lastBpmSeq
       };
       fanout(payload);
     }, 66);
