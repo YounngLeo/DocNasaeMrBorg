@@ -1105,6 +1105,7 @@ function $on(id, ev, fn) {
   return el;
 }
 const CUORE = { portalSyncLock: false, bpmMaxNormal: 140 };
+window.CUORE = CUORE;
 
 // ============================================================
 // PERSISTENT STORAGE (localStorage + IndexedDB)
@@ -3328,9 +3329,10 @@ function portalUnlockPlayback() {
 
 function applyPortalBpm(bpm) {
   if (!$('bpm')) return;
-  CUORE.portalSyncLock = true;
   const v = Math.max(50, Math.min(parseFloat($('bpm').max) || 140, Math.round(bpm)));
-  $('bpm').value = v;
+  if (parseInt($('bpm').value, 10) === v && $('bpmVal').textContent === String(v)) return;
+  CUORE.portalSyncLock = true;
+  $('bpm').value = String(v);
   $('bpmVal').textContent = String(v);
   mixApply.bpm(v);
   if (isPlaying) startTicker();

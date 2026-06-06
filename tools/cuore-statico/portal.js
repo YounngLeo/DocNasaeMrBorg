@@ -118,6 +118,16 @@
   }
 
   let meshRetryTimer = null;
+  let bpmSyncTimer = null;
+  let lastBpmSeq = 0;
+  let lastSentBpm = -1;
+
+  function hasLiveRemoteStream(peerId) {
+    const s = remoteStreams.get(peerId);
+    if (!s) return false;
+    return s.getAudioTracks().some(function (t) { return t.readyState === 'live'; });
+  }
+
   function startMeshRetry() {
     if (meshRetryTimer) clearInterval(meshRetryTimer);
     meshRetryTimer = setInterval(function () {
@@ -128,6 +138,19 @@
 
   function stopMeshRetry() {
     if (meshRetryTimer) { clearInterval(meshRetryTimer); meshRetryTimer = null; }
+  }
+
+  function startBpmSync() {
+    if (bpmSyncTimer) clearInterval(bpmSyncTimer);
+    if (!isHost) return;
+    bpmSyncTimer = setInterval(function () {
+      if (!portalOpen || !myId) return;
+      pushAuthoritativeBpm(portalBpmNow(), true);
+    }, 800);
+  }
+
+  function stopBpmSync() {
+    if (bpmSyncTimer) { clearInterval(bpmSyncTimer); bpmSyncTimer = null; }
   }
 
 
@@ -320,7 +343,18 @@
   }
 
   function audioPeerCount() {
-    return remoteStreams.size;
+    let n = 0;
+    remoteStreams.forEach(function (stream, id) {
+      if (id === myId) return;
+      if (stream.getAudioTracks().some(function (t) { return t.readyState === 'live'; })) n++;
+    });
+    return n;
+  }
+
+  function pruneStaleRemotePeers(validIds) {
+    remoteStreams.forEach(function (_, id) {
+      if (id !== myId && validIds.indexOf(id) < 0) removeRemotePeer(id);
+    });
   }
 
   function renderPeerList() {
@@ -350,7 +384,8 @@
     peers.forEach(function (p, id) {
       list.push({ id: id, name: p.name, hue: p.hue });
     });
-    broadcast({ type: 'roster', peers: list, bpm: portalBpmNow() });
+    lastBpmSeq++;
+    broadcast({ type: 'roster', peers: list, bpm: portalBpmNow(), seq: lastBpmSeq });
   }
 
   function applyTrailMessage(msg) {
@@ -375,7 +410,7 @@
       }
       connectDataTo(msg.id);
       meshCall(msg.id);
-      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm);
+      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm, msg.seq || 0);
       if (isHost) {
         sendRoster();
         connectDataTo(msg.id);
@@ -391,15 +426,18 @@
     }
 
     if (msg.type === 'roster') {
+      const validIds = [myId];
       (msg.peers || []).forEach(function (p, i) {
         if (p.id === myId) return;
+        validIds.push(p.id);
         if (!peers.has(p.id)) {
           peers.set(p.id, mkTrailUser(p.id, p.name, p.hue, (i * 2.39996) % (Math.PI * 2)));
         }
         connectDataTo(p.id);
         meshCall(p.id);
       });
-      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm);
+      pruneStaleRemotePeers(validIds);
+      if (msg.bpm != null && !isHost) applyRemoteBpm(msg.bpm, msg.seq || 0);
       renderPeerList();
       meshAllKnownPeers();
       return;
@@ -429,16 +467,13 @@
       return;
     }
 
-    if (msg.type === 'bpm') {
-      applyRemoteBpm(msg.bpm);
-      if (isHost) broadcast(msg, fromId);
+    if (msg.type === 'bpm-set') {
+      applyRemoteBpm(msg.bpm, msg.seq);
       return;
     }
 
     if (msg.type === 'bpm-relay' && isHost) {
-      const bpm = Math.round(msg.bpm);
-      broadcast({ type: 'bpm', bpm: bpm, from: 'host-sync' });
-      applyRemoteBpm(bpm);
+      pushAuthoritativeBpm(Math.round(msg.bpm));
       return;
     }
   }
@@ -457,12 +492,12 @@
 
   function syncBpmOut() {
     if (!portalOpen || !studio || !myId) return;
-    sendBpm(portalBpmNow(), isHost ? 'host-sync' : myId);
+    if (isHost) pushAuthoritativeBpm(portalBpmNow());
   }
 
   function onBpmChange(bpm) {
     if (!portalOpen) return;
-    sendBpm(bpm, isHost ? 'host-sync' : myId);
+    sendBpm(bpm);
   }
 
   function setupDataConn(conn) {
@@ -533,8 +568,8 @@
     if (p) p.hasAudio = false;
   }
 
-  async function addRemoteAudio(stream, peerId, meta) {
-    if (!studio || !studio.Tone || !stream) return;
+  async function addRemoteAudio(peerId, stream, meta) {
+    if (!studio || !studio.Tone || !stream || !peerId || peerId === myId) return;
     if (studio.unlockAudio) await studio.unlockAudio();
     if (studio.initAudio) await studio.initAudio();
 
@@ -585,16 +620,41 @@
     return Math.round(studio.getBpm());
   }
 
-  function applyRemoteBpm(bpm) {
+  function applyRemoteBpm(bpm, seq) {
     if (!studio || !studio.applyPortalBpm) return;
-    studio.applyPortalBpm(bpm);
+    const v = Math.round(bpm);
+    if (seq && seq <= lastBpmSeq) return;
+    if (seq) lastBpmSeq = seq;
+    studio.applyPortalBpm(v);
+    const st = $('portalStatus');
+    if (st && portalOpen) st.textContent = '// BPM SYNC · ' + v;
   }
 
-  function sendBpm(bpm, fromId) {
-    const msg = { type: 'bpm', bpm: Math.round(bpm), from: fromId || myId };
-    if (isHost) broadcast(msg);
+  function pushAuthoritativeBpm(bpm, force) {
+    const v = Math.round(bpm);
+    if (!force && v === lastSentBpm) return;
+    lastSentBpm = v;
+    lastBpmSeq++;
+    broadcast({ type: 'bpm-set', bpm: v, seq: lastBpmSeq, from: 'host' });
+    applyRemoteBpm(v, lastBpmSeq);
+  }
+
+  function sendBpm(bpm) {
+    const v = Math.round(bpm);
+    if (isHost) pushAuthoritativeBpm(v, true);
     else dataConns.forEach(function (conn) {
-      if (conn.open) try { conn.send({ type: 'bpm-relay', bpm: msg.bpm, from: myId }); } catch (e) {}
+      if (conn.open) try { conn.send({ type: 'bpm-relay', bpm: v, from: myId }); } catch (e) {}
+    });
+  }
+
+  function wireBpmSlider() {
+    const el = $('bpm');
+    if (!el || el.dataset.portalBpmWired) return;
+    el.dataset.portalBpmWired = '1';
+    el.addEventListener('input', function () {
+      if (global.CUORE && CUORE.portalSyncLock) return;
+      if (!portalOpen) return;
+      onBpmChange(parseInt(el.value, 10) || 76);
     });
   }
 
@@ -621,6 +681,7 @@
 
   function meshCall(remoteId) {
     if (!peer || !localStream || !remoteId || remoteId === myId) return;
+    if (hasLiveRemoteStream(remoteId)) return;
     if (!shouldInitiateCall(remoteId)) return;
     if (activeCalls.has(remoteId)) return;
 
@@ -631,10 +692,16 @@
       });
       if (!call) { activeCalls.delete(remoteId); return; }
       call.on('stream', function (stream) {
-        addRemoteAudio(stream, remoteId, call.metadata || {});
+        addRemoteAudio(remoteId, stream, call.metadata || {});
       });
-      call.on('close', function () { activeCalls.delete(remoteId); });
-      call.on('error', function () { activeCalls.delete(remoteId); });
+      call.on('close', function () {
+        activeCalls.delete(remoteId);
+        removeRemotePeer(remoteId);
+      });
+      call.on('error', function () {
+        activeCalls.delete(remoteId);
+        removeRemotePeer(remoteId);
+      });
     } catch (e) {
       activeCalls.delete(remoteId);
       console.warn('meshCall', e);
@@ -658,13 +725,22 @@
     peer.on('call', function (call) {
       ensureLocalStream().then(function () {
         if (!localStream) { call.close(); return; }
+        const pid = call.peer;
+        if (hasLiveRemoteStream(pid)) { call.close(); return; }
         call.answer(localStream);
         call.on('stream', function (stream) {
-          addRemoteAudio(stream, call.peer, call.metadata || {});
+          addRemoteAudio(pid, stream, call.metadata || {});
         });
-        activeCalls.add(call.peer);
-        call.on('close', function () { activeCalls.delete(call.peer); });
-        if (!dataConns.has(call.peer)) setupDataConn(peer.connect(call.peer));
+        activeCalls.add(pid);
+        call.on('close', function () {
+          activeCalls.delete(pid);
+          removeRemotePeer(pid);
+        });
+        call.on('error', function () {
+          activeCalls.delete(pid);
+          removeRemotePeer(pid);
+        });
+        if (!dataConns.has(pid)) connectDataTo(pid);
       });
     });
 
@@ -788,6 +864,7 @@ async function joinPortal(code) {
     if (!animId && canvas && ctx) drawPortal();
     startTrailSync();
     startMeshRetry();
+    startBpmSync();
     unlockPlayback();
   }
 
@@ -796,6 +873,7 @@ async function joinPortal(code) {
     leavePortalBoost();
     stopTrailSync();
     stopMeshRetry();
+    stopBpmSync();
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     Array.from(remoteGains.keys()).forEach(removeRemotePeer);
     dataConns.forEach(function (c) { try { c.close(); } catch (e) {} });
@@ -808,6 +886,7 @@ async function joinPortal(code) {
     hostIdRetry = false;
     localStream = null;
     selfTrail = null;
+    lastBpmSeq = 0;
     $('studioLayout').classList.remove('portal-open');
     $('portalRail').hidden = true;
     $('portalRoomWrap').hidden = true;
@@ -895,6 +974,7 @@ async function joinPortal(code) {
       canvas.height = Math.max(420, rail.clientHeight - 120);
     });
     window.dispatchEvent(new Event('resize'));
+    wireBpmSlider();
   }
 
   global.CuorePortal = {
