@@ -81,6 +81,8 @@
   let wsLastRx = 0;
   let wsKeepaliveTimer = null;
   let syncTxCount = 0;
+  let audioHealthTimer = null;
+  let hardReconnectTimer = null;
 
   function portalPeerId() {
     return myId || wsClientId || '';
@@ -203,10 +205,13 @@
 
   function applyRemotePeerVolume(peerId) {
     const vol = getRemoteVolume(peerId);
+    if (studio && studio.setPortalRemoteVolume) {
+      studio.setPortalRemoteVolume(peerId, vol);
+    }
     const g = remoteGains.get(peerId);
-    if (g && g.gain) g.gain.value = vol * 1.5;
+    if (g && g.gain) g.gain.value = vol * 1.25;
     const aud = remoteAudioEls.get(peerId);
-    if (aud) aud.volume = Math.min(1, vol);
+    if (aud && aud.dataset.fallback === '1') aud.volume = Math.min(1, vol);
   }
 
   function setRemotePeerVolume(peerId, vol, doBroadcast) {
@@ -1072,38 +1077,19 @@
   }
 
   function routeRemoteStream(stream, peerId) {
-    const Tone = studio.Tone;
-    if (!Tone) return null;
-    const ctx = Tone.getContext().rawContext;
-    const source = ctx.createMediaStreamSource(stream);
-    const gain = ctx.createGain();
-    gain.gain.value = getRemoteVolume(peerId) * 1.5;
-    source.connect(gain);
-    const remoteIn = studio.portalRemoteIn;
-    let connected = false;
-    if (remoteIn) {
-      try {
-        Tone.connect(gain, remoteIn);
-        connected = true;
-      } catch (e) { console.warn('portal tone route', e); }
+    if (studio && studio.attachPortalRemote) {
+      return studio.attachPortalRemote(peerId, stream, getRemoteVolume(peerId));
     }
-    if (!connected && studio.master) {
-      try {
-        Tone.connect(gain, studio.master);
-        connected = true;
-      } catch (e) { console.warn('portal master route', e); }
+    return null;
+  }
+
+  function detachRemoteRoute(peerId) {
+    if (studio && studio.detachPortalRemote) studio.detachPortalRemote(peerId);
+    const g = remoteGains.get(peerId);
+    if (g && g.dispose) {
+      try { g.dispose(); } catch (e) {}
     }
-    if (!connected) {
-      try { gain.connect(ctx.destination); connected = true; } catch (e) {}
-    }
-    if (!connected) return null;
-    return {
-      source: source,
-      gain: gain,
-      dispose: function () {
-        try { source.disconnect(); gain.disconnect(); } catch (e) {}
-      }
-    };
+    remoteGains.delete(peerId);
   }
 
   function wireMediaCall(remoteId, call, metaHint) {
@@ -1129,15 +1115,29 @@
   function replaceSendTracks() {
     if (!localStream) return;
     const track = localStream.getAudioTracks()[0];
-    if (!track) return;
+    if (!track || track.readyState === 'ended') return;
     mediaCalls.forEach(function (call) {
       if (!call || !call.peerConnection) return;
-      call.peerConnection.getSenders().forEach(function (sender) {
-        if (sender.track && sender.track.kind === 'audio') {
-          sender.replaceTrack(track).catch(function () {});
-        }
+      const pc = call.peerConnection;
+      const audioSenders = pc.getSenders().filter(function (s) {
+        return s.track && s.track.kind === 'audio';
+      });
+      if (!audioSenders.length) {
+        try { pc.addTrack(track, localStream); } catch (e) {}
+        return;
+      }
+      audioSenders.forEach(function (sender) {
+        sender.replaceTrack(track).catch(function () {});
       });
     });
+  }
+
+  function onSendStreamUpdated(stream) {
+    if (!stream) return;
+    localStream = stream;
+    stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
+    replaceSendTracks();
+    updateSelfAudioFlag();
   }
 
   function forceMeshCall(remoteId) {
@@ -1169,14 +1169,7 @@
     rtcDataChannels.delete(peerId);
     dataConns.delete(peerId);
     remoteStreams.delete(peerId);
-    const g = remoteGains.get(peerId);
-    if (g) {
-      try {
-        if (g.dispose) g.dispose();
-        else if (g.disconnect) g.disconnect();
-      } catch (e) {}
-    }
-    remoteGains.delete(peerId);
+    detachRemoteRoute(peerId);
     const aud = remoteAudioEls.get(peerId);
     if (aud) { aud.srcObject = null; aud.remove(); }
     remoteAudioEls.delete(peerId);
@@ -1184,7 +1177,7 @@
     if (p) p.hasAudio = false;
   }
 
-  function hardReconnectAllAudio() {
+  function hardReconnectAllAudioNow() {
     ensureLocalStream({ refresh: true }).then(function () {
       replaceSendTracks();
       meshAllAudioPeers();
@@ -1193,6 +1186,54 @@
       });
       unlockPlayback();
     });
+  }
+
+  function hardReconnectAllAudio() {
+    if (hardReconnectTimer) clearTimeout(hardReconnectTimer);
+    hardReconnectTimer = setTimeout(function () {
+      hardReconnectTimer = null;
+      hardReconnectAllAudioNow();
+    }, 280);
+  }
+
+  function startAudioHealth() {
+    if (audioHealthTimer) clearInterval(audioHealthTimer);
+    audioHealthTimer = setInterval(function () {
+      if (!portalOpen || !peer) return;
+      if (studio && studio.Tone && studio.Tone.context.state !== 'running') {
+        studio.Tone.context.resume().catch(function () {});
+      }
+      if (studio && studio.ensurePortalSend) {
+        const s = studio.ensurePortalSend();
+        if (s) {
+          if (s !== localStream) {
+            localStream = s;
+            replaceSendTracks();
+          }
+          updateSelfAudioFlag();
+        }
+      }
+      const missing = meshTargets().filter(function (t) { return !hasLiveRemoteStream(t); });
+      if (missing.length) {
+        meshAllAudioPeers();
+        missing.forEach(function (t) {
+          if (shouldInitiateCall(t)) forceMeshCall(t);
+        });
+      }
+      remoteAudioEls.forEach(function (aud, pid) {
+        if (aud.dataset.fallback === '1' && aud.paused && aud.srcObject) {
+          aud.play().catch(function () {});
+        }
+      });
+      if (studio && studio.isPlaying && studio.isPlaying()) {
+        unlockPlayback();
+      }
+    }, 3500);
+  }
+
+  function stopAudioHealth() {
+    if (audioHealthTimer) { clearInterval(audioHealthTimer); audioHealthTimer = null; }
+    if (hardReconnectTimer) { clearTimeout(hardReconnectTimer); hardReconnectTimer = null; }
   }
 
   async function addRemoteAudio(peerId, stream, meta) {
@@ -1212,32 +1253,43 @@
       t.enabled = true;
       t.onended = function () {
         if (!portalOpen) return;
+        detachRemoteRoute(peerId);
         if (shouldInitiateCall(peerId)) forceMeshCall(peerId);
       };
     });
+
+    const routed = routeRemoteStream(stream, peerId);
+    if (routed) remoteGains.set(peerId, routed);
 
     const vol = getRemoteVolume(peerId);
     const aud = document.createElement('audio');
     aud.autoplay = true;
     aud.playsInline = true;
     aud.setAttribute('playsinline', '');
-    aud.volume = Math.min(1, vol);
     aud.muted = false;
     aud.srcObject = stream;
     aud.id = 'portal-aud-' + String(peerId).slice(-8);
     aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
+    if (routed) {
+      aud.volume = 0;
+      aud.dataset.fallback = '0';
+    } else {
+      aud.volume = Math.min(1, vol);
+      aud.dataset.fallback = '1';
+    }
     document.body.appendChild(aud);
     remoteAudioEls.set(peerId, aud);
-    let htmlOk = false;
-    try {
-      await aud.play();
-      htmlOk = true;
-    } catch (e) { console.warn('portal aud play', e); }
-
-    if (!htmlOk) {
-      const routed = routeRemoteStream(stream, peerId);
-      if (routed) remoteGains.set(peerId, routed);
-    }
+    aud.play().catch(function (e) {
+      console.warn('portal aud play', e);
+      if (!routed) {
+        const retry = routeRemoteStream(stream, peerId);
+        if (retry) {
+          remoteGains.set(peerId, retry);
+          aud.volume = 0;
+          aud.dataset.fallback = '0';
+        }
+      }
+    });
 
     if (meta && meta.name) {
       if (!peers.has(peerId)) {
@@ -1447,7 +1499,11 @@
     const refresh = !!(opts && opts.refresh);
     if (studio.unlockAudio) await studio.unlockAudio();
     await studio.initAudio();
-    if (refresh && studio.refreshPortalSendStream) studio.refreshPortalSendStream();
+    if (refresh && studio.refreshPortalSendStream) {
+      studio.refreshPortalSendStream();
+    } else if (studio.ensurePortalSend) {
+      studio.ensurePortalSend();
+    }
     const s = studio.getSendStream && studio.getSendStream();
     if (!s) return null;
     localStream = s;
@@ -1549,6 +1605,7 @@ async function joinPortal(code) {
     startTrailSync();
     startMeshRetry();
     startBpmSync();
+    startAudioHealth();
     unlockPlayback();
   }
 
@@ -1558,10 +1615,12 @@ async function joinPortal(code) {
     stopTrailSync();
     stopMeshRetry();
     stopBpmSync();
+    stopAudioHealth();
     stopWsKeepalive();
     disconnectPortalWs(true);
     if (animId) { cancelAnimationFrame(animId); animId = null; }
-    Array.from(remoteGains.keys()).forEach(removeRemotePeer);
+    Array.from(remoteStreams.keys()).forEach(removeRemotePeer);
+    remoteAudioEls.forEach(function (_, id) { removeRemotePeer(id); });
     remoteVolumes.clear();
     mediaCalls.clear();
     rtcDataChannels.clear();
@@ -1685,7 +1744,7 @@ async function joinPortal(code) {
     window.dispatchEvent(new Event('resize'));
     wireBpmSlider();
     const syncEl = $('portalSyncLine');
-    if (syncEl) syncEl.textContent = '// portal.js v15 · CREA o ENTRA · mesh audio';
+    if (syncEl) syncEl.textContent = '// portal.js v16 · mix unificato · limiter';
 
     const peersEl = $('portalPeers');
     if (peersEl && !peersEl.dataset.volBound) {
@@ -1709,6 +1768,7 @@ async function joinPortal(code) {
     bind: bind,
     onTransportChange: onTransportChange,
     onBpmChange: onBpmChange,
+    onSendStreamUpdated: onSendStreamUpdated,
     unlockPlayback: unlockPlayback,
     refreshMeshAudio: refreshMeshAudio,
     isOpen: function () { return portalOpen; },

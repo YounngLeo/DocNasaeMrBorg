@@ -1129,7 +1129,7 @@
 </aside>
 </div>
 
-<script src="portal.js?v=15"></script>
+<script src="portal.js?v=16"></script>
 <script>
 'use strict';
 
@@ -2155,12 +2155,92 @@ async function initAudio() {
   applyLayerMutes();
 }
 
+const portalRemotePeers = new Map();
+
+function updatePortalRemoteMixGain() {
+  if (!A || !A.portalRemoteIn) return;
+  const n = portalRemotePeers.size;
+  A.portalRemoteIn.gain.value = n <= 1 ? 1.85 : 1.85 / Math.sqrt(n);
+}
+
+function attachPortalRemote(peerId, stream, volume) {
+  if (!A || !A.portalRemoteIn || !stream) return null;
+  detachPortalRemote(peerId);
+  const ctx = Tone.getContext().rawContext;
+  let source;
+  try {
+    source = ctx.createMediaStreamSource(stream);
+  } catch (e) {
+    console.warn('portal attach source', e);
+    return null;
+  }
+  const vol = Math.max(0, Math.min(1.5, volume == null ? 1 : volume));
+  const gain = ctx.createGain();
+  gain.gain.value = vol * 1.25;
+  source.connect(gain);
+  let toneOk = false;
+  try {
+    Tone.connect(gain, A.portalRemoteIn);
+    toneOk = true;
+  } catch (e) {
+    console.warn('portal attach tone', e);
+    try { gain.connect(ctx.destination); toneOk = true; } catch (e2) {}
+  }
+  if (!toneOk) {
+    try { source.disconnect(); gain.disconnect(); } catch (e3) {}
+    return null;
+  }
+  const entry = { source: source, gain: gain, peerId: peerId, toneOk: true };
+  portalRemotePeers.set(peerId, entry);
+  updatePortalRemoteMixGain();
+  return entry;
+}
+
+function setPortalRemoteVolume(peerId, volume) {
+  const entry = portalRemotePeers.get(peerId);
+  if (!entry || !entry.gain) return;
+  const vol = Math.max(0, Math.min(1.5, volume));
+  entry.gain.gain.value = vol * 1.25;
+}
+
+function detachPortalRemote(peerId) {
+  const entry = portalRemotePeers.get(peerId);
+  if (!entry) return;
+  try { entry.source.disconnect(); entry.gain.disconnect(); } catch (e) {}
+  portalRemotePeers.delete(peerId);
+  updatePortalRemoteMixGain();
+}
+
+function ensurePortalSendConnected() {
+  if (!A || !A.portalTap) return null;
+  if (!A.portalSend || !A.portalSend.stream) {
+    A.portalSend = Tone.context.createMediaStreamDestination();
+    A.portalTap.connect(A.portalSend);
+  }
+  const tracks = A.portalSend.stream.getAudioTracks();
+  if (!tracks.length || tracks[0].readyState === 'ended') {
+    return refreshPortalSendStream();
+  }
+  tracks.forEach(function (t) { t.enabled = true; });
+  return A.portalSend.stream;
+}
+
 function refreshPortalSendStream() {
   if (!A || !A.portalTap) return null;
-  try { A.portalTap.disconnect(); } catch (e) {}
+  const prevSend = A.portalSend;
   A.portalSend = Tone.context.createMediaStreamDestination();
+  if (prevSend) {
+    try { A.portalTap.disconnect(prevSend); } catch (e) {
+      try { A.portalTap.disconnect(); } catch (e2) {}
+    }
+  }
   A.portalTap.connect(A.portalSend);
-  return A.portalSend.stream;
+  const stream = A.portalSend.stream;
+  stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
+  if (window.CuorePortal && CuorePortal.onSendStreamUpdated) {
+    CuorePortal.onSendStreamUpdated(stream);
+  }
+  return stream;
 }
 
 function buildPadSynth() {
@@ -3456,8 +3536,13 @@ if (window.CuorePortal) {
     get portalRemoteIn() { return A ? A.portalRemoteIn : null; },
     get master() { return A ? A.master : null; },
     refreshPortalSendStream: refreshPortalSendStream,
+    ensurePortalSend: ensurePortalSendConnected,
+    attachPortalRemote: attachPortalRemote,
+    setPortalRemoteVolume: setPortalRemoteVolume,
+    detachPortalRemote: detachPortalRemote,
     getSendStream: function () {
-      if (A && A.portalSend && A.portalSend.stream) return A.portalSend.stream;
+      const s = ensurePortalSendConnected();
+      if (s) return s;
       if (A && A.recDest && A.recDest.stream) return A.recDest.stream;
       return null;
     },
