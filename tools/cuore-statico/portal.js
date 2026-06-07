@@ -57,6 +57,7 @@
   const remoteStreams = new Map();
   const remoteGains = new Map();
   const remoteAudioEls = new Map();
+  const remoteVolumes = new Map();
   const activeCalls = new Set();
   const callAttemptAt = new Map();
   const mediaCalls = new Map();
@@ -188,14 +189,52 @@
     return roomCode ? 'cuore-host-' + roomCode.toLowerCase() : '';
   }
 
-  /** Chi non ha ancora lo stream remoto può chiamare (host→guest o guest→host). */
+  /** Mesh completa: solo il peer con id lessicograficamente minore inizia la call (evita duplicati). */
   function shouldInitiateCall(remoteId) {
     if (!myId || !remoteId || remoteId === myId) return false;
     if (hasLiveRemoteStream(remoteId)) return false;
+    return myId < remoteId;
+  }
+
+  function getRemoteVolume(peerId) {
+    if (remoteVolumes.has(peerId)) return remoteVolumes.get(peerId);
+    return 1;
+  }
+
+  function applyRemotePeerVolume(peerId) {
+    const vol = getRemoteVolume(peerId);
+    const g = remoteGains.get(peerId);
+    if (g && g.gain) g.gain.value = vol * 1.5;
+    const aud = remoteAudioEls.get(peerId);
+    if (aud) aud.volume = Math.min(1, vol);
+  }
+
+  function setRemotePeerVolume(peerId, vol, doBroadcast) {
+    if (!peerId) return;
+    const v = Math.max(0, Math.min(1.5, vol));
+    remoteVolumes.set(peerId, v);
+    applyRemotePeerVolume(peerId);
+    peers.forEach(function (p) {
+      if (p.peerJsId === peerId || p.id === peerId) p.remoteVolume = v;
+    });
+    if (doBroadcast !== false && isHost) {
+      broadcast({ type: 'peer-volume', peerJsId: peerId, volume: v });
+    }
+  }
+
+  function meshTargets() {
+    const out = [];
+    const seen = new Set();
+    peers.forEach(function (p) {
+      const t = meshPeerJsTarget(p);
+      if (t && t !== myId && !seen.has(t)) {
+        seen.add(t);
+        out.push(t);
+      }
+    });
     const hid = hostPeerId();
-    if (!isHost && remoteId === hid) return true;
-    if (isHost && remoteId !== hid) return true;
-    return false;
+    if (hid && hid !== myId && !seen.has(hid)) out.push(hid);
+    return out;
   }
 
   function encodeMsg(msg) {
@@ -407,14 +446,7 @@
 
   function meshAllAudioPeers() {
     if (!peer || !myId) return;
-    if (!isHost) {
-      meshCall(hostPeerId());
-      return;
-    }
-    peers.forEach(function (p) {
-      const t = meshPeerJsTarget(p);
-      if (t && !hasLiveRemoteStream(t)) meshCall(t);
-    });
+    meshTargets().forEach(function (t) { meshCall(t); });
   }
 
   function meshAllKnownPeers() {
@@ -444,8 +476,13 @@
     if (meshRetryTimer) clearInterval(meshRetryTimer);
     meshRetryTimer = setInterval(function () {
       if (!portalOpen) return;
-      ensureLocalStream().then(function () { meshAllKnownPeers(); });
-    }, 2500);
+      ensureLocalStream().then(function () {
+        meshAllAudioPeers();
+        meshTargets().forEach(function (t) {
+          if (!hasLiveRemoteStream(t) && shouldInitiateCall(t)) forceMeshCall(t);
+        });
+      });
+    }, 2000);
   }
 
   function stopMeshRetry() {
@@ -717,21 +754,38 @@
     });
   }
 
+  function escHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  }
+
   function renderPeerList() {
     const el = $('portalPeers');
     if (!el) return;
+    const myPid = portalPeerId();
     const rows = [selfTrail].concat(Array.from(peers.values()).filter(function (p) {
-      return p && p.id !== myId;
+      return p && p.id !== myId && p.id !== myPid;
     })).filter(Boolean);
     updateSelfAudioFlag();
     el.innerHTML = rows.map(function (p) {
-      const local = p.id === myId ? ' · tu' : '';
+      const isSelf = p.id === myId || p.id === myPid;
+      const local = isSelf ? ' · tu' : '';
       const aud = p.hasAudio ? ' · audio' : '';
-      return '<div class="portal-peer"><i style="background:hsl(' + p.hue + ',70%,50%)"></i>' +
-        p.name + local + aud + '</div>';
+      const audioId = meshPeerJsTarget(p) || p.peerJsId || p.id;
+      let volUi = '';
+      if (isHost && !isSelf && audioId && String(audioId).indexOf('ws-') !== 0) {
+        const v = Math.round(getRemoteVolume(audioId) * 100);
+        volUi = '<input type="range" class="portal-vol" data-pid="' + escHtml(audioId) +
+          '" min="0" max="150" step="1" value="' + v + '" title="Volume utente">' +
+          '<span class="portal-vol-val">' + v + '%</span>';
+      }
+      return '<div class="portal-peer-row">' +
+        '<i style="background:hsl(' + p.hue + ',70%,50%)"></i>' +
+        '<span class="portal-peer-name">' + escHtml(p.name) + local + aud + '</span>' +
+        volUi + '</div>';
     }).join('') +
-      '<div class="portal-peer" style="opacity:0.55;margin-top:6px">// stream attivi: ' +
-      sessionStreamCount() + ' · operatori: ' + rows.length + ' · ws:' + (wsReady ? 'on' : 'off') +
+      '<div class="portal-peer-row" style="opacity:0.55;margin-top:6px">' +
+      '// stream: ' + sessionStreamCount() + ' · mesh: ' + remoteStreams.size +
+      ' · operatori: ' + rows.length + ' · ws:' + (wsReady ? 'on' : 'off') +
       ' · rx:' + trailRxCount + '/' + dataRxCount +
       ' · tx:' + syncTxCount + '</div>';
   }
@@ -749,7 +803,9 @@
       list.push({ id: id, peerJsId: p.peerJsId || meshPeerJsTarget(p) || '', name: p.name, hue: p.hue });
     });
     lastBpmSeq++;
-    broadcast({ type: 'roster', peers: list, bpm: portalBpmNow(), seq: lastBpmSeq });
+    const volumes = {};
+    remoteVolumes.forEach(function (v, k) { volumes[k] = v; });
+    broadcast({ type: 'roster', peers: list, bpm: portalBpmNow(), seq: lastBpmSeq, volumes: volumes });
   }
 
   function applyTrailMessage(msg) {
@@ -811,14 +867,9 @@
           entryAngle: selfTrail ? selfTrail.entryAngle : 0,
           bpm: portalBpmNow()
         }, msg.id);
-        const t = peerJsTarget(msg);
-        if (t) {
-          meshCall(t);
-          setTimeout(function () { forceMeshCall(t); }, 800);
-          setTimeout(function () { forceMeshCall(t); }, 3000);
-        }
+        meshAllAudioPeers();
       } else {
-        meshCall(hostPeerId());
+        meshAllAudioPeers();
       }
       renderPeerList();
       return;
@@ -839,8 +890,12 @@
       });
       pruneStaleRemotePeers(validIds);
       if (!isHost && msg.bpm != null) applyRemoteBpm(msg.bpm, msg.seq);
-      if (!isHost) meshCall(hostPeerId());
-      else meshAllAudioPeers();
+      if (msg.volumes) {
+        Object.keys(msg.volumes).forEach(function (k) {
+          setRemotePeerVolume(k, msg.volumes[k], false);
+        });
+      }
+      meshAllAudioPeers();
       renderPeerList();
       return;
     }
@@ -849,9 +904,7 @@
       notePeerJsId(msg);
       if (msg.type === 'sync') applySyncMessage(msg);
       else applyTrailMessage(msg);
-      if (isHost && msg.peerJsId && !hasLiveRemoteStream(msg.peerJsId)) {
-        meshCall(msg.peerJsId);
-      }
+      meshAllAudioPeers();
       if (isHost && !wsReady) fanout(msg, fromId);
       renderPeerList();
       return;
@@ -887,6 +940,14 @@
       if (isHost) {
         applyRemoteBpm(msg.bpm);
         pushAuthoritativeBpm(Math.round(msg.bpm), true);
+      }
+      return;
+    }
+
+    if (msg.type === 'peer-volume') {
+      if (msg.peerJsId != null && msg.volume != null) {
+        setRemotePeerVolume(msg.peerJsId, msg.volume, false);
+        renderPeerList();
       }
       return;
     }
@@ -1010,22 +1071,32 @@
     sendBpm(bpm);
   }
 
-  function routeRemoteStream(stream) {
+  function routeRemoteStream(stream, peerId) {
     const Tone = studio.Tone;
     if (!Tone) return null;
-    const ctx = Tone.context.rawContext;
+    const ctx = Tone.getContext().rawContext;
     const source = ctx.createMediaStreamSource(stream);
     const gain = ctx.createGain();
-    gain.gain.value = 1.35;
+    gain.gain.value = getRemoteVolume(peerId) * 1.5;
     source.connect(gain);
     const remoteIn = studio.portalRemoteIn;
-    if (remoteIn && remoteIn.input) {
-      gain.connect(remoteIn.input);
-    } else if (remoteIn) {
-      Tone.connect(gain, remoteIn);
-    } else {
-      gain.connect(ctx.destination);
+    let connected = false;
+    if (remoteIn) {
+      try {
+        Tone.connect(gain, remoteIn);
+        connected = true;
+      } catch (e) { console.warn('portal tone route', e); }
     }
+    if (!connected && studio.master) {
+      try {
+        Tone.connect(gain, studio.master);
+        connected = true;
+      } catch (e) { console.warn('portal master route', e); }
+    }
+    if (!connected) {
+      try { gain.connect(ctx.destination); connected = true; } catch (e) {}
+    }
+    if (!connected) return null;
     return {
       source: source,
       gain: gain,
@@ -1071,6 +1142,7 @@
 
   function forceMeshCall(remoteId) {
     if (!peer || !remoteId || remoteId === myId) return;
+    if (!shouldInitiateCall(remoteId)) return;
     if (hasLiveRemoteStream(remoteId)) return;
     if (activeCalls.has(remoteId)) {
       const t0 = callAttemptAt.get(remoteId) || 0;
@@ -1113,18 +1185,14 @@
   }
 
   function hardReconnectAllAudio() {
-    if (studio && studio.refreshPortalSendStream) studio.refreshPortalSendStream();
-    localStream = studio.getSendStream && studio.getSendStream();
-    replaceSendTracks();
-    meshAllAudioPeers();
-    if (isHost) {
-      peers.forEach(function (p) {
-        const t = meshPeerJsTarget(p);
-        if (t && !hasLiveRemoteStream(t)) forceMeshCall(t);
+    ensureLocalStream({ refresh: true }).then(function () {
+      replaceSendTracks();
+      meshAllAudioPeers();
+      meshTargets().forEach(function (t) {
+        if (!hasLiveRemoteStream(t) && shouldInitiateCall(t)) forceMeshCall(t);
       });
-    } else if (!hasLiveRemoteStream(hostPeerId())) {
-      forceMeshCall(hostPeerId());
-    }
+      unlockPlayback();
+    });
   }
 
   async function addRemoteAudio(peerId, stream, meta) {
@@ -1140,24 +1208,35 @@
 
     removeRemotePeer(peerId);
     remoteStreams.set(peerId, stream);
-    stream.getAudioTracks().forEach(function (t) { t.enabled = true; });
+    stream.getAudioTracks().forEach(function (t) {
+      t.enabled = true;
+      t.onended = function () {
+        if (!portalOpen) return;
+        if (shouldInitiateCall(peerId)) forceMeshCall(peerId);
+      };
+    });
 
-    const routed = routeRemoteStream(stream);
-    if (routed) {
-      remoteGains.set(peerId, routed);
-    } else {
-      const aud = document.createElement('audio');
-      aud.autoplay = true;
-      aud.playsInline = true;
-      aud.setAttribute('playsinline', '');
-      aud.volume = 1;
-      aud.muted = false;
-      aud.srcObject = stream;
-      aud.id = 'portal-aud-' + String(peerId).slice(-8);
-      aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
-      document.body.appendChild(aud);
-      remoteAudioEls.set(peerId, aud);
-      try { await aud.play(); } catch (e) { console.warn('portal aud play', e); }
+    const vol = getRemoteVolume(peerId);
+    const aud = document.createElement('audio');
+    aud.autoplay = true;
+    aud.playsInline = true;
+    aud.setAttribute('playsinline', '');
+    aud.volume = Math.min(1, vol);
+    aud.muted = false;
+    aud.srcObject = stream;
+    aud.id = 'portal-aud-' + String(peerId).slice(-8);
+    aud.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;opacity:0;pointer-events:none';
+    document.body.appendChild(aud);
+    remoteAudioEls.set(peerId, aud);
+    let htmlOk = false;
+    try {
+      await aud.play();
+      htmlOk = true;
+    } catch (e) { console.warn('portal aud play', e); }
+
+    if (!htmlOk) {
+      const routed = routeRemoteStream(stream, peerId);
+      if (routed) remoteGains.set(peerId, routed);
     }
 
     if (meta && meta.name) {
@@ -1289,12 +1368,7 @@
 
   function refreshMeshAudio() {
     if (!portalOpen || !peer) return;
-    ensureLocalStream().then(function (s) {
-      if (!s) return;
-      replaceSendTracks();
-      hardReconnectAllAudio();
-      unlockPlayback();
-    });
+    hardReconnectAllAudio();
   }
 
   function setupPeerHandlers() {
@@ -1343,7 +1417,8 @@
       }
 
       if (!answerCall()) {
-        ensureLocalStream().then(function () {
+        ensureLocalStream({ refresh: true }).then(function () {
+          replaceSendTracks();
           if (!answerCall()) call.close();
         });
       }
@@ -1368,10 +1443,11 @@
     });
   }
 
-  async function ensureLocalStream() {
+  async function ensureLocalStream(opts) {
+    const refresh = !!(opts && opts.refresh);
     if (studio.unlockAudio) await studio.unlockAudio();
     await studio.initAudio();
-    if (studio.refreshPortalSendStream) studio.refreshPortalSendStream();
+    if (refresh && studio.refreshPortalSendStream) studio.refreshPortalSendStream();
     const s = studio.getSendStream && studio.getSendStream();
     if (!s) return null;
     localStream = s;
@@ -1450,12 +1526,11 @@ async function joinPortal(code) {
 
       whenPeerReady(function () {
         if (selfTrail) selfTrail.id = myId;
-        const hid = hostPeerId();
-        connectDataTo(hid);
-        meshCall(hid);
+        connectDataTo(hostPeerId());
+        meshAllAudioPeers();
         setStatus('// JOIN · ' + code);
-        setTimeout(function () { meshCall(hid); }, 800);
-        setTimeout(function () { meshCall(hid); }, 3000);
+        setTimeout(function () { meshAllAudioPeers(); }, 800);
+        setTimeout(function () { meshAllAudioPeers(); }, 3000);
       });
     } catch (e) {
       console.error('joinPortal', e);
@@ -1487,6 +1562,7 @@ async function joinPortal(code) {
     disconnectPortalWs(true);
     if (animId) { cancelAnimationFrame(animId); animId = null; }
     Array.from(remoteGains.keys()).forEach(removeRemotePeer);
+    remoteVolumes.clear();
     mediaCalls.clear();
     rtcDataChannels.clear();
     dataConns.forEach(function (c) {
@@ -1609,7 +1685,24 @@ async function joinPortal(code) {
     window.dispatchEvent(new Event('resize'));
     wireBpmSlider();
     const syncEl = $('portalSyncLine');
-    if (syncEl) syncEl.textContent = '// portal.js v13 · CREA o ENTRA · relay Workers';
+    if (syncEl) syncEl.textContent = '// portal.js v15 · CREA o ENTRA · mesh audio';
+
+    const peersEl = $('portalPeers');
+    if (peersEl && !peersEl.dataset.volBound) {
+      peersEl.dataset.volBound = '1';
+      peersEl.addEventListener('input', function (ev) {
+        if (!isHost) return;
+        const inp = ev.target;
+        if (!inp.classList || !inp.classList.contains('portal-vol')) return;
+        const pid = inp.dataset.pid;
+        if (!pid) return;
+        const vol = parseInt(inp.value, 10) / 100;
+        setRemotePeerVolume(pid, vol);
+        const row = inp.closest('.portal-peer-row');
+        const valEl = row && row.querySelector('.portal-vol-val');
+        if (valEl) valEl.textContent = inp.value + '%';
+      });
+    }
   }
 
   global.CuorePortal = {

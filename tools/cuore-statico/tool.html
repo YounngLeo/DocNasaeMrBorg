@@ -416,9 +416,44 @@
   .portal-peers {
     border-top: 1px solid var(--dim);
     padding: 8px 10px;
-    max-height: 120px;
+    max-height: 200px;
     overflow-y: auto;
     font-size: 9px;
+  }
+  .portal-peer-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    letter-spacing: 1px;
+  }
+  .portal-peer-row i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .portal-peer-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .portal-vol {
+    width: 72px;
+    flex-shrink: 0;
+    height: 4px;
+    accent-color: #c678ff;
+    cursor: pointer;
+  }
+  body.portal-boost .portal-vol { accent-color: #ff2b4a; }
+  .portal-vol-val {
+    width: 32px;
+    flex-shrink: 0;
+    text-align: right;
+    opacity: 0.65;
+    font-size: 8px;
   }
   .portal-peer {
     display: flex;
@@ -1094,7 +1129,7 @@
 </aside>
 </div>
 
-<script src="portal.js?v=13"></script>
+<script src="portal.js?v=15"></script>
 <script>
 'use strict';
 
@@ -1791,6 +1826,32 @@ function tickLegacy() {
   if (autoSample && sampleBuffer && beat16 % autoSampleRate === 0 && Math.random() < autoSampleProb) {
     try { playSample(); } catch (e) {}
   }
+  tickLegacyDrums();
+}
+
+function drumsPatternEmpty() {
+  if (!patterns.drums) return true;
+  return DRUM_VOICES.every(function (v) {
+    const row = patterns.drums[v];
+    return !row || !row.some(Boolean);
+  });
+}
+
+function tickLegacyDrums() {
+  if (!layers.drums || !A || !A.drums) return;
+  const step = beat16 % PAT_LEN;
+  const t = Tone.now();
+  if (patterns.drums && !drumsPatternEmpty()) {
+    DRUM_VOICES.forEach(function (v) {
+      if (patterns.drums[v] && patterns.drums[v][step]) {
+        try { triggerDrum(v, t); bumpTrig(); } catch (e) {}
+      }
+    });
+    return;
+  }
+  if (step % 4 === 0) { try { triggerDrum('kick', t); bumpTrig(); } catch (e) {} }
+  if (step % 8 === 4) { try { triggerDrum('snare', t); bumpTrig(); } catch (e) {} }
+  if (step % 2 === 0) { try { triggerDrum('ch', t); } catch (e) {} }
 }
 
 function tickPattern() {
@@ -2533,6 +2594,11 @@ document.querySelectorAll('.layer').forEach(btn => {
     const layer = btn.dataset.layer;
     layers[layer] = layers[layer] ? 0 : 1;
     btn.classList.toggle('on', !!layers[layer]);
+    if (layer === 'drums' && layers.drums && drumsPatternEmpty()) {
+      patterns.drums = defaultDrumPatterns(drumKit);
+      renderPatternGrid();
+      persistPatterns();
+    }
     applyLayerMutes();
   });
 });
@@ -3373,6 +3439,9 @@ function applyPortalTransport(msg) {
   } else if (msg.playing && isPlaying && typeof msg.beat16 === 'number') {
     beat16 = msg.beat16;
     updatePatternPlayhead();
+  }
+  if (msg.playing && window.CuorePortal && CuorePortal.isOpen() && CuorePortal.refreshMeshAudio) {
+    CuorePortal.refreshMeshAudio();
   }
 }
 
