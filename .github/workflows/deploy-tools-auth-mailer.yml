@@ -15,6 +15,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Cloudflare credentials
+        uses: ./.github/actions/cloudflare-token
+        with:
+          account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          refresh_token: ${{ secrets.CLOUDFLARE_OAUTH_REFRESH_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -23,7 +29,7 @@ jobs:
         run: npm install
       - uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ env.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: workers/tools-auth-mailer
           command: deploy
