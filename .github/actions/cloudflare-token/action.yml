@@ -24,7 +24,7 @@ runs:
       run: |
         set -euo pipefail
         TOKEN=""
-        if [ -n "$INPUT_API_TOKEN" ] && [[ ! "$INPUT_API_TOKEN" =~ ^cfoat_ ]]; then
+        if [ -n "$INPUT_API_TOKEN" ] && [[ ! "$INPUT_API_TOKEN" =~ ^cfoat_ ]] && [ "${#INPUT_API_TOKEN}" -ge 32 ]; then
           TOKEN="$INPUT_API_TOKEN"
           echo "Using permanent Cloudflare API token."
         elif [ -n "$INPUT_REFRESH_TOKEN" ]; then
