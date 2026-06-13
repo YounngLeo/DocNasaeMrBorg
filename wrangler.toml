@@ -1,0 +1,7 @@
+name = "docnasae-mrborg"
+compatibility_date = "2026-06-09"
+pages_build_output_dir = "."
+
+[[kv_namespaces]]
+binding = "TOOLS_AUTH_KV"
+id = "96809d76ca064e3ebb0f25782b72f7e1"

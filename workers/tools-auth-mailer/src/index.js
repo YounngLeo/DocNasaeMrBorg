@@ -30,8 +30,32 @@ export default {
     if (!from) return new Response('MAIL_FROM not set', { status: 500 });
 
     if (env.EMAIL && env.EMAIL.send) {
-      const res = await env.EMAIL.send({ from, to, subject, html, text });
-      return Response.json({ ok: true, via: 'email-service', id: res && res.messageId });
+      try {
+        const res = await env.EMAIL.send({ from, to, subject, html, text });
+        return Response.json({ ok: true, via: 'email-service', id: res && res.messageId });
+      } catch (e) {
+        const msg = e && e.message ? e.message : String(e);
+        if (!env.RESEND_API_KEY) {
+          return new Response('email-service: ' + msg, { status: 502 });
+        }
+      }
+    }
+
+    if (env.RESEND_API_KEY) {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + env.RESEND_API_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ from, to: [to], subject, html, text })
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        return new Response('resend: ' + err, { status: 502 });
+      }
+      const data = await res.json();
+      return Response.json({ ok: true, via: 'resend', id: data && data.id });
     }
 
     const mc = await fetch('https://api.mailchannels.net/tx/v1/send', {
