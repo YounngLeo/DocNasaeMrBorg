@@ -1131,7 +1131,7 @@
 </aside>
 </div>
 
-<script src="portal.js?v=16"></script>
+<script src="portal.js?v=17"></script>
 <script>
 'use strict';
 
@@ -2182,17 +2182,21 @@ function attachPortalRemote(peerId, stream, volume) {
   source.connect(gain);
   let toneOk = false;
   try {
-    Tone.connect(gain, A.portalRemoteIn);
+    const busIn = A.portalRemoteIn.input || A.portalRemoteIn;
+    gain.connect(busIn);
     toneOk = true;
   } catch (e) {
-    console.warn('portal attach tone', e);
-    try { gain.connect(ctx.destination); toneOk = true; } catch (e2) {}
+    console.warn('portal attach bus', e);
+    try {
+      gain.connect(ctx.destination);
+      toneOk = true;
+    } catch (e2) {}
   }
   if (!toneOk) {
     try { source.disconnect(); gain.disconnect(); } catch (e3) {}
     return null;
   }
-  const entry = { source: source, gain: gain, peerId: peerId, toneOk: true };
+  const entry = { source: source, gain: gain, peerId: peerId, toneOk: toneOk };
   portalRemotePeers.set(peerId, entry);
   updatePortalRemoteMixGain();
   return entry;
