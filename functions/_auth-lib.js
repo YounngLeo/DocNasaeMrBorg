@@ -180,6 +180,32 @@ export async function kvPut(env, key, value, ttl) {
   await env.TOOLS_AUTH_KV.put(key, JSON.stringify(value), { expirationTtl: ttl || REQUEST_TTL });
 }
 
+export async function kvDelete(env, key) {
+  if (!env.TOOLS_AUTH_KV) return;
+  await env.TOOLS_AUTH_KV.delete(key);
+}
+
+const RATE_LIMIT_WINDOW = 60 * 15;
+const RATE_LIMIT_MAX = 5;
+
+export async function checkRateLimit(env, bucket, id) {
+  if (!env.TOOLS_AUTH_KV || !id) return true;
+  const key = 'rl:' + bucket + ':' + id;
+  const row = await kvGet(env, key);
+  const count = row && row.n ? row.n : 0;
+  if (count >= RATE_LIMIT_MAX) return false;
+  await kvPut(env, key, { n: count + 1 }, RATE_LIMIT_WINDOW);
+  return true;
+}
+
+export function clientIp(request) {
+  return (
+    request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('X-Forwarded-For') ||
+    'unknown'
+  ).split(',')[0].trim();
+}
+
 export async function sendEmail(env, msg) {
   const to = msg.to;
   const subject = msg.subject;

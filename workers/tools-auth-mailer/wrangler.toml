@@ -2,6 +2,6 @@ name = "tools-auth-mailer"
 main = "src/index.js"
 compatibility_date = "2026-06-09"
 
-# Abilita quando hai un dominio onboardato su Email Service:
-# [[send_email]]
-# name = "EMAIL"
+[[send_email]]
+name = "EMAIL"
+allowed_sender_addresses = ["tools@doctnasamrborg.cc", "noreply@doctnasamrborg.cc"]

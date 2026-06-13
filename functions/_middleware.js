@@ -5,8 +5,8 @@
 import {
   COOKIE, getCookie, hasCfAccess, isLocalHost, needsProtection, ownerEmail,
   isAuthorized, authMode, signData, verifyData, randomId, normalizeEmail, isValidEmail,
-  sessionToken, authTokenFromCode, kvGet, kvPut, notifyOwner, notifyVisitorApproved,
-  notifyVisitorDenied, setSessionCookie, REQUEST_TTL
+  sessionToken, authTokenFromCode, kvGet, kvPut, kvDelete, checkRateLimit, clientIp,
+  notifyOwner, notifyVisitorApproved, notifyVisitorDenied, setSessionCookie, REQUEST_TTL
 } from './_auth-lib.js';
 
 function page(title, body) {
@@ -171,6 +171,19 @@ async function handleRequest(context) {
     return htmlResponse(loginHtml(next, 'Approvazione non configurata (TOOLS_OWNER_EMAIL).', '', false, !!env.TOOLS_ACCESS_CODE), 503);
   }
 
+  const ip = clientIp(request);
+  if (!(await checkRateLimit(env, 'req-ip', ip))) {
+    return htmlResponse(loginHtml(next, 'Troppe richieste. Riprova tra qualche minuto.', '', true, !!env.TOOLS_ACCESS_CODE), 429);
+  }
+  if (!(await checkRateLimit(env, 'req-email', email))) {
+    return htmlResponse(loginHtml(next, 'Troppe richieste per questa email. Riprova più tardi.', '', true, !!env.TOOLS_ACCESS_CODE), 429);
+  }
+
+  const pending = await kvGet(env, 'pending:' + email);
+  if (pending && pending.status === 'pending') {
+    return htmlResponse(waitHtml(pending.id), 200);
+  }
+
   if (email === owner) {
     const token = await sessionToken(env, email);
     const secure = url.protocol === 'https:';
@@ -187,6 +200,7 @@ async function handleRequest(context) {
     status: 'pending',
     created: Date.now()
   });
+  await kvPut(env, 'pending:' + email, { id: reqId, status: 'pending' }, REQUEST_TTL);
 
   try {
     await notifyOwner(env, origin, reqId, email, next);
@@ -239,10 +253,14 @@ async function handleDecide(context) {
   if (!row) {
     return htmlResponse(page('ERRORE', '<h1>RICHIESTA SCADUTA</h1>'), 410);
   }
+  if (row.status !== 'pending') {
+    return htmlResponse(page('GIÀ GESTITA', '<h1>RICHIESTA GIÀ ELABORATA</h1><p>Questo link non è più valido.</p>'), 409);
+  }
 
   if (action === 'deny') {
     row.status = 'denied';
     await kvPut(env, 'req:' + payload.id, row);
+    await kvDelete(env, 'pending:' + row.email);
     try { await notifyVisitorDenied(env, row.email); } catch (e) {}
     return htmlResponse(page('NEGATO', (
       '<h1>ACCESSO NEGATO</h1>' +
@@ -265,6 +283,7 @@ async function handleDecide(context) {
   row.status = 'approved';
   row.ticket = ticket;
   await kvPut(env, 'req:' + payload.id, row);
+  await kvDelete(env, 'pending:' + row.email);
 
   try {
     await notifyVisitorApproved(env, url.origin, row.email, ticket);
@@ -293,6 +312,14 @@ async function handleEnter(context) {
   const row = data.id ? await kvGet(env, 'req:' + data.id) : null;
   if (row && row.status === 'denied') {
     return htmlResponse(page('NEGATO', '<h1>ACCESSO NEGATO</h1>'), 403);
+  }
+  if (row && row.used) {
+    return htmlResponse(page('ERRORE', '<h1>LINK GIÀ UTILIZZATO</h1><p>Richiedi un nuovo accesso.</p>'), 410);
+  }
+  if (row) {
+    row.used = true;
+    await kvPut(env, 'req:' + data.id, row, REQUEST_TTL);
+    await kvDelete(env, 'pending:' + row.email);
   }
 
   const token = await sessionToken(env, data.email);
