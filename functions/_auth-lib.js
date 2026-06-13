@@ -44,6 +44,11 @@ export function ownerEmail(env) {
   return String(env.TOOLS_OWNER_EMAIL || '').trim().toLowerCase();
 }
 
+export function publicOrigin(env, fallback) {
+  const configured = String(env.TOOLS_PUBLIC_ORIGIN || env.PUBLIC_ORIGIN || '').trim().replace(/\/$/, '');
+  return configured || fallback;
+}
+
 export function needsProtection(env) {
   return !!(
     env.TOOLS_ACCESS_CODE ||

@@ -6,8 +6,40 @@ import {
   COOKIE, getCookie, hasCfAccess, isLocalHost, needsProtection, ownerEmail,
   isAuthorized, authMode, signData, verifyData, randomId, normalizeEmail, isValidEmail,
   sessionToken, authTokenFromCode, kvGet, kvPut, kvDelete, checkRateLimit, clientIp,
-  notifyOwner, notifyVisitorApproved, notifyVisitorDenied, setSessionCookie, REQUEST_TTL
+  notifyOwner, notifyVisitorApproved, notifyVisitorDenied, setSessionCookie, publicOrigin, REQUEST_TTL
 } from './_auth-lib.js';
+
+const CANONICAL_HOST = 'doctnasamrborg.cc';
+
+const SEC_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'same-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Cache-Control': 'no-store'
+};
+
+function sameOrigin(request, url) {
+  const origin = request.headers.get('Origin');
+  if (origin && origin !== url.origin) return false;
+  const referer = request.headers.get('Referer');
+  if (referer) {
+    try {
+      if (new URL(referer).origin !== url.origin) return false;
+    } catch (e) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function withSecurity(response) {
+  const headers = new Headers(response.headers);
+  Object.keys(SEC_HEADERS).forEach(function (k) {
+    if (!headers.has(k)) headers.set(k, SEC_HEADERS[k]);
+  });
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
 
 function page(title, body) {
   return `<!DOCTYPE html>
@@ -107,10 +139,7 @@ function waitHtml(reqId) {
     '<h1>IN ATTESA</h1>' +
     '<p class="pulse">Richiesta inviata allo studio. Riceverai un\'email quando verrà approvata.</p>' +
     '<p>Questa pagina si aggiorna automaticamente…</p>' +
-    '<script>setInterval(function(){fetch("/tools/_auth/poll?id=' + reqId +
-    '").then(function(r){return r.json()}).then(function(j){if(j.status==="approved")' +
-    'location.href=j.enter;if(j.status==="denied")location.href="/tools/_auth/login?denied=1";})' +
-    '.catch(function(){});},4000);</script>' +
+    '<script>(function(){var id="' + reqId + '";var ms=4000;function poll(){fetch("/tools/_auth/poll?id="+id).then(function(r){return r.json()}).then(function(j){if(j.status==="approved"){location.href=j.enter;return;}if(j.status==="denied"){location.href="/tools/_auth/login?denied=1";return;}ms=Math.min(ms+2000,12000);setTimeout(poll,ms);}).catch(function(){ms=Math.min(ms+2000,12000);setTimeout(poll,ms);});}poll();})();</script>' +
     '<p class="foot"><a href="/tools/_auth/login">← nuova richiesta</a></p>'
   ));
 }
@@ -131,6 +160,9 @@ async function parseForm(request) {
 async function handleLogin(context) {
   const { request, env } = context;
   const url = new URL(request.url);
+  if (!sameOrigin(request, url)) {
+    return htmlResponse(loginHtml('/tools/', 'Richiesta non valida.', '', false, false), 403);
+  }
   const data = await parseForm(request);
   if (!data) return new Response('Method not allowed', { status: 405 });
 
@@ -155,6 +187,9 @@ async function handleLogin(context) {
 async function handleRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
+  if (!sameOrigin(request, url)) {
+    return htmlResponse(loginHtml('/tools/', 'Richiesta non valida.', '', true, !!env.TOOLS_ACCESS_CODE), 403);
+  }
   const origin = url.origin;
   const data = await parseForm(request);
   if (!data) return new Response('Method not allowed', { status: 405 });
@@ -203,7 +238,7 @@ async function handleRequest(context) {
   await kvPut(env, 'pending:' + email, { id: reqId, status: 'pending' }, REQUEST_TTL);
 
   try {
-    await notifyOwner(env, origin, reqId, email, next);
+    await notifyOwner(env, publicOrigin(env, origin), reqId, email, next);
   } catch (e) {
     console.error('notifyOwner', e);
     return htmlResponse(loginHtml(next, 'Invio email fallito. Riprova o contatta lo studio.', '', true, !!env.TOOLS_ACCESS_CODE), 502);
@@ -286,12 +321,12 @@ async function handleDecide(context) {
   await kvDelete(env, 'pending:' + row.email);
 
   try {
-    await notifyVisitorApproved(env, url.origin, row.email, ticket);
+    await notifyVisitorApproved(env, publicOrigin(env, url.origin), row.email, ticket);
   } catch (e) {
     console.error('notifyVisitorApproved', e);
   }
 
-  const enterUrl = url.origin + '/tools/_auth/enter?ticket=' + encodeURIComponent(ticket);
+  const enterUrl = publicOrigin(env, url.origin) + '/tools/_auth/enter?ticket=' + encodeURIComponent(ticket);
   return htmlResponse(page('AUTORIZZATO', (
     '<h1>ACCESSO AUTORIZZATO</h1>' +
     '<p>Email inviata a <b>' + row.email + '</b> con il link di ingresso.</p>' +
@@ -344,16 +379,21 @@ async function handleStatus(context) {
 }
 
 function htmlResponse(html, status) {
-  return new Response(html, {
+  return withSecurity(new Response(html, {
     status: status || 200,
     headers: { 'Content-Type': 'text/html;charset=UTF-8', 'Cache-Control': 'no-store' }
-  });
+  }));
 }
 
 export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
   const path = url.pathname;
+
+  if (url.hostname === 'www.' + CANONICAL_HOST) {
+    url.hostname = CANONICAL_HOST;
+    return Response.redirect(url.toString(), 301);
+  }
 
   if (!path.startsWith('/tools')) return next();
 

@@ -1,8 +1,13 @@
 /tools/*
   X-Robots-Tag: noindex, nofollow, noarchive
   X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
   Referrer-Policy: same-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
 
 /tools/_auth/*
   Cache-Control: no-store
