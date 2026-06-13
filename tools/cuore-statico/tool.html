@@ -534,7 +534,7 @@
 </div>
 
 <header>
-  <div class="brand">DOCTNASA&MRBORG // STUDIO_v05</div>
+  <div class="brand">DOCTNASA&MRBORG // STUDIO_v06</div>
   <div class="title">CUORE_STATICO</div>
   <div class="subtitle">synth.sampler.recorder.dub_engine · portal_lan</div>
 </header>
@@ -1372,7 +1372,7 @@ if (storedState.drumVoiceConfig && typeof storedState.drumVoiceConfig === 'objec
     const c = storedState.drumVoiceConfig[v];
     if (!c) return;
     if (Number.isFinite(c.vol)) drumVoiceConfig[v].vol = Math.max(-24, Math.min(12, c.vol));
-    if (c.src === 'synth' || c.src === 'sample') drumVoiceConfig[v].src = c.src;
+    if (c.src === 'synth' || c.src === 'sample') drumVoiceConfig[v].src = (v === 'ch' || v === 'oh') ? 'synth' : c.src;
   });
 }
 if (storedState.fxSends && typeof storedState.fxSends === 'object') {
@@ -1932,7 +1932,7 @@ function bumpTrig() {
 
 function disposeDrums(d) {
   if (!d) return;
-  ['kick', 'snareNoise', 'snareTone', 'clap', 'ch', 'oh', 'tom', 'rim'].forEach(function (k) {
+  ['kick', 'snareNoise', 'snareTone', 'clap', 'ch', 'oh', 'chFilter', 'ohFilter', 'tom', 'rim'].forEach(function (k) {
     try { if (d[k] && d[k].dispose) d[k].dispose(); } catch (e) {}
   });
   if (d.voiceGains) {
@@ -1972,19 +1972,23 @@ function buildDrumKit(kit, outGain) {
     envelope: { attack: 0.001, decay: is909 ? 0.18 : 0.25, sustain: 0, release: 0.08 }
   }).connect(voiceGains.clap);
 
-  const ch = new Tone.MetalSynth({
-    frequency: is909 ? 350 : 300,
-    envelope: { attack: 0.001, decay: is909 ? 0.09 : 0.11, release: 0.02 },
-    harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5,
-    volume: is909 ? -9 : -10
-  }).connect(voiceGains.ch);
+  const chFilter = new Tone.Filter({ type: 'highpass', frequency: is909 ? 7800 : 6800, Q: 1.2 });
+  const ch = new Tone.NoiseSynth({
+    noise: { type: 'white' },
+    envelope: { attack: 0.001, decay: is909 ? 0.035 : 0.045, sustain: 0, release: 0.01 },
+    volume: is909 ? -8 : -6
+  });
+  ch.connect(chFilter);
+  chFilter.connect(voiceGains.ch);
 
-  const oh = new Tone.MetalSynth({
-    frequency: is909 ? 320 : 280,
-    envelope: { attack: 0.001, decay: is909 ? 0.28 : 0.35, release: 0.08 },
-    harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5,
-    volume: -12
-  }).connect(voiceGains.oh);
+  const ohFilter = new Tone.Filter({ type: 'highpass', frequency: is909 ? 6200 : 5600, Q: 0.9 });
+  const oh = new Tone.NoiseSynth({
+    noise: { type: 'white' },
+    envelope: { attack: 0.001, decay: is909 ? 0.22 : 0.32, sustain: 0, release: 0.05 },
+    volume: is909 ? -10 : -8
+  });
+  oh.connect(ohFilter);
+  ohFilter.connect(voiceGains.oh);
 
   const tom = new Tone.MembraneSynth({
     pitchDecay: 0.04, octaves: is909 ? 3 : 2.5,
@@ -2000,12 +2004,13 @@ function buildDrumKit(kit, outGain) {
     volume: is909 ? -6 : -8
   }).connect(voiceGains.rim);
 
-  return { kick, snareNoise, snareTone, clap, ch, oh, tom, rim, voiceGains, kit };
+  return { kick, snareNoise, snareTone, clap, ch, oh, chFilter, ohFilter, tom, rim, voiceGains, kit };
 }
 
 function triggerDrum(voice, time) {
   if (!A || !A.drums || !layers.drums) return;
-  if (drumVoiceConfig[voice] && drumVoiceConfig[voice].src === 'sample') {
+  const cfg = drumVoiceConfig[voice];
+  if (cfg && cfg.src === 'sample' && sampleBuffer && voice !== 'ch' && voice !== 'oh') {
     playSampleAtTime(time, 0.7);
     return;
   }
@@ -2024,10 +2029,10 @@ function triggerDrum(voice, time) {
       d.clap.triggerAttackRelease('32n', t, 0.75);
       break;
     case 'ch':
-      d.ch.triggerAttackRelease('16n', t, 0.95);
+      d.ch.triggerAttackRelease('32n', t, 0.9);
       break;
     case 'oh':
-      d.oh.triggerAttackRelease('16n', t, 0.55);
+      d.oh.triggerAttackRelease(is909 ? '16n' : '8n', t, 0.75);
       break;
     case 'tom':
       d.tom.triggerAttackRelease(is909 ? 'A2' : 'G2', '8n', t, 0.8);
