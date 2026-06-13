@@ -101,23 +101,33 @@ avrai un URL `<progetto>.pages.dev`. Per dominio custom: **Custom domains** → 
 
 Con Access attivo, il middleware riconosce automaticamente il JWT (`Cf-Access-Jwt-Assertion`).
 
-### 4. passcode studio (middleware Pages)
+### 4. approvazione email (consigliato)
 
-In alternativa o in aggiunta, il file `functions/_middleware.js` protegge `/tools/*`.
+Flusso: il visitatore inserisce la sua email → **tu ricevi una mail** con pulsanti **Autorizza / Nega** → se approvi, il visitatore riceve il link di ingresso.
 
-1. Cloudflare Pages → progetto → **Settings** → **Environment variables**
-2. Aggiungi (Production + Preview):
-   - `TOOLS_ACCESS_CODE` = codice studio condiviso (es. stringa lunga casuale)
-   - opzionale `TOOLS_ACCESS_SALT` = stringa extra per il cookie
-   - opzionale `TOOLS_PROTECT=1` = richiede auth anche senza passcode (solo CF Access)
-3. Redeploy del sito
+Guida completa: [`tools/ACCESS-SETUP.md`](ACCESS-SETUP.md)
 
-Comportamento:
-- **Senza variabili** → `/tools` resta pubblico (solo `noindex` + robots.txt)
-- **Con `TOOLS_ACCESS_CODE`** → redirect a login passcode (+ CF Access se configurato)
-- **Con `TOOLS_PROTECT=1` senza passcode** → solo Cloudflare Access
+Setup rapido (Cloudflare Pages → Environment variables):
 
-Verifica: apri `/tools/_auth/status` → `{ "authorized": true, "protected": true, ... }`
+| Variabile | Valore |
+|-----------|--------|
+| `TOOLS_OWNER_EMAIL` | la tua email (es. `fornasaleonardo@gmail.com`) |
+| `TOOLS_APPROVAL` | `1` |
+| `TOOLS_AUTH_SECRET` | stringa casuale lunga |
+| `MAILER_URL` | URL worker `tools-auth-mailer` |
+| `MAILER_SECRET` | segreto condiviso con il worker |
+| `TOOLS_MAIL_FROM` | `tools@tuodominio.it` (dominio su Cloudflare DNS) |
+
+KV namespace (già creato): `dnmb-tools-auth` → binding `TOOLS_AUTH_KV` nelle Functions del progetto Pages.
+
+Deploy worker mailer: push su `workers/tools-auth-mailer/` (GitHub Action) oppure `npx wrangler deploy` nella cartella.
+
+### 5. passcode studio (opzionale)
+
+In aggiunta all'approvazione email, oppure da solo:
+
+1. Cloudflare Pages → **Settings** → **Environment variables**
+2. `TOOLS_ACCESS_CODE` = codice studio condiviso
 
 Login passcode: `/tools/_auth/login`
 

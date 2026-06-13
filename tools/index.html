@@ -1063,17 +1063,21 @@
       if (!j.protected) {
         el.textContent = 'OPEN';
         el.style.color = 'var(--amber)';
-        if (modeEl) modeEl.textContent = 'NON PROTETTO · configura TOOLS_ACCESS_CODE';
+        if (modeEl) modeEl.textContent = 'NON PROTETTO · vedi tools/ACCESS-SETUP.md';
         return;
       }
       if (j.authorized) {
         el.textContent = j.cfAccess ? 'CF.OK' : 'GATE.OK';
         el.style.color = 'var(--fg)';
-        if (modeEl) modeEl.textContent = j.cfAccess ? 'CLOUDFLARE ACCESS' : 'STUDIO PASSCODE';
+        if (modeEl) {
+          if (j.cfAccess) modeEl.textContent = 'CLOUDFLARE ACCESS';
+          else if (j.approval) modeEl.textContent = 'APPROVAZIONE EMAIL';
+          else modeEl.textContent = 'STUDIO PASSCODE';
+        }
       } else {
         el.textContent = 'LOCKED';
         el.style.color = 'var(--red)';
-        if (modeEl) modeEl.textContent = 'RISERVATO';
+        if (modeEl) modeEl.textContent = j.approval ? 'RICHIEDI ACCESSO' : 'RISERVATO';
       }
     })
     .catch(function () {

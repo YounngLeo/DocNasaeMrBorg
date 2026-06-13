@@ -1,0 +1,23 @@
+name: Deploy Tools Auth Mailer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/tools-auth-mailer/**'
+      - '.github/workflows/deploy-tools-auth-mailer.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/tools-auth-mailer
+          command: deploy

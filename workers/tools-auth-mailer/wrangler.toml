@@ -1,0 +1,10 @@
+name = "tools-auth-mailer"
+main = "src/index.js"
+compatibility_date = "2026-06-09"
+
+# Dopo onboarding dominio in Email Service, decommenta e imposta MAIL_FROM nel dashboard:
+# [[send_email]]
+# name = "EMAIL"
+
+[vars]
+# MAIL_FROM impostato come secret/variable nel dashboard Cloudflare
