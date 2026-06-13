@@ -464,7 +464,7 @@
   <a href="../" class="back">← STUDIO_ROOT</a>
   <div class="meta">
     SESSION <b id="sess">--:--:--</b><br>
-    AUTH <b style="color:var(--fg)">CF.OK</b>
+    AUTH <b id="authStatus" style="color:var(--fg)">…</b>
   </div>
 </div>
 
@@ -514,7 +514,7 @@
   <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">05 / 05</span></div>
   <div class="row"><span class="label">STUDIO</span><span class="value">DOCTNASA&MRBORG</span></div>
   <div class="row"><span class="label">YEAR</span><span class="value">2026</span></div>
-  <div class="row"><span class="label">ACCESS</span><span class="value">CLOUDFLARE.ACCESS</span></div>
+  <div class="row"><span class="label">ACCESS</span><span class="value" id="accessMode">…</span></div>
 </section>
 
 <!-- ============================ -->
@@ -1052,6 +1052,34 @@
   }
   tick();
   setInterval(tick, 1000);
+
+  /* === AUTH STATUS === */
+  fetch('/tools/_auth/status', { credentials: 'same-origin' })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      var el = document.getElementById('authStatus');
+      var modeEl = document.getElementById('accessMode');
+      if (!el) return;
+      if (!j.protected) {
+        el.textContent = 'OPEN';
+        el.style.color = 'var(--amber)';
+        if (modeEl) modeEl.textContent = 'NON PROTETTO · configura TOOLS_ACCESS_CODE';
+        return;
+      }
+      if (j.authorized) {
+        el.textContent = j.cfAccess ? 'CF.OK' : 'GATE.OK';
+        el.style.color = 'var(--fg)';
+        if (modeEl) modeEl.textContent = j.cfAccess ? 'CLOUDFLARE ACCESS' : 'STUDIO PASSCODE';
+      } else {
+        el.textContent = 'LOCKED';
+        el.style.color = 'var(--red)';
+        if (modeEl) modeEl.textContent = 'RISERVATO';
+      }
+    })
+    .catch(function () {
+      var el = document.getElementById('authStatus');
+      if (el) el.textContent = 'GATE';
+    });
 
   /* === DROPDOWN NAV === */
   var nav = document.getElementById('nav');

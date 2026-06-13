@@ -93,13 +93,33 @@ avrai un URL `<progetto>.pages.dev`. Per dominio custom: **Custom domains** → 
 4. setup:
    - **Application name:** DoctNasa Tools
    - **Session duration:** 24 hours
-   - **Application domain:** `tools.tuosito.com` o path `/tools/*`
+   - **Application domain:** il dominio Pages · path `/tools/*`
 5. **Next** → policy:
    - **Policy name:** Studio access
    - **Action:** Allow
    - **Include:** Emails → aggiungi le email autorizzate
 
-dopo questo: qualunque accesso a `/tools/*` chiede login email con magic link OTP.
+Con Access attivo, il middleware riconosce automaticamente il JWT (`Cf-Access-Jwt-Assertion`).
+
+### 4. passcode studio (middleware Pages)
+
+In alternativa o in aggiunta, il file `functions/_middleware.js` protegge `/tools/*`.
+
+1. Cloudflare Pages → progetto → **Settings** → **Environment variables**
+2. Aggiungi (Production + Preview):
+   - `TOOLS_ACCESS_CODE` = codice studio condiviso (es. stringa lunga casuale)
+   - opzionale `TOOLS_ACCESS_SALT` = stringa extra per il cookie
+   - opzionale `TOOLS_PROTECT=1` = richiede auth anche senza passcode (solo CF Access)
+3. Redeploy del sito
+
+Comportamento:
+- **Senza variabili** → `/tools` resta pubblico (solo `noindex` + robots.txt)
+- **Con `TOOLS_ACCESS_CODE`** → redirect a login passcode (+ CF Access se configurato)
+- **Con `TOOLS_PROTECT=1` senza passcode** → solo Cloudflare Access
+
+Verifica: apri `/tools/_auth/status` → `{ "authorized": true, "protected": true, ... }`
+
+Login passcode: `/tools/_auth/login`
 
 ## sviluppo locale
 
@@ -113,6 +133,8 @@ apri `http://localhost:8080/`. In locale non c'è auth — normale, cloudflare a
 ## privacy
 
 - pagine hanno `<meta name="robots" content="noindex,nofollow">`
+- `robots.txt` blocca `/tools/` ai crawler
+- `_headers` imposta `X-Robots-Tag` su `/tools/*`
 - preset usano localStorage del browser (solo dispositivo locale)
 - nessun analytics, nessun tracking
 
