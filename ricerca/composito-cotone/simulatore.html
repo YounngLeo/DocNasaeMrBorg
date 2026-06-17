@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banco LDM — Compositi gesso/canapa/cotone // DoctNasa&amp;MrBorg</title>
+<style>
+  :root{
+    --bg:#14171c; --panel:#1b1f26; --panel2:#20252e; --line:#2a3038;
+    --ink:#e8e9ec; --muted:#8a93a0; --faint:#5c6470;
+    --teal:#3fb6b2; --teal-d:#2c8784;
+    --cotton:#ede6d6; --gypsum:#c9cdd4; --hemp:#c0913f; --water:#4b8fd6; --binder:#9b7fd4;
+    --good:#5cc98a; --warn:#e0a23a; --bad:#e0594b;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","IBM Plex Mono",Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{margin:0;font-weight:600;letter-spacing:-0.01em}
+  a{color:var(--teal)}
+  .mono{font-family:var(--mono)}
+
+  header{border-bottom:1px solid var(--line);padding:18px 22px;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
+  header .id{display:flex;flex-direction:column;gap:3px}
+  header .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--teal)}
+  header h1{font-size:21px}
+  header .sub{color:var(--muted);font-size:12.5px;max-width:62ch}
+  header .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+  button.btn{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);
+    background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 11px;cursor:pointer;transition:.15s}
+  button.btn:hover{border-color:var(--teal-d);color:#fff}
+  button.btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+  .wrap{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:0;align-items:start}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+
+  .col-left{border-right:1px solid var(--line)}
+  @media(max-width:900px){.col-left{border-right:none;border-bottom:1px solid var(--line)}}
+
+  .panel{padding:18px 22px;border-bottom:1px solid var(--line)}
+  .panel:last-child{border-bottom:none}
+  .panel-h{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+  .panel-h .n{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .panel-h h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+  /* composition rows */
+  .mix-row{display:grid;grid-template-columns:14px 1fr 64px;gap:10px;align-items:center;padding:7px 0}
+  .swatch{width:11px;height:11px;border-radius:2px;justify-self:center}
+  .mix-row label{font-size:13px}
+  .mix-row .pct{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--line);border-radius:3px;outline:none;margin:9px 0 2px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);cursor:pointer}
+  input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px rgba(63,182,178,.4)}
+
+  .bar{height:9px;border-radius:5px;overflow:hidden;display:flex;background:var(--panel2);margin:6px 0 2px;border:1px solid var(--line)}
+  .bar span{display:block;height:100%}
+
+  .field{display:grid;grid-template-columns:1fr 78px;gap:10px;align-items:center;padding:6px 0}
+  .field label{font-size:12.5px;color:var(--ink)}
+  .field .hint{display:block;color:var(--faint);font-size:11px}
+  .field input[type=number]{width:100%;font-family:var(--mono);font-size:12.5px;background:var(--panel2);border:1px solid var(--line);
+    color:var(--ink);border-radius:5px;padding:6px 7px;text-align:right}
+  .field input[type=number]:focus{outline:none;border-color:var(--teal-d)}
+  .field select{width:100%;font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:6px}
+
+  /* readouts */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .stat{background:var(--panel);padding:11px 13px}
+  .stat .k{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-family:var(--mono);font-size:19px;margin-top:3px;color:#fff;line-height:1.1}
+  .stat .u{font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:3px}
+
+  /* viz */
+  .viz{display:grid;grid-template-columns:1.15fr 1fr;gap:0}
+  @media(max-width:680px){.viz{grid-template-columns:1fr}}
+  .viz .cell{padding:16px 18px}
+  .viz .cell:first-child{border-right:1px solid var(--line)}
+  @media(max-width:680px){.viz .cell:first-child{border-right:none;border-bottom:1px solid var(--line)}}
+  .cap{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  canvas{display:block;width:100%;background:transparent}
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+  /* assessment chips */
+  .chips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:520px){.chips{grid-template-columns:1fr}}
+  .chip{border:1px solid var(--line);border-radius:8px;padding:11px 13px;background:var(--panel)}
+  .chip .lab{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .chip .msg{font-size:12.5px;color:var(--ink);margin-top:6px}
+  .chip .val{font-family:var(--mono);font-size:13px;color:#fff}
+
+  .plots{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  @media(max-width:680px){.plots{grid-template-columns:1fr}}
+  .plots .cell:first-child{border-right:1px solid var(--line)}
+  @media(max-width:680px){.plots .cell:first-child{border-right:none;border-bottom:1px solid var(--line)}}
+
+  /* recipe */
+  table.recipe{width:100%;border-collapse:collapse;font-size:13px}
+  table.recipe th,table.recipe td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+  table.recipe th{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  table.recipe td.num{font-family:var(--mono);text-align:right}
+  ol.steps{margin:12px 0 0;padding-left:20px;color:var(--ink)}
+  ol.steps li{margin:6px 0}
+  ol.steps b{color:#fff;font-weight:600}
+
+  .note{font-size:12px;color:var(--muted);line-height:1.6}
+  .note code{font-family:var(--mono);background:var(--panel2);padding:1px 5px;border-radius:4px;color:var(--cotton);font-size:11.5px}
+  details summary{cursor:pointer;color:var(--teal);font-family:var(--mono);font-size:11.5px;letter-spacing:.04em}
+  details[open] summary{margin-bottom:10px}
+  .eq{font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);border-left:2px solid var(--teal-d);
+     border-radius:4px;padding:8px 11px;margin:8px 0;color:var(--cotton);overflow-x:auto}
+  .warnbox{border:1px solid var(--warn);border-radius:8px;background:rgba(224,162,58,.07);padding:11px 13px;font-size:12.5px;color:#f0d9ad;margin-top:12px}
+  .footer{padding:14px 22px;border-top:1px solid var(--line);color:var(--faint);font-size:11px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="id">
+    <span class="eyebrow">Banco LDM · v1.0</span>
+    <h1>Compositi a base di gesso naturale, canapa e cotone di scarto</h1>
+    <span class="sub">Progetta la miscela, stima la reologia e simula il percorso del materiale in estrusione di paste (Liquid Deposition Modeling). Il cotone agisce da rinforzo fibroso sacrificale, la canapa da bio-aggregato, il gesso da matrice legante.</span>
+  </div>
+  <div class="actions">
+    <a href="./" class="btn" style="text-decoration:none;display:inline-flex;align-items:center">← R03</a>
+    <button class="btn" id="btnJSON">Esporta scheda · JSON</button>
+    <button class="btn" id="btnCSV">Curva di flusso · CSV</button>
+    <button class="btn" id="btnPrint">Stampa report</button>
+    <button class="btn" id="btnReset">Ripristina</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ============ LEFT: CONTROLS ============ -->
+  <div class="col-left">
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">01</span><h2>Composizione della miscela</h2></div>
+      <div id="mix"></div>
+      <div class="bar" id="mixbar"></div>
+      <div class="legend" id="mixlegend"></div>
+      <div class="field" style="margin-top:12px">
+        <label>Lotto di preparazione<span class="hint">massa totale dell'impasto</span></label>
+        <input type="number" id="batch" value="500" min="50" step="50">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">grammi</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">02</span><h2>Fibre e additivo</h2></div>
+      <div class="field">
+        <label>Lunghezza fibra di cotone<span class="hint">influenza rete fibrosa e rischio occlusione</span></label>
+        <input type="number" id="cotLen" value="1.0" min="0.2" step="0.1">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">mm</div>
+      <div class="field">
+        <label>Ø fibra di cotone</label>
+        <input type="number" id="cotDia" value="18" min="8" step="1">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">µm</div>
+      <div class="field">
+        <label>Granulometria canapa (canapulo)<span class="hint">dimensione max delle particelle</span></label>
+        <input type="number" id="hempSize" value="1.0" min="0.1" step="0.1">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">mm</div>
+      <div class="field">
+        <label>Additivo reologico</label>
+        <select id="addType">
+          <option value="mc">Metilcellulosa (organico, sacrificale)</option>
+          <option value="starch">Amido (organico, sacrificale)</option>
+          <option value="none">Nessuno</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">03</span><h2>Parametri di stampa</h2></div>
+      <div class="field">
+        <label>Ø ugello</label>
+        <input type="number" id="nozD" value="4.0" min="0.2" step="0.1">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">mm</div>
+      <div class="field">
+        <label>Lunghezza tratto ugello</label>
+        <input type="number" id="nozL" value="6" min="1" step="0.5">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">mm</div>
+      <div class="field">
+        <label>Velocità di stampa</label>
+        <input type="number" id="speed" value="20" min="1" step="1">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">mm/s</div>
+      <div class="field">
+        <label>Altezza layer</label>
+        <input type="number" id="layerH" value="2.0" min="0.1" step="0.05">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">mm</div>
+      <div class="field">
+        <label>Pressione max disponibile<span class="hint">limite dell'estrusore a pistone/vite</span></label>
+        <input type="number" id="pMax" value="8" min="0.5" step="0.5">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">bar</div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">04</span><h2>Trattamento termico</h2></div>
+      <div class="field">
+        <label>Temperatura obiettivo<span class="hint">essiccazione, disidratazione gesso, burnout organico</span></label>
+        <input type="number" id="temp" value="105" min="20" step="5">
+      </div>
+      <div style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-4px">°C</div>
+      <div id="thermalNote"></div>
+    </section>
+  </div>
+
+  <!-- ============ RIGHT: VIZ + RESULTS ============ -->
+  <div class="col-right">
+
+    <section class="panel" style="padding:0">
+      <div class="viz">
+        <div class="cell">
+          <div class="cap">Percorso del materiale nella stampante</div>
+          <canvas id="cPrinter" height="300"></canvas>
+        </div>
+        <div class="cell">
+          <div class="cap">Sezione ugello · profilo di velocità</div>
+          <canvas id="cNozzle" height="300"></canvas>
+          <div class="legend">
+            <span><i style="background:var(--teal)"></i>flusso a pistone (non snervato)</span>
+            <span><i style="background:var(--gypsum)"></i>strato di taglio (parete)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">05</span><h2>Proprietà reologiche stimate</h2></div>
+      <div id="measBox" style="border:1px solid var(--line);border-radius:8px;padding:11px 13px;margin-bottom:14px;background:var(--panel)">
+        <label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:12.5px">
+          <input type="checkbox" id="measOn" style="width:15px;height:15px;accent-color:var(--teal)">
+          Usa dati reologici misurati al posto del modello
+        </label>
+        <div id="measFields" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:11px">
+          <div><div class="cap" style="margin-bottom:4px">τ_y [Pa]</div><input type="number" id="measTauY" value="1500" min="0" step="50" style="width:100%;font-family:var(--mono);font-size:12.5px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:6px"></div>
+          <div><div class="cap" style="margin-bottom:4px">K [Pa·sⁿ]</div><input type="number" id="measK" value="60" min="0.1" step="5" style="width:100%;font-family:var(--mono);font-size:12.5px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:6px"></div>
+          <div><div class="cap" style="margin-bottom:4px">n [–]</div><input type="number" id="measN" value="0.35" min="0.05" max="0.99" step="0.05" style="width:100%;font-family:var(--mono);font-size:12.5px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:6px"></div>
+        </div>
+        <div class="cap" style="margin-top:8px;color:var(--faint)">Composizione, densità e burnout restano calcolati; solo τ_y, K, n vengono sostituiti dai tuoi dati di reometria.</div>
+      </div>
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">06</span><h2>Indici di stampabilità</h2></div>
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <section class="panel" style="padding:0">
+      <div class="plots">
+        <div class="cell">
+          <div class="cap">Curva di flusso · τ vs γ̇ (scala log)</div>
+          <canvas id="cFlow" height="230"></canvas>
+        </div>
+        <div class="cell">
+          <div class="cap">Pressione richiesta vs portata</div>
+          <canvas id="cPQ" height="230"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">07</span><h2>Profilo termico, burnout e ritiro</h2></div>
+      <div class="cap">Massa residua vs temperatura (stile TGA) · stadi sovrapposti</div>
+      <canvas id="cTGA" height="220"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--water)"></i>acqua libera 60–120 °C</span>
+        <span><i style="background:var(--gypsum)"></i>disidratazione gesso 100–200 °C</span>
+        <span><i style="background:var(--hemp)"></i>burnout organico 150–500 °C</span>
+        <span><i style="background:var(--teal)"></i>T obiettivo</span>
+      </div>
+      <div class="stats" id="thermStats" style="margin-top:14px"></div>
+      <div id="residBox" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">08</span><h2>Preparazione del composto</h2></div>
+      <table class="recipe" id="recipe"></table>
+      <ol class="steps" id="steps"></ol>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">09</span><h2>Matrice DOE · griglia di composizioni</h2></div>
+      <div class="note" style="margin-bottom:12px">Scegli due variabili e i loro livelli (valori separati da virgola). Il tool genera la griglia fattoriale completa e calcola gli output chiave per ogni combinazione, pronta da esportare e da usare come piano sperimentale.</div>
+      <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:10px;align-items:end">
+        <div><div class="cap" style="margin-bottom:4px">Variabile 1</div>
+          <select id="doeV1" style="width:100%;font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:6px"></select></div>
+        <div><div class="cap" style="margin-bottom:4px">Livelli 1</div>
+          <input type="text" id="doeL1" value="35,40,45,50" style="width:100%;font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:7px"></div>
+        <div><div class="cap" style="margin-bottom:4px">Variabile 2</div>
+          <select id="doeV2" style="width:100%;font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:6px"></select></div>
+        <div><div class="cap" style="margin-bottom:4px">Livelli 2</div>
+          <input type="text" id="doeL2" value="3,5,7" style="width:100%;font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:7px"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" id="doeRun">Genera griglia</button>
+        <button class="btn" id="doeCSV">Esporta DOE · CSV</button>
+      </div>
+      <div id="doeOut" style="margin-top:14px;overflow-x:auto"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-h"><span class="n">10</span><h2>Modello, ipotesi e fonti</h2></div>
+      <details>
+        <summary>Equazioni costitutive e note di calibrazione (per il paper)</summary>
+        <div class="note">
+          <p><b>Reologia — modello di Herschel–Bulkley</b> per fluidi a soglia di scorrimento, pseudoplastici:</p>
+          <div class="eq">τ = τ_y + K · γ̇ⁿ&nbsp;&nbsp;(per τ &gt; τ_y); nessuno scorrimento per τ ≤ τ_y</div>
+          <p><b>Carico solido → viscosità</b> via relazione di Maron–Pierce sulla frazione volumetrica φ rispetto al massimo impacchettamento φ<sub>max</sub>:</p>
+          <div class="eq">μ_r = (1 − φ/φ_max)⁻²&nbsp;&nbsp;;&nbsp;&nbsp;K = μ_fluido · μ_r · C_K</div>
+          <p>φ<sub>max</sub> è ridotto dalle fibre ad alto rapporto d'aspetto (cotone, canapa): più fibre → impacchettamento peggiore → soglia più alta. La soglia τ_y somma un contributo colloidale/frizionale e uno di rete fibrosa percolante (∝ φ_fibra² · AR).</p>
+          <p><b>Flusso in ugello cilindrico</b> — integrazione del profilo per fluido di Herschel–Bulkley (cuore a pistone di raggio r_p = R·τ_y/τ_w):</p>
+          <div class="eq">Q = (πR³ / τ_w³ K^{1/n}) · T^{1/n+1} · [ T²/(1/n+3) + 2τ_y·T/(1/n+2) + τ_y²/(1/n+1) ]</div>
+          <div class="eq">con τ_w = ΔP·R / 2L,&nbsp; T = τ_w − τ_y. La pressione richiesta si ottiene invertendo Q(ΔP).</div>
+          <p><b>Costruibilità (shape retention)</b> — altezza massima prima del collasso plastico sotto peso proprio:</p>
+          <div class="eq">H_max ≈ τ_y / (ρ · g)</div>
+          <p style="margin-top:10px;color:var(--faint)"><b>Importante:</b> le relazioni composizione→reologia qui implementate sono <i>fenomenologiche</i> e servono per esplorazione parametrica e progettazione del DOE. I parametri (C_K, esponenti, φ<sub>max,0</sub>) vanno <i>calibrati su misure reometriche reali</i> del vostro sistema prima di qualunque affermazione quantitativa in pubblicazione. Lo strumento predice tendenze e finestre di lavorabilità, non sostituisce il reometro. Con l'override "dati misurati" puoi sostituire τ_y, K, n con i tuoi valori sperimentali.</p>
+          <p style="margin-top:14px;color:var(--ink)"><b>Dati fisici verificati su letteratura peer-reviewed</b></p>
+          <div class="note" style="font-size:11.5px;color:var(--muted)">
+          <p><b>Densità solidi (densità reale/parete cellulare, per il calcolo di φ):</b><br>
+          · Gesso (CaSO₄·2H₂O): ~2320 kg/m³ — valore mineralogico standard.<br>
+          · Cotone/cellulosa: 1540 kg/m³ (olocellulosa, Ehrnrooth 1984); cristalliti di cellulosa ~1600 kg/m³ indipendentemente dall'origine — <i>Sci. report su true density nanocellulose</i>.<br>
+          · Canapulo (densità di parete cellulare): ~1450 kg/m³ — Amziane &amp; Collet 2018; MIP 1.45 g/cm³, <i>R. Soc. Open Sci.</i> 2018. La densità <i>bulk</i> del canapulo è invece ~110–260 kg/m³ (76% porosità): per φ conta quella di parete.<br>
+          · Metilcellulosa: ~1390 kg/m³ (valore tipico).</p>
+          <p><b>Trattamento termico (soglie da TGA):</b><br>
+          · Acqua libera: evaporazione fino a ~100–120 °C.<br>
+          · Gesso → emiidrato (~100–150 °C) → anidrite (~170–200 °C). Perdita di massa totale 20,9% del gesso (15,7% + 5,2%) — TGA, <i>ACS Omega</i> 2019; <i>calcium sulfate</i>.<br>
+          · Lignocellulosa: emicellulosa ~150–250 °C, cellulosa ~300–400 °C (picco ~350 °C), lignina 250–600 °C; combustione completa in aria ~480–550 °C — <i>J. Therm. Anal. Calorim.</i> (cotone, canapa); <i>review degradazione lignocellulosa</i> 2026.</p>
+          <p><b>Reologia e stampabilità (DIW/estrusione di paste):</b><br>
+          · Herschel–Bulkley è il modello accettato per inchiostri/argille/cementi da DIW; relazioni analitiche Q–ΔP e profilo di velocità in ugello cilindrico — <i>Luzzi et al., Adv. Mater. Technol.</i> 2025 (review).<br>
+          · Maron–Pierce η_r=(1−φ/φ_max)⁻²; φ_max ≈ 0,64 (random close packing di sfere) — <i>rheology reviews</i>; argille DIW stampabili a φ ≈ 25–57 vol% — <i>Ordoñez et al.</i> 2020.<br>
+          · Costruibilità: criteri di rottura basati sulla soglia di scorrimento vs stress verticale ρgH (qui α=1, limite conservativo; in letteratura σ_crit ≈ √3·τ_y, von Mises) — <i>buildability 3D concrete printing</i>.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+  </div>
+</div>
+
+<div class="footer" id="footer"></div>
+
+<script>
+"use strict";
+const g = 9.81;
+const $ = id => document.getElementById(id);
+
+/* ---------- material database ---------- */
+const MATS = {
+  gypsum:{name:"Gesso naturale", rho:2320, color:"var(--gypsum)", hex:"#c9cdd4", organic:false, particulate:true},
+  cotton:{name:"Cotone di scarto", rho:1540, color:"var(--cotton)", hex:"#ede6d6", organic:true,  fiber:true},
+  hemp:  {name:"Canapa (canapulo)", rho:1450, color:"var(--hemp)", hex:"#c0913f", organic:true,  fiber:true},
+  water: {name:"Acqua", rho:998, color:"var(--water)", hex:"#4b8fd6", organic:false, fluid:true},
+  binder:{name:"Additivo reologico", rho:1390, color:"var(--binder)", hex:"#9b7fd4", organic:true, fluid:true}
+};
+const ORDER = ["gypsum","cotton","hemp","water","binder"];
+
+/* ---------- default state (parts by mass) ---------- */
+const DEFAULTS = {parts:{gypsum:42,cotton:4,hemp:7,water:45,binder:2},
+  batch:500, cotLen:1.0, cotDia:18, hempSize:1.0, addType:"mc",
+  nozD:4.0, nozL:6, speed:20, layerH:2.0, pMax:8, temp:105,
+  measured:{on:false, tauY:1500, K:60, n:0.35}};
+const S = JSON.parse(JSON.stringify(DEFAULTS));
+
+/* ---------- model: composition -> properties ---------- */
+function compute(){
+  const p = S.parts;
+  const totParts = ORDER.reduce((a,k)=>a+Math.max(0,p[k]),0) || 1;
+  const massFrac={}, grams={}, vol={};
+  let Vtot=0, Mtot=0;
+  ORDER.forEach(k=>{
+    massFrac[k]=Math.max(0,p[k])/totParts;
+    grams[k]=massFrac[k]*S.batch;
+    vol[k]=grams[k]/MATS[k].rho;     // cm^3 (g / (g/cm3))
+    Vtot+=vol[k]; Mtot+=grams[k];
+  });
+  if(S.addType==="none"){ /* binder still counted if user left parts>0; treat present */ }
+
+  // phases
+  const Vparticles = vol.gypsum+vol.cotton+vol.hemp;
+  const Vfluid = vol.water+vol.binder;          // binder dissolves into fluid
+  const phi = Vparticles/Math.max(1e-9,(Vparticles+Vfluid));
+  const phiFiber = (vol.cotton+vol.hemp)/Math.max(1e-9,Vparticles);   // fibrous share of solids
+
+  // fiber aspect ratio (cotton) and packing penalty
+  const AR = Math.min(80, (S.cotLen*1000)/Math.max(1,S.cotDia));   // mm->µm / µm
+  const AReff = Math.min(40, AR);
+  const phiMax0 = 0.62;
+  let phiMax = phiMax0/(1 + 0.55*phiFiber*Math.sqrt(AReff/10));
+  phiMax = Math.min(0.64, Math.max(0.18, phiMax));
+  const x = Math.min(0.995, phi/phiMax);        // reduced packing
+
+  // fluid viscosity from dissolved additive
+  const muWater=0.001;
+  const cAdd = S.addType==="none"?0:(grams.binder/Math.max(1e-6,(grams.water+grams.binder)));
+  const kAdd = S.addType==="starch"?22:38;      // MC thickens more than starch per %
+  const muF = Math.max(muWater, muWater*Math.exp(kAdd*cAdd));
+
+  // Herschel-Bulkley parameters (phenomenological mapping; Maron-Pierce eta_r)
+  const muR = Math.pow(1-x, -2);
+  const C_K = 400;                              // calibration constant
+  let K = muF*muR*C_K;                          // Pa·s^n
+  let n = 0.92 - 0.7*x - 0.18*phiFiber;
+  n = Math.min(0.95, Math.max(0.15, n));
+  const C1=120, C2=6000;
+  let tauY = C1*Math.pow(x/Math.max(1e-3,(1-x)),1.5) + C2*phiFiber*phiFiber*Math.sqrt(AReff/10);
+  let measured=false;
+  if(S.measured && S.measured.on){              // override model with rheometric data
+    tauY=Math.max(0,S.measured.tauY); K=Math.max(0.001,S.measured.K);
+    n=Math.min(0.99,Math.max(0.05,S.measured.n)); measured=true;
+  }
+
+  // paste density (kg/m3): Mtot[g]/Vtot[cm3] *1000
+  const rhoPaste = (Mtot/Math.max(1e-9,Vtot));  // kg/m3 (g / (g·m³/kg))
+
+  // thermal / burnout (staged model, thresholds from TGA literature)
+  const organicMass = grams.cotton+grams.hemp+(MATS.binder.organic?grams.binder:0);
+  const organicFrac = organicMass/Math.max(1e-9,Mtot);
+  const waterFrac = grams.water/Math.max(1e-9,Mtot);
+  const th = thermalModel(S.temp,{massFrac,vol,Vtot,waterFrac,organicFrac});
+  const {lossWater,lossGypsum,lossOrg,massLoss,porosity,dryShrink}=th;
+
+  return {massFrac,grams,vol,Vtot,Mtot,Vparticles,Vfluid,phi,phiFiber,phiMax,x,
+          AR:AReff,muF,K,n,tauY,measured,rhoPaste,organicFrac,waterFrac,massLoss,porosity,dryShrink,
+          lossWater,lossGypsum,lossOrg};
+}
+
+/* staged thermal model — water 60-120°C; gypsum dihydrate->anhydrite 100-200°C (20.9%);
+   lignocellulose burnout 150-500°C. Verified vs TGA literature. */
+function thermalModel(T,d){
+  const fW=Math.min(1,Math.max(0,(T-60)/60));
+  const fG=Math.min(1,Math.max(0,(T-100)/100));
+  const fO=Math.min(1,Math.max(0,(T-150)/350));
+  const lossWater=d.waterFrac*fW;
+  const lossGypsum=0.209*d.massFrac.gypsum*fG;
+  const lossOrg=d.organicFrac*fO;
+  const massLoss=Math.min(0.99,lossWater+lossGypsum+lossOrg);
+  const Vremoved=d.vol.water*fW + (d.vol.cotton+d.vol.hemp+d.vol.binder)*fO;
+  const porosity=Math.min(0.95,Vremoved/Math.max(1e-9,d.Vtot));
+  const dryShrink=100*d.waterFrac*0.35*fW;
+  return {fW,fG,fO,lossWater,lossGypsum,lossOrg,massLoss,porosity,dryShrink};
+}
+
+/* ---------- nozzle flow (Herschel-Bulkley pipe) ---------- */
+function flowQ(tauW, m){ // m = {K,n,tauY,R,L}
+  const {K,n,tauY,R}=m;
+  if(tauW<=tauY) return 0;
+  const inv=1/n, T=tauW-tauY;
+  return Math.PI*Math.pow(R,3)/(Math.pow(tauW,3)*Math.pow(K,inv))
+       * Math.pow(T,inv+1)
+       * ( T*T/(inv+3) + 2*tauY*T/(inv+2) + tauY*tauY/(inv+1) );
+}
+function pressureForQ(Qtarget, m){ // returns ΔP [Pa]; bisection on tauW then ΔP
+  const {tauY,R,L}=m;
+  // search ΔP between just-yield and high cap
+  let lo=2*L*tauY/R*1.0001, hi=2*L*tauY/R + 5e8;
+  // ensure hi gives Q>=target
+  for(let i=0;i<60;i++){
+    const tw=hi*R/(2*L); if(flowQ(tw,m)>=Qtarget) break; hi*=2; if(hi>1e12) break;
+  }
+  for(let i=0;i<70;i++){
+    const mid=(lo+hi)/2, tw=mid*R/(2*L), q=flowQ(tw,m);
+    if(q<Qtarget) lo=mid; else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+function velProfile(r, tauW, m){ // r in [0,R]
+  const {K,n,tauY,R}=m, inv=1/n, T=tauW-tauY;
+  if(tauW<=tauY) return 0;
+  const pref=(R/tauW)*(1/Math.pow(K,inv))/(inv+1);
+  const tr=tauW*r/R;
+  if(tr<=tauY) return pref*Math.pow(T,inv+1);                 // plug
+  return pref*(Math.pow(T,inv+1)-Math.pow(tr-tauY,inv+1));
+}
+
+/* ---------- operating point from print settings ---------- */
+function operating(props){
+  const R=(S.nozD/2)/1000, L=S.nozL/1000;          // m
+  const m={K:props.K,n:props.n,tauY:props.tauY,R,L};
+  const Abead=Math.PI*R*R;                          // round bead ~ nozzle area
+  const Q=Abead*(S.speed/1000);                     // m^3/s
+  const dP=pressureForQ(Q,m);                       // Pa
+  const tauW=dP*R/(2*L);
+  const rp=tauW>props.tauY? R*props.tauY/tauW : R;   // plug radius
+  const vmean=Q/Math.max(1e-12,Math.PI*R*R);
+  const gammaWall=(3*props.n+1)/(4*props.n)*(4*Q/(Math.PI*Math.pow(R,3)));
+  return {m,R,L,Q,dP,dP_bar:dP/1e5,tauW,rp,plugFrac:rp/R,vmean,gammaWall};
+}
+
+/* ---------- printability assessment ---------- */
+function assess(props,op){
+  // extrudability
+  const okP = op.dP_bar<=S.pMax;
+  const extr = !isFinite(op.dP_bar)? {s:"bad",t:"Non estrudibile",v:"∞"}
+    : op.dP_bar>S.pMax? {s:"bad",t:"Pressione oltre il limite — ridurre solidi/fibre o ↑ acqua",v:op.dP_bar.toFixed(1)+" bar"}
+    : op.dP_bar>S.pMax*0.7? {s:"warn",t:"Estrudibile ma vicino al limite di pressione",v:op.dP_bar.toFixed(1)+" bar"}
+    : op.dP_bar<0.05? {s:"warn",t:"Pressione molto bassa: rischio scorrimento incontrollato",v:op.dP_bar.toFixed(2)+" bar"}
+    : {s:"good",t:"Estrudibile con buon margine",v:op.dP_bar.toFixed(2)+" bar"};
+
+  // buildability
+  const Hmax=props.tauY/(props.rhoPaste*g)*1000; // mm
+  const layers=Hmax/S.layerH;
+  const build = props.tauY<50? {s:"bad",t:"Soglia troppo bassa: il filamento collassa",v:Hmax.toFixed(0)+" mm"}
+    : layers<5? {s:"warn",t:"Tiene pochi strati — adatto a oggetti bassi",v:layers.toFixed(0)+" strati"}
+    : props.tauY>6000? {s:"warn",t:"Molto rigido: rischio fratture/superficie irregolare",v:layers.toFixed(0)+" strati"}
+    : {s:"good",t:"Buona ritenzione di forma",v:layers.toFixed(0)+" strati"};
+
+  // fiber jamming — nozzle should be >= ~3x largest solid dimension
+  const D=S.nozD;
+  const ratioL=S.cotLen/D, ratioP=S.hempSize/D;
+  const worst=Math.max(ratioL,ratioP);
+  const jam = worst>0.8? {s:"bad",t:"Fibra/grano vicino o oltre il Ø ugello: occlusione probabile",v:"d/D "+worst.toFixed(2)}
+    : worst>0.34? {s:"warn",t:"Margine ridotto: Ø ugello < 3× la particella più grande",v:"d/D "+worst.toFixed(2)}
+    : {s:"good",t:"Margine adeguato fibra/ugello (Ø ≥ 3× particella)",v:"d/D "+worst.toFixed(2)};
+
+  // shear-thinning / surface
+  const surf = props.n<0.35? {s:"good",t:"Forte pseudoplasticità: buona stampa, possibile die-swell",v:"n "+props.n.toFixed(2)}
+    : props.n>0.8? {s:"warn",t:"Poco pseudoplastico: estrusione meno stabile",v:"n "+props.n.toFixed(2)}
+    : {s:"good",t:"Pseudoplasticità adeguata",v:"n "+props.n.toFixed(2)};
+
+  const Dmin=3*Math.max(S.cotLen, S.hempSize); // suggested min nozzle mm (>=3x particle)
+  return {extr,build,jam,surf,Hmax,layers,Dmin};
+}
+
+/* ================= RENDERING ================= */
+function fmt(x,d=2){ if(!isFinite(x))return "∞"; const a=Math.abs(x);
+  if(a!==0&&(a<0.01||a>=1e5)) return x.toExponential(1);
+  return x.toLocaleString("it-IT",{maximumFractionDigits:d,minimumFractionDigits:0}); }
+
+function buildMix(){
+  const wrap=$("mix"); wrap.innerHTML="";
+  ORDER.forEach(k=>{
+    const row=document.createElement("div"); row.className="mix-row";
+    row.innerHTML=`<span class="swatch" style="background:${MATS[k].color}"></span>
+      <div><label>${MATS[k].name}</label>
+      <input type="range" min="0" max="100" step="1" value="${S.parts[k]}" data-k="${k}"></div>
+      <span class="pct" id="pct-${k}"></span>`;
+    wrap.appendChild(row);
+    row.querySelector("input").addEventListener("input",e=>{S.parts[k]=+e.target.value; render();});
+  });
+}
+
+function render(){
+  const props=compute();
+  const op=operating(props);
+  const A=assess(props,op);
+
+  // mix percentages + bar + legend
+  let barHTML="", legHTML="";
+  ORDER.forEach(k=>{
+    const pc=props.massFrac[k]*100;
+    const el=$("pct-"+k); if(el) el.textContent=pc.toFixed(0)+"%";
+    barHTML+=`<span style="width:${pc}%;background:${MATS[k].color}"></span>`;
+    legHTML+=`<span><i style="background:${MATS[k].color}"></i>${MATS[k].name} · ${props.grams[k].toFixed(0)} g</span>`;
+  });
+  $("mixbar").innerHTML=barHTML;
+  $("mixlegend").innerHTML=legHTML;
+
+  // stats
+  const stats=[
+    ["Soglia di scorrimento τ_y", fmt(props.tauY,0), "Pa"],
+    ["Indice consistenza K", fmt(props.K,1), "Pa·sⁿ"],
+    ["Indice di flusso n", props.n.toFixed(2), ""],
+    ["Carico solido φ", (props.phi*100).toFixed(1), "%"],
+    ["φ / φ_max", (props.x*100).toFixed(0), "%"],
+    ["Densità impasto", fmt(props.rhoPaste,0), "kg/m³"],
+    ["Pressione richiesta", isFinite(op.dP_bar)?op.dP_bar.toFixed(2):"∞", "bar"],
+    ["Portata target", fmt(op.Q*1e9,1), "mm³/s"],
+    ["Taglio a parete γ̇", fmt(op.gammaWall,0), "s⁻¹"],
+    ["Cuore a pistone r_p/R", (op.plugFrac*100).toFixed(0), "%"],
+    ["Perdita massa @"+S.temp+"°C", (props.massLoss*100).toFixed(1), "%"],
+    ["Porosità finale", (props.porosity*100).toFixed(1), "%"]
+  ];
+  $("stats").innerHTML=stats.map(s=>`<div class="stat"><div class="k">${s[0]}</div>
+     <div class="v">${s[1]}<span class="u">${s[2]}</span></div></div>`).join("");
+
+  // chips
+  const C=[["Estrudibilità",A.extr],["Costruibilità",A.build],["Fibra / ugello",A.jam],["Pseudoplasticità",A.surf]];
+  const colorOf={good:"var(--good)",warn:"var(--warn)",bad:"var(--bad)"};
+  $("chips").innerHTML=C.map(c=>`<div class="chip">
+     <div class="lab"><span class="dot" style="background:${colorOf[c[1].s]}"></span>${c[0]}</div>
+     <div class="val">${c[1].v}</div><div class="msg">${c[1].t}</div></div>`).join("")
+   + `<div class="chip" style="grid-column:1/-1">
+        <div class="lab"><span class="dot" style="background:var(--teal)"></span>Suggerimento geometria</div>
+        <div class="msg">Ø ugello consigliato ≥ <b class="mono">${A.Dmin.toFixed(1)} mm</b> per le particelle/fibre attuali. Strati stabili stimati: <b class="mono">${A.layers.toFixed(0)}</b> (H_max ≈ ${A.Hmax.toFixed(0)} mm).</div></div>`;
+
+  // thermal note
+  let tn="";
+  if(S.temp>=400) tn=`<div class="warnbox"><b>Attenzione concettuale.</b> A ${S.temp}°C il cotone e la canapa bruciano completamente (logica "paper clay"), ma a queste temperature il gesso ha già perso l'acqua di cristallizzazione e degrada: <b>non</b> ottieni un legante da costruzione gesso+canapa. Per il materiale naturale finale (gesso + canapa) lavora a bassa temperatura (≤ ~150°C) e mantieni la canapa; il cotone resta come rinforzo o lo si rimuove solo se l'obiettivo è un poroso ceramico-simile.</div>`;
+  else if(S.temp>=150) tn=`<div class="warnbox" style="border-color:var(--teal-d);background:rgba(63,182,178,.06);color:#bfe7e5"><b>Disidratazione del gesso.</b> Sopra ~150°C il gesso passa ad anidrite con perdita di massa (~21%) e cambio di proprietà: utile saperlo per la presa e la resistenza finale.</div>`;
+  $("thermalNote").innerHTML=tn;
+
+  // recipe
+  let rows=`<tr><th>Componente</th><th style="text-align:right">% massa</th><th style="text-align:right">grammi</th><th style="text-align:right">ordine</th></tr>`;
+  const seq={gypsum:"3",cotton:"4",hemp:"4",water:"1",binder:"2"};
+  ORDER.forEach(k=>{ if(props.grams[k]<0.05)return;
+    rows+=`<tr><td><span class="swatch" style="display:inline-block;background:${MATS[k].color};margin-right:8px"></span>${MATS[k].name}</td>
+      <td class="num">${(props.massFrac[k]*100).toFixed(1)}</td>
+      <td class="num">${props.grams[k].toFixed(1)}</td><td class="num">${seq[k]}</td></tr>`;});
+  rows+=`<tr><td><b>Totale lotto</b></td><td class="num">100</td><td class="num"><b>${props.Mtot.toFixed(0)}</b></td><td></td></tr>`;
+  $("recipe").innerHTML=rows;
+  const addName=S.addType==="mc"?"metilcellulosa":S.addType==="starch"?"amido":"additivo";
+  $("steps").innerHTML=`
+    <li><b>Idratazione additivo (1–2).</b> Disperdi ${props.grams.binder.toFixed(1)} g di ${addName} in ${props.grams.water.toFixed(0)} g d'acqua; lascia gelificare 20–30 min fino a soluzione viscosa e omogenea.</li>
+    <li><b>Bagnatura fibre (4).</b> Apri e bagna ${(props.grams.cotton+props.grams.hemp).toFixed(0)} g di cotone (${S.cotLen} mm) e canapulo (${S.hempSize} mm) nella soluzione: le fibre devono assorbire ed essere prive di grumi.</li>
+    <li><b>Aggiunta gesso (3).</b> Incorpora gradualmente ${props.grams.gypsum.toFixed(0)} g di gesso naturale a bassa velocità per evitare inglobamento d'aria.</li>
+    <li><b>Impasto.</b> Miscela 3–5 min fino a pasta omogenea (target τ_y ≈ ${fmt(props.tauY,0)} Pa). Riposo 10 min, poi de-aerazione (vuoto o battitura).</li>
+    <li><b>Caricamento.</b> Riempi la siringa/cartuccia evitando bolle; verifica scorrimento a ${op.dP_bar<99?op.dP_bar.toFixed(1):"–"} bar prima di stampare.</li>`;
+
+  // thermal module: stage stats + residual composition + TGA curve
+  const th=thermalModel(S.temp,props);
+  const tStats=[
+    ["Acqua libera persa",(props.lossWater*100).toFixed(1),"% tot"],
+    ["Acqua del gesso persa",(props.lossGypsum*100).toFixed(1),"% tot"],
+    ["Organico bruciato",(props.lossOrg*100).toFixed(1),"% tot"],
+    ["Ritiro essiccazione",props.dryShrink.toFixed(1),"% lin"]
+  ];
+  $("thermStats").innerHTML=tStats.map(s=>`<div class="stat"><div class="k">${s[0]}</div>
+     <div class="v">${s[1]}<span class="u">${s[2]}</span></div></div>`).join("");
+  const gGyp=props.grams.gypsum*(1-0.209*th.fG);
+  const gOrg=(props.grams.cotton+props.grams.hemp+props.grams.binder)*(1-th.fO);
+  const gWat=props.grams.water*(1-th.fW);
+  const gRes=Math.max(0.001,gGyp+gOrg+gWat);
+  const gypLabel=th.fG>0.5?"gesso → anidrite":"gesso";
+  $("residBox").innerHTML=`<div class="cap">Solido finale dopo trattamento a ${S.temp} °C · ${gRes.toFixed(0)} g residui (${((1-props.massLoss)*100).toFixed(0)}% del lotto)</div>
+    <div class="bar"><span style="width:${gGyp/gRes*100}%;background:var(--gypsum)"></span>
+      <span style="width:${gOrg/gRes*100}%;background:var(--hemp)"></span>
+      <span style="width:${gWat/gRes*100}%;background:var(--water)"></span></div>
+    <div class="legend"><span><i style="background:var(--gypsum)"></i>${gypLabel} ${gGyp.toFixed(0)} g</span>
+      <span><i style="background:var(--hemp)"></i>organico residuo ${gOrg.toFixed(0)} g</span>
+      <span><i style="background:var(--water)"></i>acqua residua ${gWat.toFixed(0)} g</span></div>`;
+
+  // footer
+  $("footer").textContent=`τ_y=${fmt(props.tauY,0)} Pa · K=${fmt(props.K,1)} Pa·sⁿ · n=${props.n.toFixed(2)} · φ=${(props.phi*100).toFixed(1)}% · ΔP=${isFinite(op.dP_bar)?op.dP_bar.toFixed(2):"∞"} bar · ${props.measured?"reologia: DATI MISURATI":"modello Herschel–Bulkley fenomenologico, calibrazione richiesta"}.`;
+
+  drawFlow(props); drawPQ(props,op); drawTGA(props);
+  LAST={props,op,A};
+}
+let LAST=null;
+
+/* ---------- canvas helpers ---------- */
+function setupCanvas(c){
+  const dpr=window.devicePixelRatio||1;
+  const w=c.clientWidth||c.parentNode.clientWidth-36;
+  const h=c.height;
+  c.width=w*dpr; c.style.height=h+"px";
+  const ctx=c.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+
+/* ---------- flow curve (log-log) ---------- */
+function drawFlow(props){
+  const c=$("cFlow"); const {ctx,w,h}=setupCanvas(c);
+  ctx.clearRect(0,0,w,h);
+  const pad={l:46,r:12,t:10,b:28};
+  const gx0=Math.log10(0.01), gx1=Math.log10(1000);
+  // y range from data
+  const gd=[0.01,0.1,1,10,100,1000];
+  let ymax=props.tauY+props.K*Math.pow(1000,props.n);
+  ymax=Math.max(ymax,props.tauY*1.2,10);
+  const y0=Math.log10(Math.max(1,props.tauY*0.5||1)), y1=Math.log10(ymax*1.3);
+  const X=gx=> pad.l+(gx-gx0)/(gx1-gx0)*(w-pad.l-pad.r);
+  const Y=gy=> h-pad.b-(gy-y0)/(y1-y0)*(h-pad.t-pad.b);
+  // grid
+  ctx.strokeStyle=css("--line"); ctx.fillStyle=css("--faint");
+  ctx.font="10px ui-monospace,monospace"; ctx.lineWidth=1;
+  [0.01,0.1,1,10,100,1000].forEach(v=>{const gx=Math.log10(v);
+    ctx.beginPath();ctx.moveTo(X(gx),pad.t);ctx.lineTo(X(gx),h-pad.b);ctx.stroke();
+    ctx.textAlign="center";ctx.fillText(v>=1?v:v.toString(),X(gx),h-pad.b+13);});
+  const decadesY=[];for(let e=Math.floor(y0);e<=Math.ceil(y1);e++)decadesY.push(e);
+  decadesY.forEach(e=>{const gy=e;if(gy<y0||gy>y1)return;
+    ctx.beginPath();ctx.moveTo(pad.l,Y(gy));ctx.lineTo(w-pad.r,Y(gy));ctx.stroke();
+    ctx.textAlign="right";ctx.fillText(Math.pow(10,e).toString(),pad.l-6,Y(gy)+3);});
+  ctx.textAlign="center";ctx.fillStyle=css("--muted");
+  ctx.fillText("γ̇ [s⁻¹]",(pad.l+w-pad.r)/2,h-4);
+  ctx.save();ctx.translate(12,(pad.t+h-pad.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText("τ [Pa]",0,0);ctx.restore();
+  // curve
+  ctx.strokeStyle=css("--teal");ctx.lineWidth=2;ctx.beginPath();
+  let first=true;
+  for(let gx=gx0;gx<=gx1;gx+=0.03){const gr=Math.pow(10,gx);
+    const tau=props.tauY+props.K*Math.pow(gr,props.n);
+    const gy=Math.log10(Math.max(1e-6,tau));
+    const px=X(gx),py=Y(gy);
+    if(first){ctx.moveTo(px,py);first=false;}else ctx.lineTo(px,py);}
+  ctx.stroke();
+  // yield line
+  ctx.strokeStyle=css("--hemp");ctx.setLineDash([4,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,Y(Math.log10(Math.max(1,props.tauY))));ctx.lineTo(w-pad.r,Y(Math.log10(Math.max(1,props.tauY))));ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle=css("--hemp");ctx.textAlign="left";
+  ctx.fillText("τ_y",pad.l+4,Y(Math.log10(Math.max(1,props.tauY)))-4);
+}
+
+/* ---------- pressure vs flow ---------- */
+function drawPQ(props,op){
+  const c=$("cPQ");const{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);
+  const pad={l:50,r:12,t:10,b:28};
+  const R=op.R,L=op.L,m=op.m;
+  const Qmax=Math.max(op.Q*2.2, op.Q+1e-12);
+  // build P(Q) by sampling tauW
+  const pts=[];const twMax=m.tauY+ (op.tauW-m.tauY)*2.5 + 10;
+  for(let i=0;i<=80;i++){const tw=m.tauY*1.001+(twMax-m.tauY*1.001)*i/80;
+    const Q=flowQ(tw,m);const dP=2*L*tw/R; pts.push([Q,dP/1e5]);}
+  const Pmax=Math.max(...pts.map(p=>p[1]), op.dP_bar||1, S.pMax)*1.05;
+  const Qm=Math.max(...pts.map(p=>p[0]), op.Q)*1.05;
+  const X=q=>pad.l+q/Qm*(w-pad.l-pad.r);
+  const Y=pp=>h-pad.b-pp/Pmax*(h-pad.t-pad.b);
+  ctx.strokeStyle=css("--line");ctx.fillStyle=css("--faint");ctx.font="10px ui-monospace,monospace";ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const q=Qm*i/4;ctx.beginPath();ctx.moveTo(X(q),pad.t);ctx.lineTo(X(q),h-pad.b);ctx.stroke();
+    ctx.textAlign="center";ctx.fillText((q*1e9).toFixed(0),X(q),h-pad.b+13);}
+  for(let i=0;i<=4;i++){const pp=Pmax*i/4;ctx.beginPath();ctx.moveTo(pad.l,Y(pp));ctx.lineTo(w-pad.r,Y(pp));ctx.stroke();
+    ctx.textAlign="right";ctx.fillText(pp.toFixed(1),pad.l-6,Y(pp)+3);}
+  ctx.textAlign="center";ctx.fillStyle=css("--muted");ctx.fillText("Q [mm³/s]",(pad.l+w-pad.r)/2,h-4);
+  ctx.save();ctx.translate(13,(pad.t+h-pad.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText("ΔP [bar]",0,0);ctx.restore();
+  // pMax limit
+  ctx.strokeStyle=css("--bad");ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,Y(S.pMax));ctx.lineTo(w-pad.r,Y(S.pMax));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=css("--bad");ctx.textAlign="left";ctx.fillText("P max",pad.l+4,Y(S.pMax)-4);
+  // curve
+  ctx.strokeStyle=css("--teal");ctx.lineWidth=2;ctx.beginPath();
+  pts.forEach((p,i)=>{const px=X(p[0]),py=Y(p[1]);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+  // operating point
+  if(isFinite(op.dP_bar)){ctx.fillStyle=op.dP_bar<=S.pMax?css("--good"):css("--bad");
+    ctx.beginPath();ctx.arc(X(op.Q),Y(Math.min(op.dP_bar,Pmax)),4,0,7);ctx.fill();
+    ctx.strokeStyle=ctx.fillStyle;ctx.setLineDash([2,3]);ctx.beginPath();
+    ctx.moveTo(X(op.Q),h-pad.b);ctx.lineTo(X(op.Q),Y(Math.min(op.dP_bar,Pmax)));ctx.stroke();ctx.setLineDash([]);}
+}
+
+/* ================= ANIMATIONS ================= */
+let t0=performance.now();
+function animate(now){
+  const dt=now-t0; t0=now;
+  if(LAST){ drawPrinter(now); drawNozzle(now); }
+  requestAnimationFrame(animate);
+}
+let phase=0;
+function drawPrinter(now){
+  const c=$("cPrinter");const{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);
+  const {props,op,A}=LAST;
+  // layout: syringe top-left feeding a nozzle that translates over a plate laying a bead
+  const plateY=h-40, baseX=30;
+  // build plate
+  ctx.strokeStyle=css("--line");ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(20,plateY);ctx.lineTo(w-20,plateY);ctx.stroke();
+  ctx.fillStyle=css("--faint");ctx.font="10px ui-monospace,monospace";ctx.textAlign="left";
+  ctx.fillText("piano di stampa",22,plateY+16);
+
+  const cycle=(now/2600)%1;                       // head sweep
+  const travel=w-120;
+  const headX=60+travel*(0.5-0.5*Math.cos(cycle*2*Math.PI)); // ease in-out
+  const nozzleTipY=plateY-14;
+
+  // deposited bead (slumps if low buildability)
+  const slump=props.tauY<50?2.6:props.tauY<300?1.7:props.tauY<1500?1.15:0.9;
+  const beadH=Math.max(3,Math.min(12,8/slump));
+  const beadW=Math.max(6,8*slump);
+  ctx.fillStyle=mixColor(props);
+  // draw laid path up to headX
+  for(let x=60;x<headX;x+=Math.max(4,beadW*0.6)){
+    ctx.beginPath();ctx.ellipse(x,plateY-beadH/2,beadW/2,beadH/2,0,0,7);ctx.fill();
+  }
+  // pressure ok?
+  const okP=op.dP_bar<=S.pMax && isFinite(op.dP_bar);
+
+  // print head / barrel
+  const barX=headX-14, barW=28, barTop=24, barBot=nozzleTipY-26;
+  ctx.fillStyle=css("--panel2");ctx.strokeStyle=css("--line");
+  roundRect(ctx,barX,barTop,barW,barBot-barTop,5);ctx.fill();ctx.stroke();
+  // ram
+  const ramT=(now/900)%1;
+  const ramY=barTop+6+ (Math.sin(now/700)*0.5+0.5)*6;
+  ctx.fillStyle=css("--faint");roundRect(ctx,barX+5,barTop-8,barW-10,12,2);ctx.fill();
+  ctx.strokeStyle=css("--muted");ctx.beginPath();ctx.moveTo(headX,barTop-8);ctx.lineTo(headX,barTop-20);ctx.stroke();
+  // material in barrel
+  ctx.fillStyle=mixColor(props);roundRect(ctx,barX+4,ramY,barW-8,barBot-ramY-2,3);ctx.fill();
+  // converging nozzle
+  ctx.fillStyle=css("--panel2");ctx.strokeStyle=css("--line");
+  ctx.beginPath();ctx.moveTo(barX+3,barBot);ctx.lineTo(barX+barW-3,barBot);
+  ctx.lineTo(headX+5,nozzleTipY);ctx.lineTo(headX-5,nozzleTipY);ctx.closePath();ctx.fill();ctx.stroke();
+  // extruding material (only if extrudable)
+  if(okP){
+    ctx.fillStyle=mixColor(props);
+    ctx.beginPath();ctx.moveTo(headX-3,barBot);ctx.lineTo(headX+3,barBot);
+    ctx.lineTo(headX+2.2,nozzleTipY);ctx.lineTo(headX-2.2,nozzleTipY);ctx.closePath();ctx.fill();
+    // bead being deposited
+    ctx.beginPath();ctx.ellipse(headX,plateY-beadH/2,beadW/2,beadH/2,0,0,7);ctx.fill();
+  } else {
+    ctx.fillStyle=css("--bad");ctx.font="10px ui-monospace,monospace";ctx.textAlign="center";
+    ctx.fillText("⚠ occluso / pressione insufficiente",headX,nozzleTipY-2);
+  }
+  // labels
+  ctx.fillStyle=css("--muted");ctx.textAlign="left";ctx.font="10px ui-monospace,monospace";
+  ctx.fillText("cartuccia",barX+barW+8,barTop+12);
+  ctx.fillText("ugello Ø"+S.nozD+" mm",barX+barW+8,barBot-2);
+  ctx.fillStyle=okP?css("--good"):css("--bad");
+  ctx.fillText("ΔP "+(isFinite(op.dP_bar)?op.dP_bar.toFixed(2):"∞")+" bar",barX+barW+8,barTop+26);
+}
+
+function drawNozzle(now){
+  const c=$("cNozzle");const{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);
+  const {props,op}=LAST;
+  const cx=w*0.42, top=20, bot=h-30;
+  const Rpx=Math.min(64,(w*0.42)-20);
+  const R=op.R;
+  // walls (vertical channel)
+  ctx.strokeStyle=css("--line");ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx-Rpx,top);ctx.lineTo(cx-Rpx,bot);ctx.moveTo(cx+Rpx,top);ctx.lineTo(cx+Rpx,bot);ctx.stroke();
+  // velocity profile sampling
+  const N=40;const us=[];let umax=1e-9;
+  for(let i=0;i<=N;i++){const r=R*i/N;const u=velProfile(r,op.tauW,op.m);us.push(u);if(u>umax)umax=u;}
+  const okP=op.dP_bar<=S.pMax&&isFinite(op.dP_bar)&&umax>0;
+  // fill region between channel showing sheared vs plug
+  // plug core
+  const rpPx=Rpx*op.plugFrac;
+  ctx.fillStyle="rgba(63,182,178,0.10)";ctx.fillRect(cx-rpPx,top,2*rpPx,bot-top);
+  ctx.fillStyle="rgba(201,205,212,0.06)";
+  ctx.fillRect(cx-Rpx,top,Rpx-rpPx,bot-top);ctx.fillRect(cx+rpPx,top,Rpx-rpPx,bot-top);
+
+  // velocity profile curve (horizontal u(r) at mid)
+  const midY=top+(bot-top)*0.5, scale=(Rpx*0.9);
+  ctx.strokeStyle=css("--teal");ctx.lineWidth=2;ctx.beginPath();
+  for(let i=0;i<=N;i++){const r=R*i/N;const px=cx- (us[i]/Math.max(1e-9,umax))*scale; // left side mirrored
+    const py=top+(i/N)*(bot-top)/2 + 0; }
+  // Instead draw profile as left-pointing arrows along radius (top half) — clearer:
+  ctx.strokeStyle=css("--teal");
+  for(let i=0;i<=N;i+=2){const r=R*i/N;const y=top+ (bot-top)* (i/N);
+    const len=(us[i]/Math.max(1e-9,umax))*scale*0.5;
+    ctx.globalAlpha=0.5;ctx.beginPath();ctx.moveTo(cx,y);ctx.lineTo(cx-len,y);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,y);ctx.lineTo(cx+ len,y);ctx.stroke();ctx.globalAlpha=1;}
+  // envelope curve
+  ctx.strokeStyle=css("--teal");ctx.lineWidth=2;ctx.beginPath();
+  for(let i=0;i<=N;i++){const y=top+(bot-top)*(i/N);const len=(us[i]/Math.max(1e-9,umax))*scale*0.5;
+    const px=cx-len;i?ctx.lineTo(px,y):ctx.moveTo(px,y);}ctx.stroke();
+  ctx.beginPath();
+  for(let i=0;i<=N;i++){const y=top+(bot-top)*(i/N);const len=(us[i]/Math.max(1e-9,umax))*scale*0.5;
+    const px=cx+len;i?ctx.lineTo(px,y):ctx.moveTo(px,y);}ctx.stroke();
+
+  // advecting particles (gypsum dots) + fibers, speed ~ local velocity
+  if(!window.__P){window.__P=[];for(let k=0;k<46;k++)window.__P.push({r:(Math.random()*2-1),y:Math.random(),f:Math.random()<0.4});}
+  ctx.lineCap="round";
+  window.__P.forEach(p=>{
+    const rAbs=Math.abs(p.r);const idx=Math.min(N,Math.round(rAbs*N));
+    const u=okP? us[idx]/Math.max(1e-9,umax):0;
+    p.y+=u*0.010*(props.n>0?1:1)+ (okP?0.0008:0);
+    if(p.y>1)p.y-=1;
+    const x=cx+p.r*(Rpx-6), y=top+p.y*(bot-top);
+    if(p.f){ // fiber: short segment
+      ctx.strokeStyle=css("--cotton");ctx.lineWidth=1.6;
+      const fl=Math.min(Rpx*0.5,(S.cotLen/(S.nozD))*Rpx*0.6);
+      ctx.beginPath();ctx.moveTo(x-fl/2,y);ctx.lineTo(x+fl/2,y+2);ctx.stroke();
+    } else {
+      ctx.fillStyle=css("--gypsum");ctx.beginPath();ctx.arc(x,y,2,0,7);ctx.fill();
+    }
+  });
+
+  // outlet bead
+  ctx.fillStyle=okP?mixColor(props):css("--bad");
+  ctx.beginPath();ctx.ellipse(cx,bot+6,rpPx>4?Rpx*0.7:Rpx*0.5,5,0,0,7);ctx.fill();
+
+  // annotations
+  ctx.fillStyle=css("--muted");ctx.font="10px ui-monospace,monospace";ctx.textAlign="left";
+  const tx=cx+Rpx+12;
+  ctx.fillText("R = "+(S.nozD/2).toFixed(2)+" mm",tx,top+10);
+  ctx.fillText("r_p/R = "+(op.plugFrac*100).toFixed(0)+"%",tx,top+26);
+  ctx.fillText("v̄ = "+(op.vmean*1000).toFixed(1)+" mm/s",tx,top+42);
+  ctx.fillText("γ̇_w = "+fmt(op.gammaWall,0)+" s⁻¹",tx,top+58);
+  if(!okP){ctx.fillStyle=css("--bad");ctx.fillText("non estrude",tx,top+78);}
+}
+function mixColor(props){ // weighted-ish earthy paste tone
+  return props.tauY>1500? "#b9a88a" : "#cdbf9e";
+}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+/* ---------- TGA-style mass loss vs temperature ---------- */
+function drawTGA(props){
+  const c=$("cTGA");if(!c)return;const{ctx,w,h}=setupCanvas(c);ctx.clearRect(0,0,w,h);
+  const pad={l:46,r:14,t:12,b:28};
+  const Tmin=20,Tmax=Math.max(600,S.temp+40);
+  const X=T=>pad.l+(T-Tmin)/(Tmax-Tmin)*(w-pad.l-pad.r);
+  const Y=m=>h-pad.b-(m/100)*(h-pad.t-pad.b);
+  // stage bands
+  const bands=[[60,120,"--water"],[100,200,"--gypsum"],[150,500,"--hemp"]];
+  bands.forEach(b=>{ctx.fillStyle=css(b[2]);ctx.globalAlpha=0.07;
+    ctx.fillRect(X(b[0]),pad.t,X(b[1])-X(b[0]),h-pad.t-pad.b);ctx.globalAlpha=1;});
+  // grid
+  ctx.strokeStyle=css("--line");ctx.fillStyle=css("--faint");ctx.font="10px ui-monospace,monospace";ctx.lineWidth=1;
+  for(let T=100;T<=Tmax;T+=100){ctx.beginPath();ctx.moveTo(X(T),pad.t);ctx.lineTo(X(T),h-pad.b);ctx.stroke();
+    ctx.textAlign="center";ctx.fillText(T,X(T),h-pad.b+13);}
+  for(let m=0;m<=100;m+=25){ctx.beginPath();ctx.moveTo(pad.l,Y(m));ctx.lineTo(w-pad.r,Y(m));ctx.stroke();
+    ctx.textAlign="right";ctx.fillText(m,pad.l-6,Y(m)+3);}
+  ctx.textAlign="center";ctx.fillStyle=css("--muted");ctx.fillText("T [°C]",(pad.l+w-pad.r)/2,h-3);
+  ctx.save();ctx.translate(12,(pad.t+h-pad.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText("massa residua [%]",0,0);ctx.restore();
+  // curve
+  ctx.strokeStyle=css("--teal");ctx.lineWidth=2;ctx.beginPath();let first=true;
+  for(let T=Tmin;T<=Tmax;T+=4){const ml=thermalModel(T,props).massLoss;const px=X(T),py=Y(100*(1-ml));
+    first?(ctx.moveTo(px,py),first=false):ctx.lineTo(px,py);}
+  ctx.stroke();
+  // target marker
+  const mlT=props.massLoss;ctx.strokeStyle=css("--teal");ctx.setLineDash([3,3]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(X(S.temp),pad.t);ctx.lineTo(X(S.temp),h-pad.b);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle=css("--teal");ctx.beginPath();ctx.arc(X(S.temp),Y(100*(1-mlT)),4,0,7);ctx.fill();
+  ctx.textAlign="left";ctx.fillText(S.temp+"°C → "+(100*(1-mlT)).toFixed(0)+"%",Math.min(X(S.temp)+6,w-90),Y(100*(1-mlT))-7);
+}
+
+/* ================= INPUT WIRING ================= */
+function bindNum(id,key){ $(id).addEventListener("input",e=>{const v=parseFloat(e.target.value);
+  if(!isNaN(v)){S[key]=v;render();}});}
+["batch","cotLen","cotDia","hempSize","nozD","nozL","speed","layerH","pMax","temp"]
+  .forEach(id=>bindNum(id,id));
+$("addType").addEventListener("change",e=>{S.addType=e.target.value;render();});
+
+/* ---------- measured-data override ---------- */
+function syncMeas(){$("measFields").style.display=S.measured.on?"grid":"none";}
+$("measOn").addEventListener("change",e=>{S.measured.on=e.target.checked;syncMeas();render();});
+[["measTauY","tauY"],["measK","K"],["measN","n"]].forEach(([id,key])=>{
+  $(id).addEventListener("input",e=>{const v=parseFloat(e.target.value);if(!isNaN(v)){S.measured[key]=v;if(S.measured.on)render();}});});
+
+/* ---------- compute with a temporary state mutation (for DOE) ---------- */
+function computeWith(applyFn){
+  const saved=JSON.parse(JSON.stringify(S));
+  applyFn();
+  const p=compute(),o=operating(p),a=assess(p,o);
+  for(const k in saved) S[k]=saved[k];
+  return {p,o,A:a};
+}
+
+/* ---------- DOE ---------- */
+const DOE_VARS=[
+  {key:"gypsum",label:"Gesso (parti)",type:"part"},
+  {key:"cotton",label:"Cotone (parti)",type:"part"},
+  {key:"hemp",label:"Canapa (parti)",type:"part"},
+  {key:"water",label:"Acqua (parti)",type:"part"},
+  {key:"binder",label:"Additivo (parti)",type:"part"},
+  {key:"nozD",label:"Ø ugello (mm)",type:"param"},
+  {key:"speed",label:"Velocità (mm/s)",type:"param"},
+  {key:"temp",label:"Temperatura (°C)",type:"param"}
+];
+function fillDoeSelect(sel,def){DOE_VARS.forEach(v=>{const o=document.createElement("option");
+  o.value=v.key;o.textContent=v.label;if(v.key===def)o.selected=true;sel.appendChild(o);});}
+fillDoeSelect($("doeV1"),"water"); fillDoeSelect($("doeV2"),"cotton");
+function parseLevels(s){return s.split(",").map(x=>parseFloat(x.trim())).filter(x=>!isNaN(x));}
+function applyVar(key,val){const v=DOE_VARS.find(d=>d.key===key);
+  if(v.type==="part")S.parts[key]=val;else S[key]=val;}
+let DOE_ROWS=[];
+function runDOE(){
+  const v1=$("doeV1").value,v2=$("doeV2").value;
+  const L1=parseLevels($("doeL1").value),L2=parseLevels($("doeL2").value);
+  if(!L1.length||!L2.length){$("doeOut").innerHTML=`<div class="cap" style="color:var(--warn)">Inserisci almeno un livello per variabile.</div>`;return;}
+  const lab1=DOE_VARS.find(d=>d.key===v1).label, lab2=DOE_VARS.find(d=>d.key===v2).label;
+  DOE_ROWS=[];
+  L1.forEach(a=>L2.forEach(b=>{
+    const {p,o,A}=computeWith(()=>{applyVar(v1,a);applyVar(v2,b);});
+    const ok=A.extr.s!=="bad" && A.build.s!=="bad" && A.jam.s!=="bad";
+    DOE_ROWS.push({v1:a,v2:b,tauY:p.tauY,n:p.n,K:p.K,dP:o.dP_bar,layers:A.layers,phi:p.phi*100,ok});
+  }));
+  let html=`<table class="recipe"><tr><th>${lab1}</th><th>${lab2}</th>
+    <th style="text-align:right">φ %</th><th style="text-align:right">τ_y Pa</th><th style="text-align:right">n</th>
+    <th style="text-align:right">ΔP bar</th><th style="text-align:right">strati</th><th style="text-align:right">stampabile</th></tr>`;
+  DOE_ROWS.forEach(r=>{const col=r.ok?"var(--good)":"var(--bad)";
+    html+=`<tr><td class="num">${r.v1}</td><td class="num">${r.v2}</td>
+      <td class="num">${r.phi.toFixed(0)}</td><td class="num">${fmt(r.tauY,0)}</td><td class="num">${r.n.toFixed(2)}</td>
+      <td class="num">${isFinite(r.dP)?r.dP.toFixed(2):"∞"}</td><td class="num">${r.layers.toFixed(0)}</td>
+      <td class="num" style="color:${col}">${r.ok?"✓":"✗"}</td></tr>`;});
+  html+=`</table><div class="cap" style="margin-top:8px;color:var(--faint)">${DOE_ROWS.length} combinazioni · "stampabile" = ΔP ≤ P max, τ_y ≥ 50 Pa, fibra/grano &lt; Ø ugello.</div>`;
+  $("doeOut").innerHTML=html;
+}
+$("doeRun").addEventListener("click",runDOE);
+$("doeCSV").addEventListener("click",()=>{if(!DOE_ROWS.length)runDOE();
+  const v1=$("doeV1").value,v2=$("doeV2").value;
+  let s=`${v1},${v2},phi_pct,tau_y_Pa,n,K_Pa_sn,dP_bar,strati,stampabile\n`;
+  DOE_ROWS.forEach(r=>{s+=`${r.v1},${r.v2},${r.phi.toFixed(1)},${r.tauY.toFixed(1)},${r.n.toFixed(3)},${r.K.toFixed(2)},${isFinite(r.dP)?r.dP.toFixed(3):"inf"},${r.layers.toFixed(0)},${r.ok?1:0}\n`;});
+  download("doe_griglia.csv",s,"text/csv");});
+
+
+$("btnReset").addEventListener("click",()=>{Object.assign(S,JSON.parse(JSON.stringify(DEFAULTS)));
+  ["batch","cotLen","cotDia","hempSize","nozD","nozL","speed","layerH","pMax","temp"].forEach(id=>$(id).value=S[id]);
+  $("addType").value=S.addType;
+  $("measOn").checked=S.measured.on;$("measTauY").value=S.measured.tauY;$("measK").value=S.measured.K;$("measN").value=S.measured.n;
+  syncMeas(); buildMix(); render(); runDOE();});
+
+/* ---------- exports ---------- */
+function download(name,content,type){const b=new Blob([content],{type});const u=URL.createObjectURL(b);
+  const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+$("btnJSON").addEventListener("click",()=>{const p=compute(),o=operating(p),A=assess(p,o);
+  const out={input:S, composizione_pct:Object.fromEntries(ORDER.map(k=>[k,+(p.massFrac[k]*100).toFixed(2)])),
+    grammi:Object.fromEntries(ORDER.map(k=>[k,+p.grams[k].toFixed(2)])),
+    reologia:{sorgente:p.measured?"dati_misurati":"modello",tau_y_Pa:+p.tauY.toFixed(1),K_Pa_sn:+p.K.toFixed(2),n:+p.n.toFixed(3),phi:+p.phi.toFixed(3),phi_max:+p.phiMax.toFixed(3)},
+    estrusione:{dP_bar:+o.dP_bar.toFixed(3),Q_mm3_s:+(o.Q*1e9).toFixed(3),gamma_wall_s:+o.gammaWall.toFixed(1),plug_frac:+o.plugFrac.toFixed(3)},
+    termico:{T_C:S.temp,perdita_massa_pct:+(p.massLoss*100).toFixed(2),porosita_pct:+(p.porosity*100).toFixed(2)},
+    stampabilita:{Hmax_mm:+A.Hmax.toFixed(1),strati:+A.layers.toFixed(0),Dmin_mm:+A.Dmin.toFixed(2)},
+    nota:"Modello Herschel-Bulkley fenomenologico; calibrare su reometria."};
+  download("scheda_mix.json",JSON.stringify(out,null,2),"application/json");});
+$("btnCSV").addEventListener("click",()=>{const p=compute();let s="gamma_dot_1s,tau_Pa,eta_app_Pa_s\n";
+  for(let e=-2;e<=3;e+=0.1){const gr=Math.pow(10,e);const tau=p.tauY+p.K*Math.pow(gr,p.n);
+    s+=gr.toFixed(4)+","+tau.toFixed(3)+","+(tau/gr).toFixed(4)+"\n";}
+  download("curva_flusso.csv",s,"text/csv");});
+$("btnPrint").addEventListener("click",()=>window.print());
+
+/* ---------- boot ---------- */
+syncMeas(); buildMix(); render(); runDOE();
+window.addEventListener("resize",()=>{render();});
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
