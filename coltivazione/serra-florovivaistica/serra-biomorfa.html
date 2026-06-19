@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SERRA_BIOMORFA — generatore 3D + disegno tecnico // DoctNasa&amp;MrBorg</title>
+<style>
+  :root{--bg:#0a0d0b;--panel:#10140e;--panel2:#0d110c;--line:rgba(124,255,155,.10);
+    --txt:#aeb9b0;--txt-dim:#6f7d72;--head:#e9fff0;--ph:#7CFF9B;--ph-dim:#3c8456;
+    --cyan:#5bd0e6;--amber:#e7b15a;--mono:"Courier New",ui-monospace,Menlo,Consolas,monospace;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);
+    -webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 20px 60px}
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+    border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap}
+  h1{font-size:21px;font-weight:700;letter-spacing:.14em;color:var(--head);margin:0}
+  h1 .blk{color:var(--ph)}
+  .sub{color:var(--txt-dim);font-size:12px;letter-spacing:.06em;margin-top:5px}
+  .mark{color:var(--txt-dim);font-size:11px;letter-spacing:.08em;text-align:right}.mark b{color:var(--ph-dim);font-weight:400}
+  .back-link{background:transparent;border:1px solid var(--ph-dim);color:var(--ph);border-radius:2px;
+    padding:8px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-decoration:none;white-space:nowrap;transition:all .12s}
+  .back-link:hover{background:rgba(124,255,155,.12)}
+  .grid2{display:grid;grid-template-columns:1fr 340px;gap:18px}
+  @media(max-width:880px){.grid2{grid-template-columns:1fr}}
+  .stage{position:relative;background:#0d110c;border:1px solid var(--line);border-radius:3px;overflow:hidden;min-height:560px}
+  @media(max-width:880px){.stage{min-height:440px}}
+  #cv{display:block;width:100%;height:100%;position:absolute;inset:0}
+  #tech{position:absolute;inset:0;width:100%;height:100%;display:none}
+  .hud{position:absolute;left:12px;top:10px;font-size:11px;color:rgba(233,255,240,.75);
+    letter-spacing:.05em;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:2}
+  .hud2{position:absolute;left:12px;bottom:10px;font-size:11px;color:rgba(233,255,240,.55);
+    letter-spacing:.05em;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:2}
+  .readout{position:absolute;right:12px;bottom:10px;font-size:11px;color:rgba(233,255,240,.7);
+    letter-spacing:.05em;pointer-events:none;text-align:right;text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:2}
+  .readout b{color:var(--ph);font-weight:400;font-size:13px}
+  .err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--txt-dim);font-size:12px}
+  .side{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:13px 14px}
+  .lbl{font-size:10px;letter-spacing:.16em;color:var(--ph-dim);text-transform:uppercase;margin-bottom:9px}
+  .seg{display:flex;flex-wrap:wrap;gap:5px}
+  .seg button{flex:1 1 auto;min-width:52px;background:transparent;color:var(--txt-dim);border:1px solid var(--line);
+    border-radius:2px;padding:7px 6px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;cursor:pointer;transition:all .12s}
+  .seg button:hover{border-color:var(--ph-dim);color:var(--txt)}
+  .seg button[aria-pressed="true"]{background:rgba(124,255,155,.12);border-color:var(--ph);color:var(--ph)}
+  .seg button:focus-visible{outline:2px solid var(--ph);outline-offset:1px}
+  .ctrl{margin-top:13px}.ctrl:first-child{margin-top:0}
+  .ctrl .row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px}.ctrl .row span:last-child{color:var(--ph)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--ph-dim);border-radius:2px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ph);cursor:pointer;border:2px solid var(--bg)}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--ph);cursor:pointer;border:2px solid var(--bg)}
+  .toggles{display:flex;gap:14px;margin-top:13px;font-size:11px;flex-wrap:wrap}
+  .toggles label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--txt-dim)}.toggles input{accent-color:var(--ph)}
+  .acts{display:flex;gap:7px;flex-wrap:wrap}
+  .acts button{flex:1 1 auto;background:transparent;border:1px solid var(--ph-dim);color:var(--ph);border-radius:2px;
+    padding:9px 8px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;cursor:pointer;transition:all .12s}
+  .acts button:hover{background:rgba(124,255,155,.12)}.acts button.ghost{border-color:var(--line);color:var(--txt-dim)}
+  .hintbtn{margin-top:9px;width:100%;background:transparent;border:1px dashed var(--ph-dim);color:var(--ph);border-radius:2px;
+    padding:7px;font-family:var(--mono);font-size:11px;cursor:pointer}.hintbtn:hover{background:rgba(124,255,155,.08)}
+  .notes{font-size:11.5px;line-height:1.65}.notes .k{color:var(--ph-dim)}.notes p{margin:0 0 9px}.notes p:last-child{margin:0}
+  .foot{margin-top:20px;font-size:11px;color:var(--txt-dim);line-height:1.7;border-top:1px solid var(--line);padding-top:14px}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>SERRA_<span class="blk">BIOMORFA</span></h1>
+      <div class="sub">generatore parametrico · 3D + pianta/sezione quotata</div></div>
+    <a href="./" class="back-link">← SERRA FLOROVIVAISTICA</a>
+    <div class="mark">DoctNasa&amp;MrBorg<br><b>studio di ricerca · pratiche ibride</b></div>
+  </header>
+  <div class="grid2">
+    <div class="stage">
+      <canvas id="cv"></canvas>
+      <svg id="tech" viewBox="0 0 1000 1200" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="hud" id="hud">—</div>
+      <div class="hud2" id="hud2">trascina per ruotare · scroll per zoom</div>
+      <div class="readout">SUP. COPERTA <b id="rArea">—</b> m²</div>
+      <div class="err" id="err">Impossibile caricare il motore 3D (CDN bloccato). Apri con connessione attiva.</div>
+    </div>
+    <div class="side">
+      <div class="card">
+        <div class="lbl">Vista</div>
+        <div class="seg" id="segMode"></div>
+      </div>
+      <div class="card">
+        <div class="lbl">Tipologia</div><div class="seg" id="segTyp"></div>
+        <div class="ctrl" style="margin-top:14px"><div class="lbl">Materiale</div><div class="seg" id="segMat"></div></div>
+      </div>
+      <div class="card">
+        <div class="ctrl"><div class="row"><span>Moduli</span><span id="vModuli">—</span></div><input type="range" id="sModuli" min="3" max="14" step="1"></div>
+        <div class="ctrl"><div class="row"><span>Organicità</span><span id="vOrgan">—</span></div><input type="range" id="sOrgan" min="0" max="100" step="1"></div>
+        <div class="ctrl"><div class="row"><span>Allungamento / altezza</span><span id="vAllung">—</span></div><input type="range" id="sAllung" min="0" max="100" step="1"></div>
+        <div class="ctrl"><div class="row"><span>Scala</span><span id="vLen">—</span></div><input type="range" id="sLen" min="6" max="40" step="1"></div>
+        <button class="hintbtn" id="btn300">↳ dimensiona per ~300 m² coperti</button>
+        <div class="toggles">
+          <label><input type="checkbox" id="tSkin" checked> pelle</label>
+          <label><input type="checkbox" id="tStruct" checked> struttura</label>
+          <label><input type="checkbox" id="tBench" checked> bancali</label>
+          <label><input type="checkbox" id="tScale" checked> scala umana</label>
+        </div>
+      </div>
+      <div class="card"><div class="acts">
+        <button id="btnGen">RIGENERA</button>
+        <button id="btnPng" class="ghost">SALVA PNG</button>
+        <button id="btnSvg" class="ghost">ESPORTA SVG</button>
+      </div></div>
+      <div class="card notes">
+        <div class="lbl">Disposizione</div><p id="noteDisp"></p>
+        <div class="lbl" style="margin-top:4px">Materiale</div><p id="noteMat"></p>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    Vista 3D: render fisico real-time con muretti di base, bancali interni e gronde. Disegno tecnico:
+    pianta + sezione A–A quotate con scala grafica, nord e cartiglio, pronte da inserire nella relazione.
+    Il pulsante 300 m² aggancia il modello al dimensionamento del Pacchetto Giovani.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+if(typeof THREE==="undefined"){document.getElementById("err").style.display="flex";}
+else{(function(){
+const TYPES=[{id:"tunnel",name:"Tunnel sinuoso"},{id:"favo",name:"Favo / cluster"},
+  {id:"raggiera",name:"Raggiera"},{id:"dendr",name:"Dendritico"},{id:"cupola",name:"Cupola reticolare"}];
+const MATS={
+  film:{name:"Film PE",skin:0xffffff,op:.30,rough:.55,metal:0,clear:.2,struct:0x24282b,sRough:.45,sMetal:.55,ribR:0.07,latt:0x2a2e31,showSkin:true,showLatt:true,lattOp:.5,luce:"diffusa, buona",isol:"basso",costo:"molto basso",fin:"standard, pienamente finanziabile",nota:"vita 4–5 anni, struttura leggera"},
+  poli:{name:"Policarbonato",skin:0xe9f3f0,op:.52,rough:.65,metal:0,clear:.15,struct:0x2a2f33,sRough:.4,sMetal:.6,ribR:0.08,latt:0x2a2e31,showSkin:true,showLatt:true,lattOp:.5,luce:"diffusa, ottima",isol:"medio-alto",costo:"medio",fin:"finanziabile",nota:"ottima uniformità di luce"},
+  vetro:{name:"Vetro Venlo",skin:0xcfeef4,op:.20,rough:.05,metal:0,clear:1,struct:0x9aa3a8,sRough:.3,sMetal:.85,ribR:0.06,latt:0x8c969b,showSkin:true,showLatt:true,lattOp:.7,luce:"trasparenza top",isol:"medio (alto se doppio)",costo:"alto",fin:"finanziabile ma caro",nota:"durata lunga, look premium"},
+  etfe:{name:"ETFE",skin:0xffffff,op:.26,rough:.18,metal:0,clear:.6,struct:0xcfd4d7,sRough:.35,sMetal:.6,ribR:0.09,latt:0xb9c0c4,showSkin:true,showLatt:true,lattOp:.6,luce:"trasparenza altissima",isol:"medio (cuscini)",costo:"alto",fin:"non standard → quota firma",nota:"leggerissimo, scenografico"},
+  bambu:{name:"Bambù gridshell",skin:0xead8b0,op:.10,rough:.9,metal:0,clear:0,struct:0xb07a3d,sRough:.85,sMetal:0,ribR:0.13,latt:0xb07a3d,showSkin:false,showLatt:true,lattOp:1,luce:"ombra portante variabile",isol:"—",costo:"medio-alto + posa",fin:"solo come struttura certificata",nota:"richiede calcolo strutturale: padiglione firma"},
+  stampa:{name:"Stampa 3D",skin:0xc98a52,op:1,rough:.95,metal:0,clear:0,struct:0xab7038,sRough:.95,sMetal:0,ribR:0.1,latt:0xab7038,showSkin:true,showLatt:false,lattOp:1,opaque:true,luce:"opaca / traslucida",isol:"variabile",costo:"sperimentale",fin:"fuori scala come serra → nodo iconico",nota:"ideale per vasi e componenti"}};
+const DISP={
+  tunnel:"Massima resa per mq e parte più finanziabile. Orienta l'asse lungo Est–Ovest; la sinuosità è estetica. È il nucleo produttivo da mettere a bando.",
+  favo:"Ogni cupola è un microclima per specie diverse. Gruppo regolare = nucleo produttivo, periferiche = elemento firma. Occhio a luce e costi sulle curve.",
+  raggiera:"Vasca / fitodepurazione al centro come fulcro: lega vivaio acquatico e scenografia. Petali = aiuole o bancali radiali. Ottimo showroom di vendita diretta.",
+  dendr:"Spina di servizi e circolazione con ali ampliabili a fasi, comoda per la rendicontazione progressiva. Pod terminali per colture speciali.",
+  cupola:"Padiglione-firma o serra calda, bella sopra la vasca. In bambù richiede calcolo strutturale: tienila distinta dal volume produttivo finanziato."};
+
+let S={typ:"tunnel",mat:"vetro",moduli:6,organ:35,allung:45,len:22,seed:1234,
+       skin:true,struct:true,bench:true,scale:true,mode:"3d"};
+
+/* ===== geometry (shared) ===== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function geometry(){
+  const rng=mulberry32(S.seed),o=S.organ/100,al=S.allung/100,L=S.len;
+  const bands=[],domes=[];let water=null,area=0,type=S.typ;
+  if(type==="tunnel"){
+    const n=clamp(S.moduli,3,7),w=8,h=3.4+al*2.6,len=L,gap=w+1.4,span=(n-1)*gap,st=clamp(Math.round(len/1.4),12,46);
+    for(let b=0;b<n;b++){const z0=-span/2+b*gap,ph=b*0.7+o*rng()*3,amp=o*2.6,freq=0.7+al*0.6,path=[];
+      for(let i=0;i<st;i++){const t=i/(st-1);path.push({x:-len/2+len*t,z:z0+amp*Math.sin(freq*2*Math.PI*t+ph)});}
+      bands.push({path,w,h});area+=w*len;}
+  }else if(type==="favo"){
+    const n=clamp(S.moduli,4,12),r0=clamp(L*0.16,2.2,6),cols=Math.max(2,Math.round(Math.sqrt(n*1.2))),sp=r0*2.05;
+    const cells=[];let row=0;while(cells.length<n){const cc=cols+(row%2?-1:0);
+      for(let c=0;c<cc&&cells.length<n;c++)cells.push({x:c*sp+(row%2?sp/2:0),z:row*sp*0.88});row++;}
+    const xs=cells.map(p=>p.x),zs=cells.map(p=>p.z),ox=(Math.min(...xs)+Math.max(...xs))/2,oz=(Math.min(...zs)+Math.max(...zs))/2;
+    cells.forEach((p,i)=>{const r=r0*(0.78+rng()*0.44*(0.6+o)),x=p.x-ox+(rng()-0.5)*sp*0.4*o,z=p.z-oz+(rng()-0.5)*sp*0.4*o;
+      domes.push({x,z,r,core:i<Math.ceil(n*0.6)});area+=Math.PI*r*r*0.82;});
+  }else if(type==="raggiera"){
+    const n=clamp(S.moduli,5,12),Rc=clamp(L*0.2,3,7),pl=clamp(L*0.5,5,18),Wp=clamp(L*0.12,2.4,5),h=2.6+al*2.4;
+    domes.push({x:0,z:0,r:Rc,role:"center"});water={x:0,z:0,r:Rc*0.92};area+=Math.PI*Rc*Rc;
+    for(let i=0;i<n;i++){const a=i/n*2*Math.PI+(rng()-0.5)*o*0.5,st=10,path=[];
+      for(let k=0;k<st;k++){const t=k/(st-1),d=Rc*0.7+pl*t;path.push({x:Math.cos(a)*d,z:Math.sin(a)*d});}
+      bands.push({path,w:Wp,h,petal:true});area+=Wp*pl;}
+  }else if(type==="dendr"){
+    const levels=clamp(Math.round(S.moduli/2),2,4),len0=clamp(L*0.5,5,15),Wc=3.6,h=2.8+al*1.8;
+    (function grow(x,z,ang,len,lvl){const x2=x+Math.cos(ang)*len,z2=z+Math.sin(ang)*len,st=8,path=[];
+      for(let k=0;k<st;k++){const t=k/(st-1);path.push({x:x+(x2-x)*t,z:z+(z2-z)*t});}
+      bands.push({path,w:Wc*(lvl<1?1.15:0.9),h:h*(lvl<1?1.1:0.85)});area+=Wc*len;
+      if(lvl<levels){const sp=0.45+o*0.5;for(let j=0;j<2;j++){const dir=j?1:-1;grow(x2,z2,ang+dir*sp+(rng()-0.5)*o*0.5,len*0.78,lvl+1);}}
+      else{domes.push({x:x2,z:z2,r:Wc*0.85});area+=Math.PI*(Wc*0.85)**2*0.6;}})(0,len0*1.2,-Math.PI/2,len0,0);
+  }else{
+    const R=clamp(L*0.5,4,15);domes.push({x:0,z:0,r:R,core:true});area+=Math.PI*R*R;
+    const st=8,path=[];for(let k=0;k<st;k++){const t=k/(st-1);path.push({x:R*0.6+t*R*0.7,z:0});}
+    bands.push({path,w:R*0.5,h:R*0.45});
+  }
+  // bbox
+  let X0=1e9,Z0=1e9,X1=-1e9,Z1=-1e9;
+  bands.forEach(b=>b.path.forEach(p=>{X0=Math.min(X0,p.x-b.w);X1=Math.max(X1,p.x+b.w);Z0=Math.min(Z0,p.z-b.w);Z1=Math.max(Z1,p.z+b.w);}));
+  domes.forEach(d=>{X0=Math.min(X0,d.x-d.r);X1=Math.max(X1,d.x+d.r);Z0=Math.min(Z0,d.z-d.r);Z1=Math.max(Z1,d.z+d.r);});
+  return {type,bands,domes,water,area,bbox:{x0:X0,z0:Z0,x1:X1,z1:Z1,w:X1-X0,h:Z1-Z0}};
+}
+
+/* ===== 3D ===== */
+const canvas=document.getElementById("cv"),stage=canvas.parentElement,tech=document.getElementById("tech");
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true,powerPreference:"high-performance"});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(45,1,.1,1000);
+function skyTexture(){const c=document.createElement("canvas");c.width=1024;c.height=512;const ctx=c.getContext("2d");
+  const g=ctx.createLinearGradient(0,0,0,512);g.addColorStop(0,"#5d86b8");g.addColorStop(.45,"#9db8d6");
+  g.addColorStop(.62,"#dfe9f0");g.addColorStop(.64,"#e7eef2");g.addColorStop(1,"#c2cabf");
+  ctx.fillStyle=g;ctx.fillRect(0,0,1024,512);const t=new THREE.CanvasTexture(c);
+  t.mapping=THREE.EquirectangularReflectionMapping;t.encoding=THREE.sRGBEncoding;return t;}
+const sky=skyTexture();scene.background=sky;scene.fog=new THREE.Fog(0xc8d3da,90,360);
+try{const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromEquirectangular(sky).texture;}catch(e){scene.environment=sky;}
+scene.add(new THREE.HemisphereLight(0xbfd4e8,0x5d6a4e,.55));
+const sun=new THREE.DirectionalLight(0xfff2dc,2.1);sun.position.set(46,64,30);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-0.0004;sun.shadow.radius=4;
+const sc=sun.shadow.camera;sc.left=-70;sc.right=70;sc.top=70;sc.bottom=-70;sc.near=.5;sc.far=260;scene.add(sun);
+const fill=new THREE.DirectionalLight(0xbcd0e0,.35);fill.position.set(-40,30,-30);scene.add(fill);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x86906f,roughness:1}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+const root=new THREE.Group();scene.add(root);const deco=new THREE.Group();scene.add(deco);
+
+function disposeGroup(g){g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());});while(g.children.length)g.remove(g.children[0]);}
+function skinMat(M){const m=new THREE.MeshPhysicalMaterial({color:M.skin,roughness:M.rough,metalness:M.metal,clearcoat:M.clear,clearcoatRoughness:.3,side:THREE.DoubleSide});if(!M.opaque){m.transparent=true;m.opacity=M.op;m.depthWrite=false;}return m;}
+function structMat(M){return new THREE.MeshStandardMaterial({color:M.struct,roughness:M.sRough,metalness:M.sMetal});}
+function lattMat(M){return new THREE.LineBasicMaterial({color:M.latt,transparent:M.lattOp<1,opacity:M.lattOp});}
+const wallMat=new THREE.MeshStandardMaterial({color:0xb9b3a3,roughness:.95});
+const benchMat=new THREE.MeshStandardMaterial({color:0x6b7280,roughness:.8,metalness:.3});
+const plantMat=new THREE.MeshStandardMaterial({color:0x4f7a3a,roughness:.95});
+let benchCount=0;
+function addTube(pts,r,mat,grp){const cl=[];for(const p of pts){const l=cl[cl.length-1];if(!l||l.distanceTo(p)>1e-3)cl.push(p);}if(cl.length<2)return;
+  try{const c=new THREE.CatmullRomCurve3(cl);
+  const t=new THREE.Mesh(new THREE.TubeGeometry(c,Math.max(8,cl.length*2),r,6,false),mat);t.castShadow=true;grp.add(t);}catch(e){}}
+function buildVault(path,W,H,M,grp){
+  const AS=14,m=path.length,pos=[],idx=[];
+  for(let i=0;i<m;i++){const p=path[i],pr=path[Math.max(0,i-1)],nx2=path[Math.min(m-1,i+1)];
+    let tx=nx2.x-pr.x,tz=nx2.z-pr.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;const nx=-tz,nz=tx;
+    for(let j=0;j<=AS;j++){const phi=Math.PI*j/AS;pos.push(p.x+nx*(W/2)*Math.cos(phi),H*Math.sin(phi),p.z+nz*(W/2)*Math.cos(phi));}}
+  for(let i=0;i<m-1;i++)for(let j=0;j<AS;j++){const a=i*(AS+1)+j,b=a+(AS+1);idx.push(a,b,b+1,a,b+1,a+1);}
+  const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setIndex(idx);geo.computeVertexNormals();
+  if(S.skin&&M.showSkin){const sk=new THREE.Mesh(geo,skinMat(M));sk.receiveShadow=true;grp.add(sk);
+    [0,m-1].forEach(si=>{const ep=[],ei=[],base=path[si];for(let j=0;j<=AS;j++){const k=(si*(AS+1)+j)*3;ep.push(pos[k],pos[k+1],pos[k+2]);}
+      ep.push(base.x,0,base.z);for(let j=0;j<AS;j++)ei.push(j,j+1,AS+1);
+      const g2=new THREE.BufferGeometry();g2.setAttribute("position",new THREE.Float32BufferAttribute(ep,3));g2.setIndex(ei);g2.computeVertexNormals();grp.add(new THREE.Mesh(g2,skinMat(M)));});}
+  if(S.struct){const sMat=structMat(M),ribStep=Math.max(1,Math.floor((m-1)/6));
+    for(let i=0;i<m;i+=ribStep){const pts=[];for(let j=0;j<=AS;j++){const k=(i*(AS+1)+j)*3;pts.push(new THREE.Vector3(pos[k],pos[k+1],pos[k+2]));}addTube(pts,M.ribR,sMat,grp);}
+    [Math.round(AS*0.5),Math.round(AS*0.25),Math.round(AS*0.75)].forEach(j=>{const pts=[];for(let i=0;i<m;i++){const k=(i*(AS+1)+j)*3;pts.push(new THREE.Vector3(pos[k],pos[k+1],pos[k+2]));}addTube(pts,M.ribR*0.7,sMat,grp);});
+    [0,AS].forEach(j=>{const pts=[];for(let i=0;i<m;i++){const k=(i*(AS+1)+j)*3;pts.push(new THREE.Vector3(pos[k],pos[k+1],pos[k+2]));}addTube(pts,M.ribR*0.9,sMat,grp);});}
+  // base walls along eaves
+  [0,AS].forEach(j=>{const pts=[];for(let i=0;i<m;i++){const k=(i*(AS+1)+j)*3;pts.push(new THREE.Vector3(pos[k],0.35,pos[k+2]));}addTube(pts,0.28,wallMat,grp);});
+}
+function addBenches(path,W,grp){if(!S.bench||benchCount>46)return;const m=path.length,step=Math.max(1,Math.round(m/Math.max(2,Math.round(path.length/3))));
+  for(let i=1;i<m-1;i+=step){const p=path[i],pr=path[i-1],nx2=path[i+1];let tx=nx2.x-pr.x,tz=nx2.z-pr.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;const nx=-tz,nz=tx;
+    [-1,1].forEach(s=>{if(benchCount>46)return;const off=W*0.26*s,bx=p.x+nx*off,bz=p.z+nz*off;
+      const b=new THREE.Mesh(new THREE.BoxGeometry(W*0.34,0.12,1.3),benchMat);b.position.set(bx,0.75,bz);b.castShadow=true;grp.add(b);
+      const pl=new THREE.Mesh(new THREE.BoxGeometry(W*0.32,0.34,1.2),plantMat);pl.position.set(bx,0.97,bz);pl.castShadow=true;grp.add(pl);benchCount++;});}}
+function buildDome(cx,cz,R,M,grp){const detail=R>7?2:1,geo=new THREE.IcosahedronGeometry(R,detail);
+  if(S.skin&&M.showSkin){const sk=new THREE.Mesh(geo.clone(),skinMat(M));sk.position.set(cx,0,cz);sk.receiveShadow=true;grp.add(sk);}
+  if(S.struct&&M.showLatt){const wf=new THREE.LineSegments(new THREE.WireframeGeometry(geo),lattMat(M));wf.position.set(cx,0,cz);grp.add(wf);
+    const sMat=structMat(M);[0.18,0.5,0.8].forEach(f=>{const y=R*f,rr=Math.sqrt(Math.max(.01,R*R-y*y));
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(rr,M.ribR,6,40),sMat);ring.rotation.x=Math.PI/2;ring.position.set(cx,y,cz);ring.castShadow=true;grp.add(ring);});}
+  // base ring wall
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(R*0.99,R*0.99,0.6,40,1,true),wallMat);base.position.set(cx,0.3,cz);base.castShadow=true;base.receiveShadow=true;grp.add(base);
+  if(S.bench){const bed=new THREE.Mesh(new THREE.CylinderGeometry(R*0.62,R*0.62,0.35,24),plantMat);bed.position.set(cx,0.17,cz);bed.castShadow=true;grp.add(bed);}}
+
+let camTargetR=24;
+function build3D(geo){disposeGroup(root);disposeGroup(deco);benchCount=0;const M=MATS[S.mat],rng=mulberry32(S.seed+7);
+  geo.bands.forEach(b=>{buildVault(b.path,b.w,b.h,M,root);if(geo.type==="tunnel"||geo.type==="raggiera")addBenches(b.path,b.w,root);});
+  geo.domes.forEach(d=>buildDome(d.x,d.z,d.r,M,root));
+  if(geo.water){const w=new THREE.Mesh(new THREE.CircleGeometry(geo.water.r,40),new THREE.MeshPhysicalMaterial({color:0x2b6d82,roughness:.08,clearcoat:1}));w.rotation.x=-Math.PI/2;w.position.y=0.05;root.add(w);}
+  const size=Math.max(geo.bbox.w,geo.bbox.h);camTargetR=Math.max(8,size);cam.tr=clamp(camTargetR*1.85,14,150);
+  if(S.scale){const mat=new THREE.MeshStandardMaterial({color:0x222826,roughness:.9}),g=new THREE.Group();
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(.2,.26,1.25,10),mat);body.position.y=.62;
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.17,12,12),mat);head.position.y=1.4;g.add(body,head);
+    g.position.set(geo.bbox.x1+1.5,0,0);g.traverse(o=>o.castShadow=true);deco.add(g);}
+  const bmat=new THREE.MeshStandardMaterial({color:0x4f6b3a,roughness:1});
+  for(let i=0;i<10;i++){const r=.45+rng()*.7,a=rng()*6.28,d=camTargetR*(0.95+rng()*0.6);
+    const b=new THREE.Mesh(new THREE.IcosahedronGeometry(r,0),bmat);b.position.set(Math.cos(a)*d,r*0.6,Math.sin(a)*d);b.scale.y=0.7;b.castShadow=true;deco.add(b);}
+}
+
+/* ===== camera/orbit ===== */
+let cam={r:55,th:0.7,ph:0.92,tr:55,tth:0.7,tph:0.92};
+function updateCam(){cam.r+=(cam.tr-cam.r)*0.08;cam.th+=(cam.tth-cam.th)*0.12;cam.ph+=(cam.tph-cam.ph)*0.12;
+  const ty=camTargetR*0.18;camera.position.set(Math.sin(cam.ph)*Math.cos(cam.th)*cam.r,Math.cos(cam.ph)*cam.r+ty,Math.sin(cam.ph)*Math.sin(cam.th)*cam.r);camera.lookAt(0,ty,0);}
+let drag=false,px=0,py=0;
+canvas.addEventListener("pointerdown",e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener("pointermove",e=>{if(!drag)return;cam.tth+=(e.clientX-px)*0.008;cam.tph=clamp(cam.tph-(e.clientY-py)*0.006,0.12,1.45);px=e.clientX;py=e.clientY;});
+canvas.addEventListener("pointerup",()=>drag=false);
+canvas.addEventListener("wheel",e=>{e.preventDefault();cam.tr=clamp(cam.tr*(1+(e.deltaY>0?.1:-.1)),12,150);},{passive:false});
+let lastW=0,lastH=0;
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;if(w>0&&h>0){lastW=w;lastH=h;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}}
+try{new ResizeObserver(resize).observe(stage);}catch(e){}
+window.addEventListener("resize",resize);
+function loop(){const w=stage.clientWidth,h=stage.clientHeight;
+  if(w>0&&h>0&&(w!==lastW||h!==lastH)){lastW=w;lastH=h;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+  if(S.mode==="3d"){updateCam();try{renderer.render(scene,camera);}catch(err){if(!loop.e){loop.e=1;const h2=document.getElementById("hud2");if(h2)h2.textContent="errore 3D: "+err.message;}}}
+  requestAnimationFrame(loop);}
+
+/* ===== technical drawing (plan + section) ===== */
+const NS="http://www.w3.org/2000/svg";
+function E(t,a,parent){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(parent)parent.appendChild(e);return e;}
+function txt(p,x,y,s,col,anchor,size){const e=E("text",{x,y,fill:col||"#233027","font-family":"Courier New, monospace","font-size":size||12,"text-anchor":anchor||"start"},p);e.textContent=s;return e;}
+function bandPoly(path,w,map){const m=path.length,top=[],bot=[];
+  for(let i=0;i<m;i++){const p=path[i],pr=path[Math.max(0,i-1)],nx2=path[Math.min(m-1,i+1)];
+    let tx=nx2.x-pr.x,tz=nx2.z-pr.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;const nx=-tz,nz=tx;
+    top.push(map(p.x+nx*w/2,p.z+nz*w/2));bot.push(map(p.x-nx*w/2,p.z-nz*w/2));}
+  return top.concat(bot.reverse()).map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ");}
+function dimH(p,x1,x2,y,label){const c="#233027";E("line",{x1,y1:y,x2,y2:y,stroke:c,"stroke-width":.8},p);
+  [x1,x2].forEach(x=>E("line",{x1:x,y1:y-4,x2:x,y2:y+4,stroke:c,"stroke-width":.8},p));
+  const t=txt(p,(x1+x2)/2,y-5,label,c,"middle",11);t.setAttribute("paint-order","stroke");t.setAttribute("stroke","#f6f5f0");t.setAttribute("stroke-width","3");}
+function dimV(p,y1,y2,x,label){const c="#233027";E("line",{x1:x,y1,x2:x,y2,stroke:c,"stroke-width":.8},p);
+  [y1,y2].forEach(y=>E("line",{x1:x-4,y1:y,x2:x+4,y2:y,stroke:c,"stroke-width":.8},p));
+  const t=txt(p,x-6,(y1+y2)/2+4,label,c,"end",11);t.setAttribute("paint-order","stroke");t.setAttribute("stroke","#f6f5f0");t.setAttribute("stroke-width","3");}
+function archPath(x0,gy,w,h){let d="M"+x0+" "+gy;const N=22;for(let k=1;k<=N;k++){const phi=Math.PI*k/N;
+  d+=" L"+(x0+(w/2)*(1-Math.cos(phi))).toFixed(1)+" "+(gy-h*Math.sin(phi)).toFixed(1);}return d+" Z";}
+function buildTech(geo){
+  tech.textContent="";const M=MATS[S.mat];
+  E("rect",{x:0,y:0,width:1000,height:1200,fill:"#f6f5f0"},tech);
+  const glass="#d5e6e6",gstroke="#5d7d7a",cult="#d2e6c9",ink="#233027",cut="#b0453a",cyan="#bfe4ee";
+  // ---- PLAN ----
+  txt(tech,60,52,"PIANTA",ink,"start",16).setAttribute("letter-spacing",".15em");
+  txt(tech,60,70,TYPES.find(t=>t.id===S.typ).name+"  ·  "+M.name,"#6b756b","start",12);
+  const PX0=110,PY0=95,PX1=905,PY1=690,bb=geo.bbox,pad=2;
+  const scl=Math.min((PX1-PX0)/(bb.w+pad*2),(PY1-PY0)/(bb.h+pad*2));
+  const cxp=(PX0+PX1)/2,cyp=(PY0+PY1)/2,bcx=(bb.x0+bb.x1)/2,bcz=(bb.z0+bb.z1)/2;
+  const map=(x,z)=>[cxp+(x-bcx)*scl,cyp+(z-bcz)*scl];
+  const g=E("g",{},tech);
+  geo.bands.forEach(b=>{E("polygon",{points:bandPoly(b.path,b.w,map),fill:cult,stroke:gstroke,"stroke-width":1.4},g);
+    // bench rows (dashed)
+    [0.55,-0.55].forEach(s=>{const pts=b.path.map(p=>{const i=b.path.indexOf(p);const pr=b.path[Math.max(0,i-1)],nx2=b.path[Math.min(b.path.length-1,i+1)];
+      let tx=nx2.x-pr.x,tz=nx2.z-pr.z;const tl=Math.hypot(tx,tz)||1;tx/=tl;tz/=tl;return map(p.x+(-tz)*b.w*0.3*s,p.z+tx*b.w*0.3*s);});
+      E("polyline",{points:pts.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" "),fill:"none",stroke:"#7aa06e","stroke-width":.8,"stroke-dasharray":"3 3"},g);});});
+  geo.domes.forEach(d=>{const c=map(d.x,d.z);E("circle",{cx:c[0],cy:c[1],r:d.r*scl,fill:cult,stroke:gstroke,"stroke-width":1.4},g);
+    E("circle",{cx:c[0],cy:c[1],r:d.r*scl*0.62,fill:"none",stroke:"#7aa06e","stroke-width":.8,"stroke-dasharray":"3 3"},g);});
+  if(geo.water){const c=map(geo.water.x,geo.water.z);E("circle",{cx:c[0],cy:c[1],r:geo.water.r*scl,fill:cyan,stroke:"#5d97a8","stroke-width":1.2},g);
+    txt(tech,c[0],c[1]+4,"vasca","#3a6b78","middle",10);}
+  // overall dims
+  const p00=map(bb.x0,bb.z1),p10=map(bb.x1,bb.z1),p01=map(bb.x0,bb.z0);
+  dimH(tech,p00[0],p10[0],PY1+34,bb.w.toFixed(1)+" m");
+  dimV(tech,p01[1],p00[1],PX0-30,bb.h.toFixed(1)+" m");
+  // section cut line A-A (horizontal through centre)
+  const ay=cyp;E("line",{x1:PX0-8,y1:ay,x2:PX1+8,y2:ay,stroke:cut,"stroke-width":1,"stroke-dasharray":"10 4"},tech);
+  txt(tech,PX0-14,ay+4,"A",cut,"middle",13);txt(tech,PX1+16,ay+4,"A",cut,"middle",13);
+  // north
+  const nx=PX1-6,ny=PY0+30;E("line",{x1:nx,y1:ny+16,x2:nx,y2:ny-14,stroke:ink,"stroke-width":1.4},tech);
+  E("polygon",{points:(nx-5)+","+(ny-8)+" "+(nx+5)+","+(ny-8)+" "+nx+","+(ny-20),fill:ink},tech);
+  txt(tech,nx,ny-24,"N",ink,"middle",12);txt(tech,nx-90,ny+30,"orienta E–O","#6b756b","start",10);
+  // scale bar
+  let mb=Math.max(1,Math.round((PX1-PX0)/scl/5));if(mb>10)mb=Math.round(mb/5)*5;const bar=mb*scl;
+  const sx=PX0,sy=PY1+58;E("rect",{x:sx,y:sy,width:bar,height:6,fill:ink},tech);
+  E("rect",{x:sx,y:sy,width:bar/2,height:6,fill:"#f6f5f0",stroke:ink,"stroke-width":.8},tech);
+  E("rect",{x:sx+bar/2,y:sy,width:bar/2,height:6,fill:ink},tech);
+  txt(tech,sx,sy-4,"0",ink,"middle",10);txt(tech,sx+bar,sy-4,mb+" m",ink,"middle",10);
+  // ---- SECTION ----
+  txt(tech,60,790,"SEZIONE A–A",ink,"start",16).setAttribute("letter-spacing",".15em");
+  const profs=[];
+  if(geo.type==="tunnel"){const b=geo.bands[0];for(let i=0;i<geo.bands.length;i++)profs.push({k:"arch",w:b.w,h:b.h,gap:1.4});}
+  else if(geo.type==="raggiera"){const b=geo.bands[0],d=geo.domes[0];profs.push({k:"arch",w:b.w,h:b.h,gap:1.2},{k:"dome",r:d.r,gap:1.2},{k:"arch",w:b.w,h:b.h,gap:0});}
+  else if(geo.type==="favo"){geo.domes.slice(0,3).forEach(d=>profs.push({k:"dome",r:d.r,gap:1.4}));}
+  else if(geo.type==="cupola"){profs.push({k:"dome",r:geo.domes[0].r,gap:0});}
+  else{const b=geo.bands[0];profs.push({k:"arch",w:b.w,h:b.h,gap:0});}
+  let totW=0,maxH=0;profs.forEach(p=>{totW+=(p.k==="dome"?p.r*2:p.w)+(p.gap||0);maxH=Math.max(maxH,p.k==="dome"?p.r:p.h);});
+  const SX0=110,SX1=905,gy=1090,sScl=Math.min((SX1-SX0)/totW,(1090-840)/maxH);
+  // ground
+  E("line",{x1:60,y1:gy,x2:940,y2:gy,stroke:ink,"stroke-width":1.4},tech);
+  for(let x=60;x<940;x+=12)E("line",{x1:x,y1:gy,x2:x-7,y2:gy+8,stroke:"#9a9483","stroke-width":.7},tech);
+  let cur=(1000-totW*sScl)/2;
+  profs.forEach((p,i)=>{if(p.k==="arch"){const w=p.w*sScl,h=p.h*sScl;
+      E("path",{d:archPath(cur,gy,w,h),fill:glass,"fill-opacity":.7,stroke:gstroke,"stroke-width":1.4},tech);
+      E("rect",{x:cur,y:gy-8,width:3,height:8,fill:wallC()},tech);E("rect",{x:cur+w-3,y:gy-8,width:3,height:8,fill:wallC()},tech);
+      if(i===0){dimV(tech,gy-h,gy,cur-14,p.h.toFixed(1)+" m");dimH(tech,cur,cur+w,gy+30,p.w.toFixed(1)+" m");}
+      cur+=w+(p.gap||0)*sScl;}
+    else{const r=p.r*sScl;E("path",{d:archPath(cur,gy,r*2,r),fill:glass,"fill-opacity":.7,stroke:gstroke,"stroke-width":1.4},tech);
+      // lattice hint
+      for(let k=1;k<6;k++){const a=Math.PI*k/6;E("line",{x1:cur+r,y1:gy,x2:cur+r+r*Math.cos(Math.PI-a),y2:gy-r*Math.sin(a),stroke:gstroke,"stroke-width":.6,"stroke-opacity":.5},tech);}
+      if(i===0){dimV(tech,gy-r,gy,cur-14,p.r.toFixed(1)+" m");dimH(tech,cur,cur+r*2,gy+30,(p.r*2).toFixed(1)+" m");}
+      cur+=r*2+(p.gap||0)*sScl;}});
+  // figure for scale in section
+  if(S.scale){const fx=cur+10,fh=1.75*sScl;E("rect",{x:fx,y:gy-fh,width:Math.max(3,0.45*sScl),height:fh,fill:"#33403a"},tech);}
+  // title block
+  E("rect",{x:600,y:1120,width:340,height:62,fill:"none",stroke:ink,"stroke-width":1},tech);
+  E("line",{x1:600,y1:1141,x2:940,y2:1141,stroke:ink,"stroke-width":.6},tech);
+  txt(tech,610,1135,"DoctNasa&MrBorg — serra "+S.typ,ink,"start",11);
+  txt(tech,610,1158,"materiale: "+M.name,"#3a463f","start",11);
+  txt(tech,610,1174,"sup. coperta ≈ "+Math.round(geo.area)+" m²","#3a463f","start",11);
+  txt(tech,930,1174,"scala grafica",ink,"end",10);
+}
+function wallC(){return "#c8c2b2";}
+
+/* ===== build / mode ===== */
+function build(){const geo=geometry();try{build3D(geo);}catch(err){const h2=document.getElementById("hud2");if(h2)h2.textContent="errore 3D: "+err.message;}buildTech(geo);
+  document.getElementById("rArea").textContent=Math.round(geo.area);
+  document.getElementById("hud").textContent=TYPES.find(t=>t.id===S.typ).name+" · "+MATS[S.mat].name;
+  document.getElementById("noteDisp").innerHTML=DISP[S.typ];
+  document.getElementById("noteMat").innerHTML='<span class="k">luce</span> '+MATS[S.mat].luce+' · <span class="k">isol.</span> '+MATS[S.mat].isol+'<br><span class="k">costo</span> '+MATS[S.mat].costo+' · <span class="k">bando</span> '+MATS[S.mat].fin+'<br>'+MATS[S.mat].nota;}
+function setMode(m){S.mode=m;const t=m==="tech";canvas.style.display=t?"none":"block";tech.style.display=t?"block":"none";
+  document.getElementById("hud2").textContent=t?"disegno tecnico · esporta in SVG":"trascina per ruotare · scroll per zoom";}
+
+/* ===== UI ===== */
+function buildSeg(host,items,key,cb){host.textContent="";items.forEach(it=>{const b=document.createElement("button");b.textContent=it.name;
+  b.setAttribute("aria-pressed",S[key]===it.id);b.onclick=()=>{S[key]=it.id;[...host.children].forEach(c=>c.setAttribute("aria-pressed","false"));b.setAttribute("aria-pressed","true");cb?cb():build();};host.appendChild(b);});}
+buildSeg(document.getElementById("segMode"),[{id:"3d",name:"Vista 3D"},{id:"tech",name:"Disegno tecnico"}],"mode",()=>setMode(S.mode));
+buildSeg(document.getElementById("segTyp"),TYPES,"typ");
+buildSeg(document.getElementById("segMat"),Object.keys(MATS).map(k=>({id:k,name:MATS[k].name})),"mat");
+function bindRange(id,key,fmt,vid){const s=document.getElementById(id),v=document.getElementById(vid);s.value=S[key];v.textContent=fmt(S[key]);
+  s.oninput=()=>{S[key]=+s.value;v.textContent=fmt(S[key]);build();};}
+bindRange("sModuli","moduli",x=>x,"vModuli");bindRange("sOrgan","organ",x=>x+"%","vOrgan");
+bindRange("sAllung","allung",x=>x+"%","vAllung");bindRange("sLen","len",x=>x+" m","vLen");
+document.getElementById("tSkin").onchange=e=>{S.skin=e.target.checked;build();};
+document.getElementById("tStruct").onchange=e=>{S.struct=e.target.checked;build();};
+document.getElementById("tBench").onchange=e=>{S.bench=e.target.checked;build();};
+document.getElementById("tScale").onchange=e=>{S.scale=e.target.checked;build();};
+document.getElementById("btnGen").onclick=()=>{S.seed=Math.floor(Math.random()*1e9);build();};
+document.getElementById("btn300").onclick=()=>{const A=+document.getElementById("rArea").textContent;
+  if(A>0){const L=clamp(Math.round(S.len*Math.sqrt(300/A)),6,40);S.len=L;const s=document.getElementById("sLen");s.value=L;document.getElementById("vLen").textContent=L+" m";build();}};
+document.getElementById("btnPng").onclick=()=>{
+  if(S.mode==="3d"){renderer.render(scene,camera);canvas.toBlob(b=>dl(b,"serra_3d.png"));}
+  else{const str=new XMLSerializer().serializeToString(tech);const img=new Image();
+    img.onload=()=>{const cv=document.createElement("canvas");cv.width=2000;cv.height=2400;const ctx=cv.getContext("2d");ctx.fillStyle="#f6f5f0";ctx.fillRect(0,0,2000,2400);ctx.drawImage(img,0,0,2000,2400);cv.toBlob(b=>dl(b,"serra_tecnico.png"));};
+    img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(str);}};
+document.getElementById("btnSvg").onclick=()=>{const c=tech.cloneNode(true);c.setAttribute("xmlns",NS);
+  const str=new XMLSerializer().serializeToString(c);dl(new Blob([str],{type:"image/svg+xml"}),"serra_pianta_sezione.svg");};
+function dl(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement("a");a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),2000);}
+
+resize();setMode("3d");build();loop();
+})();}
+</script>
+</body>
+</html>
