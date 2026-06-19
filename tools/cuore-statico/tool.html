@@ -310,6 +310,26 @@
   }
   .wave-canvas.live { border-color: var(--fg); }
   .wave-canvas.purple-border { border-color: var(--purple); }
+  .grain-canvas {
+    width: 100%; height: 160px; display: block;
+    background: #000; border: 1px solid var(--purple);
+    image-rendering: pixelated;
+  }
+  .grain-cloud { position: relative; overflow: hidden; }
+  .grain-hud {
+    position: absolute; left: 8px; top: 6px; font-size: 10px;
+    letter-spacing: 1px; color: var(--purple); pointer-events: none;
+    text-shadow: 0 0 6px rgba(198,120,255,0.35);
+  }
+  .rec-stem-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin-bottom: 10px; }
+  .rec-stem-grid label {
+    display: flex; align-items: center; gap: 5px; font-size: 10px;
+    letter-spacing: 0.5px; cursor: pointer; opacity: 0.85;
+  }
+  .rec-stem-grid input { accent-color: var(--red); }
+  .rec-track-tag { font-size: 9px; letter-spacing: 1px; color: var(--amber); margin-right: 6px; }
+  button.grain-layer, button.grain-mode { border-color: var(--purple); color: var(--purple); font-size: 10px; padding: 7px 4px; }
+  button.grain-layer.on, button.grain-mode.on { background: var(--purple); color: var(--bg); }
 
   .rec-dot {
     display: inline-block;
@@ -534,9 +554,9 @@
 </div>
 
 <header>
-  <div class="brand">DOCTNASA&MRBORG // STUDIO_v06</div>
+  <div class="brand">DOCTNASA&MRBORG // STUDIO_v07</div>
   <div class="title">CUORE_STATICO</div>
-  <div class="subtitle">synth.sampler.recorder.dub_engine · portal_lan</div>
+  <div class="subtitle">synth.grain.rec_stems · dub_engine · portal_lan</div>
 </header>
 
 <div id="resumeBanner" class="banner">⚠ AUDIO SOSPESO — TOCCA QUI PER RIAVVIARE</div>
@@ -573,6 +593,7 @@
   <button class="tab"        data-tab="sampler">SAMPLER</button>
   <button class="tab"        data-tab="pattern">PATTERN</button>
   <button class="tab"        data-tab="fx">FX</button>
+  <button class="tab purple" data-tab="grain">GRAIN</button>
   <button class="tab purple" data-tab="portal">PORTAL</button>
   <button class="tab"        data-tab="rec">REC</button>
 </div>
@@ -1088,6 +1109,80 @@
 
 </div>
 
+<!-- ============== TAB: GRAIN ============== -->
+<div class="tabpanel" id="tab-grain">
+
+  <section class="section purple">
+    <div class="section-title">// ENGINE · GRANULAR</div>
+    <div class="grid-5" style="margin-bottom: 8px" id="grainLayerBtns">
+      <button type="button" class="grain-layer on" data-grain-layer="pad">PAD</button>
+      <button type="button" class="grain-layer" data-grain-layer="bass">BASS</button>
+      <button type="button" class="grain-layer" data-grain-layer="lead">LEAD</button>
+      <button type="button" class="grain-layer" data-grain-layer="noise">NSE</button>
+      <button type="button" class="grain-layer" data-grain-layer="sample">SMP</button>
+    </div>
+    <div class="row" style="margin-bottom: 8px">
+      <span class="label">EDITING</span><span class="value" id="grainEditingVal">PAD</span>
+    </div>
+    <div class="grid-5" style="margin-bottom: 10px" id="grainModeBtns">
+      <button type="button" class="grain-mode" data-grain-mode="pad">PAD·G</button>
+      <button type="button" class="grain-mode" data-grain-mode="bass">BAS·G</button>
+      <button type="button" class="grain-mode" data-grain-mode="lead">LED·G</button>
+      <button type="button" class="grain-mode" data-grain-mode="noise">NSE·G</button>
+      <button type="button" class="grain-mode" data-grain-mode="sample">SMP·G</button>
+    </div>
+    <div style="font-size:10px;opacity:0.6;line-height:1.55;margin-bottom:10px">
+      Disegna il suono in <b>SYNTH</b>, poi <b>CATTURA</b> il layer. Attiva <b>·G</b> per suonare in granulare nel pattern / cloud.
+      Il campione <b>SMP</b> usa il file caricato in SAMPLER (cattura opzionale).
+    </div>
+    <div class="grid-2" style="margin-bottom: 8px">
+      <button id="grainCaptureBtn" class="purple small">↳ CATTURA DA SYNTH</button>
+      <button id="grainUseSampleBtn" class="small">USE SMP FILE</button>
+    </div>
+    <div class="row"><span class="label">BUFFER</span><span class="value" id="grainStatus">—</span></div>
+  </section>
+
+  <section class="section purple">
+    <div class="section-title">// GRAIN CLOUD · VISUAL</div>
+    <div class="grain-cloud">
+      <canvas id="grainCanvas" class="grain-canvas" width="600" height="160"></canvas>
+      <div class="grain-hud" id="grainHud">// nessun buffer — cattura da synth</div>
+    </div>
+  </section>
+
+  <section class="section purple">
+    <div class="section-title">// GRAIN PARAMS</div>
+    <div class="slider-block">
+      <div class="row"><span class="label">GRAIN_SIZE</span><span class="value" id="grainSizeVal">0.12 s</span></div>
+      <input type="range" id="grainSize" min="0.02" max="0.6" step="0.01" value="0.12">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">SPRAY</span><span class="value" id="grainSprayVal">0.35</span></div>
+      <input type="range" id="grainSpray" min="0" max="1" step="0.01" value="0.35">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">POSITION</span><span class="value" id="grainPosVal">0.25</span></div>
+      <input type="range" id="grainPos" min="0" max="1" step="0.01" value="0.25">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">PITCH_SPREAD</span><span class="value" id="grainPitchVal">7 st</span></div>
+      <input type="range" id="grainPitch" min="0" max="24" step="1" value="7">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">BURST_COUNT</span><span class="value" id="grainBurstVal">4</span></div>
+      <input type="range" id="grainBurst" min="1" max="12" step="1" value="4">
+    </div>
+    <div class="slider-block">
+      <div class="row"><span class="label">CLOUD_RATE</span><span class="value" id="grainCloudVal">0.45</span></div>
+      <input type="range" id="grainCloud" min="0" max="1" step="0.01" value="0.45">
+    </div>
+    <div class="grid-2" style="margin-top: 8px">
+      <button id="grainCloudBtn" class="purple on">CLOUD: ON</button>
+      <button id="grainPreviewBtn" class="small">▶ BURST PREVIEW</button>
+    </div>
+  </section>
+</div>
+
 <!-- ============== TAB: REC ============== -->
 <div class="tabpanel" id="tab-rec">
 
@@ -1099,12 +1194,22 @@
     </div>
     <div class="row"><span class="label">TIME</span><span class="value" id="recTime">0:00</span></div>
     <div class="row" style="margin-bottom:10px"><span class="label">FORMAT</span><span class="value" id="recFormat">--</span></div>
+    <div class="section-title" style="margin-bottom:6px">// STEM TARGETS</div>
+    <div class="rec-stem-grid" id="recStemGrid">
+      <label><input type="checkbox" data-rec-stem="master" checked> MASTER</label>
+      <label><input type="checkbox" data-rec-stem="bass"> BASS</label>
+      <label><input type="checkbox" data-rec-stem="pad"> PAD</label>
+      <label><input type="checkbox" data-rec-stem="lead"> LEAD</label>
+      <label><input type="checkbox" data-rec-stem="drums"> DRUMS</label>
+      <label><input type="checkbox" data-rec-stem="noise"> NSE</label>
+      <label><input type="checkbox" data-rec-stem="sample"> SMP</label>
+    </div>
     <div class="grid-2">
       <button id="recStartBtn" class="red">● START REC</button>
       <button id="recStopBtn"  class="red">◼ STOP</button>
     </div>
     <div style="font-size:10px; opacity:0.6; line-height:1.5; margin-top:10px">
-      Registra il mix master. Le registrazioni sopravvivono al reload (salvate localmente nel browser).
+      Registra master e/o stem per layer (bass, pad, lead, drums, noise, sample). Salvate in locale nel browser.
     </div>
   </section>
 
@@ -1117,7 +1222,7 @@
 </div>
 
 <footer>
-  <div>SYNTH/SAMPLE → DUB_BUS → AUTOFILTER → DELAY → REVERB → MASTER → REC/OUT</div>
+  <div>SYNTH/GRAIN → DUB_BUS → AUTOFILTER → DELAY → REVERB → MASTER/STEMS → REC</div>
   <div class="sig">tieni il telefono vicino al cuore.</div>
 </footer>
 
@@ -1258,6 +1363,18 @@ const sampleOneShotVoices = [];
 let mediaRecorder = null;
 let recordedChunks = [];
 let recStartTime = 0;
+let stemRecorders = {};
+let stemRecordedChunks = {};
+let recStemTargets = { master: true, bass: false, pad: false, lead: false, drums: false, noise: false, sample: false };
+
+// Granular engine
+const GRAIN_LAYERS = ['pad', 'bass', 'lead', 'noise', 'sample'];
+let grainBuffers = {};
+let grainModeLayers = { pad: false, bass: false, lead: false, noise: false, sample: false };
+let grainEditLayer = 'pad';
+let grainParams = { grainSize: 0.12, spray: 0.35, position: 0.25, pitchSpread: 7, burst: 4, cloudRate: 0.45, cloudOn: true };
+let activeGrainViz = [];
+let grainCaptureBusy = false;
 let recTimer = null;
 
 // Musical data
@@ -1385,6 +1502,22 @@ if (storedState.fxSends && typeof storedState.fxSends === 'object') {
   });
 }
 
+if (storedState.grainParams && typeof storedState.grainParams === 'object') {
+  Object.assign(grainParams, storedState.grainParams);
+}
+if (storedState.grainModeLayers && typeof storedState.grainModeLayers === 'object') {
+  GRAIN_LAYERS.forEach(function (l) {
+    if (typeof storedState.grainModeLayers[l] === 'boolean') grainModeLayers[l] = storedState.grainModeLayers[l];
+  });
+}
+if (storedState.recStemTargets && typeof storedState.recStemTargets === 'object') {
+  Object.keys(recStemTargets).forEach(function (k) {
+    if (typeof storedState.recStemTargets[k] === 'boolean') recStemTargets[k] = storedState.recStemTargets[k];
+  });
+}
+
+function persistGrainState() { saveState({ grainParams, grainModeLayers }); }
+function persistRecStemTargets() { saveState({ recStemTargets }); }
 function persistPatterns() { saveState({ patterns, usePatternMode, drumKit, bassOctave, drumVoiceConfig, fxSends, fxTargetTrack }); }
 let fxPersistTimer = null;
 function persistFxStateDebounced() {
@@ -1756,8 +1889,8 @@ async function generateTrackFromPatterns() {
   isPlaying = true;
   $('stateVal').textContent = '⏺ RENDER ' + bars + ' BAR';
 
-  if (mediaRecorder && mediaRecorder.state === 'recording') {
-    mediaRecorder.stop();
+  if (Object.keys(stemRecorders).length) {
+    $('recStopBtn').click();
     await new Promise(r => setTimeout(r, 300));
   }
   $('recStartBtn').click();
@@ -1853,7 +1986,146 @@ function tickLegacyDrums() {
   }
   if (step % 4 === 0) { try { triggerDrum('kick', t); bumpTrig(); } catch (e) {} }
   if (step % 8 === 4) { try { triggerDrum('snare', t); bumpTrig(); } catch (e) {} }
-  if (step % 2 === 0) { try { triggerDrum('ch', t); } catch (e) {} }
+  if (step % 2 === 0) { try { triggerDrum('ch', t); } catch (e) {}   }
+}
+
+// ============================================================
+// GRANULAR ENGINE
+// ============================================================
+function getGrainBuffer(layer) {
+  if (layer === 'sample') return sampleBuffer || grainBuffers.sample || null;
+  return grainBuffers[layer] || null;
+}
+
+function getGrainBus(layer) {
+  if (!A) return null;
+  const map = { pad: A.padGain, bass: A.bassGain, lead: A.leadGain, noise: A.noiseGain, sample: A.sampleGain };
+  return map[layer] || null;
+}
+
+function grainBusInput(bus) {
+  if (!bus) return null;
+  return bus.input != null ? bus.input : bus;
+}
+
+function spawnGrain(layer, time, pitchMul) {
+  const buf = getGrainBuffer(layer);
+  const bus = getGrainBus(layer);
+  if (!buf || !bus || !buf.duration) return;
+  const ctx = Tone.getContext().rawContext;
+  const out = grainBusInput(bus);
+  if (!out) return;
+
+  const p = grainParams;
+  const gDur = Math.max(0.02, Math.min(buf.duration * 0.9, p.grainSize));
+  const span = Math.max(0, buf.duration - gDur);
+  const base = span * p.position;
+  const off = Math.max(0, Math.min(span, base + (Math.random() - 0.5) * p.spray * span));
+  const rate = (pitchMul || 1) * (1 + (Math.random() - 0.5) * p.pitchSpread / 50);
+
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = Math.max(0.25, Math.min(4, rate));
+  const env = ctx.createGain();
+  src.connect(env);
+  env.connect(out);
+  const t0 = time || ctx.currentTime;
+  env.gain.setValueAtTime(0.0001, t0);
+  env.gain.exponentialRampToValueAtTime(1, t0 + gDur * 0.1);
+  env.gain.exponentialRampToValueAtTime(0.0001, t0 + gDur);
+  try { src.start(t0, off, gDur); src.stop(t0 + gDur + 0.03); } catch (e) { return; }
+
+  activeGrainViz.push({ layer, off, gDur, dur: buf.duration, birth: performance.now(), life: gDur * 1000 + 180 });
+  if (activeGrainViz.length > 140) activeGrainViz.shift();
+}
+
+function triggerGrainBurst(layer, time, count, pitchMul) {
+  const n = count || Math.max(1, Math.round(grainParams.burst));
+  for (let i = 0; i < n; i++) spawnGrain(layer, time + i * 0.007, pitchMul || 1);
+}
+
+function grainLayerActive(layer) {
+  return !!grainModeLayers[layer] && !!getGrainBuffer(layer) && !!layers[layer];
+}
+
+function grainCloudTick() {
+  if (!isPlaying || !grainParams.cloudOn) return;
+  const t = Tone.now();
+  GRAIN_LAYERS.forEach(function (layer) {
+    if (!grainLayerActive(layer)) return;
+    if (Math.random() < grainParams.cloudRate * 0.22) triggerGrainBurst(layer, t, 1);
+  });
+}
+
+async function captureLayerForGrain(layer) {
+  if (grainCaptureBusy || !GRAIN_LAYERS.includes(layer)) return;
+  await initAudio();
+  grainCaptureBusy = true;
+  const btn = $('grainCaptureBtn');
+  if (btn) btn.textContent = '● CATTURA…';
+  const bus = getGrainBus(layer);
+  if (!bus || !Tone.Recorder) {
+    grainCaptureBusy = false;
+    if (btn) btn.textContent = '↳ CATTURA DA SYNTH';
+    return;
+  }
+  const recorder = new Tone.Recorder();
+  bus.connect(recorder);
+  const saved = Object.assign({}, layers);
+  TRACKS.forEach(function (t) { layers[t] = t === layer ? 1 : 0; });
+  applyLayerMutes();
+  await recorder.start();
+  const t = Tone.now() + 0.08;
+  try {
+    if (layer === 'pad') {
+      const c = PROGS[currentProg][0].map(function (n) { return n + currentKey; });
+      A.pad.triggerAttackRelease(c.map(midiToFreq), 2.8, t, 0.75);
+    } else if (layer === 'bass') {
+      A.bass.triggerAttackRelease(midiToFreq(47 + currentKey + bassOctave * 12), '2n', t, 0.95);
+    } else if (layer === 'lead') {
+      A.lead.triggerAttackRelease(midiToFreq(LEAD_BASE + currentKey), '2n', t, 0.7);
+    } else if (layer === 'noise') {
+      A.noise.gate.triggerAttackRelease(1.8, t);
+    } else if (layer === 'sample' && sampleBuffer) {
+      playSampleAtTime(t, 0.85);
+    }
+  } catch (e) {}
+  await new Promise(function (r) { setTimeout(r, 3200); });
+  let blob = null;
+  try { blob = await recorder.stop(); } catch (e) {}
+  try { bus.disconnect(recorder); } catch (e) {}
+  Object.assign(layers, saved);
+  applyLayerMutes();
+  syncLayerButtonsUI();
+  if (blob) {
+    const ab = await blob.arrayBuffer();
+    grainBuffers[layer] = await Tone.context.decodeAudioData(ab);
+    updateGrainStatus();
+    drawGrainWaveform();
+  }
+  grainCaptureBusy = false;
+  if (btn) btn.textContent = '↳ CATTURA DA SYNTH';
+}
+
+function updateGrainStatus() {
+  const el = $('grainStatus');
+  if (!el) return;
+  const buf = getGrainBuffer(grainEditLayer);
+  if (!buf) { el.textContent = '—'; return; }
+  el.textContent = grainEditLayer.toUpperCase() + ' · ' + buf.duration.toFixed(2) + 's';
+}
+
+function syncGrainModeUI() {
+  document.querySelectorAll('.grain-mode').forEach(function (btn) {
+    const l = btn.dataset.grainMode;
+    btn.classList.toggle('on', !!grainModeLayers[l]);
+  });
+  document.querySelectorAll('.grain-layer').forEach(function (btn) {
+    btn.classList.toggle('on', btn.dataset.grainLayer === grainEditLayer);
+  });
+  const ev = $('grainEditingVal');
+  if (ev) ev.textContent = grainEditLayer.toUpperCase();
+  updateGrainStatus();
 }
 
 function tickPattern() {
@@ -1871,7 +2143,12 @@ function tickPattern() {
   const bNote = patterns.bass[step];
   if (bNote != null && layers.bass) {
     try {
-      A.bass.triggerAttackRelease(midiToFreq(bNote + currentKey + bassOctave * 12), '16n', t, 0.95);
+      if (grainLayerActive('bass')) {
+        const ratio = Math.pow(2, bNote / 12);
+        triggerGrainBurst('bass', t, grainParams.burst, ratio);
+      } else {
+        A.bass.triggerAttackRelease(midiToFreq(bNote + currentKey + bassOctave * 12), '16n', t, 0.95);
+      }
       const h = $('heart'); h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
       bumpTrig();
     } catch (e) {}
@@ -1883,7 +2160,11 @@ function tickPattern() {
     if (pVal >= 1 && pVal <= 4) ci = pVal - 1;
     const c = PROGS[currentProg][ci % 4].map(n => n + currentKey);
     try {
-      A.pad.triggerAttackRelease(c.map(midiToFreq), '2n', t, 0.65);
+      if (grainLayerActive('pad')) {
+        triggerGrainBurst('pad', t, grainParams.burst + 1);
+      } else {
+        A.pad.triggerAttackRelease(c.map(midiToFreq), '2n', t, 0.65);
+      }
       $('chordVal').textContent = chordName(c);
       bumpTrig();
     } catch (e) {}
@@ -1897,21 +2178,33 @@ function tickPattern() {
     const oct = hi ? 12 : 0;
     if (LEAD_SCALE[deg] != null) {
       try {
-        A.lead.triggerAttackRelease(
-          midiToFreq(LEAD_BASE + LEAD_SCALE[deg] + oct + currentKey),
-          '8n', t, 0.55
-        );
+        if (grainLayerActive('lead')) {
+          const ratio = Math.pow(2, (LEAD_SCALE[deg] + oct) / 12);
+          triggerGrainBurst('lead', t, grainParams.burst, ratio);
+        } else {
+          A.lead.triggerAttackRelease(
+            midiToFreq(LEAD_BASE + LEAD_SCALE[deg] + oct + currentKey),
+            '8n', t, 0.55
+          );
+        }
         bumpTrig();
       } catch (e) {}
     }
   }
 
   if (patterns.noise[step] && layers.noise) {
-    try { A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl, t); } catch (e) {}
+    try {
+      if (grainLayerActive('noise')) triggerGrainBurst('noise', t, grainParams.burst);
+      else A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl, t);
+    } catch (e) {}
   }
 
   if (patterns.sample[step] && sampleBuffer && layers.sample) {
-    try { playSample(); bumpTrig(); } catch (e) {}
+    try {
+      if (grainLayerActive('sample')) triggerGrainBurst('sample', t, grainParams.burst);
+      else playSample();
+      bumpTrig();
+    } catch (e) {}
   }
 }
 
@@ -2136,6 +2429,21 @@ async function initAudio() {
   mkTrackFx(bassGain, 'bass');
   mkTrackFx(drumsGain, 'drums');
 
+  const recStems = {};
+  function connectStemTap(trackGain, key) {
+    const dest = Tone.context.createMediaStreamDestination();
+    const tap = new Tone.Gain(1);
+    trackGain.connect(tap);
+    tap.connect(dest);
+    recStems[key] = { dest, tap };
+  }
+  connectStemTap(padGain, 'pad');
+  connectStemTap(leadGain, 'lead');
+  connectStemTap(noiseGain, 'noise');
+  connectStemTap(sampleGain, 'sample');
+  connectStemTap(bassGain, 'bass');
+  connectStemTap(drumsGain, 'drums');
+
   const bassDist = new Tone.Distortion(0.20).connect(bassGain);
 
   const pad  = buildPadSynth();  pad.connect(padGain);
@@ -2148,7 +2456,7 @@ async function initAudio() {
   noiseNodes.last.connect(noiseGain);
 
   A = {
-    limiter, meter, master, recDest, recTap, portalSend, portalTap, portalRemoteIn, portalAna,
+    limiter, meter, master, recDest, recTap, recStems, portalSend, portalTap, portalRemoteIn, portalAna,
     reverb, dubDelay, dubFilter, delayIn, filterIn, reverbIn,
     fxTrackSends,
     padGain, leadGain, noiseGain, sampleGain, bassGain, drumsGain,
@@ -2431,6 +2739,7 @@ function tick() {
 
     beat16++;
     updatePatternPlayhead();
+    grainCloudTick();
   } catch (err) {
     console.warn('tick error', err);
     beat16++;
@@ -3245,37 +3554,86 @@ function pickMimeType() {
 }
 function fmtTime(sec) { const m = Math.floor(sec/60); const s = Math.floor(sec%60); return m+':'+(s<10?'0':'')+s; }
 
+function getActiveRecStems() {
+  return Object.keys(recStemTargets).filter(function (k) { return recStemTargets[k]; });
+}
+
+function recStemStream(key) {
+  if (!A) return null;
+  if (key === 'master') return A.recDest && A.recDest.stream;
+  return A.recStems && A.recStems[key] ? A.recStems[key].dest.stream : null;
+}
+
+async function finalizeStemRecording(key, mime) {
+  const chunks = key === 'master' ? recordedChunks : (stemRecordedChunks[key] || []);
+  if (!chunks.length) return;
+  const blob = new Blob(chunks, { type: mime || 'audio/webm' });
+  const ext = (mime || '').includes('mp4') ? 'm4a' : (mime || '').includes('ogg') ? 'ogg' : 'webm';
+  const ts = new Date();
+  const stamp = ts.toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const name = 'cuore_' + key + '_' + stamp + '.' + ext;
+  const record = { name, track: key, mime: blob.type, size: blob.size, blob, createdAt: ts.getTime() };
+  const id = await idbAdd(record);
+  if (id !== null) addRecordingToList({ id, ...record });
+}
+
+function syncRecStemUI() {
+  document.querySelectorAll('[data-rec-stem]').forEach(function (inp) {
+    const k = inp.dataset.recStem;
+    inp.checked = !!recStemTargets[k];
+  });
+}
+
 $('recStartBtn').addEventListener('click', async () => {
   await initAudio();
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') return;
+  if (Object.keys(stemRecorders).length) return;
   if (!window.MediaRecorder) { $('recStatus').textContent = 'NOT SUPPORTED'; return; }
+  const stems = getActiveRecStems();
+  if (!stems.length) { $('recStatus').textContent = 'NO TARGET'; return; }
   const mime = pickMimeType();
   $('recFormat').textContent = mime || 'default';
   recordedChunks = [];
-  try {
-    mediaRecorder = new MediaRecorder(A.recDest.stream, mime ? { mimeType: mime } : undefined);
-  } catch (err) { $('recStatus').textContent = 'ERROR'; console.error(err); return; }
-  mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
-  mediaRecorder.onstop = async () => {
-    const blob = new Blob(recordedChunks, { type: mime || 'audio/webm' });
-    const ext = mime.includes('mp4') ? 'm4a' : mime.includes('ogg') ? 'ogg' : 'webm';
-    const ts = new Date();
-    const stamp = ts.toISOString().replace(/[:.]/g,'-').slice(0,19);
-    const name = `cuore_${stamp}.${ext}`;
-    const record = { name, mime: blob.type, size: blob.size, blob, createdAt: ts.getTime() };
-    const id = await idbAdd(record);
-    if (id !== null) addRecordingToList({ id, ...record });
-  };
-  mediaRecorder.start(100);
+  stemRecordedChunks = {};
+  stemRecorders = {};
+  let started = 0;
+  stems.forEach(function (key) {
+    const stream = recStemStream(key);
+    if (!stream) return;
+    stemRecordedChunks[key] = [];
+    try {
+      const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      mr.ondataavailable = function (e) {
+        if (e.data.size > 0) {
+          if (key === 'master') recordedChunks.push(e.data);
+          else stemRecordedChunks[key].push(e.data);
+        }
+      };
+      mr.onstop = function () { finalizeStemRecording(key, mime); };
+      mr.start(100);
+      stemRecorders[key] = mr;
+      if (key === 'master') mediaRecorder = mr;
+      started++;
+    } catch (err) { console.warn('rec stem', key, err); }
+  });
+  if (!started) { $('recStatus').textContent = 'ERROR'; return; }
   recStartTime = Date.now();
-  $('recStatus').textContent = 'RECORDING';
+  $('recStatus').textContent = 'REC · ' + stems.join('+').toUpperCase();
   $('recDot').classList.add('live');
-  recTimer = setInterval(() => { $('recTime').textContent = fmtTime((Date.now() - recStartTime)/1000); }, 250);
+  recTimer = setInterval(function () {
+    $('recTime').textContent = fmtTime((Date.now() - recStartTime) / 1000);
+  }, 250);
 });
 
 $('recStopBtn').addEventListener('click', () => {
-  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-  mediaRecorder.stop();
+  const keys = Object.keys(stemRecorders);
+  if (!keys.length) return;
+  keys.forEach(function (key) {
+    try {
+      if (stemRecorders[key].state !== 'inactive') stemRecorders[key].stop();
+    } catch (e) {}
+  });
+  stemRecorders = {};
+  mediaRecorder = null;
   clearInterval(recTimer);
   $('recStatus').textContent = 'IDLE';
   $('recDot').classList.remove('live');
@@ -3292,9 +3650,10 @@ function addRecordingToList(rec) {
   wrap.className = 'file-wrap';
   wrap.dataset.id = rec.id;
   const kb = (rec.size / 1024).toFixed(0);
+  const track = rec.track ? rec.track.toUpperCase() : 'MASTER';
   wrap.innerHTML = `
     <div class="file-item">
-      <span>${escapeHtml(rec.name)} <span style="opacity:0.5">(${kb} KB)</span></span>
+      <span><span class="rec-track-tag">${escapeHtml(track)}</span>${escapeHtml(rec.name)} <span style="opacity:0.5">(${kb} KB)</span></span>
       <span><a href="${url}" download="${escapeHtml(rec.name)}">⬇ DL</a>
         <span class="del">×</span></span>
     </div>`;
@@ -3492,6 +3851,158 @@ try { initMixSliders(); } catch (e) { console.error('mix sliders', e); }
 try { initPatternSequencer(); } catch (e) { console.error('pattern init', e); }
 try { loadSynthParamsToUI(); } catch (e) { console.error('synth ui', e); }
 try { refreshPresetList(); } catch (e) { console.error('presets', e); }
+
+// ============================================================
+// GRAIN UI + VISUALIZATION
+// ============================================================
+const grainCanvas = $('grainCanvas');
+const grainCtx = grainCanvas ? grainCanvas.getContext('2d') : null;
+
+function drawGrainWaveform() {
+  if (!grainCtx) return;
+  const w = grainCanvas.width, h = grainCanvas.height;
+  grainCtx.fillStyle = '#000';
+  grainCtx.fillRect(0, 0, w, h);
+  grainCtx.strokeStyle = '#1a4d22';
+  grainCtx.lineWidth = 1;
+  grainCtx.beginPath();
+  grainCtx.moveTo(0, h / 2); grainCtx.lineTo(w, h / 2); grainCtx.stroke();
+
+  const buf = getGrainBuffer(grainEditLayer);
+  const hud = $('grainHud');
+  if (!buf) {
+    if (hud) hud.textContent = '// nessun buffer — cattura da synth';
+    return;
+  }
+  const ch = buf.getChannelData(0);
+  const peaks = Math.min(500, w);
+  grainCtx.strokeStyle = '#5a3080';
+  grainCtx.lineWidth = 1;
+  grainCtx.beginPath();
+  for (let i = 0; i < peaks; i++) {
+    const start = Math.floor((i / peaks) * ch.length);
+    const end = Math.floor(((i + 1) / peaks) * ch.length);
+    let mn = 0, mx = 0;
+    for (let j = start; j < end; j++) {
+      const v = ch[j];
+      if (v < mn) mn = v;
+      if (v > mx) mx = v;
+    }
+    const x = (i / peaks) * w;
+    const y1 = (1 - (mx + 1) / 2) * h;
+    const y2 = (1 - (mn + 1) / 2) * h;
+    grainCtx.moveTo(x, y1);
+    grainCtx.lineTo(x, y2);
+  }
+  grainCtx.stroke();
+
+  const p = grainParams;
+  const span = Math.max(0, buf.duration - p.grainSize);
+  const winX = (p.position * span / buf.duration) * w;
+  const winW = Math.max(6, (p.grainSize / buf.duration) * w);
+  grainCtx.fillStyle = 'rgba(198,120,255,0.14)';
+  grainCtx.fillRect(winX, 8, winW, h - 16);
+  grainCtx.strokeStyle = '#c678ff';
+  grainCtx.strokeRect(winX, 8, winW, h - 16);
+
+  const now = performance.now();
+  let shown = 0;
+  activeGrainViz.forEach(function (g) {
+    if (g.layer !== grainEditLayer) return;
+    const age = now - g.birth;
+    if (age > g.life) return;
+    shown++;
+    const alpha = 1 - age / g.life;
+    const x = (g.off / g.dur) * w;
+    const gw = Math.max(4, (g.gDur / g.dur) * w);
+    grainCtx.fillStyle = 'rgba(198,120,255,' + (alpha * 0.85) + ')';
+    grainCtx.beginPath();
+    grainCtx.ellipse(x + gw * 0.5, h * 0.5, gw * 0.45, 5 + alpha * 6, 0, 0, Math.PI * 2);
+    grainCtx.fill();
+    grainCtx.strokeStyle = 'rgba(233,255,240,' + (alpha * 0.5) + ')';
+    grainCtx.stroke();
+  });
+  if (hud) hud.textContent = '// ' + grainEditLayer.toUpperCase() + ' · ' + shown + ' grani attivi';
+}
+
+function drawGrainLoop() {
+  drawGrainWaveform();
+  requestAnimationFrame(drawGrainLoop);
+}
+drawGrainLoop();
+
+function bindGrainSlider(id, key, fmt, vid) {
+  const s = $(id), v = $(vid);
+  if (!s || !v) return;
+  s.value = grainParams[key];
+  v.textContent = fmt(grainParams[key]);
+  s.addEventListener('input', function () {
+    grainParams[key] = parseFloat(s.value);
+    v.textContent = fmt(grainParams[key]);
+    persistGrainState();
+    drawGrainWaveform();
+  });
+}
+
+function initGrainUI() {
+  syncGrainModeUI();
+  syncRecStemUI();
+  bindGrainSlider('grainSize', 'grainSize', function (x) { return x.toFixed(2) + ' s'; }, 'grainSizeVal');
+  bindGrainSlider('grainSpray', 'spray', function (x) { return x.toFixed(2); }, 'grainSprayVal');
+  bindGrainSlider('grainPos', 'position', function (x) { return x.toFixed(2); }, 'grainPosVal');
+  bindGrainSlider('grainPitch', 'pitchSpread', function (x) { return x + ' st'; }, 'grainPitchVal');
+  bindGrainSlider('grainBurst', 'burst', function (x) { return String(Math.round(x)); }, 'grainBurstVal');
+  bindGrainSlider('grainCloud', 'cloudRate', function (x) { return x.toFixed(2); }, 'grainCloudVal');
+
+  document.querySelectorAll('.grain-layer').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      grainEditLayer = btn.dataset.grainLayer;
+      syncGrainModeUI();
+      drawGrainWaveform();
+    });
+  });
+  document.querySelectorAll('.grain-mode').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const l = btn.dataset.grainMode;
+      grainModeLayers[l] = !grainModeLayers[l];
+      syncGrainModeUI();
+      persistGrainState();
+    });
+  });
+  document.querySelectorAll('[data-rec-stem]').forEach(function (inp) {
+    inp.addEventListener('change', function () {
+      recStemTargets[inp.dataset.recStem] = inp.checked;
+      persistRecStemTargets();
+    });
+  });
+
+  const cloudBtn = $('grainCloudBtn');
+  if (cloudBtn) {
+    cloudBtn.addEventListener('click', function () {
+      grainParams.cloudOn = !grainParams.cloudOn;
+      cloudBtn.textContent = grainParams.cloudOn ? 'CLOUD: ON' : 'CLOUD: OFF';
+      cloudBtn.classList.toggle('on', grainParams.cloudOn);
+      persistGrainState();
+    });
+    cloudBtn.textContent = grainParams.cloudOn ? 'CLOUD: ON' : 'CLOUD: OFF';
+    cloudBtn.classList.toggle('on', grainParams.cloudOn);
+  }
+
+  $on('grainCaptureBtn', 'click', function () { captureLayerForGrain(grainEditLayer); });
+  $on('grainUseSampleBtn', 'click', function () {
+    if (!sampleBuffer) { $('grainStatus').textContent = 'NO SAMPLE'; return; }
+    grainBuffers.sample = sampleBuffer;
+    if (grainEditLayer === 'sample') updateGrainStatus();
+    drawGrainWaveform();
+  });
+  $on('grainPreviewBtn', 'click', async function () {
+    await initAudio();
+    if (!getGrainBuffer(grainEditLayer)) return;
+    triggerGrainBurst(grainEditLayer, Tone.now() + 0.05);
+  });
+}
+
+try { initGrainUI(); } catch (e) { console.error('grain init', e); }
 try { loadRecordings(); } catch (e) { console.error('recordings', e); }
 
 function portalUnlockPlayback() {
