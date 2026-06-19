@@ -310,17 +310,59 @@
   }
   .wave-canvas.live { border-color: var(--fg); }
   .wave-canvas.purple-border { border-color: var(--purple); }
-  .grain-canvas {
-    width: 100%; height: 160px; display: block;
-    background: #000; border: 1px solid var(--purple);
-    image-rendering: pixelated;
+  .orbit-wrap {
+    display: grid;
+    grid-template-columns: 42px 1fr 168px;
+    gap: 8px;
+    min-height: 320px;
+    border: 1px solid var(--dim);
+    background: #000;
   }
-  .grain-cloud { position: relative; overflow: hidden; }
-  .grain-hud {
-    position: absolute; left: 8px; top: 6px; font-size: 10px;
-    letter-spacing: 1px; color: var(--purple); pointer-events: none;
-    text-shadow: 0 0 6px rgba(198,120,255,0.35);
+  @media (max-width: 720px) {
+    .orbit-wrap { grid-template-columns: 36px 1fr; }
+    .orbit-samples { grid-column: 1 / -1; max-height: 200px; overflow-y: auto; }
   }
+  .orbit-toolbar {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 6px 4px; border-right: 1px solid var(--dim);
+  }
+  .orbit-toolbar button {
+    width: 34px; height: 34px; padding: 0; font-size: 15px; line-height: 1;
+    border-color: var(--dim); color: var(--fg);
+  }
+  .orbit-toolbar button.on { border-color: var(--fg); background: var(--fg); color: var(--bg); }
+  .orbit-stage { position: relative; min-height: 300px; }
+  #orbitCanvas { display: block; width: 100%; height: 100%; min-height: 300px; cursor: crosshair; }
+  .orbit-samples {
+    border-left: 1px solid var(--dim);
+    padding: 8px 6px; overflow-y: auto; max-height: 340px;
+    background: #050505;
+  }
+  .orbit-samples-title {
+    font-size: 10px; letter-spacing: 2px; opacity: 0.65;
+    margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--dim);
+  }
+  .orbit-sample {
+    border: 1px solid var(--dim); padding: 6px; margin-bottom: 8px;
+    background: #080808;
+  }
+  .orbit-sample.ready { background: #0a120c; }
+  .orbit-sample.selected { box-shadow: 0 0 0 1px var(--fg); }
+  .os-head { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
+  .os-name { font-size: 10px; letter-spacing: 1px; flex: 1; }
+  .os-cap, .os-test { padding: 2px 6px !important; font-size: 9px !important; min-width: 28px; }
+  .os-wave { width: 100%; height: 28px; display: block; background: #000; margin-bottom: 4px; }
+  .os-sliders label {
+    display: grid; grid-template-columns: 24px 1fr 28px; gap: 4px;
+    align-items: center; font-size: 9px; margin-bottom: 3px; opacity: 0.85;
+  }
+  .os-sliders input[type=range] { width: 100%; height: 3px; }
+  .os-hint { font-size: 8px; opacity: 0.45; letter-spacing: 0.5px; margin-top: 2px; }
+  .orbit-status {
+    font-size: 10px; letter-spacing: 1px; opacity: 0.7;
+    padding: 8px 0 4px; border-bottom: 1px dotted var(--dim); margin-bottom: 10px;
+  }
+  .orbit-ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
   .rec-stem-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin-bottom: 10px; }
   .rec-stem-grid label {
     display: flex; align-items: center; gap: 5px; font-size: 10px;
@@ -328,8 +370,6 @@
   }
   .rec-stem-grid input { accent-color: var(--red); }
   .rec-track-tag { font-size: 9px; letter-spacing: 1px; color: var(--amber); margin-right: 6px; }
-  button.grain-layer, button.grain-mode { border-color: var(--purple); color: var(--purple); font-size: 10px; padding: 7px 4px; }
-  button.grain-layer.on, button.grain-mode.on { background: var(--purple); color: var(--bg); }
 
   .rec-dot {
     display: inline-block;
@@ -554,9 +594,9 @@
 </div>
 
 <header>
-  <div class="brand">DOCTNASA&MRBORG // STUDIO_v07</div>
+  <div class="brand">DOCTNASA&MRBORG // STUDIO_v08</div>
   <div class="title">CUORE_STATICO</div>
-  <div class="subtitle">synth.grain.rec_stems · dub_engine · portal_lan</div>
+  <div class="subtitle">synth.orbit.grain · rec_stems · dub_engine</div>
 </header>
 
 <div id="resumeBanner" class="banner">⚠ AUDIO SOSPESO — TOCCA QUI PER RIAVVIARE</div>
@@ -593,7 +633,7 @@
   <button class="tab"        data-tab="sampler">SAMPLER</button>
   <button class="tab"        data-tab="pattern">PATTERN</button>
   <button class="tab"        data-tab="fx">FX</button>
-  <button class="tab purple" data-tab="grain">GRAIN</button>
+  <button class="tab purple" data-tab="grain">ORBIT</button>
   <button class="tab purple" data-tab="portal">PORTAL</button>
   <button class="tab"        data-tab="rec">REC</button>
 </div>
@@ -1109,76 +1149,36 @@
 
 </div>
 
-<!-- ============== TAB: GRAIN ============== -->
+<!-- ============== TAB: ORBIT (granular) ============== -->
 <div class="tabpanel" id="tab-grain">
 
   <section class="section purple">
-    <div class="section-title">// ENGINE · GRANULAR</div>
-    <div class="grid-5" style="margin-bottom: 8px" id="grainLayerBtns">
-      <button type="button" class="grain-layer on" data-grain-layer="pad">PAD</button>
-      <button type="button" class="grain-layer" data-grain-layer="bass">BASS</button>
-      <button type="button" class="grain-layer" data-grain-layer="lead">LEAD</button>
-      <button type="button" class="grain-layer" data-grain-layer="noise">NSE</button>
-      <button type="button" class="grain-layer" data-grain-layer="sample">SMP</button>
+    <div class="section-title">// ORBIT · GRANULAR (ref. Orbitonic)</div>
+    <div style="font-size:10px;opacity:0.62;line-height:1.6;margin-bottom:10px">
+      <b>1</b> Crea il suono in <b>SYNTH</b> → <b>CAP</b> nel pannello samples.<br>
+      <b>2</b> Trascina un'<b>orbita</b> (○) sul canvas · clicca il bordo per aggiungere <b>strike</b> (|).<br>
+      <b>3</b> Il nodo orbitante trigghera il grano su ogni strike · <b>SYNC</b> con il play principale.
     </div>
-    <div class="row" style="margin-bottom: 8px">
-      <span class="label">EDITING</span><span class="value" id="grainEditingVal">PAD</span>
+    <div class="orbit-status" id="orbitStatus">—</div>
+    <div class="orbit-wrap">
+      <div class="orbit-toolbar">
+        <button type="button" data-orbit-tool="orbit" title="trascina nuova orbita">○</button>
+        <button type="button" data-orbit-tool="strike" title="aggiungi strike">|</button>
+        <button type="button" data-orbit-tool="move" title="sposta orbita">↕</button>
+        <button type="button" data-orbit-tool="delete" title="elimina">×</button>
+      </div>
+      <div class="orbit-stage">
+        <canvas id="orbitCanvas"></canvas>
+      </div>
+      <div class="orbit-samples" id="orbitSamples"></div>
     </div>
-    <div class="grid-5" style="margin-bottom: 10px" id="grainModeBtns">
-      <button type="button" class="grain-mode" data-grain-mode="pad">PAD·G</button>
-      <button type="button" class="grain-mode" data-grain-mode="bass">BAS·G</button>
-      <button type="button" class="grain-mode" data-grain-mode="lead">LED·G</button>
-      <button type="button" class="grain-mode" data-grain-mode="noise">NSE·G</button>
-      <button type="button" class="grain-mode" data-grain-mode="sample">SMP·G</button>
+    <div class="orbit-ctrl">
+      <button type="button" id="orbitPlayBtn" class="purple">▶ PLAY ORBITS</button>
+      <button type="button" id="orbitSyncBtn" class="purple on">SYNC: MAIN ▶</button>
     </div>
-    <div style="font-size:10px;opacity:0.6;line-height:1.55;margin-bottom:10px">
-      Disegna il suono in <b>SYNTH</b>, poi <b>CATTURA</b> il layer. Attiva <b>·G</b> per suonare in granulare nel pattern / cloud.
-      Il campione <b>SMP</b> usa il file caricato in SAMPLER (cattura opzionale).
-    </div>
-    <div class="grid-2" style="margin-bottom: 8px">
-      <button id="grainCaptureBtn" class="purple small">↳ CATTURA DA SYNTH</button>
-      <button id="grainUseSampleBtn" class="small">USE SMP FILE</button>
-    </div>
-    <div class="row"><span class="label">BUFFER</span><span class="value" id="grainStatus">—</span></div>
-  </section>
-
-  <section class="section purple">
-    <div class="section-title">// GRAIN CLOUD · VISUAL</div>
-    <div class="grain-cloud">
-      <canvas id="grainCanvas" class="grain-canvas" width="600" height="160"></canvas>
-      <div class="grain-hud" id="grainHud">// nessun buffer — cattura da synth</div>
-    </div>
-  </section>
-
-  <section class="section purple">
-    <div class="section-title">// GRAIN PARAMS</div>
-    <div class="slider-block">
-      <div class="row"><span class="label">GRAIN_SIZE</span><span class="value" id="grainSizeVal">0.12 s</span></div>
-      <input type="range" id="grainSize" min="0.02" max="0.6" step="0.01" value="0.12">
-    </div>
-    <div class="slider-block">
-      <div class="row"><span class="label">SPRAY</span><span class="value" id="grainSprayVal">0.35</span></div>
-      <input type="range" id="grainSpray" min="0" max="1" step="0.01" value="0.35">
-    </div>
-    <div class="slider-block">
-      <div class="row"><span class="label">POSITION</span><span class="value" id="grainPosVal">0.25</span></div>
-      <input type="range" id="grainPos" min="0" max="1" step="0.01" value="0.25">
-    </div>
-    <div class="slider-block">
-      <div class="row"><span class="label">PITCH_SPREAD</span><span class="value" id="grainPitchVal">7 st</span></div>
-      <input type="range" id="grainPitch" min="0" max="24" step="1" value="7">
-    </div>
-    <div class="slider-block">
-      <div class="row"><span class="label">BURST_COUNT</span><span class="value" id="grainBurstVal">4</span></div>
-      <input type="range" id="grainBurst" min="1" max="12" step="1" value="4">
-    </div>
-    <div class="slider-block">
-      <div class="row"><span class="label">CLOUD_RATE</span><span class="value" id="grainCloudVal">0.45</span></div>
-      <input type="range" id="grainCloud" min="0" max="1" step="0.01" value="0.45">
-    </div>
-    <div class="grid-2" style="margin-top: 8px">
-      <button id="grainCloudBtn" class="purple on">CLOUD: ON</button>
-      <button id="grainPreviewBtn" class="small">▶ BURST PREVIEW</button>
+    <div class="slider-block" style="margin-top:10px">
+      <div class="row"><span class="label">GRAIN_LEN</span><span class="value" id="orbitGrainSizeVal">0.10 s</span></div>
+      <input type="range" id="orbitGrainSize" min="0.02" max="0.5" step="0.01" value="0.10">
     </div>
   </section>
 </div>
@@ -1237,6 +1237,7 @@
 </div>
 
 <script src="portal.js?v=17"></script>
+<script src="grain-orbit.js?v=2"></script>
 <script>
 'use strict';
 
@@ -1370,10 +1371,6 @@ let recStemTargets = { master: true, bass: false, pad: false, lead: false, drums
 // Granular engine
 const GRAIN_LAYERS = ['pad', 'bass', 'lead', 'noise', 'sample'];
 let grainBuffers = {};
-let grainModeLayers = { pad: false, bass: false, lead: false, noise: false, sample: false };
-let grainEditLayer = 'pad';
-let grainParams = { grainSize: 0.12, spray: 0.35, position: 0.25, pitchSpread: 7, burst: 4, cloudRate: 0.45, cloudOn: true };
-let activeGrainViz = [];
 let grainCaptureBusy = false;
 let recTimer = null;
 
@@ -1502,13 +1499,8 @@ if (storedState.fxSends && typeof storedState.fxSends === 'object') {
   });
 }
 
-if (storedState.grainParams && typeof storedState.grainParams === 'object') {
-  Object.assign(grainParams, storedState.grainParams);
-}
-if (storedState.grainModeLayers && typeof storedState.grainModeLayers === 'object') {
-  GRAIN_LAYERS.forEach(function (l) {
-    if (typeof storedState.grainModeLayers[l] === 'boolean') grainModeLayers[l] = storedState.grainModeLayers[l];
-  });
+if (storedState.orbitState && typeof storedState.orbitState === 'object') {
+  // loaded by CuoreOrbit.init
 }
 if (storedState.recStemTargets && typeof storedState.recStemTargets === 'object') {
   Object.keys(recStemTargets).forEach(function (k) {
@@ -1516,7 +1508,11 @@ if (storedState.recStemTargets && typeof storedState.recStemTargets === 'object'
   });
 }
 
-function persistGrainState() { saveState({ grainParams, grainModeLayers }); }
+function persistOrbitState(patch) {
+  const cur = loadState();
+  const orbitState = Object.assign({}, cur.orbitState || {}, patch);
+  saveState({ orbitState });
+}
 function persistRecStemTargets() { saveState({ recStemTargets }); }
 function persistPatterns() { saveState({ patterns, usePatternMode, drumKit, bassOctave, drumVoiceConfig, fxSends, fxTargetTrack }); }
 let fxPersistTimer = null;
@@ -2008,7 +2004,7 @@ function grainBusInput(bus) {
   return bus.input != null ? bus.input : bus;
 }
 
-function spawnGrain(layer, time, pitchMul) {
+function spawnGrain(layer, time, pitchMul, volMul, sizeOverride) {
   const buf = getGrainBuffer(layer);
   const bus = getGrainBus(layer);
   if (!buf || !bus || !buf.duration) return;
@@ -2016,12 +2012,16 @@ function spawnGrain(layer, time, pitchMul) {
   const out = grainBusInput(bus);
   if (!out) return;
 
-  const p = grainParams;
-  const gDur = Math.max(0.02, Math.min(buf.duration * 0.9, p.grainSize));
+  const gSize = sizeOverride || (window.CuoreOrbit && CuoreOrbit.grainSize) || 0.1;
+  const spray = 0.4;
+  const position = 0.2 + Math.random() * 0.6;
+  const pitchSpread = 4;
+  const gDur = Math.max(0.02, Math.min(buf.duration * 0.9, gSize));
   const span = Math.max(0, buf.duration - gDur);
-  const base = span * p.position;
-  const off = Math.max(0, Math.min(span, base + (Math.random() - 0.5) * p.spray * span));
-  const rate = (pitchMul || 1) * (1 + (Math.random() - 0.5) * p.pitchSpread / 50);
+  const base = span * position;
+  const off = Math.max(0, Math.min(span, base + (Math.random() - 0.5) * spray * span));
+  const rate = (pitchMul || 1) * (1 + (Math.random() - 0.5) * pitchSpread / 50);
+  const peak = Math.max(0.05, Math.min(1, volMul != null ? volMul : 0.75));
 
   const src = ctx.createBufferSource();
   src.buffer = buf;
@@ -2031,42 +2031,23 @@ function spawnGrain(layer, time, pitchMul) {
   env.connect(out);
   const t0 = time || ctx.currentTime;
   env.gain.setValueAtTime(0.0001, t0);
-  env.gain.exponentialRampToValueAtTime(1, t0 + gDur * 0.1);
+  env.gain.exponentialRampToValueAtTime(peak, t0 + gDur * 0.1);
   env.gain.exponentialRampToValueAtTime(0.0001, t0 + gDur);
   try { src.start(t0, off, gDur); src.stop(t0 + gDur + 0.03); } catch (e) { return; }
-
-  activeGrainViz.push({ layer, off, gDur, dur: buf.duration, birth: performance.now(), life: gDur * 1000 + 180 });
-  if (activeGrainViz.length > 140) activeGrainViz.shift();
 }
 
 function triggerGrainBurst(layer, time, count, pitchMul) {
-  const n = count || Math.max(1, Math.round(grainParams.burst));
+  const n = count || 3;
   for (let i = 0; i < n; i++) spawnGrain(layer, time + i * 0.007, pitchMul || 1);
-}
-
-function grainLayerActive(layer) {
-  return !!grainModeLayers[layer] && !!getGrainBuffer(layer) && !!layers[layer];
-}
-
-function grainCloudTick() {
-  if (!isPlaying || !grainParams.cloudOn) return;
-  const t = Tone.now();
-  GRAIN_LAYERS.forEach(function (layer) {
-    if (!grainLayerActive(layer)) return;
-    if (Math.random() < grainParams.cloudRate * 0.22) triggerGrainBurst(layer, t, 1);
-  });
 }
 
 async function captureLayerForGrain(layer) {
   if (grainCaptureBusy || !GRAIN_LAYERS.includes(layer)) return;
   await initAudio();
   grainCaptureBusy = true;
-  const btn = $('grainCaptureBtn');
-  if (btn) btn.textContent = '● CATTURA…';
   const bus = getGrainBus(layer);
   if (!bus || !Tone.Recorder) {
     grainCaptureBusy = false;
-    if (btn) btn.textContent = '↳ CATTURA DA SYNTH';
     return;
   }
   const recorder = new Tone.Recorder();
@@ -2100,32 +2081,9 @@ async function captureLayerForGrain(layer) {
   if (blob) {
     const ab = await blob.arrayBuffer();
     grainBuffers[layer] = await Tone.context.decodeAudioData(ab);
-    updateGrainStatus();
-    drawGrainWaveform();
+    if (window.CuoreOrbit && CuoreOrbit.refreshSamples) CuoreOrbit.refreshSamples();
   }
   grainCaptureBusy = false;
-  if (btn) btn.textContent = '↳ CATTURA DA SYNTH';
-}
-
-function updateGrainStatus() {
-  const el = $('grainStatus');
-  if (!el) return;
-  const buf = getGrainBuffer(grainEditLayer);
-  if (!buf) { el.textContent = '—'; return; }
-  el.textContent = grainEditLayer.toUpperCase() + ' · ' + buf.duration.toFixed(2) + 's';
-}
-
-function syncGrainModeUI() {
-  document.querySelectorAll('.grain-mode').forEach(function (btn) {
-    const l = btn.dataset.grainMode;
-    btn.classList.toggle('on', !!grainModeLayers[l]);
-  });
-  document.querySelectorAll('.grain-layer').forEach(function (btn) {
-    btn.classList.toggle('on', btn.dataset.grainLayer === grainEditLayer);
-  });
-  const ev = $('grainEditingVal');
-  if (ev) ev.textContent = grainEditLayer.toUpperCase();
-  updateGrainStatus();
 }
 
 function tickPattern() {
@@ -2143,12 +2101,7 @@ function tickPattern() {
   const bNote = patterns.bass[step];
   if (bNote != null && layers.bass) {
     try {
-      if (grainLayerActive('bass')) {
-        const ratio = Math.pow(2, bNote / 12);
-        triggerGrainBurst('bass', t, grainParams.burst, ratio);
-      } else {
-        A.bass.triggerAttackRelease(midiToFreq(bNote + currentKey + bassOctave * 12), '16n', t, 0.95);
-      }
+      A.bass.triggerAttackRelease(midiToFreq(bNote + currentKey + bassOctave * 12), '16n', t, 0.95);
       const h = $('heart'); h.classList.remove('beat'); void h.offsetWidth; h.classList.add('beat');
       bumpTrig();
     } catch (e) {}
@@ -2160,11 +2113,7 @@ function tickPattern() {
     if (pVal >= 1 && pVal <= 4) ci = pVal - 1;
     const c = PROGS[currentProg][ci % 4].map(n => n + currentKey);
     try {
-      if (grainLayerActive('pad')) {
-        triggerGrainBurst('pad', t, grainParams.burst + 1);
-      } else {
-        A.pad.triggerAttackRelease(c.map(midiToFreq), '2n', t, 0.65);
-      }
+      A.pad.triggerAttackRelease(c.map(midiToFreq), '2n', t, 0.65);
       $('chordVal').textContent = chordName(c);
       bumpTrig();
     } catch (e) {}
@@ -2178,33 +2127,21 @@ function tickPattern() {
     const oct = hi ? 12 : 0;
     if (LEAD_SCALE[deg] != null) {
       try {
-        if (grainLayerActive('lead')) {
-          const ratio = Math.pow(2, (LEAD_SCALE[deg] + oct) / 12);
-          triggerGrainBurst('lead', t, grainParams.burst, ratio);
-        } else {
-          A.lead.triggerAttackRelease(
-            midiToFreq(LEAD_BASE + LEAD_SCALE[deg] + oct + currentKey),
-            '8n', t, 0.55
-          );
-        }
+        A.lead.triggerAttackRelease(
+          midiToFreq(LEAD_BASE + LEAD_SCALE[deg] + oct + currentKey),
+          '8n', t, 0.55
+        );
         bumpTrig();
       } catch (e) {}
     }
   }
 
   if (patterns.noise[step] && layers.noise) {
-    try {
-      if (grainLayerActive('noise')) triggerGrainBurst('noise', t, grainParams.burst);
-      else A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl, t);
-    } catch (e) {}
+    try { A.noise.gate.triggerAttackRelease(synthParams.noise.gateLvl, t); } catch (e) {}
   }
 
   if (patterns.sample[step] && sampleBuffer && layers.sample) {
-    try {
-      if (grainLayerActive('sample')) triggerGrainBurst('sample', t, grainParams.burst);
-      else playSample();
-      bumpTrig();
-    } catch (e) {}
+    try { playSample(); bumpTrig(); } catch (e) {}
   }
 }
 
@@ -2739,7 +2676,6 @@ function tick() {
 
     beat16++;
     updatePatternPlayhead();
-    grainCloudTick();
   } catch (err) {
     console.warn('tick error', err);
     beat16++;
@@ -2782,6 +2718,7 @@ async function togglePlay() {
   } else {
     isPlaying = true; beat16 = chordIdx = bassIdx = 0;
     startTicker();
+    if (window.CuoreOrbit && CuoreOrbit.resetAngles) CuoreOrbit.resetAngles();
     $('stateVal').textContent = '▶ TRANSMITTING';
   }
   const btn = $('playBtn');
@@ -3442,6 +3379,8 @@ $('sampleFile').addEventListener('change', async (e) => {
     const arrayBuffer = await file.arrayBuffer();
     const audioBuffer = await Tone.context.decodeAudioData(arrayBuffer);
     sampleBuffer = new Tone.ToneAudioBuffer(audioBuffer);
+    grainBuffers.sample = audioBuffer;
+    if (window.CuoreOrbit && CuoreOrbit.refreshSamples) CuoreOrbit.refreshSamples();
     sampleName = file.name.length > 24 ? file.name.slice(0,21)+'...' : file.name;
     $('sampleName').textContent = sampleName;
     $('sampleDur').textContent = audioBuffer.duration.toFixed(2) + ' s';
@@ -3853,156 +3792,39 @@ try { loadSynthParamsToUI(); } catch (e) { console.error('synth ui', e); }
 try { refreshPresetList(); } catch (e) { console.error('presets', e); }
 
 // ============================================================
-// GRAIN UI + VISUALIZATION
+// ORBIT UI (Orbitonic-style granular)
 // ============================================================
-const grainCanvas = $('grainCanvas');
-const grainCtx = grainCanvas ? grainCanvas.getContext('2d') : null;
-
-function drawGrainWaveform() {
-  if (!grainCtx) return;
-  const w = grainCanvas.width, h = grainCanvas.height;
-  grainCtx.fillStyle = '#000';
-  grainCtx.fillRect(0, 0, w, h);
-  grainCtx.strokeStyle = '#1a4d22';
-  grainCtx.lineWidth = 1;
-  grainCtx.beginPath();
-  grainCtx.moveTo(0, h / 2); grainCtx.lineTo(w, h / 2); grainCtx.stroke();
-
-  const buf = getGrainBuffer(grainEditLayer);
-  const hud = $('grainHud');
-  if (!buf) {
-    if (hud) hud.textContent = '// nessun buffer — cattura da synth';
-    return;
-  }
-  const ch = buf.getChannelData(0);
-  const peaks = Math.min(500, w);
-  grainCtx.strokeStyle = '#5a3080';
-  grainCtx.lineWidth = 1;
-  grainCtx.beginPath();
-  for (let i = 0; i < peaks; i++) {
-    const start = Math.floor((i / peaks) * ch.length);
-    const end = Math.floor(((i + 1) / peaks) * ch.length);
-    let mn = 0, mx = 0;
-    for (let j = start; j < end; j++) {
-      const v = ch[j];
-      if (v < mn) mn = v;
-      if (v > mx) mx = v;
-    }
-    const x = (i / peaks) * w;
-    const y1 = (1 - (mx + 1) / 2) * h;
-    const y2 = (1 - (mn + 1) / 2) * h;
-    grainCtx.moveTo(x, y1);
-    grainCtx.lineTo(x, y2);
-  }
-  grainCtx.stroke();
-
-  const p = grainParams;
-  const span = Math.max(0, buf.duration - p.grainSize);
-  const winX = (p.position * span / buf.duration) * w;
-  const winW = Math.max(6, (p.grainSize / buf.duration) * w);
-  grainCtx.fillStyle = 'rgba(198,120,255,0.14)';
-  grainCtx.fillRect(winX, 8, winW, h - 16);
-  grainCtx.strokeStyle = '#c678ff';
-  grainCtx.strokeRect(winX, 8, winW, h - 16);
-
-  const now = performance.now();
-  let shown = 0;
-  activeGrainViz.forEach(function (g) {
-    if (g.layer !== grainEditLayer) return;
-    const age = now - g.birth;
-    if (age > g.life) return;
-    shown++;
-    const alpha = 1 - age / g.life;
-    const x = (g.off / g.dur) * w;
-    const gw = Math.max(4, (g.gDur / g.dur) * w);
-    grainCtx.fillStyle = 'rgba(198,120,255,' + (alpha * 0.85) + ')';
-    grainCtx.beginPath();
-    grainCtx.ellipse(x + gw * 0.5, h * 0.5, gw * 0.45, 5 + alpha * 6, 0, 0, Math.PI * 2);
-    grainCtx.fill();
-    grainCtx.strokeStyle = 'rgba(233,255,240,' + (alpha * 0.5) + ')';
-    grainCtx.stroke();
-  });
-  if (hud) hud.textContent = '// ' + grainEditLayer.toUpperCase() + ' · ' + shown + ' grani attivi';
-}
-
-function drawGrainLoop() {
-  drawGrainWaveform();
-  requestAnimationFrame(drawGrainLoop);
-}
-drawGrainLoop();
-
-function bindGrainSlider(id, key, fmt, vid) {
-  const s = $(id), v = $(vid);
-  if (!s || !v) return;
-  s.value = grainParams[key];
-  v.textContent = fmt(grainParams[key]);
-  s.addEventListener('input', function () {
-    grainParams[key] = parseFloat(s.value);
-    v.textContent = fmt(grainParams[key]);
-    persistGrainState();
-    drawGrainWaveform();
-  });
-}
-
-function initGrainUI() {
-  syncGrainModeUI();
-  syncRecStemUI();
-  bindGrainSlider('grainSize', 'grainSize', function (x) { return x.toFixed(2) + ' s'; }, 'grainSizeVal');
-  bindGrainSlider('grainSpray', 'spray', function (x) { return x.toFixed(2); }, 'grainSprayVal');
-  bindGrainSlider('grainPos', 'position', function (x) { return x.toFixed(2); }, 'grainPosVal');
-  bindGrainSlider('grainPitch', 'pitchSpread', function (x) { return x + ' st'; }, 'grainPitchVal');
-  bindGrainSlider('grainBurst', 'burst', function (x) { return String(Math.round(x)); }, 'grainBurstVal');
-  bindGrainSlider('grainCloud', 'cloudRate', function (x) { return x.toFixed(2); }, 'grainCloudVal');
-
-  document.querySelectorAll('.grain-layer').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      grainEditLayer = btn.dataset.grainLayer;
-      syncGrainModeUI();
-      drawGrainWaveform();
-    });
-  });
-  document.querySelectorAll('.grain-mode').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      const l = btn.dataset.grainMode;
-      grainModeLayers[l] = !grainModeLayers[l];
-      syncGrainModeUI();
-      persistGrainState();
-    });
-  });
+function syncRecStemUI() {
   document.querySelectorAll('[data-rec-stem]').forEach(function (inp) {
-    inp.addEventListener('change', function () {
-      recStemTargets[inp.dataset.recStem] = inp.checked;
-      persistRecStemTargets();
-    });
-  });
-
-  const cloudBtn = $('grainCloudBtn');
-  if (cloudBtn) {
-    cloudBtn.addEventListener('click', function () {
-      grainParams.cloudOn = !grainParams.cloudOn;
-      cloudBtn.textContent = grainParams.cloudOn ? 'CLOUD: ON' : 'CLOUD: OFF';
-      cloudBtn.classList.toggle('on', grainParams.cloudOn);
-      persistGrainState();
-    });
-    cloudBtn.textContent = grainParams.cloudOn ? 'CLOUD: ON' : 'CLOUD: OFF';
-    cloudBtn.classList.toggle('on', grainParams.cloudOn);
-  }
-
-  $on('grainCaptureBtn', 'click', function () { captureLayerForGrain(grainEditLayer); });
-  $on('grainUseSampleBtn', 'click', function () {
-    if (!sampleBuffer) { $('grainStatus').textContent = 'NO SAMPLE'; return; }
-    grainBuffers.sample = sampleBuffer;
-    if (grainEditLayer === 'sample') updateGrainStatus();
-    drawGrainWaveform();
-  });
-  $on('grainPreviewBtn', 'click', async function () {
-    await initAudio();
-    if (!getGrainBuffer(grainEditLayer)) return;
-    triggerGrainBurst(grainEditLayer, Tone.now() + 0.05);
+    const k = inp.dataset.recStem;
+    inp.checked = !!recStemTargets[k];
+    if (!inp.dataset.recBound) {
+      inp.dataset.recBound = '1';
+      inp.addEventListener('change', function () {
+        recStemTargets[inp.dataset.recStem] = inp.checked;
+        persistRecStemTargets();
+      });
+    }
   });
 }
 
-try { initGrainUI(); } catch (e) { console.error('grain init', e); }
+try {
+  if (window.CuoreOrbit) {
+    CuoreOrbit.init({
+      storedState: loadState(),
+      saveState: function (patch) { persistOrbitState(patch); },
+      getGrainBuffer: getGrainBuffer,
+      captureLayer: captureLayerForGrain,
+      spawnGrain: spawnGrain,
+      initAudio: initAudio,
+      getBpm: function () { return parseFloat($('bpm').value) || 76; },
+      getBeat16: function () { return beat16; },
+      isPlaying: function () { return isPlaying; }
+    });
+  }
+  syncRecStemUI();
+} catch (e) { console.error('orbit init', e); }
+
 try { loadRecordings(); } catch (e) { console.error('recordings', e); }
 
 function portalUnlockPlayback() {
