@@ -4,9 +4,9 @@
 window.CuoreEpiciclo = (function () {
   const NAME = '// EPICICLO';
   const PALETTE = ['#ffb000', '#c678ff', '#4af6ff', '#ff2b4a', '#7ec8f8', '#e0533d', '#8a5fe0', '#00ff41'];
-  const COL_RING = '#1a4d22';
+  const COL_RING = 'rgba(0,255,65,0.55)';
   const COL_RING_SEL = '#c678ff';
-  const COL_STRIKE = '#3d5a40';
+  const COL_STRIKE = 'rgba(0,255,65,0.4)';
   const COL_STRIKE_HOT = '#00ff41';
   const COL_STRIKE_SEL = '#c678ff';
   const COL_PREVIEW = '#c678ff';
@@ -116,8 +116,12 @@ window.CuoreEpiciclo = (function () {
   let H = 0;
 
   function resize() {
-    if (!cv) return;
-    const r = cv.getBoundingClientRect();
+    if (!cv || !ctx) return;
+    const stage = cv.parentElement;
+    const r = (stage && stage.getBoundingClientRect().height > 2)
+      ? stage.getBoundingClientRect()
+      : cv.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     W = r.width;
     H = r.height;
@@ -247,6 +251,7 @@ window.CuoreEpiciclo = (function () {
   }
 
   function loop(t) {
+    if (W < 2 || H < 2) resize();
     const dt = Math.min((t - last) / 1000, 0.05);
     last = t;
     const bpm = getBpm();
@@ -910,6 +915,8 @@ window.CuoreEpiciclo = (function () {
     bindStrip();
     bindUI();
     resize();
+    const stage = cv.parentElement;
+    if (stage) new ResizeObserver(resize).observe(stage);
     new ResizeObserver(resize).observe(cv);
 
     const stored = hooks.storedState && hooks.storedState.epicicloState
@@ -928,6 +935,7 @@ window.CuoreEpiciclo = (function () {
 
   return {
     init: init,
+    resize: resize,
     resetEngine: resetEngine,
     refresh: refresh,
     addSampleFromBuffer: addSampleFromBuffer
