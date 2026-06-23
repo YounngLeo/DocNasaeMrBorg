@@ -310,59 +310,123 @@
   }
   .wave-canvas.live { border-color: var(--fg); }
   .wave-canvas.purple-border { border-color: var(--purple); }
-  .orbit-wrap {
-    display: grid;
-    grid-template-columns: 42px 1fr 168px;
-    gap: 8px;
-    min-height: 320px;
-    border: 1px solid var(--dim);
+  .epiciclo-wrap {
+    display: flex;
+    height: min(72vh, 640px);
+    min-height: 360px;
+    border: 1px solid var(--purple);
     background: #000;
+    overflow: hidden;
   }
-  @media (max-width: 720px) {
-    .orbit-wrap { grid-template-columns: 36px 1fr; }
-    .orbit-samples { grid-column: 1 / -1; max-height: 200px; overflow-y: auto; }
+  .epic-rail {
+    width: 42px; flex: 0 0 42px;
+    border-right: 1px solid var(--dim);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8px 0; gap: 4px; background: #050505;
   }
-  .orbit-toolbar {
-    display: flex; flex-direction: column; gap: 4px;
-    padding: 6px 4px; border-right: 1px solid var(--dim);
+  .epic-tool {
+    width: 34px; height: 34px; padding: 0;
+    border: 1px solid transparent; background: transparent;
+    color: var(--dim); cursor: pointer;
+    display: grid; place-items: center;
   }
-  .orbit-toolbar button {
-    width: 34px; height: 34px; padding: 0; font-size: 15px; line-height: 1;
-    border-color: var(--dim); color: var(--fg);
+  .epic-tool svg { width: 16px; height: 16px; display: block; }
+  .epic-tool:hover { color: var(--fg); border-color: var(--dim); }
+  .epic-tool.active { color: var(--purple); border-color: var(--purple); background: #0a0a0a; }
+  .epic-rail-sep { width: 22px; height: 1px; background: var(--dim); margin: 4px 0; }
+  .epic-stage { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+  #epicScope { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+  .epic-titlebar { position: absolute; top: 10px; left: 12px; z-index: 4; pointer-events: none; }
+  .epic-titlebar h3 { font-size: 11px; letter-spacing: 3px; margin: 0; color: var(--purple); font-weight: bold; }
+  #epicEphem { font-size: 10px; letter-spacing: 1px; opacity: 0.65; margin-top: 4px; }
+  #epicEphem b { color: var(--fg); }
+  .epic-topbar {
+    position: absolute; top: 8px; right: 10px; z-index: 6;
+    display: flex; gap: 4px; align-items: center; flex-wrap: wrap; justify-content: flex-end;
   }
-  .orbit-toolbar button.on { border-color: var(--fg); background: var(--fg); color: var(--bg); }
-  .orbit-stage { position: relative; min-height: 300px; }
-  #orbitCanvas { display: block; width: 100%; height: 100%; min-height: 300px; cursor: crosshair; }
-  .orbit-samples {
+  .epic-ubtn {
+    height: 28px; padding: 0 8px; font-size: 9px; letter-spacing: 1px;
+    border: 1px solid var(--dim); background: #080808; color: var(--fg);
+    display: flex; align-items: center; gap: 4px; cursor: pointer;
+  }
+  .epic-ubtn:hover { border-color: var(--purple); color: var(--purple); }
+  .epic-ubtn svg { width: 12px; height: 12px; }
+  #epicSyncBadge {
+    font-size: 9px; letter-spacing: 1.5px; padding: 4px 8px;
+    border: 1px solid var(--dim); color: var(--dim);
+  }
+  #epicSyncBadge.on { border-color: var(--fg); color: var(--fg); }
+  #epicSelstrip {
+    position: absolute; left: 12px; bottom: 12px; z-index: 6; display: none;
+    background: #080808; border: 1px solid var(--purple); padding: 8px 10px;
+    align-items: center; gap: 10px; font-size: 10px; max-width: min(560px, 70vw);
+    flex-wrap: wrap;
+  }
+  .epic-kind { color: var(--purple); letter-spacing: 2px; font-weight: bold; }
+  .epic-grp { display: flex; align-items: center; gap: 4px; opacity: 0.85; }
+  .epic-lab { font-size: 9px; letter-spacing: 1px; opacity: 0.7; }
+  .epic-mini {
+    width: 22px; height: 22px; padding: 0; font-size: 12px;
+    border: 1px solid var(--dim); background: #000; color: var(--fg); cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .epic-mini:hover { border-color: var(--purple); color: var(--purple); }
+  .epic-val { min-width: 24px; text-align: center; }
+  .epic-hint { font-size: 9px; opacity: 0.5; }
+  .epic-seldel { color: var(--red) !important; border-color: var(--red) !important; }
+  #epicStagehint {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; font-size: 10px; opacity: 0.45; letter-spacing: 1px; line-height: 1.8;
+    pointer-events: none; z-index: 3;
+  }
+  #epicStagehint .k { color: var(--purple); }
+  #epicToast {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: var(--fg); color: var(--bg); font-size: 10px; letter-spacing: 1px;
+    padding: 6px 12px; opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 20;
+  }
+  #epicToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .epic-panel {
+    width: 200px; flex: 0 0 200px;
     border-left: 1px solid var(--dim);
-    padding: 8px 6px; overflow-y: auto; max-height: 340px;
-    background: #050505;
+    background: #050505; display: flex; flex-direction: column;
   }
-  .orbit-samples-title {
-    font-size: 10px; letter-spacing: 2px; opacity: 0.65;
-    margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--dim);
+  .epic-panel-head {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 10px 8px; border-bottom: 1px solid var(--dim);
   }
-  .orbit-sample {
-    border: 1px solid var(--dim); padding: 6px; margin-bottom: 8px;
-    background: #080808;
+  .epic-panel-head h4 { font-size: 10px; letter-spacing: 2px; opacity: 0.65; margin: 0; color: var(--purple); }
+  .epic-cap-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+  .epic-cap-row button { font-size: 8px !important; padding: 4px 2px !important; letter-spacing: 0; border-color: var(--dim); color: var(--fg); }
+  .epic-cap-row button:hover { border-color: var(--purple); color: var(--purple); }
+  #epicAddsample { font-size: 9px; padding: 5px; border-style: dashed; border-color: var(--dim); color: var(--fg); width: 100%; }
+  #epicAddsample:hover { border-color: var(--purple); color: var(--purple); }
+  #epicSamples { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+  .epic-card { border: 1px solid var(--dim); padding: 8px; background: #080808; cursor: pointer; }
+  .epic-card.active { border-color: var(--purple); box-shadow: 0 0 0 1px var(--purple) inset; }
+  .epic-card.bind { border-color: var(--fg); }
+  .epic-card-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .epic-swatch { width: 12px; height: 12px; flex: 0 0 auto; border: 1px solid var(--dim); }
+  .epic-card-name { font-size: 10px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .epic-card-count { font-size: 8px; opacity: 0.5; }
+  .epic-card-x { width: 20px; height: 20px; padding: 0 !important; border: none !important; background: transparent !important; color: var(--dim); font-size: 11px; }
+  .epic-card-x:hover { color: var(--red) !important; }
+  .epic-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 9px; }
+  .epic-row input[type=range] { flex: 1; height: 3px; margin: 0; }
+  .epic-num { width: 32px; text-align: right; font-size: 9px; }
+  .epic-empty { font-size: 9px; opacity: 0.5; line-height: 1.6; }
+  .epic-empty b { color: var(--fg); opacity: 0.8; }
+  #epicPaneltoggle { display: none; }
+  @media (max-width: 720px) {
+    .epiciclo-wrap { flex-direction: column; height: auto; min-height: 480px; }
+    .epic-panel {
+      position: absolute; right: 0; top: 0; bottom: 0; width: 84vw; max-width: 280px;
+      transform: translateX(100%); transition: transform 0.26s ease; z-index: 8;
+      box-shadow: -4px 0 16px rgba(0,0,0,0.5);
+    }
+    .epic-panel.open { transform: translateX(0); }
+    #epicPaneltoggle { display: flex; }
   }
-  .orbit-sample.ready { background: #0a120c; }
-  .orbit-sample.selected { box-shadow: 0 0 0 1px var(--fg); }
-  .os-head { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }
-  .os-name { font-size: 10px; letter-spacing: 1px; flex: 1; }
-  .os-cap, .os-test { padding: 2px 6px !important; font-size: 9px !important; min-width: 28px; }
-  .os-wave { width: 100%; height: 28px; display: block; background: #000; margin-bottom: 4px; }
-  .os-sliders label {
-    display: grid; grid-template-columns: 24px 1fr 28px; gap: 4px;
-    align-items: center; font-size: 9px; margin-bottom: 3px; opacity: 0.85;
-  }
-  .os-sliders input[type=range] { width: 100%; height: 3px; }
-  .os-hint { font-size: 8px; opacity: 0.45; letter-spacing: 0.5px; margin-top: 2px; }
-  .orbit-status {
-    font-size: 10px; letter-spacing: 1px; opacity: 0.7;
-    padding: 8px 0 4px; border-bottom: 1px dotted var(--dim); margin-bottom: 10px;
-  }
-  .orbit-ctrl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
   .rec-stem-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin-bottom: 10px; }
   .rec-stem-grid label {
     display: flex; align-items: center; gap: 5px; font-size: 10px;
@@ -594,9 +658,9 @@
 </div>
 
 <header>
-  <div class="brand">DOCTNASA&MRBORG // STUDIO_v08</div>
+  <div class="brand">DOCTNASA&MRBORG // STUDIO_v09</div>
   <div class="title">CUORE_STATICO</div>
-  <div class="subtitle">synth.orbit.grain · rec_stems · dub_engine</div>
+  <div class="subtitle">synth.epiciclo · rec_stems · dub_engine</div>
 </header>
 
 <div id="resumeBanner" class="banner">⚠ AUDIO SOSPESO — TOCCA QUI PER RIAVVIARE</div>
@@ -633,7 +697,7 @@
   <button class="tab"        data-tab="sampler">SAMPLER</button>
   <button class="tab"        data-tab="pattern">PATTERN</button>
   <button class="tab"        data-tab="fx">FX</button>
-  <button class="tab purple" data-tab="grain">ORBIT</button>
+  <button class="tab purple" data-tab="grain">EPICICLO</button>
   <button class="tab purple" data-tab="portal">PORTAL</button>
   <button class="tab"        data-tab="rec">REC</button>
 </div>
@@ -1149,36 +1213,69 @@
 
 </div>
 
-<!-- ============== TAB: ORBIT (granular) ============== -->
+<!-- ============== TAB: EPICICLO ============== -->
 <div class="tabpanel" id="tab-grain">
 
-  <section class="section purple">
-    <div class="section-title">// ORBIT · GRANULAR (ref. Orbitonic)</div>
-    <div style="font-size:10px;opacity:0.62;line-height:1.6;margin-bottom:10px">
-      <b>1</b> Crea il suono in <b>SYNTH</b> → <b>CAP</b> nel pannello samples.<br>
-      <b>2</b> Trascina un'<b>orbita</b> (○) sul canvas · clicca il bordo per aggiungere <b>strike</b> (|).<br>
-      <b>3</b> Il nodo orbitante trigghera il grano su ogni strike · <b>SYNC</b> con il play principale.
-    </div>
-    <div class="orbit-status" id="orbitStatus">—</div>
-    <div class="orbit-wrap">
-      <div class="orbit-toolbar">
-        <button type="button" data-orbit-tool="orbit" title="trascina nuova orbita">○</button>
-        <button type="button" data-orbit-tool="strike" title="aggiungi strike">|</button>
-        <button type="button" data-orbit-tool="move" title="sposta orbita">↕</button>
-        <button type="button" data-orbit-tool="delete" title="elimina">×</button>
+  <section class="section purple" style="padding:0;border:none;background:transparent">
+    <div class="epiciclo-wrap" id="epicApp">
+      <nav class="epic-rail" aria-label="Strumenti EPICICLO">
+        <button type="button" class="epic-tool active" data-epic-tool="orbit" title="Orbita [O]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/></svg>
+        </button>
+        <button type="button" class="epic-tool" data-epic-tool="planet" title="Pianeta [P]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><circle cx="20" cy="6" r="2.2" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="epic-tool" data-epic-tool="strike" title="Marker [S]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="7"/></svg>
+        </button>
+        <div class="epic-rail-sep"></div>
+        <button type="button" class="epic-tool" data-epic-tool="move" title="Sposta [M]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M3 12h18"/></svg>
+        </button>
+        <button type="button" class="epic-tool" data-epic-tool="select" title="Seleziona [V]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4l6 16 2-7 7-2z"/></svg>
+        </button>
+        <button type="button" class="epic-tool" data-epic-tool="delete" title="Elimina [X]">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+        </button>
+      </nav>
+      <div class="epic-stage">
+        <canvas id="epicScope"></canvas>
+        <div class="epic-titlebar">
+          <h3 id="epicTitle">// EPICICLO</h3>
+          <div id="epicEphem">—</div>
+        </div>
+        <div class="epic-topbar">
+          <button type="button" id="epicPaneltoggle" class="epic-ubtn" title="Campioni">≡</button>
+          <span id="epicSyncBadge">STBY</span>
+          <button type="button" id="epicSave" class="epic-ubtn">SALVA</button>
+          <button type="button" id="epicLoad" class="epic-ubtn">APRI</button>
+          <button type="button" id="epicPng" class="epic-ubtn">PNG</button>
+          <input id="epicPatchfile" type="file" accept="application/json,.json" hidden>
+        </div>
+        <div id="epicStagehint">
+          <span class="k">○ ORBITA</span> — trascina sul piano<br>
+          <span class="k">◇ PIANETA</span> / <span class="k">| MARKER</span> — clicca su orbita<br>
+          play principale ▶ sincronizza il motore
+        </div>
+        <div id="epicSelstrip"></div>
+        <div id="epicToast"></div>
       </div>
-      <div class="orbit-stage">
-        <canvas id="orbitCanvas"></canvas>
-      </div>
-      <div class="orbit-samples" id="orbitSamples"></div>
-    </div>
-    <div class="orbit-ctrl">
-      <button type="button" id="orbitPlayBtn" class="purple">▶ PLAY ORBITS</button>
-      <button type="button" id="orbitSyncBtn" class="purple on">SYNC: MAIN ▶</button>
-    </div>
-    <div class="slider-block" style="margin-top:10px">
-      <div class="row"><span class="label">GRAIN_LEN</span><span class="value" id="orbitGrainSizeVal">0.10 s</span></div>
-      <input type="range" id="orbitGrainSize" min="0.02" max="0.5" step="0.01" value="0.10">
+      <aside class="epic-panel" id="epicPanel" aria-label="Campioni">
+        <div class="epic-panel-head">
+          <h4>// CAMPIONI</h4>
+          <div class="epic-cap-row">
+            <button type="button" data-epic-cap="pad">CAP PAD</button>
+            <button type="button" data-epic-cap="bass">CAP BAS</button>
+            <button type="button" data-epic-cap="lead">CAP LED</button>
+            <button type="button" data-epic-cap="noise">CAP NSE</button>
+            <button type="button" data-epic-cap="sample" style="grid-column:span 2">CAP SMP</button>
+          </div>
+          <button type="button" id="epicAddsample">+ CARICA FILE</button>
+          <input id="epicFilein" type="file" accept="audio/*" multiple hidden>
+        </div>
+        <div id="epicSamples"></div>
+      </aside>
     </div>
   </section>
 </div>
@@ -1222,7 +1319,7 @@
 </div>
 
 <footer>
-  <div>SYNTH/GRAIN → DUB_BUS → AUTOFILTER → DELAY → REVERB → MASTER/STEMS → REC</div>
+  <div>SYNTH/EPICICLO → DUB_BUS → AUTOFILTER → DELAY → REVERB → MASTER/STEMS → REC</div>
   <div class="sig">tieni il telefono vicino al cuore.</div>
 </footer>
 
@@ -1237,7 +1334,7 @@
 </div>
 
 <script src="portal.js?v=17"></script>
-<script src="grain-orbit.js?v=2"></script>
+<script src="epiciclo.js?v=1"></script>
 <script>
 'use strict';
 
@@ -1499,8 +1596,8 @@ if (storedState.fxSends && typeof storedState.fxSends === 'object') {
   });
 }
 
-if (storedState.orbitState && typeof storedState.orbitState === 'object') {
-  // loaded by CuoreOrbit.init
+if (storedState.epicicloState && typeof storedState.epicicloState === 'object') {
+  // loaded by CuoreEpiciclo.init
 }
 if (storedState.recStemTargets && typeof storedState.recStemTargets === 'object') {
   Object.keys(recStemTargets).forEach(function (k) {
@@ -1508,10 +1605,10 @@ if (storedState.recStemTargets && typeof storedState.recStemTargets === 'object'
   });
 }
 
-function persistOrbitState(patch) {
+function persistEpicicloState(patch) {
   const cur = loadState();
-  const orbitState = Object.assign({}, cur.orbitState || {}, patch);
-  saveState({ orbitState });
+  const epicicloState = Object.assign({}, cur.epicicloState || {}, patch);
+  saveState({ epicicloState });
 }
 function persistRecStemTargets() { saveState({ recStemTargets }); }
 function persistPatterns() { saveState({ patterns, usePatternMode, drumKit, bassOctave, drumVoiceConfig, fxSends, fxTargetTrack }); }
@@ -1989,7 +2086,11 @@ function tickLegacyDrums() {
 // GRANULAR ENGINE
 // ============================================================
 function getGrainBuffer(layer) {
-  if (layer === 'sample') return sampleBuffer || grainBuffers.sample || null;
+  if (layer === 'sample') {
+    if (grainBuffers.sample) return grainBuffers.sample;
+    if (sampleBuffer && sampleBuffer.get) return sampleBuffer.get();
+    return null;
+  }
   return grainBuffers[layer] || null;
 }
 
@@ -2012,7 +2113,7 @@ function spawnGrain(layer, time, pitchMul, volMul, sizeOverride) {
   const out = grainBusInput(bus);
   if (!out) return;
 
-  const gSize = sizeOverride || (window.CuoreOrbit && CuoreOrbit.grainSize) || 0.1;
+  const gSize = sizeOverride || 0.1;
   const spray = 0.4;
   const position = 0.2 + Math.random() * 0.6;
   const pitchSpread = 4;
@@ -2081,7 +2182,6 @@ async function captureLayerForGrain(layer) {
   if (blob) {
     const ab = await blob.arrayBuffer();
     grainBuffers[layer] = await Tone.context.decodeAudioData(ab);
-    if (window.CuoreOrbit && CuoreOrbit.refreshSamples) CuoreOrbit.refreshSamples();
   }
   grainCaptureBusy = false;
 }
@@ -2718,7 +2818,7 @@ async function togglePlay() {
   } else {
     isPlaying = true; beat16 = chordIdx = bassIdx = 0;
     startTicker();
-    if (window.CuoreOrbit && CuoreOrbit.resetAngles) CuoreOrbit.resetAngles();
+    if (window.CuoreEpiciclo && CuoreEpiciclo.resetEngine) CuoreEpiciclo.resetEngine();
     $('stateVal').textContent = '▶ TRANSMITTING';
   }
   const btn = $('playBtn');
@@ -3380,7 +3480,9 @@ $('sampleFile').addEventListener('change', async (e) => {
     const audioBuffer = await Tone.context.decodeAudioData(arrayBuffer);
     sampleBuffer = new Tone.ToneAudioBuffer(audioBuffer);
     grainBuffers.sample = audioBuffer;
-    if (window.CuoreOrbit && CuoreOrbit.refreshSamples) CuoreOrbit.refreshSamples();
+    if (window.CuoreEpiciclo && CuoreEpiciclo.addSampleFromBuffer) {
+      CuoreEpiciclo.addSampleFromBuffer('SMP', audioBuffer, 'sample');
+    }
     sampleName = file.name.length > 24 ? file.name.slice(0,21)+'...' : file.name;
     $('sampleName').textContent = sampleName;
     $('sampleDur').textContent = audioBuffer.duration.toFixed(2) + ' s';
@@ -3792,8 +3894,18 @@ try { loadSynthParamsToUI(); } catch (e) { console.error('synth ui', e); }
 try { refreshPresetList(); } catch (e) { console.error('presets', e); }
 
 // ============================================================
-// ORBIT UI (Orbitonic-style granular)
+// EPICICLO UI
 // ============================================================
+function getEpicMasterInput() {
+  if (!A || !A.master) return null;
+  return A.master.input != null ? A.master.input : A.master;
+}
+function getEpicLayerGain(layer) {
+  if (!A) return null;
+  const map = { pad: A.padGain, bass: A.bassGain, lead: A.leadGain, noise: A.noiseGain, sample: A.sampleGain };
+  return map[layer] || null;
+}
+
 function syncRecStemUI() {
   document.querySelectorAll('[data-rec-stem]').forEach(function (inp) {
     const k = inp.dataset.recStem;
@@ -3809,21 +3921,22 @@ function syncRecStemUI() {
 }
 
 try {
-  if (window.CuoreOrbit) {
-    CuoreOrbit.init({
+  if (window.CuoreEpiciclo) {
+    CuoreEpiciclo.init({
       storedState: loadState(),
-      saveState: function (patch) { persistOrbitState(patch); },
+      saveState: function (patch) { persistEpicicloState(patch); },
       getGrainBuffer: getGrainBuffer,
       captureLayer: captureLayerForGrain,
-      spawnGrain: spawnGrain,
       initAudio: initAudio,
       getBpm: function () { return parseFloat($('bpm').value) || 76; },
-      getBeat16: function () { return beat16; },
-      isPlaying: function () { return isPlaying; }
+      isPlaying: function () { return isPlaying; },
+      togglePlay: togglePlay,
+      getMasterInput: getEpicMasterInput,
+      getLayerGain: getEpicLayerGain
     });
   }
   syncRecStemUI();
-} catch (e) { console.error('orbit init', e); }
+} catch (e) { console.error('epiciclo init', e); }
 
 try { loadRecordings(); } catch (e) { console.error('recordings', e); }
 
