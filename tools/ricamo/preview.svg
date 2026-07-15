@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <rect width="320" height="200" fill="#060a07"/>
+  <rect x="8" y="8" width="304" height="184" stroke="#17351f" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="14" y="22" fill="#1d4a2a" font-family="monospace" font-size="6" letter-spacing="1.5">// PUNTO CROCE · RILIEVO · STL</text>
+  <g stroke="#7CFF9B" stroke-width="0.6" opacity="0.35">
+    <path d="M40 40 H280 M40 60 H280 M40 80 H280 M40 100 H280 M40 120 H280 M40 140 H280 M40 160 H280"/>
+    <path d="M40 40 V160 M60 40 V160 M80 40 V160 M100 40 V160 M120 40 V160 M140 40 V160 M160 40 V160 M180 40 V160 M200 40 V160 M220 40 V160 M240 40 V160 M260 40 V160 M280 40 V160"/>
+  </g>
+  <g fill="#7CFF9B" opacity="0.9">
+    <rect x="79" y="79" width="12" height="12"/><rect x="139" y="99" width="12" height="12"/>
+    <rect x="199" y="59" width="12" height="12"/><rect x="119" y="139" width="12" height="12"/>
+    <rect x="179" y="119" width="12" height="12"/><rect x="239" y="139" width="12" height="12"/>
+  </g>
+  <path d="M100 150 Q140 110 180 130 T260 100" stroke="#ffcc66" stroke-width="1.2" fill="none" opacity="0.75"/>
+  <text x="160" y="192" fill="#3f8f55" font-family="monospace" font-size="8" text-anchor="middle" letter-spacing="2">RICAMO</text>
+</svg>

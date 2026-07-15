@@ -119,7 +119,7 @@
     border-top: 0 solid var(--dim);
   }
   .nav.open .nav-list {
-    max-height: 300px;
+    max-height: 420px;
     border-top: 1px solid var(--dim);
   }
   .nav-list a {
@@ -146,6 +146,10 @@
   .nav-list a.purple-link:hover { background: rgba(198,120,255,0.08); }
   .nav-list a.mesh-link { color: #e8e8e8; }
   .nav-list a.mesh-link:hover { background: rgba(232,232,232,0.06); }
+  .nav-list a.fos-link { color: #7CFF9B; }
+  .nav-list a.fos-link:hover { background: rgba(124,255,155,0.06); }
+  .nav-list a.tan-link { color: #c8a17b; }
+  .nav-list a.tan-link:hover { background: rgba(200,161,123,0.08); }
 
   /* === SECTIONS === */
   .section {
@@ -216,6 +220,8 @@
   .tool-header.gold  { border-bottom-color: #fff03a; }
   .tool-header.purple { border-bottom-color: var(--purple); }
   .tool-header.mesh { border-bottom-color: #e8e8e8; }
+  .tool-header.fos { border-bottom-color: #7CFF9B; }
+  .tool-header.tan { border-bottom-color: #c8a17b; }
 
   .tool-meta {
     display: flex;
@@ -253,6 +259,10 @@
   .tool-header.purple .right b { color: var(--purple); }
   .tool-header.mesh .name { color: #e8e8e8; }
   .tool-header.mesh .right b { color: #e8e8e8; }
+  .tool-header.fos .name { color: #7CFF9B; }
+  .tool-header.fos .right b { color: #7CFF9B; }
+  .tool-header.tan .name { color: #c8a17b; }
+  .tool-header.tan .right b { color: #c8a17b; }
   .section.gold .section-title { color: #fff03a; }
   .section.purple { border-color: var(--purple); }
   .section.purple .section-title { color: var(--purple); }
@@ -263,8 +273,20 @@
   .launch-btn.purple:hover { background: var(--purple); color: var(--bg); }
   .launch-btn.mesh { border-color: #e8e8e8; color: #e8e8e8; }
   .launch-btn.mesh:hover { background: #e8e8e8; color: var(--bg); }
+  .launch-btn.fos { border-color: #7CFF9B; color: #7CFF9B; }
+  .launch-btn.fos:hover { background: #7CFF9B; color: var(--bg); }
+  .launch-btn.tan { border-color: #c8a17b; color: #c8a17b; }
+  .launch-btn.tan:hover { background: #c8a17b; color: var(--bg); }
   .section.mesh { border-color: #666; }
   .section.mesh .section-title { color: #e8e8e8; }
+  .section.fos { border-color: #7CFF9B; }
+  .section.fos .section-title { color: #7CFF9B; }
+  .section.tan { border-color: #c8a17b; }
+  .section.tan .section-title { color: #c8a17b; }
+  .section.fos { border-color: #7CFF9B; }
+  .section.fos .section-title { color: #7CFF9B; }
+  .section.tan { border-color: #c8a17b; }
+  .section.tan .section-title { color: #c8a17b; }
   .section.mesh ul li b { color: #e8e8e8; font-weight: normal; letter-spacing: 1px; }
 
   /* === LAUNCH BAR === */
@@ -481,7 +503,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 04 active</div>
+    <div class="nav-progress" id="navProgress">// 06 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -500,6 +522,14 @@
       <span><span class="marker">▸</span>BIO_MESH</span>
       <span class="num">TOOL_04 · MESH</span>
     </a>
+    <a href="#ricamo" class="fos-link" data-nav="ricamo">
+      <span><span class="marker">▸</span>RICAMO</span>
+      <span class="num">TOOL_05 · RICAMO</span>
+    </a>
+    <a href="#velario" class="tan-link" data-nav="velario">
+      <span><span class="marker">▸</span>VELARIO</span>
+      <span class="num">TOOL_06 · TASSEL</span>
+    </a>
   </div>
 </nav>
 
@@ -508,7 +538,7 @@
 <!-- ============================ -->
 <section class="section">
   <div class="section-title">// SYSTEM_STATUS</div>
-  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">04 / 04</span></div>
+  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">06 / 06</span></div>
   <div class="row"><span class="label">STUDIO</span><span class="value">DOCTNASA&MRBORG</span></div>
   <div class="row"><span class="label">YEAR</span><span class="value">2026</span></div>
   <div class="row"><span class="label">ACCESS</span><span class="value" id="accessMode">…</span></div>
@@ -923,8 +953,130 @@
 
 </div>
 
+<div class="divider">— — — — — — — —</div>
+
+<!-- ============================ -->
+<!-- TOOL_05 :: RICAMO            -->
+<!-- ============================ -->
+<div class="tool-block" id="ricamo" data-section="ricamo">
+
+  <div class="tool-header fos">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_05 :: RICAMO</div>
+        <div class="name">RICAMO</div>
+        <div class="sub">punto croce · rilievi · griglia → STL multicolore</div>
+      </div>
+      <div class="right">
+        <b>v4</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="ricamo/preview.svg" alt="ricamo preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="ricamo/tool.html" class="launch-btn fos">▶ LAUNCH</a>
+    <a href="ricamo/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section fos">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Editor di ricamo digitale su griglia: disegna punto croce, punti lisci e rilievi a mano libera con palette multicolore. Ogni colore diventa una parte STL separata, pronta per stampa multicolore (AMS) o assemblaggio come oggetto unico con più parti in Bambu Studio.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">// PIPELINE</div>
+        <ul>
+          <li>Disegna sulla griglia 2D o passa alla vista 3D del rilievo</li>
+          <li>Configura passo punto, altezza rilievo e livelli da 0.2 mm</li>
+          <li>Genera mesh analitiche per colore (rete, punti, rilievo)</li>
+          <li>Export STL per colore o STL unico · calco negativo opzionale</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section fos">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>OUTPUT</dt><dd>STL multicolore</dd>
+          <dt>LAYER</dt><dd>0.2 mm consigliato</dd>
+          <dt>USO</dt><dd>ricamo 3D · AMS · calco</dd>
+          <dt>TAGS</dt><dd>ricamo · punto croce · stampa</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+
+</div>
+
+<div class="divider">— — — — — — — —</div>
+
+<!-- ============================ -->
+<!-- TOOL_06 :: VELARIO            -->
+<!-- ============================ -->
+<div class="tool-block" id="velario" data-section="velario">
+
+  <div class="tool-header tan">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_06 :: TASSEL</div>
+        <div class="name">VELARIO</div>
+        <div class="sub">tassellazione modulare · archi in tubo · preventivo stampa</div>
+      </div>
+      <div class="right">
+        <b>v2</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="velario/preview.svg" alt="velario preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="velario/tool.html" class="launch-btn tan">▶ LAUNCH</a>
+    <a href="velario/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section tan">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Configuratore di velari modulari stampati in 3D: modulo concavo con fori per viti, tassellazione su struttura ad archi in tubo, anteprima Three.js e preventivo materiale/tempo in tempo reale.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">// CONTROLLI</div>
+        <ul>
+          <li><b>MODULO</b> — lato, concavità, spessore, fori, risoluzione bordo</li>
+          <li><b>TASSEL</b> — griglia moduli, giunto, alternanza colore</li>
+          <li><b>ARCHI</b> — span, altezza, diametro tubo, posizione multipla</li>
+          <li><b>EXPORT</b> — STL modulo watertight · salva/carica config JSON</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section tan">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>Three.js r128</dd>
+          <dt>OUTPUT</dt><dd>STL binario (mm)</dd>
+          <dt>USO</dt><dd>velario · installazione · outdoor</dd>
+          <dt>TAGS</dt><dd>tessel · PETG · archi</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
-  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.3</span>
+  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.4</span>
   <span>END_OF_INDEX</span>
 </footer>
 
@@ -1014,10 +1166,12 @@
                   id === 'barene-frame'  ? '// viewing BARENE_FRAME' :
                   id === 'fluid-vessel'  ? '// viewing FLUID_VESSEL' :
                   id === 'bio-mesh' ? '// viewing BIO_MESH' :
-                  '// 04 active';
+                  id === 'ricamo' ? '// viewing RICAMO' :
+                  id === 'velario' ? '// viewing VELARIO' :
+                  '// 06 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 04 active';
+      navProgress.textContent = '// 06 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });

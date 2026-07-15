@@ -23,6 +23,12 @@ tools/
     ├── tool.html           ← mesh biomorfa da spettro audio · Three.js
     ├── mesh-core.js
     └── preview.svg
+├── ricamo/
+    ├── tool.html           ← punto croce e rilievi · STL multicolore
+    └── preview.svg
+└── velario/
+    ├── tool.html           ← tassellazione modulare · archi · STL
+    └── preview.svg
 ```
 
 ## aggiornare un tool

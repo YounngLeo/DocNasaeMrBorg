@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <rect width="320" height="200" fill="#060a07"/>
+  <rect x="8" y="8" width="304" height="184" stroke="#1c3524" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="14" y="22" fill="#1c3524" font-family="monospace" font-size="6" letter-spacing="1.5">// TASSEL · ARCHI · STL</text>
+  <path d="M50 150 Q110 40 160 55 T270 150" stroke="#c8a17b" stroke-width="2" fill="none" opacity="0.85"/>
+  <path d="M70 150 Q130 70 160 80 T250 150" stroke="#7CFF9B" stroke-width="1" fill="none" opacity="0.45"/>
+  <g fill="#c8a17b" opacity="0.7">
+    <path d="M72 118 L88 118 L80 102 Z"/><path d="M112 98 L128 98 L120 82 Z"/>
+    <path d="M152 88 L168 88 L160 72 Z"/><path d="M192 98 L208 98 L200 82 Z"/>
+    <path d="M232 118 L248 118 L240 102 Z"/>
+  </g>
+  <circle cx="80" cy="118" r="2" fill="#7CFF9B"/><circle cx="160" cy="88" r="2" fill="#7CFF9B"/><circle cx="240" cy="118" r="2" fill="#7CFF9B"/>
+  <text x="160" y="192" fill="#3f8f56" font-family="monospace" font-size="8" text-anchor="middle" letter-spacing="2">VELARIO</text>
+</svg>

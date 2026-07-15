@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<script src="../_mirror.js"></script>
+<title>VELARIO // DOCTNASA&MRBORG</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{ --fg:#7CFF9B; --fg-dim:#3f8f56; --bg:#060a07; --panel:#0a120c; --line:#1c3524; --warn:#ff6b5e; --tan:#c8a17b; }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%; overflow:hidden;}
+  body{ background:var(--bg); color:var(--fg); font-family:'Courier New',monospace; font-size:12px; }
+  #vista{position:fixed; inset:0;}
+  canvas{display:block;}
+
+  #pannello{
+    position:fixed; top:0; left:0; bottom:0; width:318px;
+    background:var(--panel); border-right:1px solid var(--line);
+    overflow-y:auto; padding:14px 14px 40px; z-index:10;
+  }
+  #pannello::-webkit-scrollbar{width:6px;}
+  #pannello::-webkit-scrollbar-thumb{background:var(--line);}
+
+  h1{font-size:17px; letter-spacing:4px; font-weight:normal;}
+  .sotto{color:var(--fg-dim); font-size:10px; margin:3px 0 14px; letter-spacing:1px;}
+  .sez{border-top:1px solid var(--line); margin-top:14px; padding-top:10px;}
+  .sez h2{font-size:11px; letter-spacing:2px; color:var(--fg); margin-bottom:8px;}
+  .riga{display:flex; align-items:center; gap:8px; margin:7px 0;}
+  .riga label{flex:0 0 118px; color:var(--fg-dim); font-size:11px;}
+  .riga input[type=range]{flex:1; accent-color:var(--fg); height:14px; background:transparent;}
+  .riga .val{flex:0 0 58px; text-align:right; font-size:11px;}
+  select,input[type=number]{
+    background:#04150b; color:var(--fg); border:1px solid var(--line);
+    font-family:inherit; font-size:11px; padding:3px 5px; width:100%;
+  }
+  .riga select,.riga input[type=number]{flex:1;}
+  button{
+    background:transparent; color:var(--fg); border:1px solid var(--fg-dim);
+    font-family:inherit; font-size:11px; letter-spacing:1px; padding:7px 10px;
+    cursor:pointer; width:100%; margin-top:6px; transition:background .15s;
+  }
+  button:hover{background:#0f2416;}
+  button.mini{width:auto; padding:4px 9px; margin:0; font-size:10px;}
+  button:disabled{opacity:.35; cursor:not-allowed;}
+  .duo{display:flex; gap:6px;}
+  .duo button{flex:1;}
+  #avvisi{color:var(--warn); font-size:11px; margin-top:8px; min-height:14px; white-space:pre-line;}
+  .hint{color:var(--fg-dim); font-size:10px; margin-top:8px; line-height:1.5;}
+
+  #preventivo{
+    position:fixed; top:12px; right:12px; width:280px; z-index:10;
+    background:rgba(6,12,8,.88); border:1px solid var(--line); padding:12px 14px;
+    backdrop-filter:blur(3px);
+  }
+  #preventivo h2{font-size:11px; letter-spacing:2px; margin-bottom:8px;}
+  #preventivo table{width:100%; border-collapse:collapse; font-size:11px;}
+  #preventivo td{padding:2px 0; color:var(--fg-dim);}
+  #preventivo td:last-child{text-align:right; color:var(--fg);}
+  #preventivo tr.tot td{border-top:1px solid var(--line); padding-top:5px; color:var(--fg);}
+  #preventivo .cap{color:var(--fg); padding-top:8px; letter-spacing:1px;}
+
+  #modulo2d{
+    position:fixed; left:330px; bottom:12px; z-index:10;
+    background:rgba(6,12,8,.88); border:1px solid var(--line);
+  }
+  #etichetta2d{
+    position:fixed; left:330px; bottom:222px; z-index:10; font-size:10px;
+    color:var(--fg-dim); letter-spacing:1px;
+  }
+  #aiuto{
+    position:fixed; right:12px; bottom:12px; z-index:10; font-size:10px;
+    color:var(--fg-dim); text-align:right; line-height:1.6;
+  }
+</style>
+</head>
+<body>
+<div id="vista"></div>
+
+<div id="pannello">
+  <h1>VELARIO</h1>
+  <div class="sotto">tassellazione modulare stampata · struttura ad archi · v1.0</div>
+
+  <div class="sez">
+    <h2>[ MODULO ]</h2>
+    <div class="riga"><label>lato L (mm)</label><input type="range" id="mL" min="100" max="245" step="1" value="180"><span class="val" id="vL"></span></div>
+    <div class="riga"><label>concavità bordo</label><input type="range" id="mConc" min="0.04" max="0.205" step="0.005" value="0.16"><span class="val" id="vConc"></span></div>
+    <div class="riga"><label>spessore (mm)</label><input type="range" id="mThick" min="0.5" max="3" step="0.1" value="1.0"><span class="val" id="vThick"></span></div>
+    <div class="riga"><label>Ø foro vite (mm)</label><input type="range" id="mHole" min="3" max="8" step="0.2" value="4.8"><span class="val" id="vHole"></span></div>
+    <div class="riga"><label>inserto angolo (mm)</label><input type="range" id="mInset" min="8" max="30" step="0.5" value="15"><span class="val" id="vInset"></span></div>
+    <div class="riga"><label>risoluzione bordo</label><input type="range" id="mSegs" min="10" max="40" step="2" value="22"><span class="val" id="vSegs"></span></div>
+  </div>
+
+  <div class="sez">
+    <h2>[ TASSELLAZIONE ]</h2>
+    <div class="riga"><label>moduli lungo arco</label><input type="range" id="tNx" min="2" max="16" step="1" value="8"><span class="val" id="vNx"></span></div>
+    <div class="riga"><label>moduli in profondità</label><input type="range" id="tNy" min="2" max="16" step="1" value="6"><span class="val" id="vNy"></span></div>
+    <div class="riga"><label>giunto (mm)</label><input type="range" id="tGap" min="0" max="25" step="1" value="6"><span class="val" id="vGap"></span></div>
+    <div class="riga"><label>alterna colore</label><input type="checkbox" id="tAlt" checked style="accent-color:var(--fg)"></div>
+  </div>
+
+  <div class="sez">
+    <h2>[ STRUTTURA · ARCHI IN TUBO ]</h2>
+    <div class="riga"><label>arco selezionato</label><select id="sSel"></select></div>
+    <div class="riga"><label>posizione Y (m)</label><input type="range" id="sY" min="-10" max="14" step="0.1" value="0"><span class="val" id="vY"></span></div>
+    <div class="riga"><label>luce / span (m)</label><input type="range" id="sSpan" min="1" max="10" step="0.1" value="4"><span class="val" id="vSpan"></span></div>
+    <div class="riga"><label>altezza (m)</label><input type="range" id="sH" min="0.5" max="5" step="0.1" value="2.2"><span class="val" id="vH"></span></div>
+    <div class="riga"><label>offset X (m)</label><input type="range" id="sXoff" min="-4" max="4" step="0.1" value="0"><span class="val" id="vXoff"></span></div>
+    <div class="duo">
+      <button class="mini" id="bAddArco">+ ARCO</button>
+      <button class="mini" id="bDelArco">− ARCO</button>
+    </div>
+    <div class="riga" style="margin-top:10px"><label>Ø tubo (mm)</label><input type="range" id="sTube" min="15" max="60" step="0.5" value="33.7"><span class="val" id="vTube"></span></div>
+  </div>
+
+  <div class="sez">
+    <h2>[ MATERIALE ]</h2>
+    <div class="riga"><label>filamento</label>
+      <select id="mMat">
+        <option value="PETG">PETG (1.27)</option>
+        <option value="PLA">PLA (1.24)</option>
+        <option value="TPU">TPU 95A (1.21)</option>
+        <option value="ASA">ASA (1.07)</option>
+        <option value="PETGCF">PETG-CF (1.29)</option>
+      </select>
+    </div>
+    <div class="riga"><label>prezzo (€/kg)</label><input type="number" id="mPrezzo" value="22" min="5" step="0.5"></div>
+    <div class="riga"><label>portata (g/h)</label><input type="number" id="mPortata" value="14" min="3" step="1"></div>
+    <div class="riga"><label>vite+dado (€/cad)</label><input type="number" id="mVite" value="0.12" min="0" step="0.01"></div>
+  </div>
+
+  <div class="sez">
+    <h2>[ EXPORT ]</h2>
+    <button id="bStl">⬇ STL MODULO (mm, watertight)</button>
+    <div class="duo">
+      <button class="mini" id="bSalva">SALVA CONFIG</button>
+      <button class="mini" id="bCarica">CARICA CONFIG</button>
+    </div>
+    <input type="file" id="fileConfig" accept=".json" style="display:none">
+    <div id="avvisi"></div>
+    <div class="hint">stampa in piano · 100% riempimento (pareti concentriche per la texture rigata) · TPU/PETG sottile per drappeggio, PETG ≥1.2&nbsp;mm per pannelli rigidi · esterno: ASA o PETG</div>
+  </div>
+</div>
+
+<div id="preventivo">
+  <h2>[ PREVENTIVO ]</h2>
+  <table id="tabPrev"></table>
+</div>
+
+<div id="etichetta2d">[ MODULO · vista in piano ]</div>
+<canvas id="modulo2d" width="260" height="200"></canvas>
+
+<div id="aiuto">trascina · ruota&nbsp;&nbsp;|&nbsp;&nbsp;shift+trascina · sposta&nbsp;&nbsp;|&nbsp;&nbsp;rotella · zoom</div>
+
+<script>
+/* ============================================================
+   VELARIO · core geometrico
+   modulo "a cuscino" con bordi concavi + fori angolari
+   triangolazione ear-clipping con bridge dei fori
+   estrusione watertight + export STL binario
+   funziona in browser (window.VELARIO) e in Node (module.exports)
+   ============================================================ */
+(function (root) {
+  'use strict';
+
+  /* ---------- utilità 2D ---------- */
+  function polyAreaSigned(pts) {
+    let a = 0;
+    for (let i = 0, n = pts.length; i < n; i++) {
+      const p = pts[i], q = pts[(i + 1) % n];
+      a += p.x * q.y - q.x * p.y;
+    }
+    return a * 0.5;
+  }
+
+  function pointInPoly(p, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const a = poly[i], b = poly[j];
+      if ((a.y > p.y) !== (b.y > p.y) &&
+          p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+    }
+    return inside;
+  }
+
+  /* arco circolare da A a B con sagitta sag verso l'interno del poligono
+     (interno = a sinistra del verso A->B per contorno CCW).
+     Ritorna i punti INTERMEDI (esclusi A e B). */
+  function arcPoints(A, B, sag, segs) {
+    const dx = B.x - A.x, dy = B.y - A.y;
+    const c = Math.hypot(dx, dy);
+    const nx = -dy / c, ny = dx / c;            // normale sinistra
+    const M = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+    if (sag < 1e-6) {
+      const out = [];
+      for (let i = 1; i < segs; i++) {
+        const t = i / segs;
+        out.push({ x: A.x + dx * t, y: A.y + dy * t });
+      }
+      return out;
+    }
+    const R = (sag * sag + (c / 2) * (c / 2)) / (2 * sag);
+    const apex = { x: M.x + nx * sag, y: M.y + ny * sag };
+    const O = { x: apex.x - nx * R, y: apex.y - ny * R };
+    const a0 = Math.atan2(A.y - O.y, A.x - O.x);
+    const a1 = Math.atan2(B.y - O.y, B.x - O.x);
+    let d = a1 - a0;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;      // arco minore (sag < c/2)
+    const out = [];
+    for (let i = 1; i < segs; i++) {
+      const ang = a0 + d * (i / segs);
+      out.push({ x: O.x + R * Math.cos(ang), y: O.y + R * Math.sin(ang) });
+    }
+    return out;
+  }
+
+  /* ---------- sagoma modulo ----------
+     p = { L, conc, holeR, inset, edgeSegs, holeSegs }
+     outer CCW, fori CW */
+  /* oltre conc≈0.2108 gli archi di lati adiacenti si intersecano
+     (verificato numericamente, invariante di scala) */
+  const CONC_MAX = 0.205;
+
+  function buildOutline(p) {
+    const h = p.L / 2;
+    const conc = Math.min(p.conc, CONC_MAX);
+    const sag = conc * p.L;
+    const corners = [
+      { x: -h, y: -h }, { x: h, y: -h }, { x: h, y: h }, { x: -h, y: h }
+    ];
+    const outer = [], cornerIdx = [];
+    for (let k = 0; k < 4; k++) {
+      cornerIdx[k] = outer.length;
+      outer.push({ x: corners[k].x, y: corners[k].y });
+      const nxt = corners[(k + 1) % 4];
+      const mid = arcPoints(corners[k], nxt, sag, p.edgeSegs);
+      for (const q of mid) outer.push(q);
+    }
+    const holes = [];
+    for (let k = 0; k < 4; k++) {
+      const cx = Math.sign(corners[k].x) * (h - p.inset);
+      const cy = Math.sign(corners[k].y) * (h - p.inset);
+      const loop = [];
+      for (let i = 0; i < p.holeSegs; i++) {
+        const ang = -2 * Math.PI * i / p.holeSegs;   // CW
+        loop.push({ x: cx + p.holeR * Math.cos(ang), y: cy + p.holeR * Math.sin(ang) });
+      }
+      holes.push({ loop, center: { x: cx, y: cy } });
+    }
+    return { outer, holes, cornerIdx, corners, sag };
+  }
+
+  /* validazione: tutti i vertici dei fori dentro la sagoma con margine */
+  function validateOutline(o, margin) {
+    margin = margin || 0.6;
+    for (const hh of o.holes) {
+      for (const v of hh.loop) {
+        if (!pointInPoly(v, o.outer)) return false;
+        // margine: punto spostato radialmente verso l'esterno del foro
+        const dx = v.x - hh.center.x, dy = v.y - hh.center.y;
+        const dd = Math.hypot(dx, dy) || 1;
+        const vm = { x: v.x + dx / dd * margin, y: v.y + dy / dd * margin };
+        if (!pointInPoly(vm, o.outer)) return false;
+      }
+    }
+    return true;
+  }
+
+  /* ---------- bridge fori + ear clipping ---------- */
+  function buildBridged(o) {
+    const pts = [];
+    let k = 0;
+    for (let i = 0; i < o.outer.length; i++) {
+      pts.push(o.outer[i]);
+      if (k < 4 && i === o.cornerIdx[k]) {
+        const hole = o.holes[k].loop;
+        // vertice del foro più vicino all'angolo
+        let j0 = 0, best = Infinity;
+        for (let j = 0; j < hole.length; j++) {
+          const d = (hole[j].x - o.outer[i].x) ** 2 + (hole[j].y - o.outer[i].y) ** 2;
+          if (d < best) { best = d; j0 = j; }
+        }
+        for (let j = 0; j <= hole.length; j++) pts.push(hole[(j0 + j) % hole.length]);
+        pts.push({ x: o.outer[i].x, y: o.outer[i].y });  // ritorno all'angolo
+        k++;
+      }
+    }
+    return pts;
+  }
+
+  function earClip(pts) {
+    const n = pts.length;
+    if (n < 3) return [];
+    const scale = Math.max(...pts.map(p => Math.abs(p.x) + Math.abs(p.y)));
+    const EPSA = 1e-10 * scale * scale;
+    const prev = new Int32Array(n), next = new Int32Array(n);
+    for (let i = 0; i < n; i++) { prev[i] = (i + n - 1) % n; next[i] = (i + 1) % n; }
+    const area2 = (a, b, c) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    const tris = [];
+    let count = n, cur = 0, guard = 0, guardMax = n * n * 4;
+
+    while (count > 3 && guard++ < guardMax) {
+      const a = prev[cur], b = cur, c = next[cur];
+      const A = pts[a], B = pts[b], C = pts[c];
+      const cross = area2(A, B, C);
+      let isEar = false;
+      if (cross > EPSA) {
+        isEar = true;
+        let j = next[c];
+        while (j !== a) {
+          const P = pts[j];
+          const sameAsVert =
+            (Math.abs(P.x - A.x) < 1e-9 && Math.abs(P.y - A.y) < 1e-9) ||
+            (Math.abs(P.x - B.x) < 1e-9 && Math.abs(P.y - B.y) < 1e-9) ||
+            (Math.abs(P.x - C.x) < 1e-9 && Math.abs(P.y - C.y) < 1e-9);
+          if (!sameAsVert) {
+            const d1 = area2(A, B, P), d2 = area2(B, C, P), d3 = area2(C, A, P);
+            if (d1 > EPSA && d2 > EPSA && d3 > EPSA) { isEar = false; break; }
+          }
+          j = next[j];
+        }
+      } else if (Math.abs(cross) <= EPSA) {
+        // vertice degenere (spike/collineare): rimuovi senza triangolo
+        next[a] = c; prev[c] = a;
+        count--; cur = c;
+        continue;
+      }
+      if (isEar) {
+        tris.push([a, b, c]);
+        next[a] = c; prev[c] = a;
+        count--; cur = a;
+      } else {
+        cur = next[cur];
+      }
+    }
+    if (count === 3) tris.push([prev[cur], cur, next[cur]]);
+    return tris;
+  }
+
+  /* ---------- estrusione watertight ----------
+     ritorna { positions: Float32Array (soup), area, volume, capVerts, capTris } */
+  function buildModuleMesh(p) {
+    const o = buildOutline(p);
+    const bridged = buildBridged(o);
+    const tris = earClip(bridged);
+    const t = p.thick;
+    const pos = [];
+    const push = (v, z) => { pos.push(v.x, v.y, z); };
+
+    // cap superiore (z = t, CCW) e inferiore (z = 0, CW)
+    for (const tr of tris) {
+      push(bridged[tr[0]], t); push(bridged[tr[1]], t); push(bridged[tr[2]], t);
+    }
+    for (const tr of tris) {
+      push(bridged[tr[0]], 0); push(bridged[tr[2]], 0); push(bridged[tr[1]], 0);
+    }
+    // pareti: contorno esterno (CCW) e fori (CW) — stessa formula, normali corrette
+    const wall = (loop) => {
+      for (let i = 0; i < loop.length; i++) {
+        const A = loop[i], B = loop[(i + 1) % loop.length];
+        push(A, 0); push(B, 0); push(B, t);
+        push(A, 0); push(B, t); push(A, t);
+      }
+    };
+    wall(o.outer);
+    for (const hh of o.holes) wall(hh.loop);
+
+    let area = polyAreaSigned(o.outer);
+    for (const hh of o.holes) area += polyAreaSigned(hh.loop); // CW -> negativa
+    return {
+      positions: new Float32Array(pos),
+      area, volume: area * t,
+      capVerts: bridged, capTris: tris, outline: o
+    };
+  }
+
+  /* ---------- STL binario ---------- */
+  function stlBinary(positions, name) {
+    const nTri = positions.length / 9;
+    const buf = new ArrayBuffer(84 + nTri * 50);
+    const dv = new DataView(buf);
+    const header = (name || 'VELARIO modulo').slice(0, 79);
+    for (let i = 0; i < header.length; i++) dv.setUint8(i, header.charCodeAt(i));
+    dv.setUint32(80, nTri, true);
+    let off = 84;
+    for (let i = 0; i < nTri; i++) {
+      const b = i * 9;
+      const ax = positions[b], ay = positions[b + 1], az = positions[b + 2];
+      const bx = positions[b + 3], by = positions[b + 4], bz = positions[b + 5];
+      const cx = positions[b + 6], cy = positions[b + 7], cz = positions[b + 8];
+      const ux = bx - ax, uy = by - ay, uz = bz - az;
+      const vx = cx - ax, vy = cy - ay, vz = cz - az;
+      let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+      const l = Math.hypot(nx, ny, nz) || 1;
+      nx /= l; ny /= l; nz /= l;
+      dv.setFloat32(off, nx, true); dv.setFloat32(off + 4, ny, true); dv.setFloat32(off + 8, nz, true);
+      dv.setFloat32(off + 12, ax, true); dv.setFloat32(off + 16, ay, true); dv.setFloat32(off + 20, az, true);
+      dv.setFloat32(off + 24, bx, true); dv.setFloat32(off + 28, by, true); dv.setFloat32(off + 32, bz, true);
+      dv.setFloat32(off + 36, cx, true); dv.setFloat32(off + 40, cy, true); dv.setFloat32(off + 44, cz, true);
+      dv.setUint16(off + 48, 0, true);
+      off += 50;
+    }
+    return buf;
+  }
+
+  /* ---------- verifiche (usate nei test) ---------- */
+  function checkWatertight(positions) {
+    const key = (x, y, z) => x.toFixed(4) + ',' + y.toFixed(4) + ',' + z.toFixed(4);
+    const edges = new Map();
+    const nTri = positions.length / 9;
+    for (let i = 0; i < nTri; i++) {
+      const b = i * 9;
+      const vs = [
+        key(positions[b], positions[b + 1], positions[b + 2]),
+        key(positions[b + 3], positions[b + 4], positions[b + 5]),
+        key(positions[b + 6], positions[b + 7], positions[b + 8])
+      ];
+      for (let e = 0; e < 3; e++) {
+        const k = vs[e] + '|' + vs[(e + 1) % 3];
+        edges.set(k, (edges.get(k) || 0) + 1);
+      }
+    }
+    for (const [k, c] of edges) {
+      const rev = k.split('|').reverse().join('|');
+      if ((edges.get(rev) || 0) !== c) return false;
+    }
+    return true;
+  }
+
+  function signedVolume(positions) {
+    let v = 0;
+    const nTri = positions.length / 9;
+    for (let i = 0; i < nTri; i++) {
+      const b = i * 9;
+      const ax = positions[b], ay = positions[b + 1], az = positions[b + 2];
+      const bx = positions[b + 3], by = positions[b + 4], bz = positions[b + 5];
+      const cx = positions[b + 6], cy = positions[b + 7], cz = positions[b + 8];
+      v += (ax * (by * cz - bz * cy) - ay * (bx * cz - bz * cx) + az * (bx * cy - by * cx)) / 6;
+    }
+    return v;
+  }
+
+  const VELARIO = {
+    polyAreaSigned, pointInPoly, arcPoints, buildOutline, validateOutline,
+    buildBridged, earClip, buildModuleMesh, CONC_MAX, stlBinary, checkWatertight, signedVolume
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = VELARIO;
+  else root.VELARIO = VELARIO;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+'use strict';
+/* ================= STATO ================= */
+const stato = {
+  mod: { L:180, conc:0.16, holeR:2.4, inset:15, thick:1.0, edgeSegs:22, holeSegs:24 },
+  tass:{ nx:8, ny:6, gap:6, alterna:true },
+  str: { tubeD:33.7, sel:0, archi:[
+    { y:0.0, span:4.0, h:2.2, xoff:0 },
+    { y:2.0, span:4.4, h:2.5, xoff:0 },
+    { y:4.0, span:4.0, h:2.2, xoff:0 }
+  ]},
+  mat: { tipo:'PETG', prezzo:22, portata:14, vite:0.12 }
+};
+const DENSITA = { PETG:1.27, PLA:1.24, TPU:1.21, ASA:1.07, PETGCF:1.29 };
+let meshDati = null;       // risultato VELARIO.buildModuleMesh
+let sagomaValida = true;
+
+/* ================= SCENA THREE ================= */
+let renderer, scena, camera;
+let grpStruttura = new THREE.Group(), grpModuli = new THREE.Group(), grpViti = null;
+const orbita = { theta: -0.9, phi: 1.05, dist: 9, target: new THREE.Vector3(0, 1.2, 2) };
+
+function initScena(){
+  renderer = new THREE.WebGLRenderer({ antialias:true });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  document.getElementById('vista').appendChild(renderer.domElement);
+
+  scena = new THREE.Scene();
+  scena.background = new THREE.Color(0x060a07);
+  scena.fog = new THREE.Fog(0x060a07, 18, 55);
+
+  camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.05, 200);
+
+  scena.add(new THREE.AmbientLight(0x9fb8a5, 0.55));
+  const sole = new THREE.DirectionalLight(0xfff3df, 1.0);
+  sole.position.set(6, 12, 4);
+  scena.add(sole);
+  const contro = new THREE.DirectionalLight(0x7cff9b, 0.18);
+  contro.position.set(-8, 3, -6);
+  scena.add(contro);
+
+  const griglia = new THREE.GridHelper(40, 40, 0x1c3524, 0x122417);
+  scena.add(griglia);
+
+  scena.add(grpStruttura);
+  scena.add(grpModuli);
+
+  const dom = renderer.domElement;
+  let giu = false, pan = false, px = 0, py = 0;
+  dom.addEventListener('mousedown', e => { giu = true; pan = e.shiftKey || e.button === 2; px = e.clientX; py = e.clientY; });
+  addEventListener('mouseup', () => giu = false);
+  addEventListener('mousemove', e => {
+    if(!giu) return;
+    const dx = e.clientX - px, dy = e.clientY - py; px = e.clientX; py = e.clientY;
+    if(pan){
+      const s = orbita.dist * 0.0016;
+      const fw = new THREE.Vector3(Math.sin(orbita.theta), 0, Math.cos(orbita.theta));
+      const dr = new THREE.Vector3(fw.z, 0, -fw.x);
+      orbita.target.addScaledVector(dr, -dx*s);
+      orbita.target.y = Math.max(0, orbita.target.y + dy*s);
+    } else {
+      orbita.theta -= dx*0.006;
+      orbita.phi = Math.min(1.52, Math.max(0.08, orbita.phi - dy*0.006));
+    }
+  });
+  dom.addEventListener('wheel', e => {
+    e.preventDefault();
+    orbita.dist = Math.min(60, Math.max(1.5, orbita.dist * (1 + Math.sign(e.deltaY)*0.09)));
+  }, { passive:false });
+  dom.addEventListener('contextmenu', e => e.preventDefault());
+
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  (function anima(){
+    requestAnimationFrame(anima);
+    const { theta, phi, dist, target } = orbita;
+    camera.position.set(
+      target.x + dist*Math.sin(phi)*Math.sin(theta),
+      target.y + dist*Math.cos(phi),
+      target.z + dist*Math.sin(phi)*Math.cos(theta)
+    );
+    camera.lookAt(target);
+    renderer.render(scena, camera);
+  })();
+}
+
+/* ================= SUPERFICIE S(u,v) ================= */
+function archiOrdinati(){ return [...stato.str.archi].sort((a,b)=>a.y-b.y); }
+
+function catmull(arr, f){
+  const n = arr.length;
+  if(n === 1) return arr[0];
+  const i = Math.min(n-2, Math.max(0, Math.floor(f)));
+  const t = f - i;
+  const p0 = arr[Math.max(i-1,0)], p1 = arr[i], p2 = arr[Math.min(i+1,n-1)], p3 = arr[Math.min(i+2,n-1)];
+  const t2 = t*t, t3 = t2*t;
+  return 0.5*((2*p1) + (-p0+p2)*t + (2*p0-5*p1+4*p2-p3)*t2 + (-p0+3*p1-3*p2+p3)*t3);
+}
+
+function superficie(u, v){
+  const A = archiOrdinati();
+  const f = v*(A.length-1);
+  const y    = catmull(A.map(a=>a.y), f);
+  const span = catmull(A.map(a=>a.span), f);
+  const h    = catmull(A.map(a=>a.h), f);
+  const xoff = catmull(A.map(a=>a.xoff), f);
+  return new THREE.Vector3(xoff + span*(u-0.5), h*4*u*(1-u), y);
+}
+
+function lunghezzaArco(a){
+  let l = 0, prev = null;
+  for(let i=0;i<=64;i++){
+    const t = i/64;
+    const p = { x: a.span*(t-0.5), y: a.h*4*t*(1-t) };
+    if(prev) l += Math.hypot(p.x-prev.x, p.y-prev.y);
+    prev = p;
+  }
+  return l;
+}
+
+/* ================= COSTRUZIONE 3D ================= */
+class CurvaArco extends THREE.Curve {
+  constructor(a){ super(); this.a = a; }
+  getPoint(t){ const a = this.a; return new THREE.Vector3(a.xoff + a.span*(t-0.5), a.h*4*t*(1-t), a.y); }
+}
+
+function ricostruisciStruttura(){
+  while(grpStruttura.children.length) {
+    const c = grpStruttura.children.pop();
+    c.geometry && c.geometry.dispose();
+  }
+  const matTubo = new THREE.MeshStandardMaterial({ color:0x8a9199, metalness:0.75, roughness:0.35 });
+  const matSel  = new THREE.MeshStandardMaterial({ color:0x7cff9b, metalness:0.4, roughness:0.4, emissive:0x123f22 });
+  const r = stato.str.tubeD/2000; // mm -> m
+  stato.str.archi.forEach((a, i) => {
+    const tubo = new THREE.Mesh(
+      new THREE.TubeGeometry(new CurvaArco(a), 48, r, 10, false),
+      i === stato.str.sel ? matSel : matTubo
+    );
+    grpStruttura.add(tubo);
+  });
+}
+
+function ricostruisciModuli(){
+  while(grpModuli.children.length) {
+    const c = grpModuli.children.pop();
+    c.geometry && c.geometry.dispose();
+  }
+  grpViti = null;
+  if(!meshDati || !sagomaValida) return;
+
+  const { nx, ny, gap, alterna } = stato.tass;
+  const { L } = stato.mod;
+  const verts = meshDati.capVerts, tris = meshDati.capTris;
+  const gapFrac = gap/(L+gap);
+
+  const geoA = { pos:[], idx:[] }, geoB = { pos:[], idx:[] };
+  for(let j=0;j<ny;j++) for(let i=0;i<nx;i++){
+    const dst = (alterna && (i+j)%2) ? geoB : geoA;
+    const base = dst.pos.length/3;
+    for(const p of verts){
+      const lu = (p.x/L + 0.5), lv = (p.y/L + 0.5);
+      const u = (i + gapFrac/2 + lu*(1-gapFrac)) / nx;
+      const v = (j + gapFrac/2 + lv*(1-gapFrac)) / ny;
+      const P = superficie(u, v);
+      dst.pos.push(P.x, P.y, P.z);
+    }
+    for(const t of tris) dst.idx.push(base+t[0], base+t[1], base+t[2]);
+  }
+  const mk = (g, col) => {
+    if(!g.idx.length) return;
+    const bg = new THREE.BufferGeometry();
+    bg.setAttribute('position', new THREE.Float32BufferAttribute(g.pos, 3));
+    bg.setIndex(g.idx);
+    bg.computeVertexNormals();
+    grpModuli.add(new THREE.Mesh(bg, new THREE.MeshStandardMaterial({
+      color: col, roughness: 0.85, metalness: 0.02, side: THREE.DoubleSide
+    })));
+  };
+  mk(geoA, 0xc8a17b);
+  mk(geoB, alterna ? 0xede7da : 0xc8a17b);
+
+  // viti alle giunzioni
+  const nV = (nx+1)*(ny+1);
+  const vite = new THREE.InstancedMesh(
+    new THREE.SphereGeometry(0.011, 8, 8),
+    new THREE.MeshStandardMaterial({ color:0xd8dde2, metalness:0.9, roughness:0.25 }),
+    nV
+  );
+  const M = new THREE.Matrix4();
+  let k = 0;
+  for(let j=0;j<=ny;j++) for(let i=0;i<=nx;i++){
+    const P = superficie(i/nx, j/ny);
+    M.setPosition(P.x, P.y, P.z);
+    vite.setMatrixAt(k++, M);
+  }
+  grpViti = vite;
+  grpModuli.add(vite);
+}
+
+/* ================= DISEGNO 2D MODULO ================= */
+function disegna2D(){
+  const cv = document.getElementById('modulo2d');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(!meshDati) return;
+  const o = meshDati.outline;
+  const s = Math.min(cv.width, cv.height) * 0.82 / stato.mod.L;
+  const cx = cv.width/2, cy = cv.height/2;
+  const T = p => [cx + p.x*s, cy - p.y*s];
+
+  ctx.strokeStyle = sagomaValida ? '#7CFF9B' : '#ff6b5e';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  o.outer.forEach((p,i) => { const [x,y] = T(p); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); });
+  ctx.closePath(); ctx.stroke();
+
+  ctx.lineWidth = 1;
+  for(const h of o.holes){
+    ctx.beginPath();
+    h.loop.forEach((p,i) => { const [x,y] = T(p); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); });
+    ctx.closePath(); ctx.stroke();
+  }
+  // texture rigata indicativa
+  ctx.strokeStyle = 'rgba(124,255,155,0.14)';
+  ctx.save();
+  ctx.beginPath();
+  o.outer.forEach((p,i) => { const [x,y] = T(p); i ? ctx.lineTo(x,y) : ctx.moveTo(x,y); });
+  ctx.closePath(); ctx.clip();
+  const passo = 6;
+  for(let d = -cv.width; d < cv.width; d += passo){
+    ctx.beginPath(); ctx.moveTo(d, 0); ctx.lineTo(d + cv.height, cv.height); ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.fillStyle = '#3f8f56';
+  ctx.font = '10px Courier New';
+  ctx.fillText('L ' + stato.mod.L + ' mm', 8, 14);
+  ctx.fillText('sagitta ' + (Math.min(stato.mod.conc, VELARIO.CONC_MAX) * stato.mod.L).toFixed(1) + ' mm', 8, 27);
+  ctx.fillText('Ø ' + (stato.mod.holeR*2).toFixed(1) + ' mm', 8, 40);
+}
+
+/* ================= PREVENTIVO ================= */
+function fmt(n, d){ return n.toLocaleString('it-IT', { minimumFractionDigits:d??1, maximumFractionDigits:d??1 }); }
+
+function aggiornaPreventivo(){
+  const tab = document.getElementById('tabPrev');
+  if(!meshDati || !sagomaValida){ tab.innerHTML = '<tr><td>—</td><td>—</td></tr>'; return; }
+  const { nx, ny, gap } = stato.tass;
+  const { L } = stato.mod;
+  const dens = DENSITA[stato.mat.tipo];
+  const vol = meshDati.volume;                    // mm³
+  const massa = vol * dens / 1000;                // g
+  const filM = vol / 2.405 / 1000;                // m di filo 1.75
+  const nMod = nx * ny;
+  const totKg = nMod * massa / 1000;
+  const ore = (nMod * massa) / stato.mat.portata;
+  const nViti = (nx+1)*(ny+1);
+  const A = archiOrdinati();
+  const tuboM = A.reduce((s,a) => s + lunghezzaArco(a), 0);
+  const svilMedio = A.reduce((s,a) => s + lunghezzaArco(a), 0) / A.length;
+  const largReale = nx * (L+gap) / 1000;
+  const profReale = ny * (L+gap) / 1000;
+  const profArchi = A[A.length-1].y - A[0].y;
+  const costoMat = totKg * stato.mat.prezzo;
+  const costoViti = nViti * stato.mat.vite;
+
+  tab.innerHTML = `
+    <tr><td class="cap" colspan="2">MODULO SINGOLO</td></tr>
+    <tr><td>area</td><td>${fmt(meshDati.area/100)} cm²</td></tr>
+    <tr><td>peso (${stato.mat.tipo})</td><td>${fmt(massa)} g</td></tr>
+    <tr><td>filamento</td><td>${fmt(filM,2)} m</td></tr>
+    <tr><td class="cap" colspan="2">TASSELLAZIONE ${nx}×${ny}</td></tr>
+    <tr><td>moduli</td><td>${nMod}</td></tr>
+    <tr><td>peso totale</td><td>${fmt(totKg,2)} kg</td></tr>
+    <tr><td>bobine da 1 kg</td><td>${Math.ceil(totKg*1.08)}</td></tr>
+    <tr><td>tempo stampa</td><td>${fmt(ore)} h (${fmt(ore/24)} gg)</td></tr>
+    <tr><td>viti+dadi M${Math.max(3, Math.round(stato.mod.holeR*2)-1)}</td><td>${nViti} pz</td></tr>
+    <tr><td class="cap" colspan="2">STRUTTURA</td></tr>
+    <tr><td>tubo Ø${fmt(stato.str.tubeD)} acciaio</td><td>${fmt(tuboM)} m</td></tr>
+    <tr><td>archi</td><td>${A.length}</td></tr>
+    <tr><td class="cap" colspan="2">COPERTURA REALE</td></tr>
+    <tr><td>telo ${fmt(largReale)}×${fmt(profReale)} m</td><td>${fmt(largReale*profReale)} m²</td></tr>
+    <tr><td>sviluppo medio archi</td><td>${fmt(svilMedio)} m</td></tr>
+    <tr><td>scala su arco</td><td>${fmt(100*largReale/svilMedio,0)} %</td></tr>
+    <tr><td>scala in profondità</td><td>${profArchi>0 ? fmt(100*profReale/profArchi,0) : '—'} %</td></tr>
+    <tr class="tot"><td>materiale ~</td><td>${fmt(costoMat,0)} €</td></tr>
+    <tr class="tot"><td>viteria ~</td><td>${fmt(costoViti,0)} €</td></tr>`;
+}
+
+/* ================= RICOSTRUZIONE ================= */
+function ricostruisci(){
+  const m = stato.mod;
+  meshDati = VELARIO.buildModuleMesh({
+    L:m.L, conc:m.conc, holeR:m.holeR, inset:m.inset,
+    edgeSegs:m.edgeSegs, holeSegs:m.holeSegs, thick:m.thick
+  });
+  sagomaValida = VELARIO.validateOutline(meshDati.outline, 0.6);
+  const wt = sagomaValida ? VELARIO.checkWatertight(meshDati.positions) : false;
+
+  const avvisi = [];
+  if(m.conc > VELARIO.CONC_MAX) avvisi.push('concavità limitata a ' + VELARIO.CONC_MAX + ' (limite geometrico)');
+  if(!sagomaValida) avvisi.push('⚠ FORO FUORI SAGOMA — aumenta inserto angolo o riduci concavità');
+  else if(!wt) avvisi.push('⚠ mesh non watertight — cambia parametri');
+  document.getElementById('avvisi').textContent = avvisi.join('\n');
+  document.getElementById('bStl').disabled = !(sagomaValida && wt);
+
+  disegna2D();
+  ricostruisciStruttura();
+  ricostruisciModuli();
+  aggiornaPreventivo();
+}
+
+/* ================= EXPORT ================= */
+function scaricaBlob(blob, nome){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nome;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+document.getElementById('bStl').addEventListener('click', () => {
+  if(!meshDati || !sagomaValida) return;
+  const buf = VELARIO.stlBinary(meshDati.positions, 'VELARIO modulo L' + stato.mod.L);
+  scaricaBlob(new Blob([buf], { type:'model/stl' }),
+    `velario_modulo_L${stato.mod.L}_c${Math.round(stato.mod.conc*100)}_t${stato.mod.thick.toFixed(1)}.stl`);
+});
+
+document.getElementById('bSalva').addEventListener('click', () => {
+  scaricaBlob(new Blob([JSON.stringify(stato, null, 2)], { type:'application/json' }), 'velario_config.json');
+});
+document.getElementById('bCarica').addEventListener('click', () => document.getElementById('fileConfig').click());
+document.getElementById('fileConfig').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const s = JSON.parse(r.result);
+      Object.assign(stato.mod, s.mod); Object.assign(stato.tass, s.tass);
+      Object.assign(stato.mat, s.mat);
+      stato.str.tubeD = s.str.tubeD; stato.str.archi = s.str.archi; stato.str.sel = 0;
+      sincronizzaUI(); ricostruisci();
+    } catch(err){ document.getElementById('avvisi').textContent = 'config non valida'; }
+  };
+  r.readAsText(f);
+});
+
+/* ================= BINDING UI ================= */
+function lega(id, vid, get, set, fmtF){
+  const el = document.getElementById(id), lab = document.getElementById(vid);
+  const agg = () => { lab.textContent = fmtF ? fmtF(get()) : get(); };
+  el.addEventListener('input', () => { set(parseFloat(el.value)); agg(); ricostruisci(); });
+  el.value = get(); agg();
+}
+
+function popolaSelArchi(){
+  const sel = document.getElementById('sSel');
+  sel.innerHTML = '';
+  stato.str.archi.forEach((a,i) => {
+    const o = document.createElement('option');
+    o.value = i; o.textContent = `arco ${i+1}  ·  y ${a.y.toFixed(1)} m`;
+    sel.appendChild(o);
+  });
+  sel.value = stato.str.sel;
+}
+
+function sincronizzaArcoUI(){
+  const a = stato.str.archi[stato.str.sel];
+  const c = [['sY','vY',a.y],['sSpan','vSpan',a.span],['sH','vH',a.h],['sXoff','vXoff',a.xoff]];
+  for(const [id,vid,val] of c){
+    document.getElementById(id).value = val;
+    document.getElementById(vid).textContent = val.toFixed(1) + ' m';
+  }
+}
+
+function sincronizzaUI(){
+  const m = stato.mod, t = stato.tass;
+  const coppie = [
+    ['mL', m.L], ['mConc', m.conc], ['mThick', m.thick], ['mHole', m.holeR*2],
+    ['mInset', m.inset], ['mSegs', m.edgeSegs],
+    ['tNx', t.nx], ['tNy', t.ny], ['tGap', t.gap], ['sTube', stato.str.tubeD]
+  ];
+  for(const [id,val] of coppie) document.getElementById(id).value = val;
+  document.getElementById('tAlt').checked = t.alterna;
+  document.getElementById('mMat').value = stato.mat.tipo;
+  document.getElementById('mPrezzo').value = stato.mat.prezzo;
+  document.getElementById('mPortata').value = stato.mat.portata;
+  document.getElementById('mVite').value = stato.mat.vite;
+  // aggiorna etichette
+  ['mL','mConc','mThick','mHole','mInset','mSegs','tNx','tNy','tGap','sTube']
+    .forEach(id => document.getElementById(id).dispatchEvent(new Event('input')));
+  popolaSelArchi(); sincronizzaArcoUI();
+}
+
+lega('mL','vL', () => stato.mod.L, v => stato.mod.L = v, v => v + ' mm');
+lega('mConc','vConc', () => stato.mod.conc, v => stato.mod.conc = v, v => (v*100).toFixed(1) + ' %');
+lega('mThick','vThick', () => stato.mod.thick, v => stato.mod.thick = v, v => v.toFixed(1) + ' mm');
+lega('mHole','vHole', () => stato.mod.holeR*2, v => stato.mod.holeR = v/2, v => v.toFixed(1) + ' mm');
+lega('mInset','vInset', () => stato.mod.inset, v => stato.mod.inset = v, v => v.toFixed(1) + ' mm');
+lega('mSegs','vSegs', () => stato.mod.edgeSegs, v => stato.mod.edgeSegs = Math.round(v), v => Math.round(v) + '');
+lega('tNx','vNx', () => stato.tass.nx, v => stato.tass.nx = Math.round(v), v => Math.round(v) + '');
+lega('tNy','vNy', () => stato.tass.ny, v => stato.tass.ny = Math.round(v), v => Math.round(v) + '');
+lega('tGap','vGap', () => stato.tass.gap, v => stato.tass.gap = v, v => v + ' mm');
+lega('sTube','vTube', () => stato.str.tubeD, v => stato.str.tubeD = v, v => v.toFixed(1) + ' mm');
+
+document.getElementById('tAlt').addEventListener('change', e => { stato.tass.alterna = e.target.checked; ricostruisci(); });
+document.getElementById('mMat').addEventListener('change', e => { stato.mat.tipo = e.target.value; aggiornaPreventivo(); });
+document.getElementById('mPrezzo').addEventListener('input', e => { stato.mat.prezzo = parseFloat(e.target.value)||0; aggiornaPreventivo(); });
+document.getElementById('mPortata').addEventListener('input', e => { stato.mat.portata = Math.max(1, parseFloat(e.target.value)||1); aggiornaPreventivo(); });
+document.getElementById('mVite').addEventListener('input', e => { stato.mat.vite = parseFloat(e.target.value)||0; aggiornaPreventivo(); });
+
+document.getElementById('sSel').addEventListener('change', e => {
+  stato.str.sel = parseInt(e.target.value); sincronizzaArcoUI(); ricostruisciStruttura();
+});
+function legaArco(id, vid, chiave){
+  document.getElementById(id).addEventListener('input', e => {
+    stato.str.archi[stato.str.sel][chiave] = parseFloat(e.target.value);
+    document.getElementById(vid).textContent = parseFloat(e.target.value).toFixed(1) + ' m';
+    popolaSelArchi(); ricostruisci();
+  });
+}
+legaArco('sY','vY','y'); legaArco('sSpan','vSpan','span');
+legaArco('sH','vH','h'); legaArco('sXoff','vXoff','xoff');
+
+document.getElementById('bAddArco').addEventListener('click', () => {
+  const A = archiOrdinati();
+  const ult = A[A.length-1];
+  stato.str.archi.push({ y: ult.y + 2, span: ult.span, h: ult.h, xoff: ult.xoff });
+  stato.str.sel = stato.str.archi.length - 1;
+  popolaSelArchi(); sincronizzaArcoUI(); ricostruisci();
+});
+document.getElementById('bDelArco').addEventListener('click', () => {
+  if(stato.str.archi.length <= 2) {
+    document.getElementById('avvisi').textContent = 'servono almeno 2 archi';
+    return;
+  }
+  stato.str.archi.splice(stato.str.sel, 1);
+  stato.str.sel = Math.max(0, stato.str.sel - 1);
+  popolaSelArchi(); sincronizzaArcoUI(); ricostruisci();
+});
+
+/* ================= AVVIO ================= */
+initScena();
+popolaSelArchi();
+sincronizzaArcoUI();
+ricostruisci();
+</script>
+</body>
+</html>
