@@ -279,6 +279,11 @@ window.VENTAGLIO = (function () {
     ];
   }
 
+  function defaultCord(half) {
+    const tipY = half ? half[half.length - 1].y : 148;
+    return { x: 13, y: tipY - 6, r: 1.4 };
+  }
+
   function halfToOutline(half) {
     const left = [];
     for (let i = half.length - 1; i >= 0; i--) {
@@ -312,9 +317,10 @@ window.VENTAGLIO = (function () {
     return { coords: coords, holeIdx: holeIdx, outer: outerCCW, holes: holesCW };
   }
 
-  function extrudeShape(outer, holes, z0, z1) {
+  function extrudeShape(outer, holes, z0, z1, meshSegs) {
+    const segs = meshSegs != null ? meshSegs : 32;
     const holeLoops = holes.map(function (h) {
-      return circlePts(h.x, h.y, h.r, h.segs || 24, true);
+      return circlePts(h.x, h.y, h.r, h.segs || segs, true);
     });
     const flat = flattenForEarcut(outer, holeLoops);
     const indices = earcut(flat.coords, flat.holeIdx, 2);
@@ -421,12 +427,18 @@ window.VENTAGLIO = (function () {
   function collectHoles(opts, half) {
     const holes = (opts.holes || defaultHoles()).slice();
     const pivotR = opts.pivotR != null ? opts.pivotR : 5.5;
-    const cord = opts.cord || { x: 13, y: 142, r: 1.4 };
+    const meshSegs = opts.meshSegs != null ? opts.meshSegs : 32;
+    const cord = opts.cord || defaultCord(half);
     const tipY = half[half.length - 1].y;
-    holes.push({ x: 0, y: Math.max(6, half[1].y * 0.5), r: pivotR, segs: 28 });
-    if (cord) holes.push({ x: cord.x, y: cord.y != null ? cord.y : tipY - 6, r: cord.r, segs: 16 });
-    if (opts.cordLeft) holes.push({ x: -cord.x, y: cord.y != null ? cord.y : tipY - 6, r: cord.r, segs: 16 });
-    return { holes: holes, pivotR: pivotR };
+    const pivotSegs = Math.max(meshSegs + 12, 40);
+    holes.push({ x: 0, y: Math.max(6, half[1].y * 0.5), r: pivotR, segs: pivotSegs });
+    if (cord && opts.cordRight !== false) {
+      holes.push({ x: cord.x, y: cord.y != null ? cord.y : tipY - 6, r: cord.r, segs: meshSegs });
+    }
+    if (cord && opts.cordLeft) {
+      holes.push({ x: -cord.x, y: cord.y != null ? cord.y : tipY - 6, r: cord.r, segs: meshSegs });
+    }
+    return { holes: holes, pivotR: pivotR, meshSegs: meshSegs };
   }
 
   function buildModuleParts(opts) {
@@ -436,7 +448,8 @@ window.VENTAGLIO = (function () {
     const withSpine = opts.withSpine !== false;
     const outer = halfToOutline(half);
     const holeData = collectHoles(opts, half);
-    const blade = extrudeShape(outer, holeData.holes, 0, thick);
+    const segs = holeData.meshSegs;
+    const blade = extrudeShape(outer, holeData.holes, 0, thick, segs);
     const parts = { blade: blade, spine: null };
 
     if (withSpine && spineW > 0.5) {
@@ -445,9 +458,9 @@ window.VENTAGLIO = (function () {
         x: 0,
         y: Math.max(6, half[1].y * 0.5),
         r: holeData.pivotR * 0.55,
-        segs: 20
+        segs: Math.max(segs - 4, 20)
       }];
-      parts.spine = extrudeShape(sp, spHoles, 0, thick + 0.12);
+      parts.spine = extrudeShape(sp, spHoles, 0, thick + 0.12, segs);
     }
     return parts;
   }
@@ -508,6 +521,7 @@ window.VENTAGLIO = (function () {
   return {
     defaultHalfProfile: defaultHalfProfile,
     defaultHoles: defaultHoles,
+    defaultCord: defaultCord,
     halfToOutline: halfToOutline,
     buildModuleMesh: buildModuleMesh,
     buildModuleParts: buildModuleParts,

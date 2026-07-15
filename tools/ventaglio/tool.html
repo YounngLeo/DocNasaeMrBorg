@@ -7,7 +7,7 @@
 <script src="../_mirror.js"></script>
 <title>VENTAGLIO // DOCTNASA&MRBORG</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="ventaglio-core.js?v=2"></script>
+<script src="ventaglio-core.js?v=3"></script>
 <style>
   :root {
     --fg: #7CFF9B; --fg-dim: #3f8f56; --bg: #060a07; --panel: #0a120c;
@@ -81,7 +81,16 @@
       <div class="riga"><label>spessore (mm)</label><input type="range" id="pThick" min="0.6" max="2.5" step="0.1" value="1.2"><span class="val" id="vThick">1.2</span></div>
       <div class="riga"><label>costola (mm)</label><input type="range" id="pSpine" min="0" max="8" step="0.2" value="4.2"><span class="val" id="vSpine">4.2</span></div>
       <div class="riga"><label>Ø pivot (mm)</label><input type="range" id="pPivot" min="3" max="10" step="0.2" value="5.5"><span class="val" id="vPivot">5.5</span></div>
-      <div class="riga"><label>fori corda</label><input type="checkbox" id="pCord2" checked style="accent-color:var(--fg)"></div>
+      <div class="riga"><label>risoluzione 3D</label><input type="range" id="pMeshSegs" min="20" max="64" step="4" value="40"><span class="val" id="vMeshSegs">40</span></div>
+    </div>
+
+    <div class="sez">
+      <h2>[ CORDA ]</h2>
+      <div class="riga"><label>foro destro</label><input type="checkbox" id="pCordR" checked style="accent-color:var(--fg)"></div>
+      <div class="riga"><label>foro sinistro</label><input type="checkbox" id="pCord2" checked style="accent-color:var(--fg)"></div>
+      <div class="riga"><label>X corda (mm)</label><input type="range" id="pCordX" min="4" max="22" step="0.5" value="13"><span class="val" id="vCordX">13.0</span></div>
+      <div class="riga"><label>Y corda (mm)</label><input type="range" id="pCordY" min="20" max="145" step="1" value="142"><span class="val" id="vCordY">142</span></div>
+      <div class="riga"><label>Ø corda (mm)</label><input type="range" id="pCordRmm" min="0.8" max="3" step="0.1" value="1.4"><span class="val" id="vCordRmm">1.4</span></div>
       <div class="duo">
         <button type="button" class="mini" id="bResetProf">↺ PROFILO</button>
         <button type="button" class="mini" id="bResetFori">↺ FORI</button>
@@ -109,12 +118,12 @@
         <button type="button" class="mini" id="bCarica">CARICA</button>
       </div>
       <input type="file" id="fileCfg" accept=".json" hidden>
-      <div class="hint">Clic sulla metà destra per aggiungere punti · trascina i punti verdi · doppio clic per rimuovere · Rosso = costola · cerchi = fori · viola = corda.<br>Stampa le stecche in piano, impilate come nel pacchetto chiuso.</div>
+      <div class="hint">Clic sul bordo del profilo per aggiungere punti · trascina verde=profilo · viola=corda · grigio=fori · doppio clic rimuove punto.<br>Stampa le stecche in piano, impilate come nel pacchetto chiuso.</div>
     </div>
   </div>
 
   <div id="editorWrap">
-    <div id="editorHead">// PROFILO MODULO · clic per aggiungere punto · trascina per modificare</div>
+    <div id="editorHead">// PROFILO · clic sul bordo = nuovo punto · trascina maniglie</div>
     <div id="editorArea">
       <canvas id="editor"></canvas>
     </div>
@@ -140,6 +149,9 @@ const stato = {
   thick: 1.2,
   spineW: 4.2,
   pivotR: 5.5,
+  meshSegs: 40,
+  cord: VENTAGLIO.defaultCord(VENTAGLIO.defaultHalfProfile()),
+  cordRight: true,
   cord2: true,
   count: 12,
   spreadDeg: 140,
@@ -147,7 +159,7 @@ const stato = {
   stackGap: 0.32
 };
 
-let dragPt = -1;
+let drag = null;
 let dirty3d = true;
 let scene, camera, renderer, fanGroup, orbit;
 let matBlade, matSpine;
@@ -164,10 +176,25 @@ function opts() {
     thick: stato.thick,
     spineW: stato.spineW,
     pivotR: stato.pivotR,
-    cord: { x: 13, y: stato.half[stato.half.length - 1].y - 6, r: 1.4 },
+    meshSegs: stato.meshSegs,
+    cord: Object.assign({}, stato.cord),
+    cordRight: stato.cordRight,
     cordLeft: stato.cord2,
     withSpine: stato.spineW > 0.3
   };
+}
+
+function syncCordUi() {
+  const tipY = stato.half[stato.half.length - 1].y;
+  document.getElementById('pCordY').max = Math.max(30, tipY - 4);
+  document.getElementById('pCordX').value = stato.cord.x;
+  document.getElementById('pCordY').value = stato.cord.y;
+  document.getElementById('pCordRmm').value = stato.cord.r;
+  document.getElementById('vCordX').textContent = stato.cord.x.toFixed(1);
+  document.getElementById('vCordY').textContent = Math.round(stato.cord.y);
+  document.getElementById('vCordRmm').textContent = stato.cord.r.toFixed(1);
+  document.getElementById('pCordR').checked = stato.cordRight;
+  document.getElementById('pCord2').checked = stato.cord2;
 }
 
 function meshToGeometry(pos) {
@@ -222,7 +249,7 @@ function resizeEditor() {
   if (r.width < 2 || r.height < 2) return false;
   edW = r.width;
   edH = r.height;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
   ed.width = Math.max(1, Math.floor(edW * dpr));
   ed.height = Math.max(1, Math.floor(edH * dpr));
   ed.style.width = edW + 'px';
@@ -289,20 +316,39 @@ function drawEditor() {
     ectx.stroke();
   }
 
-  stato.holes.forEach(function (h) {
+  stato.holes.forEach(function (h, hi) {
     const s = toScreen(h.x, h.y);
     ectx.beginPath();
     ectx.arc(s.x, s.y, h.r * edScale, 0, Math.PI * 2);
     ectx.strokeStyle = '#3f8f56';
     ectx.lineWidth = 1;
     ectx.stroke();
+    ectx.fillStyle = drag && drag.kind === 'hole' && drag.idx === hi ? '#fff' : '#6a9a78';
+    ectx.beginPath();
+    ectx.arc(s.x, s.y, drag && drag.kind === 'hole' && drag.idx === hi ? 5 : 4, 0, Math.PI * 2);
+    ectx.fill();
+    ectx.strokeStyle = '#000';
+    ectx.lineWidth = 1;
+    ectx.stroke();
   });
-  const cordY = stato.half[stato.half.length - 1].y - 6;
-  [{ x: 13, y: cordY }, stato.cord2 ? { x: -13, y: cordY } : null].filter(Boolean).forEach(function (c) {
+
+  const cordPts = [];
+  if (stato.cordRight) cordPts.push({ side: 'R', x: stato.cord.x, y: stato.cord.y, r: stato.cord.r });
+  if (stato.cord2) cordPts.push({ side: 'L', x: -stato.cord.x, y: stato.cord.y, r: stato.cord.r });
+  cordPts.forEach(function (c) {
     const s = toScreen(c.x, c.y);
     ectx.beginPath();
-    ectx.arc(s.x, s.y, 1.4 * edScale, 0, Math.PI * 2);
+    ectx.arc(s.x, s.y, c.r * edScale, 0, Math.PI * 2);
     ectx.strokeStyle = '#8b2942';
+    ectx.lineWidth = 1.2;
+    ectx.stroke();
+    const active = drag && drag.kind === 'cord' && drag.side === c.side;
+    ectx.fillStyle = active ? '#fff' : '#8b2942';
+    ectx.beginPath();
+    ectx.arc(s.x, s.y, active ? 6 : 5, 0, Math.PI * 2);
+    ectx.fill();
+    ectx.strokeStyle = '#000';
+    ectx.lineWidth = 1;
     ectx.stroke();
   });
   const pv = toScreen(0, Math.max(6, stato.half[1].y * 0.5));
@@ -331,10 +377,11 @@ function drawEditor() {
     if (p.lock && i !== stato.half.length - 1 && i !== 0) return;
     const s = toScreen(p.x, p.y);
     const sL = toScreen(-p.x, p.y);
-    ectx.fillStyle = dragPt === i ? '#fff' : '#7CFF9B';
+    const active = drag && drag.kind === 'pt' && drag.idx === i;
+    ectx.fillStyle = active ? '#fff' : '#7CFF9B';
     [s, i > 0 && i < stato.half.length - 1 ? sL : null].filter(Boolean).forEach(function (pt) {
       ectx.beginPath();
-      ectx.arc(pt.x, pt.y, dragPt === i ? 6 : 5, 0, Math.PI * 2);
+      ectx.arc(pt.x, pt.y, active ? 7 : 6, 0, Math.PI * 2);
       ectx.fill();
       ectx.strokeStyle = '#000';
       ectx.lineWidth = 1;
@@ -348,29 +395,66 @@ function editorCoords(e) {
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
-function hitPoint(sx, sy) {
-  let best = -1, bd = 16;
+function hitHandle(sx, sy) {
+  let best = null, bd = 18;
+  function consider(kind, idx, x, y, extra) {
+    const s = toScreen(x, y);
+    const d = Math.hypot(sx - s.x, sy - s.y);
+    if (d < bd) { bd = d; best = Object.assign({ kind: kind, idx: idx }, extra || {}); }
+  }
+  if (stato.cordRight) consider('cord', 0, stato.cord.x, stato.cord.y, { side: 'R' });
+  if (stato.cord2) consider('cord', 1, -stato.cord.x, stato.cord.y, { side: 'L' });
+  stato.holes.forEach(function (h, i) { consider('hole', i, h.x, h.y); });
   stato.half.forEach(function (p, i) {
     if (p.lock && i > 0 && i < stato.half.length - 1) return;
-    [[p.x, p.y], i > 0 && i < stato.half.length - 1 ? [-p.x, p.y] : null].filter(Boolean).forEach(function (xy) {
-      const s = toScreen(xy[0], xy[1]);
-      const d = Math.hypot(sx - s.x, sy - s.y);
-      if (d < bd) { bd = d; best = i; }
-    });
+    consider('pt', i, p.x, p.y);
+    if (i > 0 && i < stato.half.length - 1) consider('pt', i, -p.x, p.y);
   });
   return best;
 }
 
+function projectSegment(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  if (len2 < 1e-6) return null;
+  let t = ((px - ax) * dx + (py - ay) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return { x: ax + t * dx, y: ay + t * dy, t: t, seg: -1 };
+}
+
+function tryInsertPoint(p) {
+  const px = Math.abs(p.x);
+  const py = p.y;
+  const y0 = stato.half[0].y;
+  const y1 = stato.half[stato.half.length - 1].y;
+  if (py <= y0 + 2 || py >= y1 - 2) return false;
+
+  let bestProj = null, bestD = Infinity, bestSeg = -1;
+  for (let i = 0; i < stato.half.length - 1; i++) {
+    const A = stato.half[i], B = stato.half[i + 1];
+    const proj = projectSegment(px, py, A.x, A.y, B.x, B.y);
+    if (!proj) continue;
+    const d = Math.hypot(px - proj.x, py - proj.y);
+    if (d < bestD) { bestD = d; bestProj = proj; bestSeg = i; }
+  }
+  const thresh = Math.max(8, 14 / edScale);
+  if (bestProj && bestD < thresh && bestProj.t > 0.04 && bestProj.t < 0.96) {
+    stato.half.splice(bestSeg + 1, 0, { x: Math.max(0.8, bestProj.x), y: bestProj.y });
+    return true;
+  }
+  return insertPointAt({ x: px, y: py });
+}
+
 function insertPointAt(p) {
-  if (p.x < 2 || p.y <= stato.half[0].y + 4 || p.y >= stato.half[stato.half.length - 1].y - 4) return false;
+  if (p.y <= stato.half[0].y + 2 || p.y >= stato.half[stato.half.length - 1].y - 2) return false;
   let idx = stato.half.length - 1;
   for (let i = 0; i < stato.half.length - 1; i++) {
-    if (p.y < stato.half[i + 1].y - 2) { idx = i + 1; break; }
+    if (p.y < stato.half[i + 1].y - 1) { idx = i + 1; break; }
   }
   if (idx <= 0 || idx >= stato.half.length) return false;
   const prev = stato.half[idx - 1], next = stato.half[idx];
-  if (p.y <= prev.y + 4 || p.y >= next.y - 4) return false;
-  stato.half.splice(idx, 0, { x: Math.max(2, p.x), y: p.y });
+  if (p.y <= prev.y + 2 || p.y >= next.y - 2) return false;
+  stato.half.splice(idx, 0, { x: Math.max(0.8, p.x), y: p.y });
   return true;
 }
 
@@ -389,12 +473,32 @@ function movePoint(i, p) {
     return;
   }
   if (i === stato.half.length - 1) {
-    pt.y = Math.max(stato.half[i - 1].y + 5, p.y);
+    pt.y = Math.max(stato.half[i - 1].y + 4, p.y);
     pt.x = 0;
     return;
   }
-  pt.x = Math.max(2, Math.abs(p.x));
-  pt.y = Math.max(stato.half[i - 1].y + 3, Math.min(stato.half[i + 1].y - 3, p.y));
+  pt.x = Math.max(0.8, Math.abs(p.x));
+  pt.y = Math.max(stato.half[i - 1].y + 2, Math.min(stato.half[i + 1].y - 2, p.y));
+}
+
+function moveDrag(p) {
+  if (!drag) return;
+  if (drag.kind === 'pt') {
+    movePoint(drag.idx, p);
+    return;
+  }
+  if (drag.kind === 'hole') {
+    const h = stato.holes[drag.idx];
+    h.x = p.x;
+    h.y = Math.max(stato.half[0].y + 8, Math.min(stato.half[stato.half.length - 1].y - 8, p.y));
+    return;
+  }
+  if (drag.kind === 'cord') {
+    const tipY = stato.half[stato.half.length - 1].y;
+    stato.cord.x = Math.max(3, Math.abs(p.x));
+    stato.cord.y = Math.max(stato.half[0].y + 10, Math.min(tipY - 4, p.y));
+    syncCordUi();
+  }
 }
 
 function markDirty() {
@@ -402,6 +506,7 @@ function markDirty() {
 }
 
 function refresh(full) {
+  syncCordUi();
   drawEditor();
   if (full || dirty3d) rebuild3D();
   else updateStats();
@@ -413,25 +518,36 @@ function init3D() {
   scene.background = new THREE.Color(0x060a07);
   camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
   camera.position.set(0, 80, 220);
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
+  if (renderer.outputEncoding !== undefined) renderer.outputEncoding = THREE.sRGBEncoding;
+  if (renderer.toneMapping !== undefined) {
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+  }
   el.appendChild(renderer.domElement);
   fanGroup = new THREE.Group();
   scene.add(fanGroup);
   matBlade = new THREE.MeshPhysicalMaterial({
-    color: 0xe8f5e9, transparent: true, opacity: 0.8,
-    roughness: 0.38, metalness: 0, side: THREE.FrontSide,
-    depthWrite: true
+    color: 0xe8f5e9, transparent: true, opacity: 0.82,
+    roughness: 0.32, metalness: 0, side: THREE.FrontSide,
+    depthWrite: true, clearcoat: 0.15, clearcoatRoughness: 0.4
   });
   matSpine = new THREE.MeshPhysicalMaterial({
-    color: 0xc62828, roughness: 0.42, metalness: 0.04,
+    color: 0xc62828, roughness: 0.38, metalness: 0.05,
     side: THREE.FrontSide, polygonOffset: true,
-    polygonOffsetFactor: -2, polygonOffsetUnits: -2
+    polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+    clearcoat: 0.2, clearcoatRoughness: 0.35
   });
-  const amb = new THREE.AmbientLight(0xffffff, 0.55);
-  const dir = new THREE.DirectionalLight(0xffffff, 0.85);
-  dir.position.set(80, 120, 60);
-  scene.add(amb, dir);
+  scene.add(new THREE.HemisphereLight(0x9fd4aa, 0x060a07, 0.42));
+  const amb = new THREE.AmbientLight(0xffffff, 0.28);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.95);
+  dir.position.set(90, 130, 70);
+  const fill = new THREE.DirectionalLight(0xc8ffe0, 0.45);
+  fill.position.set(-70, 60, -90);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.25);
+  rim.position.set(0, -40, 120);
+  scene.add(amb, dir, fill, rim);
   const grid = new THREE.GridHelper(300, 20, 0x1c3524, 0x0f1a12);
   grid.rotation.x = Math.PI / 2;
   scene.add(grid);
@@ -476,10 +592,10 @@ function init3D() {
 ed.addEventListener('pointerdown', function (e) {
   if (e.button !== 0) return;
   const c = editorCoords(e);
-  dragPt = hitPoint(c.x, c.y);
-  if (dragPt < 0) {
+  drag = hitHandle(c.x, c.y);
+  if (!drag) {
     const p = fromScreen(c.x, c.y);
-    if (insertPointAt(p)) {
+    if (tryInsertPoint(p)) {
       markDirty();
       refresh(true);
     }
@@ -489,24 +605,23 @@ ed.addEventListener('pointerdown', function (e) {
   e.preventDefault();
 });
 ed.addEventListener('pointermove', function (e) {
-  if (dragPt < 0) return;
-  const c = editorCoords(e);
-  movePoint(dragPt, fromScreen(c.x, c.y));
+  if (!drag) return;
+  moveDrag(fromScreen(editorCoords(e).x, editorCoords(e).y));
   markDirty();
   drawEditor();
   updateStats();
 });
 function endDrag() {
-  if (dragPt < 0) return;
-  dragPt = -1;
+  if (!drag) return;
+  drag = null;
   refresh(true);
 }
 ed.addEventListener('pointerup', endDrag);
 ed.addEventListener('pointercancel', endDrag);
 ed.addEventListener('dblclick', function (e) {
   const c = editorCoords(e);
-  const i = hitPoint(c.x, c.y);
-  if (i > 0 && i < stato.half.length - 1 && removePoint(i)) {
+  const h = hitHandle(c.x, c.y);
+  if (h && h.kind === 'pt' && h.idx > 0 && h.idx < stato.half.length - 1 && removePoint(h.idx)) {
     markDirty();
     refresh(true);
   }
@@ -530,6 +645,7 @@ function bindRange(id, key, fmt, onChange) {
 bindRange('pThick', 'thick', function (v) { return v.toFixed(1); });
 bindRange('pSpine', 'spineW', function (v) { return v.toFixed(1); });
 bindRange('pPivot', 'pivotR', function (v) { return v.toFixed(1); });
+bindRange('pMeshSegs', 'meshSegs', function (v) { return String(Math.round(v)); });
 bindRange('pCount', 'count', function (v) { return String(Math.round(v)); });
 bindRange('pSpread', 'spreadDeg', function (v) { return String(Math.round(v)); });
 bindRange('pOpen', 'open', function (v) {
@@ -538,6 +654,25 @@ bindRange('pOpen', 'open', function (v) {
 });
 bindRange('pStack', 'stackGap', function (v) { return v.toFixed(2); });
 
+function bindCordRange(id, key, fmt) {
+  const inp = document.getElementById(id);
+  const val = document.getElementById('v' + id.slice(1));
+  inp.addEventListener('input', function () {
+    stato.cord[key] = parseFloat(inp.value);
+    if (val) val.textContent = fmt(stato.cord[key]);
+    markDirty();
+    refresh(true);
+  });
+}
+bindCordRange('pCordX', 'x', function (v) { return v.toFixed(1); });
+bindCordRange('pCordY', 'y', function (v) { return String(Math.round(v)); });
+bindCordRange('pCordRmm', 'r', function (v) { return v.toFixed(1); });
+
+document.getElementById('pCordR').addEventListener('change', function (e) {
+  stato.cordRight = e.target.checked;
+  markDirty();
+  refresh(true);
+});
 document.getElementById('pCord2').addEventListener('change', function (e) {
   stato.cord2 = e.target.checked;
   markDirty();
@@ -559,6 +694,7 @@ document.getElementById('bAperto').onclick = function () {
 };
 document.getElementById('bResetProf').onclick = function () {
   stato.half = VENTAGLIO.defaultHalfProfile();
+  syncCordUi();
   markDirty();
   refresh(true);
 };
@@ -602,14 +738,19 @@ document.getElementById('fileCfg').onchange = function (e) {
   r.onload = function () {
     try {
       Object.assign(stato, JSON.parse(r.result));
+      if (!stato.cord) stato.cord = VENTAGLIO.defaultCord(stato.half);
+      if (stato.cordRight == null) stato.cordRight = true;
+      if (stato.meshSegs == null) stato.meshSegs = 40;
       document.getElementById('pThick').value = stato.thick;
       document.getElementById('pSpine').value = stato.spineW;
       document.getElementById('pPivot').value = stato.pivotR;
+      document.getElementById('pMeshSegs').value = stato.meshSegs;
+      document.getElementById('vMeshSegs').textContent = String(stato.meshSegs);
       document.getElementById('pCount').value = stato.count;
       document.getElementById('pSpread').value = stato.spreadDeg;
       document.getElementById('pOpen').value = Math.round(stato.open * 100);
       document.getElementById('pStack').value = stato.stackGap;
-      document.getElementById('pCord2').checked = stato.cord2;
+      syncCordUi();
       markDirty();
       refresh(true);
     } catch (err) { alert('Config non valida'); }
@@ -619,6 +760,7 @@ document.getElementById('fileCfg').onchange = function (e) {
 };
 
 init3D();
+syncCordUi();
 new ResizeObserver(function () { drawEditor(); }).observe(edArea);
 requestAnimationFrame(function () { refresh(true); });
 </script>
