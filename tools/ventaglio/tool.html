@@ -7,7 +7,7 @@
 <script src="../_mirror.js"></script>
 <title>VENTAGLIO // DOCTNASA&MRBORG</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="ventaglio-core.js?v=1"></script>
+<script src="ventaglio-core.js?v=2"></script>
 <style>
   :root {
     --fg: #7CFF9B; --fg-dim: #3f8f56; --bg: #060a07; --panel: #0a120c;
@@ -150,6 +150,7 @@ const stato = {
 let dragPt = -1;
 let dirty3d = true;
 let scene, camera, renderer, fanGroup, orbit;
+let matBlade, matSpine;
 
 const ed = document.getElementById('editor');
 const edArea = document.getElementById('editorArea');
@@ -171,7 +172,7 @@ function opts() {
 
 function meshToGeometry(pos) {
   const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('position', new THREE.BufferAttribute(pos.slice(), 3));
   geo.computeVertexNormals();
   return geo;
 }
@@ -179,20 +180,19 @@ function meshToGeometry(pos) {
 function rebuild3D() {
   if (!fanGroup) return;
   while (fanGroup.children.length) fanGroup.remove(fanGroup.children[0]);
-  const meshes = VENTAGLIO.buildFanMeshes(Object.assign({}, opts(), {
+  const staves = VENTAGLIO.buildFanParts(Object.assign({}, opts(), {
     count: stato.count,
     spreadDeg: stato.spreadDeg,
     open: stato.open,
     stackGap: stato.stackGap
   }));
-  const matBlade = new THREE.MeshPhysicalMaterial({
-    color: 0xe8f5e9, transparent: true, opacity: 0.72,
-    roughness: 0.35, metalness: 0, side: THREE.DoubleSide
-  });
-  meshes.forEach(function (pos) {
-    const geo = meshToGeometry(pos);
-    const mesh = new THREE.Mesh(geo, matBlade);
-    fanGroup.add(mesh);
+  staves.forEach(function (part) {
+    if (part.blade && part.blade.length) {
+      fanGroup.add(new THREE.Mesh(meshToGeometry(part.blade), matBlade));
+    }
+    if (part.spine && part.spine.length) {
+      fanGroup.add(new THREE.Mesh(meshToGeometry(part.spine), matSpine));
+    }
   });
   const single = VENTAGLIO.buildModuleMesh(opts());
   const spineGeo = meshToGeometry(single);
@@ -418,6 +418,16 @@ function init3D() {
   el.appendChild(renderer.domElement);
   fanGroup = new THREE.Group();
   scene.add(fanGroup);
+  matBlade = new THREE.MeshPhysicalMaterial({
+    color: 0xe8f5e9, transparent: true, opacity: 0.8,
+    roughness: 0.38, metalness: 0, side: THREE.FrontSide,
+    depthWrite: true
+  });
+  matSpine = new THREE.MeshPhysicalMaterial({
+    color: 0xc62828, roughness: 0.42, metalness: 0.04,
+    side: THREE.FrontSide, polygonOffset: true,
+    polygonOffsetFactor: -2, polygonOffsetUnits: -2
+  });
   const amb = new THREE.AmbientLight(0xffffff, 0.55);
   const dir = new THREE.DirectionalLight(0xffffff, 0.85);
   dir.position.set(80, 120, 60);
