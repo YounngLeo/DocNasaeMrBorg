@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<script src="../_mirror.js"></script>
+<title>VENTAGLIO // DOCTNASA&MRBORG</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="ventaglio-core.js?v=1"></script>
+<style>
+  :root {
+    --fg: #7CFF9B; --fg-dim: #3f8f56; --bg: #060a07; --panel: #0a120c;
+    --line: #1c3524; --spine: #c62828; --warn: #ff6b5e; --cord: #8b2942;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: var(--bg); color: var(--fg); font-family: 'Courier New', monospace; font-size: 12px; }
+  #layout { display: grid; grid-template-columns: 300px 1fr 1fr; grid-template-rows: 1fr auto; height: 100vh; }
+  #pannello {
+    grid-row: 1 / 3; overflow-y: auto; padding: 14px 12px 40px;
+    border-right: 1px solid var(--line); background: var(--panel);
+  }
+  #pannello::-webkit-scrollbar { width: 6px; }
+  #pannello::-webkit-scrollbar-thumb { background: var(--line); }
+  h1 { font-size: 17px; letter-spacing: 4px; font-weight: normal; }
+  .sotto { color: var(--fg-dim); font-size: 10px; margin: 3px 0 14px; letter-spacing: 1px; }
+  .sez { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+  .sez h2 { font-size: 11px; letter-spacing: 2px; margin-bottom: 8px; }
+  .riga { display: flex; align-items: center; gap: 8px; margin: 7px 0; }
+  .riga label { flex: 0 0 110px; color: var(--fg-dim); font-size: 11px; }
+  .riga input[type=range] { flex: 1; accent-color: var(--fg); }
+  .riga .val { flex: 0 0 52px; text-align: right; font-size: 11px; }
+  button {
+    background: transparent; color: var(--fg); border: 1px solid var(--fg-dim);
+    font-family: inherit; font-size: 11px; letter-spacing: 1px; padding: 7px 10px;
+    cursor: pointer; width: 100%; margin-top: 6px;
+  }
+  button:hover { background: #0f2416; }
+  button.mini { width: auto; padding: 4px 8px; margin: 0; font-size: 10px; }
+  .duo { display: flex; gap: 6px; }
+  .duo button { flex: 1; }
+  .hint { color: var(--fg-dim); font-size: 10px; margin-top: 8px; line-height: 1.55; }
+  #editorWrap {
+    position: relative; border-right: 1px solid var(--line); background: #040804;
+    display: flex; flex-direction: column;
+  }
+  #editorHead {
+    padding: 8px 12px; font-size: 10px; letter-spacing: 2px; color: var(--fg-dim);
+    border-bottom: 1px solid var(--line);
+  }
+  #editor { flex: 1; display: block; width: 100%; cursor: crosshair; touch-action: none; }
+  #vista3d { position: relative; min-height: 0; }
+  #vista3d canvas { display: block; width: 100%; height: 100%; }
+  #statusBar {
+    grid-column: 2 / 4; padding: 6px 12px; border-top: 1px solid var(--line);
+    font-size: 10px; color: var(--fg-dim); display: flex; gap: 16px; flex-wrap: wrap;
+  }
+  #hud3d {
+    position: absolute; top: 10px; right: 10px; z-index: 5;
+    background: rgba(6,12,8,.85); border: 1px solid var(--line); padding: 8px 10px;
+    font-size: 10px; letter-spacing: 1px;
+  }
+  @media (max-width: 960px) {
+    #layout { grid-template-columns: 1fr; grid-template-rows: auto 280px 280px auto; }
+    #pannello { grid-row: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--line); }
+    #editorWrap { border-right: none; border-bottom: 1px solid var(--line); min-height: 280px; }
+  }
+</style>
+</head>
+<body>
+<div id="layout">
+  <div id="pannello">
+    <h1>VENTAGLIO</h1>
+    <div class="sotto">modulo stampabile · punti controllo · simulazione apertura</div>
+
+    <div class="sez">
+      <h2>[ MODULO ]</h2>
+      <div class="riga"><label>spessore (mm)</label><input type="range" id="pThick" min="0.6" max="2.5" step="0.1" value="1.2"><span class="val" id="vThick">1.2</span></div>
+      <div class="riga"><label>costola (mm)</label><input type="range" id="pSpine" min="0" max="8" step="0.2" value="4.2"><span class="val" id="vSpine">4.2</span></div>
+      <div class="riga"><label>Ø pivot (mm)</label><input type="range" id="pPivot" min="3" max="10" step="0.2" value="5.5"><span class="val" id="vPivot">5.5</span></div>
+      <div class="riga"><label>fori corda</label><input type="checkbox" id="pCord2" checked style="accent-color:var(--fg)"></div>
+      <div class="duo">
+        <button type="button" class="mini" id="bResetProf">↺ PROFILO</button>
+        <button type="button" class="mini" id="bResetFori">↺ FORI</button>
+      </div>
+    </div>
+
+    <div class="sez">
+      <h2>[ COMPOSIZIONE ]</h2>
+      <div class="riga"><label>n° stecche</label><input type="range" id="pCount" min="4" max="24" step="1" value="12"><span class="val" id="vCount">12</span></div>
+      <div class="riga"><label>apertura °</label><input type="range" id="pSpread" min="60" max="180" step="2" value="140"><span class="val" id="vSpread">140</span></div>
+      <div class="riga"><label>stato</label><input type="range" id="pOpen" min="0" max="100" step="1" value="70"><span class="val" id="vOpen">70%</span></div>
+      <div class="riga"><label>gap chiuso (mm)</label><input type="range" id="pStack" min="0.15" max="0.8" step="0.05" value="0.32"><span class="val" id="vStack">0.32</span></div>
+      <div class="duo">
+        <button type="button" class="mini" id="bChiuso">◼ CHIUSO</button>
+        <button type="button" class="mini" id="bAperto">◆ APERTO</button>
+      </div>
+    </div>
+
+    <div class="sez">
+      <h2>[ EXPORT ]</h2>
+      <button type="button" id="bStlMod">⬇ STL MODULO SINGOLO</button>
+      <button type="button" id="bStlFan">⬇ STL STECCHE (pacchetto chiuso)</button>
+      <div class="duo">
+        <button type="button" class="mini" id="bSalva">SALVA</button>
+        <button type="button" class="mini" id="bCarica">CARICA</button>
+      </div>
+      <input type="file" id="fileCfg" accept=".json" hidden>
+      <div class="hint">Trascina i punti verdi sul profilo (metà destra — specchio automatico). Rosso = costola · cerchi = fori · viola = corda.<br>Stampa le stecche in piano, impilate come nel pacchetto chiuso.</div>
+    </div>
+  </div>
+
+  <div id="editorWrap">
+    <div id="editorHead">// PROFILO MODULO · vista in piano (mm)</div>
+    <canvas id="editor"></canvas>
+  </div>
+
+  <div id="vista3d">
+    <div id="hud3d">VENTAGLIO · 3D</div>
+  </div>
+
+  <div id="statusBar">
+    <span id="stPts">punti: —</span>
+    <span id="stArea">area: —</span>
+    <span id="stVol">vol stecca: —</span>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const stato = {
+  half: VENTAGLIO.defaultHalfProfile(),
+  holes: VENTAGLIO.defaultHoles(),
+  thick: 1.2,
+  spineW: 4.2,
+  pivotR: 5.5,
+  cord2: true,
+  count: 12,
+  spreadDeg: 140,
+  open: 0.7,
+  stackGap: 0.32
+};
+
+let dragPt = -1;
+let scene, camera, renderer, fanGroup, orbit;
+
+const ed = document.getElementById('editor');
+const ectx = ed.getContext('2d');
+let edW = 0, edH = 0, edScale = 1, edOx = 0, edOy = 0;
+
+function opts() {
+  return {
+    half: stato.half,
+    holes: stato.holes,
+    thick: stato.thick,
+    spineW: stato.spineW,
+    pivotR: stato.pivotR,
+    cord: { x: 13, y: stato.half[stato.half.length - 1].y - 6, r: 1.4 },
+    cordLeft: stato.cord2,
+    withSpine: stato.spineW > 0.3
+  };
+}
+
+function meshToGeometry(pos) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+function rebuild3D() {
+  if (!fanGroup) return;
+  while (fanGroup.children.length) fanGroup.remove(fanGroup.children[0]);
+  const meshes = VENTAGLIO.buildFanMeshes(Object.assign({}, opts(), {
+    count: stato.count,
+    spreadDeg: stato.spreadDeg,
+    open: stato.open,
+    stackGap: stato.stackGap
+  }));
+  const matBlade = new THREE.MeshPhysicalMaterial({
+    color: 0xe8f5e9, transparent: true, opacity: 0.72,
+    roughness: 0.35, metalness: 0, side: THREE.DoubleSide
+  });
+  const matSpine = new THREE.MeshPhysicalMaterial({
+    color: 0xc62828, roughness: 0.4, metalness: 0.05
+  });
+  meshes.forEach(function (pos) {
+    const geo = meshToGeometry(pos);
+    const mesh = new THREE.Mesh(geo, matBlade);
+    fanGroup.add(mesh);
+  });
+  const single = VENTAGLIO.buildModuleMesh(opts());
+  const spineGeo = meshToGeometry(single);
+  const bb = new THREE.Box3().setFromBufferAttribute(spineGeo.getAttribute('position'));
+  const center = bb.getCenter(new THREE.Vector3());
+  fanGroup.position.set(-center.x, -center.y, -center.z * 0.5);
+  updateStats();
+}
+
+function updateStats() {
+  const o = opts();
+  const out = VENTAGLIO.halfToOutline(o.half);
+  let area = 0;
+  for (let i = 0; i < out.length; i++) {
+    const p = out[i], q = out[(i + 1) % out.length];
+    area += p.x * q.y - q.x * p.y;
+  }
+  area = Math.abs(area * 0.5);
+  document.getElementById('stPts').textContent = 'punti: ' + stato.half.length;
+  document.getElementById('stArea').textContent = 'area: ' + area.toFixed(0) + ' mm²';
+  document.getElementById('stVol').textContent = 'vol stecca: ~' + (area * stato.thick).toFixed(0) + ' mm³';
+}
+
+function resizeEditor() {
+  const r = ed.parentElement.getBoundingClientRect();
+  edW = r.width; edH = r.height - 32;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  ed.width = Math.floor(edW * dpr);
+  ed.height = Math.floor(edH * dpr);
+  ed.style.height = edH + 'px';
+  ectx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const maxY = stato.half[stato.half.length - 1].y + 20;
+  const maxX = Math.max(20, stato.half.reduce(function (m, p) { return Math.max(m, p.x); }, 0) + 10);
+  edScale = Math.min((edW - 40) / (maxX * 2.2), (edH - 40) / maxY);
+  edOx = edW * 0.5;
+  edOy = edH - 24;
+}
+
+function toScreen(x, y) {
+  return { x: edOx + x * edScale, y: edOy - y * edScale };
+}
+function fromScreen(sx, sy) {
+  return { x: (sx - edOx) / edScale, y: (edOy - sy) / edScale };
+}
+
+function drawEditor() {
+  resizeEditor();
+  ectx.fillStyle = '#040804';
+  ectx.fillRect(0, 0, edW, edH);
+  ectx.strokeStyle = '#1c3524';
+  ectx.lineWidth = 1;
+  for (let y = 0; y <= 160; y += 20) {
+    const p = toScreen(0, y);
+    ectx.beginPath(); ectx.moveTo(0, p.y); ectx.lineTo(edW, p.y); ectx.stroke();
+  }
+  for (let x = -30; x <= 30; x += 10) {
+    const p = toScreen(x, 0);
+    ectx.beginPath(); ectx.moveTo(p.x, 0); ectx.lineTo(p.x, edH); ectx.stroke();
+  }
+
+  const out = VENTAGLIO.halfToOutline(stato.half);
+  ectx.beginPath();
+  out.forEach(function (p, i) {
+    const s = toScreen(p.x, p.y);
+    if (i === 0) ectx.moveTo(s.x, s.y);
+    else ectx.lineTo(s.x, s.y);
+  });
+  ectx.closePath();
+  ectx.fillStyle = 'rgba(124,255,155,0.08)';
+  ectx.fill();
+  ectx.strokeStyle = '#7CFF9B';
+  ectx.lineWidth = 1.5;
+  ectx.stroke();
+
+  if (stato.spineW > 0.3) {
+    const hw = stato.spineW * 0.5;
+    const top = stato.half[stato.half.length - 1].y;
+    const bot = Math.max(8, stato.half[1].y);
+    const sp = [{ x: -hw, y: bot }, { x: hw, y: bot }, { x: hw, y: top }, { x: -hw, y: top }];
+    ectx.beginPath();
+    sp.forEach(function (p, i) {
+      const s = toScreen(p.x, p.y);
+      if (i === 0) ectx.moveTo(s.x, s.y); else ectx.lineTo(s.x, s.y);
+    });
+    ectx.closePath();
+    ectx.fillStyle = 'rgba(198,40,40,0.25)';
+    ectx.fill();
+    ectx.strokeStyle = '#c62828';
+    ectx.stroke();
+  }
+
+  stato.holes.forEach(function (h) {
+    const s = toScreen(h.x, h.y);
+    ectx.beginPath();
+    ectx.arc(s.x, s.y, h.r * edScale, 0, Math.PI * 2);
+    ectx.strokeStyle = '#3f8f56';
+    ectx.lineWidth = 1;
+    ectx.stroke();
+  });
+  const cordY = stato.half[stato.half.length - 1].y - 6;
+  [{ x: 13, y: cordY }, stato.cord2 ? { x: -13, y: cordY } : null].filter(Boolean).forEach(function (c) {
+    const s = toScreen(c.x, c.y);
+    ectx.beginPath();
+    ectx.arc(s.x, s.y, 1.4 * edScale, 0, Math.PI * 2);
+    ectx.strokeStyle = '#8b2942';
+    ectx.stroke();
+  });
+  const pv = toScreen(0, Math.max(6, stato.half[1].y * 0.5));
+  ectx.beginPath();
+  ectx.arc(pv.x, pv.y, stato.pivotR * edScale, 0, Math.PI * 2);
+  ectx.strokeStyle = '#7CFF9B';
+  ectx.setLineDash([3, 3]);
+  ectx.stroke();
+  ectx.setLineDash([]);
+
+  ectx.strokeStyle = 'rgba(124,255,155,0.2)';
+  ectx.setLineDash([2, 4]);
+  ectx.beginPath();
+  stato.half.forEach(function (p, i) {
+    const s = toScreen(p.x, p.y);
+    const m = toScreen(-p.x, p.y);
+    if (i === 0) ectx.moveTo(s.x, s.y);
+    else ectx.lineTo(s.x, s.y);
+    ectx.moveTo(m.x, m.y);
+    ectx.lineTo(s.x, s.y);
+  });
+  ectx.stroke();
+  ectx.setLineDash([]);
+
+  stato.half.forEach(function (p, i) {
+    if (p.lock && i !== stato.half.length - 1 && i !== 0) return;
+    const s = toScreen(p.x, p.y);
+    ectx.fillStyle = dragPt === i ? '#fff' : '#7CFF9B';
+    ectx.beginPath();
+    ectx.arc(s.x, s.y, dragPt === i ? 6 : 5, 0, Math.PI * 2);
+    ectx.fill();
+    ectx.strokeStyle = '#000';
+    ectx.lineWidth = 1;
+    ectx.stroke();
+  });
+}
+
+function hitPoint(sx, sy) {
+  let best = -1, bd = 14;
+  stato.half.forEach(function (p, i) {
+    if (p.lock && i > 0 && i < stato.half.length - 1) return;
+    const s = toScreen(p.x, p.y);
+    const d = Math.hypot(sx - s.x, sy - s.y);
+    if (d < bd) { bd = d; best = i; }
+  });
+  return best;
+}
+
+function refresh() {
+  drawEditor();
+  rebuild3D();
+}
+
+function init3D() {
+  const el = document.getElementById('vista3d');
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060a07);
+  camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
+  camera.position.set(0, 80, 220);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  el.appendChild(renderer.domElement);
+  fanGroup = new THREE.Group();
+  scene.add(fanGroup);
+  const amb = new THREE.AmbientLight(0xffffff, 0.55);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.85);
+  dir.position.set(80, 120, 60);
+  scene.add(amb, dir);
+  const grid = new THREE.GridHelper(300, 20, 0x1c3524, 0x0f1a12);
+  grid.rotation.x = Math.PI / 2;
+  scene.add(grid);
+
+  let down = false, lx = 0, ly = 0, shift = false;
+  renderer.domElement.addEventListener('pointerdown', function (e) {
+    down = true; lx = e.clientX; ly = e.clientY; shift = e.shiftKey;
+  });
+  window.addEventListener('pointerup', function () { down = false; });
+  window.addEventListener('pointermove', function (e) {
+    if (!down) return;
+    const dx = e.clientX - lx, dy = e.clientY - ly;
+    lx = e.clientX; ly = e.clientY;
+    if (shift) {
+      camera.position.x -= dx * 0.3;
+      camera.position.y += dy * 0.3;
+    } else {
+      fanGroup.rotation.y += dx * 0.008;
+      fanGroup.rotation.x += dy * 0.008;
+    }
+  });
+  renderer.domElement.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    camera.position.multiplyScalar(1 + e.deltaY * 0.001);
+  }, { passive: false });
+
+  function resize() {
+    const r = el.getBoundingClientRect();
+    renderer.setSize(r.width, r.height);
+    camera.aspect = r.width / r.height;
+    camera.updateProjectionMatrix();
+    camera.lookAt(0, 0, 0);
+  }
+  new ResizeObserver(resize).observe(el);
+  resize();
+  (function anim() {
+    requestAnimationFrame(anim);
+    renderer.render(scene, camera);
+  })();
+}
+
+ed.addEventListener('pointerdown', function (e) {
+  const rect = ed.getBoundingClientRect();
+  dragPt = hitPoint(e.clientX - rect.left, e.clientY - rect.top);
+});
+ed.addEventListener('pointermove', function (e) {
+  if (dragPt < 0) return;
+  const rect = ed.getBoundingClientRect();
+  const p = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
+  const pt = stato.half[dragPt];
+  if (dragPt === 0) { pt.y = Math.max(0, p.y); return refresh(); }
+  if (dragPt === stato.half.length - 1) {
+    pt.y = Math.max(stato.half[dragPt - 1].y + 5, p.y);
+    pt.x = 0;
+    return refresh();
+  }
+  pt.x = Math.max(2, p.x);
+  pt.y = Math.max(stato.half[dragPt - 1].y + 3, Math.min(stato.half[dragPt + 1].y - 3, p.y));
+  refresh();
+});
+ed.addEventListener('pointerup', function () { dragPt = -1; drawEditor(); });
+
+function bindRange(id, key, fmt, onChange) {
+  const inp = document.getElementById(id);
+  const val = document.getElementById('v' + id.slice(1));
+  function upd() {
+    const v = parseFloat(inp.value);
+    stato[key] = v;
+    if (val) val.textContent = fmt ? fmt(v) : v;
+    if (onChange) onChange(v);
+    refresh();
+  }
+  inp.addEventListener('input', upd);
+  upd();
+}
+
+bindRange('pThick', 'thick', function (v) { return v.toFixed(1); });
+bindRange('pSpine', 'spineW', function (v) { return v.toFixed(1); });
+bindRange('pPivot', 'pivotR', function (v) { return v.toFixed(1); });
+bindRange('pCount', 'count', function (v) { return String(Math.round(v)); });
+bindRange('pSpread', 'spreadDeg', function (v) { return String(Math.round(v)); });
+bindRange('pOpen', 'open', function (v) {
+  stato.open = v / 100;
+  return Math.round(v) + '%';
+});
+bindRange('pStack', 'stackGap', function (v) { return v.toFixed(2); });
+
+document.getElementById('pCord2').addEventListener('change', function (e) {
+  stato.cord2 = e.target.checked;
+  refresh();
+});
+document.getElementById('bChiuso').onclick = function () {
+  document.getElementById('pOpen').value = 0;
+  stato.open = 0;
+  document.getElementById('vOpen').textContent = '0%';
+  refresh();
+};
+document.getElementById('bAperto').onclick = function () {
+  document.getElementById('pOpen').value = 100;
+  stato.open = 1;
+  document.getElementById('vOpen').textContent = '100%';
+  refresh();
+};
+document.getElementById('bResetProf').onclick = function () {
+  stato.half = VENTAGLIO.defaultHalfProfile();
+  refresh();
+};
+document.getElementById('bResetFori').onclick = function () {
+  stato.holes = VENTAGLIO.defaultHoles();
+  refresh();
+};
+
+function dl(buf, name) {
+  const blob = new Blob([buf], { type: 'application/octet-stream' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+
+document.getElementById('bStlMod').onclick = function () {
+  const pos = VENTAGLIO.buildModuleMesh(opts());
+  dl(VENTAGLIO.stlBinary(pos, 'ventaglio-modulo'), 'ventaglio-modulo.stl');
+};
+document.getElementById('bStlFan').onclick = function () {
+  const parts = VENTAGLIO.buildFanMeshes(Object.assign({}, opts(), {
+    count: stato.count, spreadDeg: stato.spreadDeg, open: 0, stackGap: stato.stackGap
+  }));
+  dl(VENTAGLIO.stlBinary(VENTAGLIO.mergePositions(parts), 'ventaglio-pacchetto'), 'ventaglio-pacchetto.stl');
+};
+
+document.getElementById('bSalva').onclick = function () {
+  const blob = new Blob([JSON.stringify(stato)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ventaglio-config.json';
+  a.click();
+};
+document.getElementById('bCarica').onclick = function () { document.getElementById('fileCfg').click(); };
+document.getElementById('fileCfg').onchange = function (e) {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = function () {
+    try {
+      Object.assign(stato, JSON.parse(r.result));
+      document.getElementById('pThick').value = stato.thick;
+      document.getElementById('pSpine').value = stato.spineW;
+      document.getElementById('pPivot').value = stato.pivotR;
+      document.getElementById('pCount').value = stato.count;
+      document.getElementById('pSpread').value = stato.spreadDeg;
+      document.getElementById('pOpen').value = Math.round(stato.open * 100);
+      document.getElementById('pStack').value = stato.stackGap;
+      document.getElementById('pCord2').checked = stato.cord2;
+      refresh();
+    } catch (err) { alert('Config non valida'); }
+  };
+  r.readAsText(f);
+  e.target.value = '';
+};
+
+init3D();
+refresh();
+window.addEventListener('resize', function () { drawEditor(); });
+</script>
+</body>
+</html>

@@ -29,6 +29,10 @@ tools/
 └── velario/
     ├── tool.html           ← tassellazione modulare · archi · STL
     └── preview.svg
+└── ventaglio/
+    ├── tool.html           ← ventaglio modulare · profilo · simulazione
+    ├── ventaglio-core.js
+    └── preview.svg
 ```
 
 ## aggiornare un tool

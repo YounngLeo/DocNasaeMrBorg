@@ -150,6 +150,8 @@
   .nav-list a.fos-link:hover { background: rgba(124,255,155,0.06); }
   .nav-list a.tan-link { color: #c8a17b; }
   .nav-list a.tan-link:hover { background: rgba(200,161,123,0.08); }
+  .nav-list a.coral-link { color: #ff7a9a; }
+  .nav-list a.coral-link:hover { background: rgba(255,122,154,0.08); }
 
   /* === SECTIONS === */
   .section {
@@ -222,6 +224,7 @@
   .tool-header.mesh { border-bottom-color: #e8e8e8; }
   .tool-header.fos { border-bottom-color: #7CFF9B; }
   .tool-header.tan { border-bottom-color: #c8a17b; }
+  .tool-header.coral { border-bottom-color: #ff7a9a; }
 
   .tool-meta {
     display: flex;
@@ -263,6 +266,8 @@
   .tool-header.fos .right b { color: #7CFF9B; }
   .tool-header.tan .name { color: #c8a17b; }
   .tool-header.tan .right b { color: #c8a17b; }
+  .tool-header.coral .name { color: #ff7a9a; }
+  .tool-header.coral .right b { color: #ff7a9a; }
   .section.gold .section-title { color: #fff03a; }
   .section.purple { border-color: var(--purple); }
   .section.purple .section-title { color: var(--purple); }
@@ -277,16 +282,18 @@
   .launch-btn.fos:hover { background: #7CFF9B; color: var(--bg); }
   .launch-btn.tan { border-color: #c8a17b; color: #c8a17b; }
   .launch-btn.tan:hover { background: #c8a17b; color: var(--bg); }
+  .launch-btn.coral { border-color: #ff7a9a; color: #ff7a9a; }
+  .launch-btn.coral:hover { background: #ff7a9a; color: var(--bg); }
   .section.mesh { border-color: #666; }
   .section.mesh .section-title { color: #e8e8e8; }
   .section.fos { border-color: #7CFF9B; }
   .section.fos .section-title { color: #7CFF9B; }
   .section.tan { border-color: #c8a17b; }
   .section.tan .section-title { color: #c8a17b; }
+  .section.coral { border-color: #ff7a9a; }
+  .section.coral .section-title { color: #ff7a9a; }
   .section.fos { border-color: #7CFF9B; }
   .section.fos .section-title { color: #7CFF9B; }
-  .section.tan { border-color: #c8a17b; }
-  .section.tan .section-title { color: #c8a17b; }
   .section.mesh ul li b { color: #e8e8e8; font-weight: normal; letter-spacing: 1px; }
 
   /* === LAUNCH BAR === */
@@ -503,7 +510,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 06 active</div>
+    <div class="nav-progress" id="navProgress">// 07 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -530,6 +537,10 @@
       <span><span class="marker">▸</span>VELARIO</span>
       <span class="num">TOOL_06 · TASSEL</span>
     </a>
+    <a href="#ventaglio" class="coral-link" data-nav="ventaglio">
+      <span><span class="marker">▸</span>VENTAGLIO</span>
+      <span class="num">TOOL_07 · FAN</span>
+    </a>
   </div>
 </nav>
 
@@ -538,7 +549,7 @@
 <!-- ============================ -->
 <section class="section">
   <div class="section-title">// SYSTEM_STATUS</div>
-  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">06 / 06</span></div>
+  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">07 / 07</span></div>
   <div class="row"><span class="label">STUDIO</span><span class="value">DOCTNASA&MRBORG</span></div>
   <div class="row"><span class="label">YEAR</span><span class="value">2026</span></div>
   <div class="row"><span class="label">ACCESS</span><span class="value" id="accessMode">…</span></div>
@@ -1075,8 +1086,69 @@
 
 </div>
 
+<div class="divider">— — — — — — — —</div>
+
+<!-- ============================ -->
+<!-- TOOL_07 :: VENTAGLIO          -->
+<!-- ============================ -->
+<div class="tool-block" id="ventaglio" data-section="ventaglio">
+
+  <div class="tool-header coral">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_07 :: FAN</div>
+        <div class="name">VENTAGLIO</div>
+        <div class="sub">modulo singolo · punti controllo · simulazione apertura · STL</div>
+      </div>
+      <div class="right">
+        <b>v1</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="ventaglio/preview.svg" alt="ventaglio preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="ventaglio/tool.html" class="launch-btn coral">▶ LAUNCH</a>
+    <a href="ventaglio/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section coral">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Designer parametrico per ventagli stampati in 3D ispirati ai moduli sovrapposti con costola centrale, fori graduated e corda perimetrale. Disegna il profilo della stecca con punti controllo trascinabili, simula l'assemblaggio aperto/chiuso e esporta STL per stampa.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">// WORKFLOW</div>
+        <ul>
+          <li>Trascina i punti sul profilo (metà destra, specchio automatico)</li>
+          <li>Regola spessore, costola rossa, foro pivot e fori decorativi</li>
+          <li>Slider <b>stato</b>: da pacchetto chiuso (stecche impilate) ad aperto</li>
+          <li>Export STL modulo singolo o pacchetto chiuso per stampa batch</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section coral">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>Three.js r128 · mesh STL</dd>
+          <dt>OUTPUT</dt><dd>STL watertight (mm)</dd>
+          <dt>USO</dt><dd>ventaglio · PETG/PLA sottile</dd>
+          <dt>TAGS</dt><dd>fan · modulare · stampa 3D</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
-  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.4</span>
+  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.5</span>
   <span>END_OF_INDEX</span>
 </footer>
 
@@ -1168,10 +1240,11 @@
                   id === 'bio-mesh' ? '// viewing BIO_MESH' :
                   id === 'ricamo' ? '// viewing RICAMO' :
                   id === 'velario' ? '// viewing VELARIO' :
-                  '// 06 active';
+                  id === 'ventaglio' ? '// viewing VENTAGLIO' :
+                  '// 07 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 06 active';
+      navProgress.textContent = '// 07 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });
