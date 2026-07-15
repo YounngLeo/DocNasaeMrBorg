@@ -16,7 +16,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; overflow: hidden; }
   body { background: var(--bg); color: var(--fg); font-family: 'Courier New', monospace; font-size: 12px; }
-  #layout { display: grid; grid-template-columns: 300px 1fr 1fr; grid-template-rows: 1fr auto; height: 100vh; }
+  #layout { display: grid; grid-template-columns: 300px 1fr 1fr; grid-template-rows: 1fr auto; height: 100vh; min-height: 0; }
   #pannello {
     grid-row: 1 / 3; overflow-y: auto; padding: 14px 12px 40px;
     border-right: 1px solid var(--line); background: var(--panel);
@@ -43,13 +43,15 @@
   .hint { color: var(--fg-dim); font-size: 10px; margin-top: 8px; line-height: 1.55; }
   #editorWrap {
     position: relative; border-right: 1px solid var(--line); background: #040804;
-    display: flex; flex-direction: column;
+    display: flex; flex-direction: column; min-height: 0; min-width: 0;
   }
   #editorHead {
+    flex: 0 0 auto;
     padding: 8px 12px; font-size: 10px; letter-spacing: 2px; color: var(--fg-dim);
     border-bottom: 1px solid var(--line);
   }
-  #editor { flex: 1; display: block; width: 100%; cursor: crosshair; touch-action: none; }
+  #editorArea { flex: 1; min-height: 120px; position: relative; }
+  #editor { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
   #vista3d { position: relative; min-height: 0; }
   #vista3d canvas { display: block; width: 100%; height: 100%; }
   #statusBar {
@@ -107,13 +109,15 @@
         <button type="button" class="mini" id="bCarica">CARICA</button>
       </div>
       <input type="file" id="fileCfg" accept=".json" hidden>
-      <div class="hint">Trascina i punti verdi sul profilo (metà destra — specchio automatico). Rosso = costola · cerchi = fori · viola = corda.<br>Stampa le stecche in piano, impilate come nel pacchetto chiuso.</div>
+      <div class="hint">Clic sulla metà destra per aggiungere punti · trascina i punti verdi · doppio clic per rimuovere · Rosso = costola · cerchi = fori · viola = corda.<br>Stampa le stecche in piano, impilate come nel pacchetto chiuso.</div>
     </div>
   </div>
 
   <div id="editorWrap">
-    <div id="editorHead">// PROFILO MODULO · vista in piano (mm)</div>
-    <canvas id="editor"></canvas>
+    <div id="editorHead">// PROFILO MODULO · clic per aggiungere punto · trascina per modificare</div>
+    <div id="editorArea">
+      <canvas id="editor"></canvas>
+    </div>
   </div>
 
   <div id="vista3d">
@@ -144,9 +148,11 @@ const stato = {
 };
 
 let dragPt = -1;
+let dirty3d = true;
 let scene, camera, renderer, fanGroup, orbit;
 
 const ed = document.getElementById('editor');
+const edArea = document.getElementById('editorArea');
 const ectx = ed.getContext('2d');
 let edW = 0, edH = 0, edScale = 1, edOx = 0, edOy = 0;
 
@@ -183,9 +189,6 @@ function rebuild3D() {
     color: 0xe8f5e9, transparent: true, opacity: 0.72,
     roughness: 0.35, metalness: 0, side: THREE.DoubleSide
   });
-  const matSpine = new THREE.MeshPhysicalMaterial({
-    color: 0xc62828, roughness: 0.4, metalness: 0.05
-  });
   meshes.forEach(function (pos) {
     const geo = meshToGeometry(pos);
     const mesh = new THREE.Mesh(geo, matBlade);
@@ -196,6 +199,7 @@ function rebuild3D() {
   const bb = new THREE.Box3().setFromBufferAttribute(spineGeo.getAttribute('position'));
   const center = bb.getCenter(new THREE.Vector3());
   fanGroup.position.set(-center.x, -center.y, -center.z * 0.5);
+  dirty3d = false;
   updateStats();
 }
 
@@ -214,11 +218,14 @@ function updateStats() {
 }
 
 function resizeEditor() {
-  const r = ed.parentElement.getBoundingClientRect();
-  edW = r.width; edH = r.height - 32;
+  const r = edArea.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return false;
+  edW = r.width;
+  edH = r.height;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  ed.width = Math.floor(edW * dpr);
-  ed.height = Math.floor(edH * dpr);
+  ed.width = Math.max(1, Math.floor(edW * dpr));
+  ed.height = Math.max(1, Math.floor(edH * dpr));
+  ed.style.width = edW + 'px';
   ed.style.height = edH + 'px';
   ectx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const maxY = stato.half[stato.half.length - 1].y + 20;
@@ -226,6 +233,7 @@ function resizeEditor() {
   edScale = Math.min((edW - 40) / (maxX * 2.2), (edH - 40) / maxY);
   edOx = edW * 0.5;
   edOy = edH - 24;
+  return true;
 }
 
 function toScreen(x, y) {
@@ -236,7 +244,7 @@ function fromScreen(sx, sy) {
 }
 
 function drawEditor() {
-  resizeEditor();
+  if (!resizeEditor()) return;
   ectx.fillStyle = '#040804';
   ectx.fillRect(0, 0, edW, edH);
   ectx.strokeStyle = '#1c3524';
@@ -322,30 +330,81 @@ function drawEditor() {
   stato.half.forEach(function (p, i) {
     if (p.lock && i !== stato.half.length - 1 && i !== 0) return;
     const s = toScreen(p.x, p.y);
+    const sL = toScreen(-p.x, p.y);
     ectx.fillStyle = dragPt === i ? '#fff' : '#7CFF9B';
-    ectx.beginPath();
-    ectx.arc(s.x, s.y, dragPt === i ? 6 : 5, 0, Math.PI * 2);
-    ectx.fill();
-    ectx.strokeStyle = '#000';
-    ectx.lineWidth = 1;
-    ectx.stroke();
+    [s, i > 0 && i < stato.half.length - 1 ? sL : null].filter(Boolean).forEach(function (pt) {
+      ectx.beginPath();
+      ectx.arc(pt.x, pt.y, dragPt === i ? 6 : 5, 0, Math.PI * 2);
+      ectx.fill();
+      ectx.strokeStyle = '#000';
+      ectx.lineWidth = 1;
+      ectx.stroke();
+    });
   });
 }
 
+function editorCoords(e) {
+  const rect = ed.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
 function hitPoint(sx, sy) {
-  let best = -1, bd = 14;
+  let best = -1, bd = 16;
   stato.half.forEach(function (p, i) {
     if (p.lock && i > 0 && i < stato.half.length - 1) return;
-    const s = toScreen(p.x, p.y);
-    const d = Math.hypot(sx - s.x, sy - s.y);
-    if (d < bd) { bd = d; best = i; }
+    [[p.x, p.y], i > 0 && i < stato.half.length - 1 ? [-p.x, p.y] : null].filter(Boolean).forEach(function (xy) {
+      const s = toScreen(xy[0], xy[1]);
+      const d = Math.hypot(sx - s.x, sy - s.y);
+      if (d < bd) { bd = d; best = i; }
+    });
   });
   return best;
 }
 
-function refresh() {
+function insertPointAt(p) {
+  if (p.x < 2 || p.y <= stato.half[0].y + 4 || p.y >= stato.half[stato.half.length - 1].y - 4) return false;
+  let idx = stato.half.length - 1;
+  for (let i = 0; i < stato.half.length - 1; i++) {
+    if (p.y < stato.half[i + 1].y - 2) { idx = i + 1; break; }
+  }
+  if (idx <= 0 || idx >= stato.half.length) return false;
+  const prev = stato.half[idx - 1], next = stato.half[idx];
+  if (p.y <= prev.y + 4 || p.y >= next.y - 4) return false;
+  stato.half.splice(idx, 0, { x: Math.max(2, p.x), y: p.y });
+  return true;
+}
+
+function removePoint(i) {
+  if (i <= 0 || i >= stato.half.length - 1) return false;
+  if (stato.half.length <= 3) return false;
+  stato.half.splice(i, 1);
+  return true;
+}
+
+function movePoint(i, p) {
+  const pt = stato.half[i];
+  if (i === 0) {
+    pt.y = Math.max(0, p.y);
+    pt.x = 0;
+    return;
+  }
+  if (i === stato.half.length - 1) {
+    pt.y = Math.max(stato.half[i - 1].y + 5, p.y);
+    pt.x = 0;
+    return;
+  }
+  pt.x = Math.max(2, Math.abs(p.x));
+  pt.y = Math.max(stato.half[i - 1].y + 3, Math.min(stato.half[i + 1].y - 3, p.y));
+}
+
+function markDirty() {
+  dirty3d = true;
+}
+
+function refresh(full) {
   drawEditor();
-  rebuild3D();
+  if (full || dirty3d) rebuild3D();
+  else updateStats();
 }
 
 function init3D() {
@@ -405,25 +464,43 @@ function init3D() {
 }
 
 ed.addEventListener('pointerdown', function (e) {
-  const rect = ed.getBoundingClientRect();
-  dragPt = hitPoint(e.clientX - rect.left, e.clientY - rect.top);
+  if (e.button !== 0) return;
+  const c = editorCoords(e);
+  dragPt = hitPoint(c.x, c.y);
+  if (dragPt < 0) {
+    const p = fromScreen(c.x, c.y);
+    if (insertPointAt(p)) {
+      markDirty();
+      refresh(true);
+    }
+    return;
+  }
+  ed.setPointerCapture(e.pointerId);
+  e.preventDefault();
 });
 ed.addEventListener('pointermove', function (e) {
   if (dragPt < 0) return;
-  const rect = ed.getBoundingClientRect();
-  const p = fromScreen(e.clientX - rect.left, e.clientY - rect.top);
-  const pt = stato.half[dragPt];
-  if (dragPt === 0) { pt.y = Math.max(0, p.y); return refresh(); }
-  if (dragPt === stato.half.length - 1) {
-    pt.y = Math.max(stato.half[dragPt - 1].y + 5, p.y);
-    pt.x = 0;
-    return refresh();
-  }
-  pt.x = Math.max(2, p.x);
-  pt.y = Math.max(stato.half[dragPt - 1].y + 3, Math.min(stato.half[dragPt + 1].y - 3, p.y));
-  refresh();
+  const c = editorCoords(e);
+  movePoint(dragPt, fromScreen(c.x, c.y));
+  markDirty();
+  drawEditor();
+  updateStats();
 });
-ed.addEventListener('pointerup', function () { dragPt = -1; drawEditor(); });
+function endDrag() {
+  if (dragPt < 0) return;
+  dragPt = -1;
+  refresh(true);
+}
+ed.addEventListener('pointerup', endDrag);
+ed.addEventListener('pointercancel', endDrag);
+ed.addEventListener('dblclick', function (e) {
+  const c = editorCoords(e);
+  const i = hitPoint(c.x, c.y);
+  if (i > 0 && i < stato.half.length - 1 && removePoint(i)) {
+    markDirty();
+    refresh(true);
+  }
+});
 
 function bindRange(id, key, fmt, onChange) {
   const inp = document.getElementById(id);
@@ -433,7 +510,8 @@ function bindRange(id, key, fmt, onChange) {
     stato[key] = v;
     if (val) val.textContent = fmt ? fmt(v) : v;
     if (onChange) onChange(v);
-    refresh();
+    markDirty();
+    refresh(true);
   }
   inp.addEventListener('input', upd);
   upd();
@@ -452,27 +530,32 @@ bindRange('pStack', 'stackGap', function (v) { return v.toFixed(2); });
 
 document.getElementById('pCord2').addEventListener('change', function (e) {
   stato.cord2 = e.target.checked;
-  refresh();
+  markDirty();
+  refresh(true);
 });
 document.getElementById('bChiuso').onclick = function () {
   document.getElementById('pOpen').value = 0;
   stato.open = 0;
   document.getElementById('vOpen').textContent = '0%';
-  refresh();
+  markDirty();
+  refresh(true);
 };
 document.getElementById('bAperto').onclick = function () {
   document.getElementById('pOpen').value = 100;
   stato.open = 1;
   document.getElementById('vOpen').textContent = '100%';
-  refresh();
+  markDirty();
+  refresh(true);
 };
 document.getElementById('bResetProf').onclick = function () {
   stato.half = VENTAGLIO.defaultHalfProfile();
-  refresh();
+  markDirty();
+  refresh(true);
 };
 document.getElementById('bResetFori').onclick = function () {
   stato.holes = VENTAGLIO.defaultHoles();
-  refresh();
+  markDirty();
+  refresh(true);
 };
 
 function dl(buf, name) {
@@ -517,7 +600,8 @@ document.getElementById('fileCfg').onchange = function (e) {
       document.getElementById('pOpen').value = Math.round(stato.open * 100);
       document.getElementById('pStack').value = stato.stackGap;
       document.getElementById('pCord2').checked = stato.cord2;
-      refresh();
+      markDirty();
+      refresh(true);
     } catch (err) { alert('Config non valida'); }
   };
   r.readAsText(f);
@@ -525,8 +609,8 @@ document.getElementById('fileCfg').onchange = function (e) {
 };
 
 init3D();
-refresh();
-window.addEventListener('resize', function () { drawEditor(); });
+new ResizeObserver(function () { drawEditor(); }).observe(edArea);
+requestAnimationFrame(function () { refresh(true); });
 </script>
 </body>
 </html>
