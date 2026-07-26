@@ -119,7 +119,7 @@
     border-top: 0 solid var(--dim);
   }
   .nav.open .nav-list {
-    max-height: 420px;
+    max-height: 480px;
     border-top: 1px solid var(--dim);
   }
   .nav-list a {
@@ -152,6 +152,8 @@
   .nav-list a.tan-link:hover { background: rgba(200,161,123,0.08); }
   .nav-list a.coral-link { color: #ff7a9a; }
   .nav-list a.coral-link:hover { background: rgba(255,122,154,0.08); }
+  .nav-list a.iso-link { color: #00ff41; }
+  .nav-list a.iso-link:hover { background: rgba(0,255,65,0.06); }
 
   /* === SECTIONS === */
   .section {
@@ -225,6 +227,7 @@
   .tool-header.fos { border-bottom-color: #7CFF9B; }
   .tool-header.tan { border-bottom-color: #c8a17b; }
   .tool-header.coral { border-bottom-color: #ff7a9a; }
+  .tool-header.iso { border-bottom-color: #00ff41; }
 
   .tool-meta {
     display: flex;
@@ -268,6 +271,8 @@
   .tool-header.tan .right b { color: #c8a17b; }
   .tool-header.coral .name { color: #ff7a9a; }
   .tool-header.coral .right b { color: #ff7a9a; }
+  .tool-header.iso .name { color: #00ff41; }
+  .tool-header.iso .right b { color: #00ff41; }
   .section.gold .section-title { color: #fff03a; }
   .section.purple { border-color: var(--purple); }
   .section.purple .section-title { color: var(--purple); }
@@ -284,6 +289,10 @@
   .launch-btn.tan:hover { background: #c8a17b; color: var(--bg); }
   .launch-btn.coral { border-color: #ff7a9a; color: #ff7a9a; }
   .launch-btn.coral:hover { background: #ff7a9a; color: var(--bg); }
+  .launch-btn.iso { border-color: #00ff41; color: #00ff41; }
+  .launch-btn.iso:hover { background: #00ff41; color: var(--bg); }
+  .section.iso { border-color: #00ff41; }
+  .section.iso .section-title { color: #00ff41; }
   .section.mesh { border-color: #666; }
   .section.mesh .section-title { color: #e8e8e8; }
   .section.fos { border-color: #7CFF9B; }
@@ -510,7 +519,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 07 active</div>
+    <div class="nav-progress" id="navProgress">// 08 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -541,6 +550,10 @@
       <span><span class="marker">▸</span>VENTAGLIO</span>
       <span class="num">TOOL_07 · FAN</span>
     </a>
+    <a href="#isoieta" class="iso-link" data-nav="isoieta">
+      <span><span class="marker">▸</span>ISOIETA</span>
+      <span class="num">TOOL_08 · METEO FM</span>
+    </a>
   </div>
 </nav>
 
@@ -549,7 +562,7 @@
 <!-- ============================ -->
 <section class="section">
   <div class="section-title">// SYSTEM_STATUS</div>
-  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">07 / 07</span></div>
+  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">08 / 08</span></div>
   <div class="row"><span class="label">STUDIO</span><span class="value">DOCTNASA&MRBORG</span></div>
   <div class="row"><span class="label">YEAR</span><span class="value">2026</span></div>
   <div class="row"><span class="label">ACCESS</span><span class="value" id="accessMode">…</span></div>
@@ -1147,8 +1160,67 @@
 
 </div>
 
+<!-- ============================ -->
+<!-- TOOL_08 :: ISOIETA            -->
+<!-- ============================ -->
+<div class="tool-block" id="isoieta" data-section="isoieta">
+
+  <div class="tool-header iso">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_08 :: METEO FM</div>
+        <div class="name">ISOIETA</div>
+        <div class="sub">sintetizzatore FM · organico stratificato · centro tonale ancorato</div>
+      </div>
+      <div class="right">
+        <b>v1</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="isoieta/preview.svg" alt="isoieta preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="isoieta/tool.html" class="launch-btn iso">▶ LAUNCH</a>
+    <a href="isoieta/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section iso">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Sintetizzatore FM meteorologico: legge precipitazione, temperatura, pressione, umidità, vento e nuvolosità (live Open-Meteo o fronte simulato) e li mappa su nove celle radar — fondo, motore, superficie — con centro tonale ancorato e organico stratificato.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">// WORKFLOW</div>
+        <ul>
+          <li>Imposta lat/lon e sorgente (RETE o SIMULATA), poi <b>LEGGI ORA</b></li>
+          <li>Osserva mappatura: centro tonale, densità motore, indice/rapporto FM</li>
+          <li>Usa lo scarto manuale per suonare il meteo a mano, o torna al dato</li>
+          <li>Apri il radar Windy in overlay quando serve contesto geografico</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section iso">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>Web Audio · Open-Meteo</dd>
+          <dt>OUTPUT</dt><dd>audio live · radar canvas</dd>
+          <dt>USO</dt><dd>performance · listening · studio</dd>
+          <dt>TAGS</dt><dd>FM · meteo · radar · barene</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
-  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.5</span>
+  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.6</span>
   <span>END_OF_INDEX</span>
 </footer>
 
@@ -1241,10 +1313,11 @@
                   id === 'ricamo' ? '// viewing RICAMO' :
                   id === 'velario' ? '// viewing VELARIO' :
                   id === 'ventaglio' ? '// viewing VENTAGLIO' :
-                  '// 07 active';
+                  id === 'isoieta' ? '// viewing ISOIETA' :
+                  '// 08 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 07 active';
+      navProgress.textContent = '// 08 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });

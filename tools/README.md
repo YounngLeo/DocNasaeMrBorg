@@ -33,6 +33,9 @@ tools/
     ├── tool.html           ← ventaglio modulare · profilo · simulazione
     ├── ventaglio-core.js
     └── preview.svg
+└── isoieta/
+    ├── tool.html           ← sintetizzatore FM meteorologico · Open-Meteo
+    └── preview.svg
 ```
 
 ## aggiornare un tool

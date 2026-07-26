@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<script src="../_mirror.js"></script>
+<title>ISOIETA // DOCTNASA&MRBORG</title>
+<style>
+:root{
+  --nero:#040604; --pannello:#080c08;
+  --fosforo:#00ff41; --fosforo2:#5eff7e; --fosforo3:#0f7a2c;
+  --linea:#0d3a18; --linea2:#123f1c;
+  --ambra:#ffb000; --rosso:#ff3b3b;
+  --mono:'Courier New',Courier,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--nero);color:var(--fosforo);font-family:var(--mono);font-size:13px;line-height:1.45}
+body{min-height:100vh;overflow-x:hidden}
+#barene{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.5;pointer-events:none}
+#wrap{position:relative;z-index:1;max-width:1360px;margin:0 auto;padding:18px 16px 60px}
+
+header{border:1px solid var(--linea);padding:14px 16px;margin-bottom:14px;background:linear-gradient(180deg,rgba(0,255,65,.045),rgba(0,0,0,0))}
+.titolo{display:flex;flex-wrap:wrap;align-items:baseline;gap:14px}
+h1{font-size:30px;letter-spacing:.42em;margin:0;font-weight:700;text-shadow:0 0 14px rgba(0,255,65,.4)}
+.sottotitolo{font-size:11px;color:var(--fosforo3);letter-spacing:.22em;text-transform:uppercase}
+.firma{margin-top:8px;font-size:10.5px;color:var(--fosforo3);letter-spacing:.14em}
+
+.griglia{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:start}
+.pannello{border:1px solid var(--linea);background:var(--pannello);position:relative}
+.pannello>h2{margin:0;font-size:10.5px;letter-spacing:.26em;padding:7px 11px;border-bottom:1px solid var(--linea);color:var(--fosforo2);background:rgba(0,255,65,.05);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pannello>h2 span.tag{color:var(--fosforo3);letter-spacing:.1em;white-space:nowrap}
+.corpo{padding:11px}
+.riga{display:flex;justify-content:space-between;gap:8px;padding:2.5px 0;border-bottom:1px dotted rgba(0,255,65,.12)}
+.riga:last-child{border-bottom:none}
+.riga b{font-weight:400;color:var(--fosforo3);letter-spacing:.06em}
+.riga i{font-style:normal;color:var(--fosforo2);text-align:right}
+.riga.forte i{color:var(--fosforo);text-shadow:0 0 8px rgba(0,255,65,.5)}
+.nota{font-size:10.5px;color:var(--fosforo3);line-height:1.6}
+
+label.cmp{display:block;margin:9px 0 3px;font-size:10px;letter-spacing:.16em;color:var(--fosforo3)}
+input[type=number],select{width:100%;background:#020402;border:1px solid var(--linea);color:var(--fosforo);font-family:var(--mono);font-size:12.5px;padding:5px 7px;outline:none}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:16px;background:transparent;margin:1px 0}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--linea2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:14px;background:var(--fosforo);margin-top:-6px;border:none;cursor:ew-resize}
+input[type=range]::-moz-range-track{height:2px;background:var(--linea2)}
+input[type=range]::-moz-range-thumb{width:9px;height:14px;border-radius:0;background:var(--fosforo);border:none;cursor:ew-resize}
+button{font-family:var(--mono);font-size:11px;letter-spacing:.16em;background:#020402;color:var(--fosforo);border:1px solid var(--linea2);padding:7px 10px;cursor:pointer;transition:background .12s}
+button:hover:not(:disabled){background:rgba(0,255,65,.12)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:1px solid var(--fosforo);outline-offset:1px}
+button:disabled{opacity:.35;cursor:not-allowed}
+button.primario{border-color:var(--fosforo);color:var(--fosforo2)}
+button.attivo{background:var(--fosforo);color:#020402}
+.bottoni{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.bottoni button{flex:1 1 auto}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slider{margin-bottom:7px}
+.slider .cap{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.1em;color:var(--fosforo3)}
+.slider .cap i{font-style:normal;color:var(--fosforo2)}
+fieldset{border:1px solid var(--linea);margin:10px 0 0;padding:8px 9px 10px}
+legend{font-size:9.5px;letter-spacing:.2em;color:var(--fosforo3);padding:0 5px}
+
+canvas.tela{display:block;width:100%;background:#010301;border:1px solid var(--linea)}
+.partitura{display:grid;grid-template-columns:1fr 1.25fr;gap:12px;margin-top:12px}
+#oscillo{margin-top:12px}
+
+#registro{height:120px;overflow-y:auto;background:#010301;border:1px solid var(--linea);padding:7px 9px;font-size:11px;margin-top:12px}
+#registro div{white-space:pre-wrap;color:var(--fosforo3)}
+#registro div .t{color:var(--linea2)}
+#registro div.imp{color:var(--fosforo2)}
+#registro div.err{color:var(--rosso)}
+#registro div.avv{color:var(--ambra)}
+
+details{margin-top:12px;border:1px solid var(--linea);background:var(--pannello)}
+details summary{cursor:pointer;font-size:10.5px;letter-spacing:.24em;padding:8px 11px;color:var(--fosforo2)}
+details .corpo{border-top:1px solid var(--linea)}
+details table{width:100%;border-collapse:collapse;font-size:11px}
+details td,details th{border-bottom:1px dotted rgba(0,255,65,.14);padding:4px 6px;vertical-align:top;text-align:left}
+details th{color:var(--fosforo);font-weight:400;letter-spacing:.12em;font-size:10px}
+details td:first-child{color:var(--fosforo2);width:24%;letter-spacing:.06em}
+details td{color:var(--fosforo3)}
+iframe#windy{width:100%;height:280px;border:1px solid var(--linea);margin-top:12px;display:none;filter:saturate(.5) hue-rotate(75deg) contrast(1.1)}
+.spia{display:inline-block;width:7px;height:7px;background:var(--linea2);margin-right:6px;vertical-align:middle}
+.spia.on{background:var(--fosforo);box-shadow:0 0 7px var(--fosforo)}
+.ancora{color:var(--ambra)}
+@media (max-width:1000px){.griglia{grid-template-columns:1fr}.partitura{grid-template-columns:1fr}h1{font-size:22px;letter-spacing:.3em}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="barene" aria-hidden="true"></canvas>
+<div id="wrap">
+
+<header>
+  <div class="titolo">
+    <h1>ISOIETA</h1>
+    <div class="sottotitolo">sintetizzatore FM · organico stratificato · centro tonale ancorato</div>
+  </div>
+  <div class="firma">DoctNasa&amp;MrBorg · studio di ricerca · nove celle radar, nove funzioni distinte: fondo · motore · superficie</div>
+</header>
+
+<section class="griglia">
+
+  <!-- ============ 01 CAMPO ============ -->
+  <div class="pannello">
+    <h2>01 · CAMPO DI PIOGGIA <span class="tag" id="fonte-tag">—</span></h2>
+    <div class="corpo">
+      <div class="duo">
+        <div><label class="cmp">LATITUDINE</label><input type="number" id="lat" step="0.001" value="45.756"></div>
+        <div><label class="cmp">LONGITUDINE</label><input type="number" id="lon" step="0.001" value="11.736"></div>
+      </div>
+      <label class="cmp">SORGENTE</label>
+      <select id="sorgente">
+        <option value="live">RETE · Open-Meteo, nowcast a 15 min interpolato</option>
+        <option value="sim">SIMULATA · fronte sintetico</option>
+      </select>
+      <div class="duo">
+        <div>
+          <label class="cmp">LETTURA</label>
+          <select id="lettura">
+            <option value="adesso">ADESSO</option>
+            <option value="previsione">PREVISIONE 24 h</option>
+          </select>
+        </div>
+        <div>
+          <label class="cmp">CADENZA</label>
+          <select id="cadenza">
+            <option value="30">ogni 30 s</option>
+            <option value="60" selected>ogni minuto</option>
+            <option value="300">ogni 5 min</option>
+            <option value="600">ogni 10 min</option>
+            <option value="0">manuale</option>
+          </select>
+        </div>
+      </div>
+      <div class="bottoni">
+        <button id="btn-leggi" class="primario">LEGGI ORA</button>
+        <button id="btn-windy">RADAR WINDY</button>
+      </div>
+
+      <canvas id="radar" class="tela" width="360" height="384" style="margin-top:12px"></canvas>
+
+      <div style="margin-top:10px">
+        <div class="riga forte"><b>PROSSIMA LETTURA</b><i id="d-conto">—</i></div>
+        <div class="riga"><b>ORA DEL DATO</b><i id="d-ora">—</i></div>
+        <div class="riga"><b>PRECIPITAZIONE</b><i id="d-prec">—</i></div>
+        <div class="riga"><b>TEMPERATURA</b><i id="d-temp">—</i></div>
+        <div class="riga"><b>PRESSIONE</b><i id="d-press">—</i></div>
+        <div class="riga"><b>UMIDIT&Agrave;</b><i id="d-umid">—</i></div>
+        <div class="riga"><b>VENTO</b><i id="d-vento">—</i></div>
+        <div class="riga"><b>NUVOLOSIT&Agrave;</b><i id="d-nubi">—</i></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 02 MAPPATURA ============ -->
+  <div class="pannello">
+    <h2>02 · MAPPATURA MUSICALE <span class="tag" id="regime-tag">—</span></h2>
+    <div class="corpo">
+      <div class="riga forte"><b>CENTRO TONALE</b><i id="m-centro">—</i></div>
+      <div class="riga"><b>COLLEZIONE</b><i id="m-coll">—</i></div>
+      <div class="riga"><b>ANCORAGGIO</b><i id="m-ancora">—</i></div>
+      <div class="riga"><b>DENSIT&Agrave; MOTORE</b><i id="m-dens">—</i></div>
+      <div class="riga"><b>ORGANICO ATTIVO</b><i id="m-voci">—</i></div>
+      <div class="riga"><b>INDICE FM</b><i id="m-indice">—</i></div>
+      <div class="riga"><b>RAPPORTO FM</b><i id="m-rapp">—</i></div>
+      <div class="riga"><b>DECADIMENTO</b><i id="m-decad">—</i></div>
+      <div class="riga"><b>RIVERBERO</b><i id="m-riv">—</i></div>
+      <div class="riga"><b>TEMPO</b><i id="m-bpm">—</i></div>
+      <div class="riga"><b>DERIVA DI FASE</b><i id="m-deriva">—</i></div>
+      <div class="riga"><b>TAGLIO PASSA-BASSO</b><i id="m-taglio">—</i></div>
+
+      <fieldset>
+        <legend>SCARTO MANUALE</legend>
+        <div class="nota" style="margin-bottom:7px">Sposta un cursore per suonare il meteo a mano.
+          <button id="btn-auto" style="padding:3px 7px;font-size:10px">TORNA AL DATO</button></div>
+        <div class="slider" data-par="temp"  data-min="-8"  data-max="42"   data-step="0.5" data-suf="&deg;C"></div>
+        <div class="slider" data-par="prec"  data-min="0"   data-max="14"   data-step="0.1" data-suf=" mm/h"></div>
+        <div class="slider" data-par="press" data-min="965" data-max="1045" data-step="1"   data-suf=" hPa"></div>
+        <div class="slider" data-par="umid"  data-min="10"  data-max="100"  data-step="1"   data-suf=" %"></div>
+        <div class="slider" data-par="vento" data-min="0"   data-max="70"   data-step="1"   data-suf=" km/h"></div>
+        <div class="slider" data-par="nubi"  data-min="0"   data-max="100"  data-step="1"   data-suf=" %"></div>
+      </fieldset>
+    </div>
+  </div>
+
+  <!-- ============ 03 ESECUZIONE ============ -->
+  <div class="pannello">
+    <h2>03 · ESECUZIONE <span class="tag"><span class="spia" id="spia"></span><span id="stato-tag">FERMO</span></span></h2>
+    <div class="corpo">
+      <div class="bottoni">
+        <button id="btn-play" class="primario">AVVIA</button>
+        <button id="btn-stop" disabled>ARRESTA</button>
+      </div>
+
+      <label class="cmp">CENTRO TONALE</label>
+      <select id="centro">
+        <option value="ancorato" selected>ANCORATO · un solo centro, non si muove mai</option>
+        <option value="segue">SEGUE LA TEMPERATURA · trasporta a ogni lettura</option>
+      </select>
+      <div class="bottoni" style="margin-top:6px">
+        <button id="btn-rifonda">RIFONDA IL CENTRO SUL DATO DI ADESSO</button>
+      </div>
+
+      <label class="cmp">FASATURA</label>
+      <select id="processo">
+        <option value="fase" selected>FASE · le voci del motore scivolano l'una sull'altra</option>
+        <option value="canone">CANONE · sfasamento fisso a incastro</option>
+        <option value="statico">STATICO · tutte allineate</option>
+      </select>
+
+      <label class="cmp">INSEGUIMENTO DEL DATO</label>
+      <select id="inseguimento">
+        <option value="graduale" selected>GRADUALE · una nota per ciclo verso il bersaglio</option>
+        <option value="immediato">IMMEDIATO · salta subito alla nuova densit&agrave;</option>
+      </select>
+
+      <label class="cmp">CELLA RITMICA</label>
+      <select id="ciclo">
+        <option value="8">8 impulsi</option>
+        <option value="12" selected>12 impulsi</option>
+        <option value="16">16 impulsi</option>
+      </select>
+
+      <fieldset>
+        <legend>STRATI</legend>
+        <div class="slider" data-mix="volume"     data-min="0" data-max="1" data-step="0.01" data-val="0.7" data-nome="VOLUME"></div>
+        <div class="slider" data-mix="fondo"      data-min="0" data-max="1" data-step="0.01" data-val="0.8" data-nome="FONDO · basso impulso pedale"></div>
+        <div class="slider" data-mix="motore"     data-min="0" data-max="1" data-step="0.01" data-val="0.9" data-nome="MOTORE · tre cellule"></div>
+        <div class="slider" data-mix="superficie" data-min="0" data-max="1" data-step="0.01" data-val="0.7" data-nome="SUPERFICIE · metalli risultante"></div>
+        <div class="slider" data-mix="tempo"  data-min="0.4" data-max="2" data-step="0.01" data-val="1" data-suf="&times;" data-nome="TEMPO REL."></div>
+        <div class="slider" data-mix="deriva" data-min="0"   data-max="3" data-step="0.01" data-val="1" data-suf="&times;" data-nome="DERIVA REL."></div>
+      </fieldset>
+
+      <div class="bottoni">
+        <button id="btn-reg">REGISTRA</button>
+        <button id="btn-semi">RIGENERA MOTIVI</button>
+      </div>
+      <div class="nota" style="margin-top:9px">Barra spaziatrice = avvia / arresta. L'audio parte solo dopo un tuo clic: cos&igrave; vuole il browser.</div>
+    </div>
+  </div>
+</section>
+
+<div class="partitura">
+  <div class="pannello">
+    <h2>04 · FASI PER STRATO</h2>
+    <div class="corpo"><canvas id="fasi" class="tela" width="520" height="380"></canvas></div>
+  </div>
+  <div class="pannello">
+    <h2>05 · ORGANICO <span class="tag" id="org-tag">—</span></h2>
+    <div class="corpo"><canvas id="celle" class="tela" width="680" height="380"></canvas></div>
+  </div>
+</div>
+
+<canvas id="oscillo" class="tela" width="1200" height="140"></canvas>
+<iframe id="windy" title="Radar Windy" loading="lazy"></iframe>
+<div id="registro" aria-live="polite"></div>
+
+<details>
+  <summary>ORGANICO — le nove funzioni della griglia</summary>
+  <div class="corpo">
+    <table>
+      <tr><th>CELLA</th><th>FUNZIONE</th><th>STRATO</th><th>COSA FA, E COSA LEGGE DALLA SUA CELLA</th></tr>
+      <tr><td>NO · in alto a sinistra</td><td>METALLO O</td><td>superficie</td><td>Accenti metallici acuti, rapporti FM inarmonici: risuona solo dove piove davvero. La pioggia sulla sua cella decide quanti accenti e quanto lunga la coda.</td></tr>
+      <tr><td>N · in alto al centro</td><td>RISULTANTE</td><td>superficie</td><td>Non ha un ritmo proprio: suona solo dove due cellule del motore coincidono, raddoppiando all'ottava il <i>pattern risultante</i> che emerge dalla fasatura. &Egrave; il flauto di <i>Piano Phase</i>.</td></tr>
+      <tr><td>NE · in alto a destra</td><td>METALLO E</td><td>superficie</td><td>Come METALLO O, un'ottava sotto e sfasato: la coppia apre l'immagine stereo verso est.</td></tr>
+      <tr><td>O · centro sinistra</td><td>CELLULA O</td><td>motore</td><td>Cella ritmica di marimba, maschera euclidea. Attacchi proporzionali alla pioggia sulla sua cella.</td></tr>
+      <tr><td>C · centro</td><td>CELLULA C</td><td>motore</td><td>La stessa funzione, ma &egrave; l'esecutore maestro: da lei dipende l'orologio del brano e non deriva mai.</td></tr>
+      <tr><td>E · centro destra</td><td>CELLULA E</td><td>motore</td><td>Terza cella, registro leggermente pi&ugrave; grave: le tre si incastrano senza fare unisono.</td></tr>
+      <tr><td>SO · in basso a sinistra</td><td>BASSO</td><td>fondo</td><td>Da una a quattro note gravi per ciclo, solo fondamentale e quinta. La pressione ne decide il corpo: bassa pressione, basso pi&ugrave; ruvido.</td></tr>
+      <tr><td>S · in basso al centro</td><td>IMPULSO</td><td>fondo</td><td>La pulsazione costante, senza deriva. La pioggia sulla sua cella infittisce la suddivisione: ogni tre impulsi, ogni due, ogni uno.</td></tr>
+      <tr><td>SE · in basso a destra</td><td>PEDALE</td><td>fondo</td><td>Note tenute lunghissime con attacco lento, una ogni due cicli, che si muovono <i>dentro</i> la collezione senza mai cambiarla. L'umidit&agrave; ne allunga la durata.</td></tr>
+    </table>
+  </div>
+</details>
+
+<details>
+  <summary>CORRISPONDENZE — dal radar alla partitura</summary>
+  <div class="corpo">
+    <table>
+      <tr><td>Precipitazione</td><td>Densit&agrave;. Ogni cella alimenta solo la propria funzione, quindi la stessa pioggia diventa attacchi nel motore, suddivisione nell'impulso, accenti nel metallo, durata nel pedale.</td></tr>
+      <tr><td>Posizione</td><td>Colonna = posizione stereo (ovest a sinistra, est a destra). Riga = strato funzionale: superficie in alto, motore al centro, fondo in basso.</td></tr>
+      <tr><td>Temperatura</td><td>Fissa il centro tonale e il modo alla prima lettura, poi <b>resta ferma</b>. Con centro ancorato le letture successive non trasportano nulla: la temperatura locale di ogni cella scalda o raffredda soltanto il timbro di quella voce.</td></tr>
+      <tr><td>Pressione</td><td>Armonici. Bassa pressione = indice FM alto e rapporti inarmonici (metallico, campane); alta pressione = 1:1, marimba pulita.</td></tr>
+      <tr><td>Umidit&agrave;</td><td>Coda: decadimento, riverbero, durata del pedale.</td></tr>
+      <tr><td>Vento</td><td>Tempo metronomico e velocit&agrave; della deriva di fase. Il tempo non salta: scivola verso il nuovo valore in una quindicina di secondi.</td></tr>
+      <tr><td>Nuvolosit&agrave;</td><td>Taglio del filtro passa-basso.</td></tr>
+      <tr><td>Cadenza</td><td>Il dato corrente di Open-Meteo si rinfresca ogni 15 min, ma la precipitazione arriva dal nowcast a 15 minuti <b>interpolato al secondo</b>: leggere ogni minuto restituisce quindi un campo che si muove per davvero.</td></tr>
+      <tr><td>Inseguimento</td><td>GRADUALE: a ogni lettura le densit&agrave; nuove diventano bersagli e le voci ci arrivano una nota per ciclo, sostituendo pause con note. &Egrave; il processo di <i>Music for Pieces of Wood</i> messo al servizio del meteo, e impedisce ogni scatto.</td></tr>
+    </table>
+  </div>
+</details>
+
+</div>
+
+<!-- ==================== NUCLEO PURO (testabile in Node) ==================== -->
+<script id="nucleo">
+var CORE = (function(){
+  'use strict';
+  const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
+  const norm=(v,a,b)=>(a===b?0:clamp((v-a)/(b-a),0,1));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+
+  function mulberry32(a){
+    return function(){
+      a|=0; a=a+0x6D2B79F5|0;
+      let t=Math.imul(a^a>>>15,1|a);
+      t=t+Math.imul(t^t>>>7,61|t)^t;
+      return ((t^t>>>14)>>>0)/4294967296;
+    };
+  }
+
+  function euclid(k,n){
+    k=clamp(Math.round(k),0,n);
+    const out=[];
+    for(let i=0;i<n;i++) out.push(((i*k)%n)<k);
+    return out;
+  }
+  function ruota(a,r){
+    const n=a.length; if(!n) return a.slice();
+    r=((r%n)+n)%n;
+    return a.slice(r).concat(a.slice(0,r));
+  }
+
+  const MODI=[
+    {nome:'EOLIO',     s:[0,2,3,5,7,8,10]},
+    {nome:'DORICO',    s:[0,2,3,5,7,9,10]},
+    {nome:'MIXOLIDIO', s:[0,2,4,5,7,9,10]},
+    {nome:'IONICO',    s:[0,2,4,5,7,9,11]},
+    {nome:'LIDIO',     s:[0,2,4,6,7,9,11]}
+  ];
+  const NOMI=['DO','DO#','RE','MIb','MI','FA','FA#','SOL','SOL#','LA','SIb','SI'];
+  const nomeNota=m=>NOMI[((Math.round(m)%12)+12)%12]+(Math.floor(Math.round(m)/12)-1);
+  const nomeGrado=m=>NOMI[((Math.round(m)%12)+12)%12];
+  const gradoAMidi=(fond,s,g)=>{
+    const o=Math.floor(g/s.length);
+    const i=((g%s.length)+s.length)%s.length;
+    return fond+o*12+s[i];
+  };
+  const midiAHz=m=>440*Math.pow(2,(m-69)/12);
+  const collezione=(fond,modo)=>modo.s.map(iv=>nomeGrado(fond+iv));
+
+  /* ---- organico: nove funzioni, una per cella, in ordine riga-colonna ---- */
+  const FUNZIONI=[
+    {id:'metallo_o', nome:'METALLO O',  strato:'superficie', reg:10,  ruolo:'accento'},
+    {id:'risultante',nome:'RISULTANTE', strato:'superficie', reg:7,   ruolo:'risultante'},
+    {id:'metallo_e', nome:'METALLO E',  strato:'superficie', reg:9,   ruolo:'accento'},
+    {id:'cellula_o', nome:'CELLULA O',  strato:'motore',     reg:0,   ruolo:'cellula'},
+    {id:'cellula_c', nome:'CELLULA C',  strato:'motore',     reg:3,   ruolo:'cellula'},
+    {id:'cellula_e', nome:'CELLULA E',  strato:'motore',     reg:-2,  ruolo:'cellula'},
+    {id:'basso',     nome:'BASSO',      strato:'fondo',      reg:-14, ruolo:'basso'},
+    {id:'impulso',   nome:'IMPULSO',    strato:'fondo',      reg:-7,  ruolo:'impulso'},
+    {id:'pedale',    nome:'PEDALE',     strato:'fondo',      reg:-4,  ruolo:'pedale'}
+  ];
+  const INDICE_MAESTRO=4;                     // CELLULA C, cella centrale
+  /* il motore va programmato prima della superficie: la risultante ascolta il motore */
+  const ORDINE=[3,4,5,6,7,8,0,1,2];
+
+  /* dal meteo ai parametri continui — nessun ciclo armonico: il centro sta fermo */
+  function deriva(m){
+    const nT=norm(m.temp,-5,38),
+          nP=norm(m.press,975,1035),
+          nU=norm(m.umid,20,100),
+          nV=norm(m.vento,0,55),
+          nN=norm(m.nubi,0,100),
+          nR=Math.pow(norm(m.prec,0,10),0.55);
+    const modo=MODI[clamp(Math.floor(nT*MODI.length),0,MODI.length-1)];
+    const fond=55+Math.round(nT*12);
+    const indice=0.45+(1-nP)*5.8+nR*2.2;
+    const RAP=[1,1,2,1.5,3,3.5,4,7];
+    const rapporto=RAP[clamp(Math.round((1-nP)*3.4+nR*2.6),0,RAP.length-1)];
+    const decad=lerp(2.7,0.55,nR)*lerp(0.78,1.35,nU);
+    const riverbero=0.10+nU*0.55;
+    const bpm=Math.round(lerp(76,152,nV));
+    const derivaFase=0.0006+nV*0.011;
+    const taglio=Math.round(lerp(9500,1300,nN));
+    const secco=(m.precMax!==undefined?m.precMax:m.prec)<0.05;
+    return {nT,nP,nU,nV,nN,nR,modo,fond,indice,rapporto,decad,riverbero,bpm,
+            deriva:derivaFase,taglio,secco};
+  }
+
+  function densitaCella(c,secco){
+    if(secco) return clamp(0.05+norm(c.umid,35,100)*0.26+norm(c.nubi,0,100)*0.14,0,0.45);
+    return Math.pow(norm(c.prec,0,10),0.5);
+  }
+
+  /* timbro proprio di ogni funzione: aree timbriche separate, non nove marimbe uguali */
+  function timbroFunzione(f,p,c){
+    const caldo=norm(c.temp,-5,38), bagnato=Math.pow(norm(c.prec,0,10),0.5);
+    switch(f.ruolo){
+      case 'cellula':
+        return {rapporto:p.rapporto, indice:p.indice*(0.6+caldo*0.8),
+                decad:clamp(p.decad*(0.7+bagnato*0.6),0.25,4),
+                att:0.006, amp:0.16+bagnato*0.12};
+      case 'accento':
+        return {rapporto:(1-p.nP)>0.5?7:3.5, indice:p.indice*1.5+1.2,
+                decad:clamp(p.decad*2.4,1.2,4.5),
+                att:0.003, amp:0.075+bagnato*0.075};
+      case 'risultante':
+        return {rapporto:1, indice:0.12+caldo*0.28,
+                decad:clamp(p.decad*1.8,0.9,3.0),
+                att:0.10+(1-bagnato)*0.14, amp:0.12+bagnato*0.07};
+      case 'basso':
+        return {rapporto:1, indice:0.35+(1-p.nP)*1.7,
+                decad:clamp(p.decad*2.8,1.5,6),
+                att:0.02, amp:0.26+(1-p.nP)*0.07};
+      case 'impulso':
+        return {rapporto:2, indice:0.7+bagnato*1.7,
+                decad:clamp(0.07+(1-bagnato)*0.06,0.05,0.2),
+                att:0.002, amp:0.12+bagnato*0.05};
+      case 'pedale':
+        return {rapporto:1, indice:0.15+p.nU*0.42,
+                decad:clamp(6+p.nU*8,4,16),
+                att:0.9+p.nU*1.5, amp:0.15};
+    }
+    return {rapporto:1,indice:1,decad:1,att:0.01,amp:0.1};
+  }
+
+  /* ritmo proprio di ogni funzione */
+  const attacchiBersaglio=(d,L)=>clamp(Math.round(1+d*(L-1)),1,L);
+  function ritmoFunzione(f,dens,L,i){
+    switch(f.ruolo){
+      case 'cellula':
+        return {k:attacchiBersaglio(dens,L), ogni:1, rot:(i*5)%L};
+      case 'accento':{
+        const max=Math.max(1,Math.round(L/3));
+        return {k:clamp(Math.round(1+dens*(max-1)),1,max), ogni:1, rot:(i*7+2)%L};
+      }
+      case 'basso':
+        return {k:clamp(Math.round(1+dens*2.6),1,4), ogni:1, rot:0};
+      case 'impulso':
+        return {k:L, ogni:(dens<0.3?3:(dens<0.62?2:1)), rot:0};
+      case 'pedale':
+        return {k:1, ogni:L*2, rot:0};
+      case 'risultante':
+        /* nessuna griglia propria — una griglia fissa cadrebbe in trappole di parità.
+           Setaccio a conteggio: raddoppia una coincidenza ogni N, con N dettato dalla sua cella. */
+        return {k:L, ogni:1, rot:0, setaccio:clamp(Math.round(lerp(4,1,dens)),1,4)};
+    }
+    return {k:1,ogni:1,rot:0};
+  }
+
+  function motivo(seme,L,ampiezza){
+    const rnd=mulberry32(seme|0);
+    const passi=[-2,-1,-1,-1,1,1,1,2,2,3];
+    const out=[];
+    let g=Math.floor(rnd()*3);
+    for(let i=0;i<L;i++){
+      out.push(g);
+      g+=passi[Math.floor(rnd()*passi.length)];
+      if(g>ampiezza) g-=4;
+      if(g<0) g+=3;
+    }
+    return out;
+  }
+
+  /* scivolamento del tempo: nessun salto quando arriva una lettura nuova */
+  const scivola=(corrente,bersaglio,quota)=>corrente+(bersaglio-corrente)*clamp(quota,0,1);
+
+  /* il centro tonale: fissato una volta, poi immobile qualunque cosa faccia la temperatura */
+  function ancoraCentro(p,ancora,ancorato){
+    if(ancorato){
+      const a=ancora||{fond:p.fond,modo:p.modo};
+      return {fond:a.fond,modo:a.modo,ancora:a};
+    }
+    return {fond:p.fond,modo:p.modo,ancora:{fond:p.fond,modo:p.modo}};
+  }
+
+  return {clamp,norm,lerp,mulberry32,euclid,ruota,MODI,NOMI,FUNZIONI,INDICE_MAESTRO,ORDINE,
+          nomeNota,nomeGrado,collezione,gradoAMidi,midiAHz,deriva,densitaCella,
+          timbroFunzione,ritmoFunzione,motivo,attacchiBersaglio,scivola,ancoraCentro};
+})();
+if(typeof module!=='undefined' && module.exports) module.exports=CORE;
+</script>
+
+<!-- ==================== APPLICAZIONE ==================== -->
+<script id="app">
+(function(){
+'use strict';
+const {clamp,norm,euclid,ruota,MODI,FUNZIONI,INDICE_MAESTRO,ORDINE,nomeNota,collezione,
+       gradoAMidi,midiAHz,deriva,densitaCella,timbroFunzione,ritmoFunzione,motivo,scivola,
+       ancoraCentro}=CORE;
+const $=id=>document.getElementById(id);
+
+/* ---------- registro ---------- */
+const reg=$('registro');
+function log(t,cls){
+  const d=document.createElement('div');
+  if(cls) d.className=cls;
+  d.innerHTML='<span class="t">'+new Date().toTimeString().slice(0,8)+'</span>  '+t;
+  reg.appendChild(d);
+  while(reg.children.length>250) reg.removeChild(reg.firstChild);
+  reg.scrollTop=reg.scrollHeight;
+}
+
+/* ---------- stato ---------- */
+const S={
+  centro:{lat:45.756,lon:11.736},
+  celle:[], meteo:null, par:null,
+  ancora:null,                 // {fond, modo} — il centro tonale, fissato una volta
+  scarto:{},
+  mix:{volume:0.7,fondo:0.8,motore:0.9,superficie:0.7,tempo:1,deriva:1},
+  esecutori:[], L:12,
+  processo:'fase', inseguimento:'graduale',
+  seme:Math.floor(Math.random()*1e9), rigenera:false,
+  inEsecuzione:false, passoMaestro:0,
+  bpmCorrente:null,
+  attacchiMotore:[],           // memoria breve per la voce RISULTANTE
+  previsione:null, passoPrev:0, passiDisponibili:0,
+  fonte:'—', oraDato:'—',
+  prossimaLettura:0, cadenza:60, letturaInCorso:false
+};
+
+/* ==================== DATI ==================== */
+const PASSO_LAT=0.22, PASSO_LON=0.30;
+function coordinateGriglia(lat,lon){
+  const out=[];
+  for(let r=-1;r<=1;r++) for(let c=-1;c<=1;c++)
+    out.push({lat:+(lat-r*PASSO_LAT).toFixed(4), lon:+(lon+c*PASSO_LON).toFixed(4), r:r+1, c:c+1});
+  return out;
+}
+
+async function leggiRete(lat,lon){
+  const g=coordinateGriglia(lat,lon);
+  const u='https://api.open-meteo.com/v1/forecast'
+    +'?latitude='+g.map(p=>p.lat).join(',')
+    +'&longitude='+g.map(p=>p.lon).join(',')
+    +'&current=temperature_2m,relative_humidity_2m,precipitation,surface_pressure,cloud_cover,wind_speed_10m,wind_direction_10m'
+    +'&minutely_15=precipitation'
+    +'&hourly=precipitation,temperature_2m,surface_pressure,relative_humidity_2m,cloud_cover,wind_speed_10m,wind_direction_10m'
+    +'&forecast_days=2&forecast_minutely_15=96&timezone=auto';
+  const r=await fetch(u,{cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  let j=await r.json();
+  if(!Array.isArray(j)) j=[j];
+  if(j.length<9) throw new Error('griglia incompleta ('+j.length+' punti)');
+  return {punti:j,griglia:g};
+}
+
+/* nowcast a 15 min interpolato all'istante: è questo che rende utile leggere ogni minuto */
+function precInterpolata(p,quando){
+  const m=p.minutely_15;
+  if(!m||!m.time||!m.precipitation) return null;
+  const t=m.time, v=m.precipitation;
+  for(let i=0;i<t.length-1;i++){
+    const a=new Date(t[i]).getTime(), b=new Date(t[i+1]).getTime();
+    if(quando>=a&&quando<b){
+      const va=(v[i]==null?0:+v[i]), vb=(v[i+1]==null?0:+v[i+1]);
+      const f=(quando-a)/(b-a);
+      return {val:va+(vb-va)*f, ora:t[i], indice:i};
+    }
+  }
+  return null;
+}
+
+function cellaDaCorrente(p,g,quando){
+  const c=p.current||{};
+  const np=precInterpolata(p,quando===undefined?Date.now():quando);
+  return {lat:g.lat,lon:g.lon,r:g.r,c:g.c,
+    prec:np?Math.max(0,np.val):+(c.precipitation||0),
+    fontePrec:np?'nowcast 15 min interpolato':'dato corrente',
+    temp:c.temperature_2m!==undefined?+c.temperature_2m:15,
+    press:c.surface_pressure!==undefined?+c.surface_pressure:1013,
+    umid:c.relative_humidity_2m!==undefined?+c.relative_humidity_2m:60,
+    nubi:c.cloud_cover!==undefined?+c.cloud_cover:40,
+    vento:c.wind_speed_10m!==undefined?+c.wind_speed_10m:6,
+    dir:c.wind_direction_10m!==undefined?+c.wind_direction_10m:180,
+    ora:(np?np.ora:c.time)||''};
+}
+/* previsione: passo di 15 minuti sulla precipitazione, campi lenti dall'ora corrispondente */
+function cellaDaPasso(p,g,i0,passo){
+  const m=p.minutely_15, h=p.hourly;
+  const k=clamp(i0+passo,0,(m&&m.time?m.time.length:1)-1);
+  const vq=(a,d)=>(a&&a[k]!=null)?+a[k]:d;
+  const ora=(m&&m.time)?m.time[k]:'';
+  let ho=0;
+  if(h&&h.time&&ora){ for(let i=0;i<h.time.length;i++){ if(h.time[i]<=ora) ho=i; else break; } }
+  const vh=(a,d)=>(a&&a[ho]!=null)?+a[ho]:d;
+  return {lat:g.lat,lon:g.lon,r:g.r,c:g.c,
+    prec:Math.max(0,vq(m&&m.precipitation,vh(h&&h.precipitation,0))),
+    temp:vh(h&&h.temperature_2m,15), press:vh(h&&h.surface_pressure,1013),
+    umid:vh(h&&h.relative_humidity_2m,60), nubi:vh(h&&h.cloud_cover,40),
+    vento:vh(h&&h.wind_speed_10m,6), dir:vh(h&&h.wind_direction_10m,180),
+    ora:ora};
+}
+function indicePassoCorrente(p){
+  const m=p.minutely_15;
+  if(!m||!m.time) return 0;
+  const ora=Date.now();
+  for(let i=0;i<m.time.length;i++){ if(new Date(m.time[i]).getTime()>=ora) return Math.max(0,i-1); }
+  return 0;
+}
+
+function campoSimulato(lat,lon,fase){
+  const g=coordinateGriglia(lat,lon), f=fase||0;
+  const fronteX=-3.5+((f*0.11)%7.0);
+  const base={temp:9+8*Math.sin(f*0.09),press:1004-16*Math.sin(f*0.07),
+              umid:64+26*Math.sin(f*0.13+1),nubi:52+44*Math.sin(f*0.06+2),
+              vento:9+16*Math.abs(Math.sin(f*0.05+0.6)),dir:(200+f*3)%360};
+  return g.map((p,i)=>{
+    const x=(p.c-1)-fronteX, y=(p.r-1)-1;
+    const banda=Math.exp(-(x*x)/0.55)*Math.exp(-(y*y)/3.2);
+    const grana=0.55+0.45*Math.sin(i*2.7+f*0.4);
+    return {lat:p.lat,lon:p.lon,r:p.r,c:p.c,
+      prec:+(banda*grana*9.2).toFixed(2),
+      temp:+(base.temp-(p.r-1)*1.4).toFixed(1),
+      press:+(base.press-banda*6).toFixed(0),
+      umid:clamp(base.umid+banda*24,10,100),
+      nubi:clamp(base.nubi+banda*40,0,100),
+      vento:+(base.vento+banda*7).toFixed(1),
+      dir:base.dir, ora:''};
+  });
+}
+
+function aggrega(celle){
+  const n=celle.length, c4=celle[4]||celle[0];
+  const med=k=>celle.reduce((a,b)=>a+b[k],0)/n;
+  return {prec:med('prec'),precMax:Math.max.apply(null,celle.map(c=>c.prec)),
+          temp:c4.temp,press:c4.press,umid:med('umid'),nubi:med('nubi'),
+          vento:med('vento'),dir:c4.dir};
+}
+function meteoEffettivo(){
+  const m=Object.assign({},S.meteo);
+  for(const k in S.scarto) if(S.scarto[k]!=null) m[k]=S.scarto[k];
+  if(S.scarto.prec!=null) m.precMax=Math.max(m.precMax||0,S.scarto.prec);
+  return m;
+}
+
+/* ==================== ORGANICO ==================== */
+function costruisciEsecutori(){
+  const L=S.L, p=S.par;
+  S.esecutori=S.celle.map((c,i)=>{
+    const f=FUNZIONI[i];
+    const dens=densitaCella(c,p.secco);
+    const rit=ritmoFunzione(f,dens,L,i);
+    const v=S.esecutori[i];
+    const nuovaCella=!v||v.L!==L;
+    const k=(S.inseguimento==='graduale'&&!nuovaCella)?v.k:rit.k;
+    const e={
+      i, f, cella:c, dens, L,
+      k, kB:rit.k, ogni:rit.ogni, rot:rit.rot, setaccio:rit.setaccio||1,
+      conta:v?v.conta:0,
+      motivo:(v&&!S.rigenera&&!nuovaCella)?v.motivo:motivo(S.seme+i*7919,L,7),
+      timbro:timbroFunzione(f,p,c),
+      pan:panDaCella(c,f),
+      passo:v?v.passo:0,
+      prossimo:v?v.prossimo:0,
+      gradoPedale:v?v.gradoPedale:0,
+      fase:v?v.fase:0,
+      ultimoAttacco:0
+    };
+    e.maschera=ruota(euclid(e.k,L),e.rot);
+    e.attivo=attivita(e);
+    return e;
+  });
+  const sg=sogliaRisultante();
+  S.esecutori.forEach(e=>{ if(e.f.ruolo==='risultante') e.soglia=sg; });
+  S.esecutori.forEach(e=>{ e.attivo=attivita(e); });   // la risultante dipende dal motore appena costruito
+  S.rigenera=false;
+  applicaDeriva();
+}
+function panDaCella(c,f){
+  const base=(c.c-1)*0.74;
+  if(f.ruolo==='basso'||f.ruolo==='impulso') return base*0.2;   // il fondo sta al centro
+  if(f.ruolo==='accento') return clamp(base*1.15,-1,1);
+  return clamp(base,-1,1);
+}
+function attivita(e){
+  const s=e.f.strato;
+  if(s==='fondo') return true;                       // il fondo non tace mai
+  if(e.f.ruolo==='risultante')
+    return S.esecutori.filter(x=>x&&x.f.strato==='motore'&&x.attivo).length>=1;
+  if(e.f.ruolo==='accento') return e.dens>0.10;      // il metallo risuona solo con la pioggia
+  return e.dens>0.02;
+}
+function applicaDeriva(){
+  const base=S.par?S.par.deriva:0.004, m=S.mix.deriva;
+  S.esecutori.forEach(e=>{
+    const motore=e.f.strato==='motore';
+    if(S.processo==='fase'&&motore){
+      const d=(e.i-INDICE_MAESTRO)/1.5;              // −0.67 / 0 / +0.67 sulle tre cellule
+      e.deriva=base*m*d; e.offset=0;
+    }else if(S.processo==='canone'&&motore){
+      e.deriva=0; e.offset=(e.i-3)*Math.max(1,Math.round(S.L/3));
+    }else{
+      e.deriva=0; e.offset=0;
+    }
+  });
+}
+function rigeneraMaschera(e){ e.maschera=ruota(euclid(e.k,e.L),e.rot); }
+/* con motore rado basta una cellula: il raddoppio traccia comunque ciò che emerge */
+function sogliaRisultante(){
+  const mot=S.esecutori.filter(e=>e&&e.f.strato==='motore');
+  if(!mot.length) return 2;
+  return (mot.reduce((a,e)=>a+e.kB/e.L,0)/mot.length)>0.4?2:1;
+}
+
+/* ==================== AUDIO ==================== */
+let ctx=null,bus=null,secco=null,umido=null,conv=null,maestro=null,filtro=null,
+    analizzatore=null,ondaBuf=null,streamDest=null,recorder=null,voci=0;
+
+function impulsoRiverbero(sec,dec){
+  const n=Math.max(1,Math.floor(ctx.sampleRate*sec));
+  const b=ctx.createBuffer(2,n,ctx.sampleRate);
+  for(let c=0;c<2;c++){
+    const d=b.getChannelData(c);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,dec)*(1-Math.exp(-i/600));
+  }
+  return b;
+}
+function avviaAudio(){
+  if(ctx) return;
+  ctx=new (window.AudioContext||window.webkitAudioContext)();
+  maestro=ctx.createGain(); maestro.gain.value=S.mix.volume;
+  const comp=ctx.createDynamicsCompressor();
+  comp.threshold.value=-14; comp.knee.value=22; comp.ratio.value=3.2;
+  comp.attack.value=0.006; comp.release.value=0.28;
+  filtro=ctx.createBiquadFilter(); filtro.type='lowpass'; filtro.Q.value=0.4;
+  filtro.frequency.value=S.par?S.par.taglio:7000;
+  analizzatore=ctx.createAnalyser(); analizzatore.fftSize=2048;
+  ondaBuf=new Float32Array(analizzatore.fftSize);
+  bus=ctx.createGain();
+  secco=ctx.createGain(); secco.gain.value=0.78;
+  umido=ctx.createGain(); umido.gain.value=S.par?S.par.riverbero:0.3;
+  conv=ctx.createConvolver(); conv.buffer=impulsoRiverbero(3.6,2.6);
+  bus.connect(secco); bus.connect(umido);
+  umido.connect(conv); conv.connect(filtro); secco.connect(filtro);
+  filtro.connect(comp); comp.connect(maestro);
+  maestro.connect(analizzatore); maestro.connect(ctx.destination);
+  streamDest=ctx.createMediaStreamDestination(); maestro.connect(streamDest);
+  log('motore audio pronto · '+ctx.sampleRate+' Hz','imp');
+}
+
+function nota(t,hz,o){
+  if(voci>64||!isFinite(hz)||hz<18||hz>7000) return;
+  voci++;
+  const car=ctx.createOscillator(), mod=ctx.createOscillator(),
+        gMod=ctx.createGain(), vca=ctx.createGain(), pan=ctx.createStereoPanner();
+  car.type='sine'; mod.type='sine';
+  car.frequency.value=hz;
+  mod.frequency.value=Math.min(hz*o.rapporto,16000);   // niente aliasing sugli acuti
+  const idx=hz*o.indice;
+  gMod.gain.setValueAtTime(idx,t);
+  gMod.gain.exponentialRampToValueAtTime(Math.max(0.5,idx*0.03),t+o.decad*0.85);
+  mod.connect(gMod); gMod.connect(car.frequency);
+  vca.gain.setValueAtTime(0.0001,t);
+  vca.gain.linearRampToValueAtTime(Math.max(0.0002,o.amp),t+o.att);
+  vca.gain.exponentialRampToValueAtTime(0.0005,t+o.att+o.decad);
+  pan.pan.value=clamp(o.pan||0,-1,1);
+  car.connect(vca); vca.connect(pan); pan.connect(bus);
+  car.start(t); mod.start(t);
+  const fine=t+o.att+o.decad+0.06;
+  car.stop(fine); mod.stop(fine);
+  car.onended=()=>{voci--;try{car.disconnect();mod.disconnect();gMod.disconnect();vca.disconnect();pan.disconnect();}catch(e){}};
+}
+
+/* ==================== SEQUENZIATORE ==================== */
+let timer=null;
+const LOOKAHEAD=0.14, INTERVALLO=25;
+function durataPasso(){
+  const bpm=(S.bpmCorrente||S.par.bpm)*S.mix.tempo;
+  return 60/clamp(bpm,30,300)/2;
+}
+function guadagnoStrato(s){ return S.mix[s]!==undefined?S.mix[s]:1; }
+
+function suona(e,t){
+  if(!e.attivo) return;
+  const p=S.par, L=e.L, tb=e.timbro;
+  const g=guadagnoStrato(e.f.strato);
+  if(g<=0.001) return;
+
+  if(e.f.ruolo==='risultante'){
+    /* legge il pattern con un impulso di ritardo: la finestra è così interamente
+       nel passato già programmato, e non perde le coincidenze appena future. */
+    const dp=durataPasso(), centro=t-dp, tol=dp*0.34;
+    const vicini=S.attacchiMotore.filter(a=>Math.abs(a.t-centro)<tol);
+    if(vicini.length<e.soglia) return;
+    e.conta=(e.conta||0)+1;
+    if(e.conta%e.setaccio!==0) return;             // raddoppia una coincidenza ogni N
+    const grado=Math.max.apply(null,vicini.map(a=>a.grado))+e.f.reg;
+    nota(t,midiAHz(gradoAMidi(p.fond,p.modo.s,grado)),
+      {rapporto:tb.rapporto,indice:tb.indice,decad:tb.decad,att:tb.att,
+       amp:tb.amp*g*Math.min(1,vicini.length/2+0.4),pan:e.pan});
+    e.ultimoAttacco=t;
+    return;
+  }
+
+  const idx=((e.passo+e.offset)%L+L)%L;
+  if(!e.maschera[idx]) return;
+  if(e.ogni>1 && (e.passo%e.ogni)!==0) return;
+
+  let grado;
+  switch(e.f.ruolo){
+    case 'basso':   grado=(e.passo%(L*2)<L?0:4)+e.f.reg; break;
+    case 'impulso': grado=(idx===0?0:4)+e.f.reg; break;
+    case 'pedale':  grado=[0,4,2,6][e.gradoPedale%4]+e.f.reg; e.gradoPedale++; break;
+    default:        grado=e.motivo[idx]+e.f.reg;
+  }
+  const accento=(e.f.ruolo==='impulso'&&idx===0)?1.35:1;
+  nota(t,midiAHz(gradoAMidi(p.fond,p.modo.s,grado)),
+    {rapporto:tb.rapporto,indice:tb.indice*(1+0.18*Math.sin(e.passo*0.7)),
+     decad:tb.decad,att:tb.att,amp:tb.amp*g*accento,pan:e.pan});
+  e.ultimoAttacco=t;
+  if(e.f.strato==='motore') S.attacchiMotore.push({t,grado});
+}
+
+function ciclo(){
+  if(!S.inEsecuzione) return;
+  const ora=ctx.currentTime, dp=durataPasso();
+  ORDINE.forEach(i=>{
+    const e=S.esecutori[i]; if(!e) return;
+    const passoE=dp*(1+e.deriva);
+    if(e.prossimo<ora-0.25) e.prossimo=ora+0.02;
+    let guardia=0;
+    while(e.prossimo<ora+LOOKAHEAD && guardia++<64){
+      suona(e,e.prossimo);
+      if(i===INDICE_MAESTRO) battuta(e.prossimo);
+      e.prossimo+=passoE; e.passo++;
+      e.fase=(e.passo%e.L)/e.L;
+    }
+  });
+  if(S.attacchiMotore.length>200)
+    S.attacchiMotore=S.attacchiMotore.filter(a=>a.t>ora-2.5);
+  disegnaFasi(); disegnaCelle();
+}
+
+/* fine di ogni cella del maestro: inseguimento graduale e scivolamento del tempo */
+function battuta(){
+  S.passoMaestro++;
+  if(S.passoMaestro%S.L!==0) return;
+  if(S.inseguimento==='graduale'){
+    let mosse=0;
+    S.esecutori.forEach(e=>{
+      if(e.k!==e.kB){ e.k+=(e.k<e.kB?1:-1); rigeneraMaschera(e); mosse++; }
+      e.attivo=attivita(e);
+    });
+    if(mosse) disegnaCelle();
+  }
+  if(S.par){
+    S.bpmCorrente=scivola(S.bpmCorrente||S.par.bpm,S.par.bpm,0.18);
+    aggiornaMappatura();
+  }
+}
+
+function avvia(){
+  if(!S.par){ log('nessun campo in memoria: leggo prima i dati','avv'); leggi(); return; }
+  avviaAudio();
+  if(ctx.state==='suspended') ctx.resume();
+  S.inEsecuzione=true;
+  S.attacchiMotore=[];
+  const t0=ctx.currentTime+0.12;
+  S.esecutori.forEach(e=>{e.prossimo=t0;e.passo=0;});
+  S.passoMaestro=0;
+  timer=setInterval(ciclo,INTERVALLO);
+  disegnaOscillo();
+  $('btn-play').disabled=true; $('btn-stop').disabled=false;
+  $('spia').classList.add('on'); $('stato-tag').textContent='IN ESECUZIONE';
+  log('esecuzione avviata · centro '+nomeNota(S.par.fond)+' '+S.par.modo.nome
+    +' · '+Math.round(S.bpmCorrente||S.par.bpm)+' bpm · '
+    +S.esecutori.filter(e=>e.attivo).length+'/9 in organico','imp');
+}
+function arresta(){
+  S.inEsecuzione=false;
+  if(timer) clearInterval(timer); timer=null;
+  $('btn-play').disabled=false; $('btn-stop').disabled=true;
+  $('spia').classList.remove('on'); $('stato-tag').textContent='FERMO';
+  log('esecuzione arrestata');
+}
+
+/* ==================== RICALCOLO ==================== */
+function ricalcola(rilog){
+  if(!S.celle.length) return;
+  S.meteo=aggrega(S.celle);
+  const p=deriva(meteoEffettivo());
+  p.dirRad=(meteoEffettivo().dir||0)*Math.PI/180;
+
+  /* il centro tonale: si fissa alla prima lettura e poi non si muove */
+  const anc=ancoraCentro(p,S.ancora,$('centro').value==='ancorato');
+  p.fond=anc.fond; p.modo=anc.modo; S.ancora=anc.ancora;
+  S.par=p;
+  if(S.bpmCorrente==null) S.bpmCorrente=p.bpm;
+  S.L=+$('ciclo').value;
+  S.processo=$('processo').value;
+  S.inseguimento=$('inseguimento').value;
+  costruisciEsecutori();
+  if(ctx){
+    filtro.frequency.setTargetAtTime(p.taglio,ctx.currentTime,0.8);
+    umido.gain.setTargetAtTime(p.riverbero,ctx.currentTime,0.8);
+  }
+  aggiornaDati(); aggiornaMappatura(); aggiornaScarti();
+  disegnaRadar(); disegnaFasi(); disegnaCelle();
+  if(rilog){
+    const mot=S.esecutori.filter(e=>e.f.strato==='motore');
+    log('campo mappato · bersagli motore '+mot.map(e=>e.kB).join('/')+' su '+S.L
+      +' · '+(S.inseguimento==='graduale'?'inseguimento graduale':'salto immediato'),'imp');
+  }
+}
+
+/* ==================== LETTURA ==================== */
+function pianificaLettura(){
+  S.cadenza=+$('cadenza').value;
+  S.prossimaLettura=S.cadenza?Date.now()+S.cadenza*1000:0;
+  aggiornaConto();
+}
+function aggiornaConto(){
+  const el=$('d-conto');
+  if(S.letturaInCorso){ el.textContent='lettura in corso…'; return; }
+  if(!S.cadenza){ el.textContent='manuale'; return; }
+  const s=Math.max(0,Math.round((S.prossimaLettura-Date.now())/1000));
+  el.textContent='fra '+s+' s   (ogni '+(S.cadenza>=60?(S.cadenza/60)+' min':S.cadenza+' s')+')';
+}
+
+async function leggi(silenzioso){
+  if(S.letturaInCorso) return;
+  S.letturaInCorso=true;
+  const lat=+$('lat').value, lon=+$('lon').value;
+  S.centro={lat,lon};
+  const sorg=$('sorgente').value, lett=$('lettura').value;
+  if(!silenzioso){ $('btn-leggi').disabled=true; $('btn-leggi').textContent='LETTURA…'; }
+  aggiornaConto();
+  try{
+    if(sorg==='sim') throw {simulata:true};
+    const d=await leggiRete(lat,lon);
+    S.previsione={tipo:'rete',punti:d.punti,griglia:d.griglia,i0:indicePassoCorrente(d.punti[0])};
+    const nSlot=(d.punti[0].minutely_15&&d.punti[0].minutely_15.time)?d.punti[0].minutely_15.time.length:0;
+    S.passiDisponibili=Math.max(1,Math.min(96,nSlot-S.previsione.i0));
+    S.fonte='RETE';
+    if(lett==='previsione'){ applicaPasso(); }
+    else{
+      const adesso=Date.now();
+      S.celle=d.punti.map((p,i)=>cellaDaCorrente(p,d.griglia[i],adesso));
+      S.oraDato=(S.celle[4].ora||'').replace('T',' ')
+        +(S.celle[4].fontePrec==='dato corrente'?'  (senza nowcast)':'  ↝ interpolato');
+      ricalcola(!silenzioso);
+    }
+    if(!silenzioso) log('Open-Meteo: 9 punti · nowcast a 15 min disponibile: '+(nSlot?'sì ('+nSlot+' passi)':'no'),'imp');
+    else log('lettura al minuto · pioggia media '+aggrega(S.celle).prec.toFixed(2)+' mm/h');
+  }catch(err){
+    if(!err||!err.simulata) log('rete non raggiungibile ('+((err&&err.message)||err)+') → campo simulato','avv');
+    const fase0=(S.previsione&&S.previsione.tipo==='sim')?S.previsione.fase0:Date.now()/3.6e6%1000;
+    S.previsione={tipo:'sim',fase0:fase0};
+    S.passiDisponibili=96;
+    S.fonte='SIMULATA';
+    const avanzo=(Date.now()/60000)%1000;
+    S.celle=campoSimulato(lat,lon,fase0+avanzo*0.25);
+    S.oraDato='sim '+new Date().toTimeString().slice(0,5);
+    ricalcola(!silenzioso);
+  }finally{
+    S.letturaInCorso=false;
+    $('btn-leggi').disabled=false; $('btn-leggi').textContent='LEGGI ORA';
+    pianificaLettura();
+  }
+}
+function applicaPasso(){
+  const P=S.previsione; if(!P) return;
+  if(P.tipo==='rete'){
+    S.celle=P.punti.map((p,i)=>cellaDaPasso(p,P.griglia[i],P.i0,S.passoPrev));
+    S.oraDato=(S.celle[4].ora||'').replace('T',' ')+'  (+'+(S.passoPrev*15)+' min)';
+  }else{
+    S.celle=campoSimulato(S.centro.lat,S.centro.lon,P.fase0+S.passoPrev*0.4);
+    S.oraDato='sim +'+(S.passoPrev*15)+' min';
+  }
+  ricalcola(false);
+}
+function avanzaPasso(){
+  if(!S.previsione) return;
+  S.passoPrev=(S.passoPrev+1)%S.passiDisponibili;
+  applicaPasso();
+}
+
+/* ==================== INTERFACCIA ==================== */
+function aggiornaDati(){
+  const m=meteoEffettivo();
+  $('fonte-tag').textContent=S.fonte;
+  $('d-ora').textContent=S.oraDato;
+  $('d-prec').textContent=m.prec.toFixed(2)+' mm/h  (max '+(m.precMax||0).toFixed(2)+')';
+  $('d-temp').textContent=m.temp.toFixed(1)+' °C';
+  $('d-press').textContent=Math.round(m.press)+' hPa';
+  $('d-umid').textContent=Math.round(m.umid)+' %';
+  const bussola=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+  $('d-vento').textContent=m.vento.toFixed(1)+' km/h  '+bussola[Math.round(((m.dir||0)%360)/22.5)%16];
+  $('d-nubi').textContent=Math.round(m.nubi)+' %';
+}
+function aggiornaMappatura(){
+  const p=S.par; if(!p) return;
+  $('regime-tag').textContent=p.secco?'SERENO':(p.nR>0.6?'ROVESCIO':'PIOVIGGINE');
+  $('m-centro').textContent=nomeNota(p.fond)+'  '+p.modo.nome;
+  $('m-coll').textContent=collezione(p.fond,p.modo).join(' ');
+  const anc=$('centro').value==='ancorato';
+  $('m-ancora').innerHTML=anc?'<span class="ancora">FISSO da inizio sessione</span>':'segue la temperatura';
+  const mot=S.esecutori.filter(e=>e.f.strato==='motore');
+  $('m-dens').textContent=mot.map(e=>e.k).join(' · ')+'  →  '+mot.map(e=>e.kB).join(' · ')+'  / '+S.L;
+  $('m-voci').textContent=S.esecutori.filter(e=>e.attivo).length+' / 9';
+  $('m-indice').textContent=p.indice.toFixed(2);
+  $('m-rapp').textContent='1 : '+p.rapporto+'  (motore)';
+  $('m-decad').textContent=p.decad.toFixed(2)+' s';
+  $('m-riv').textContent=Math.round(p.riverbero*100)+' %';
+  const bc=Math.round((S.bpmCorrente||p.bpm)*S.mix.tempo), bb=Math.round(p.bpm*S.mix.tempo);
+  $('m-bpm').textContent=bc+' bpm'+(Math.abs(bc-bb)>1?'  ↝ '+bb:'');
+  $('m-deriva').textContent=(p.deriva*S.mix.deriva*100).toFixed(2)+' %';
+  $('m-taglio').textContent=p.taglio+' Hz';
+  $('org-tag').textContent=S.esecutori.filter(e=>e.attivo).length+'/9 attivi';
+}
+
+/* ==================== DISEGNO ==================== */
+function adatta(cv){
+  const r=window.devicePixelRatio||1, w=cv.clientWidth||cv.width;
+  const h=Math.round(w*(cv.height/cv.width));
+  if(cv.dataset.w!=w+''){
+    cv.dataset.w=w; cv.width=Math.round(w*r); cv.height=Math.round(h*r); cv.style.height=h+'px';
+  }
+  const c=cv.getContext('2d');
+  c.setTransform(cv.width/w,0,0,cv.width/w,0,0);
+  return {c,w,h:cv.height/(cv.width/w)};
+}
+const COLORE_STRATO={superficie:'0,255,65',motore:'94,255,126',fondo:'15,122,44'};
+
+function disegnaRadar(){
+  const cv=$('radar'); if(!cv.clientWidth) return;
+  const {c,w,h}=adatta(cv);
+  c.clearRect(0,0,w,h); c.fillStyle='#010301'; c.fillRect(0,0,w,h);
+  const padX=24, padT=18, s=(w-padX*2)/3, alt=Math.min(s,(h-padT-30)/3);
+  S.esecutori.forEach(e=>{
+    const cell=e.cella;
+    const x=padX+(cell.c-1)*s, y=padT+(cell.r-1)*alt;
+    const d=e.dens;
+    c.fillStyle='rgba(0,255,65,'+(0.04+d*0.5).toFixed(3)+')';
+    c.fillRect(x,y,s-2,alt-2);
+    c.strokeStyle=e.attivo?'rgba(0,255,65,.38)':'rgba(0,255,65,.14)';
+    c.lineWidth=1; c.strokeRect(x+.5,y+.5,s-2,alt-2);
+    const scuro=d>0.4;
+    c.textAlign='center';
+    c.fillStyle=scuro?'#020402':'#5eff7e';
+    c.font='9.5px "Courier New",monospace';
+    c.fillText(e.f.nome,x+(s-2)/2,y+12);
+    c.font='12px "Courier New",monospace';
+    c.fillStyle=scuro?'#020402':'#00ff41';
+    c.fillText(cell.prec.toFixed(1),x+(s-2)/2,y+alt/2+2);
+    c.font='9px "Courier New",monospace';
+    c.fillStyle=scuro?'rgba(2,4,2,.85)':'rgba(15,122,44,1)';
+    c.fillText(Math.round(cell.temp)+'° '+Math.round(cell.press)+' hPa',x+(s-2)/2,y+alt-7);
+    if(e.attivo){
+      const a=-Math.PI/2+e.fase*6.2832, rr=Math.min(s,alt)*0.30;
+      const cx=x+(s-2)/2, cy=y+alt/2-2;
+      c.strokeStyle='rgba(0,255,65,.22)'; c.beginPath(); c.arc(cx,cy,rr,0,6.2832); c.stroke();
+      c.fillStyle=scuro?'#020402':'#00ff41';
+      c.beginPath(); c.arc(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr,2.6,0,6.2832); c.fill();
+    }
+  });
+  c.fillStyle='#0f7a2c'; c.font='9px "Courier New",monospace'; c.textAlign='center';
+  c.fillText('SUPERFICIE ← nord',w/2,10);
+  c.fillText('fondo → sud   ·   ovest  '+'—'.repeat(6)+'  est',w/2,h-6);
+  if(S.par){
+    const cx=w-18,cy=h-20,a=(S.par.dirRad||0)+Math.PI/2;
+    c.strokeStyle='#ffb000'; c.lineWidth=1.4; c.beginPath();
+    c.moveTo(cx-Math.cos(a)*9,cy-Math.sin(a)*9);
+    c.lineTo(cx+Math.cos(a)*9,cy+Math.sin(a)*9); c.stroke();
+  }
+}
+
+function disegnaFasi(){
+  const cv=$('fasi'); if(!cv.clientWidth) return;
+  const {c,w,h}=adatta(cv);
+  c.clearRect(0,0,w,h);
+  const cx=w*0.5, cy=h*0.5, rMax=Math.min(w,h)*0.45;
+  const bande={fondo:[0.22,0.42],motore:[0.48,0.70],superficie:[0.76,1.0]};
+  Object.keys(bande).forEach(st=>{
+    const gruppo=S.esecutori.filter(e=>e.f.strato===st);
+    const [a,b]=bande[st];
+    gruppo.forEach((e,j)=>{
+      const rr=rMax*(a+(b-a)*((j+0.5)/gruppo.length));
+      c.strokeStyle='rgba('+COLORE_STRATO[st]+','+(e.attivo?0.22:0.07)+')';
+      c.lineWidth=1; c.beginPath(); c.arc(cx,cy,rr,0,6.2832); c.stroke();
+      if(!e.attivo) return;
+      for(let k=0;k<e.L;k++){
+        if(!e.maschera[k]) continue;
+        const ang=-Math.PI/2+(k/e.L)*6.2832;
+        c.strokeStyle='rgba('+COLORE_STRATO[st]+',.45)';
+        c.beginPath();
+        c.moveTo(cx+Math.cos(ang)*(rr-3.5),cy+Math.sin(ang)*(rr-3.5));
+        c.lineTo(cx+Math.cos(ang)*(rr+3.5),cy+Math.sin(ang)*(rr+3.5)); c.stroke();
+      }
+      const ang=-Math.PI/2+e.fase*6.2832;
+      const px=cx+Math.cos(ang)*rr, py=cy+Math.sin(ang)*rr;
+      c.fillStyle='rgb('+COLORE_STRATO[st]+')';
+      c.beginPath(); c.arc(px,py,3,0,6.2832); c.fill();
+      c.fillStyle='rgba('+COLORE_STRATO[st]+',.13)';
+      c.beginPath(); c.arc(px,py,6.5,0,6.2832); c.fill();
+      c.fillStyle='rgba('+COLORE_STRATO[st]+',.5)';
+      c.font='8px "Courier New",monospace'; c.textAlign='left';
+      c.fillText(e.f.nome,cx+4,cy-rr+1);
+    });
+  });
+  c.textAlign='center'; c.fillStyle='#0f7a2c'; c.font='10px "Courier New",monospace';
+  c.fillText(S.processo.toUpperCase(),cx,cy-4);
+  c.fillText(S.L+' impulsi',cx,cy+9);
+}
+
+function disegnaCelle(){
+  const cv=$('celle'); if(!cv.clientWidth) return;
+  const {c,w,h}=adatta(cv);
+  c.clearRect(0,0,w,h);
+  const padL=112, righeH=(h-8)/9;
+  let stratoPrec=null;
+  S.esecutori.forEach((e,i)=>{
+    const y=4+i*righeH;
+    if(e.f.strato!==stratoPrec){
+      stratoPrec=e.f.strato;
+      c.strokeStyle='rgba(0,255,65,.22)'; c.beginPath();
+      c.moveTo(0,y-1); c.lineTo(w,y-1); c.stroke();
+    }
+    c.font='9.5px "Courier New",monospace'; c.textAlign='left';
+    c.fillStyle=e.attivo?'rgb('+COLORE_STRATO[e.f.strato]+')':'rgba(15,122,44,.55)';
+    c.fillText(e.f.nome,4,y+righeH*0.5);
+    c.font='8.5px "Courier New",monospace'; c.fillStyle='rgba(15,122,44,.9)';
+    const et=(e.f.ruolo==='risultante')
+      ? ('coinc. ≥'+(e.soglia||2)+'  ÷'+e.setaccio)
+      : (e.k+'/'+e.L+(e.k!==e.kB?' →'+e.kB:'')+(e.ogni>1?'  ÷'+e.ogni:''));
+    c.fillText(et,4,y+righeH*0.86);
+
+    const larg=(w-padL-6)/e.L;
+    const idxCorr=((e.passo+e.offset)%e.L+e.L)%e.L;
+    if(e.f.ruolo==='risultante'){
+      c.fillStyle='rgba(0,255,65,.06)';
+      c.fillRect(padL,y+3,w-padL-6,righeH-8);
+      c.fillStyle=e.attivo?'rgba(0,255,65,.45)':'rgba(0,255,65,.12)';
+      c.fillRect(padL+idxCorr*larg,y+3,Math.max(2,larg-2),righeH-8);
+      c.fillStyle='rgba(15,122,44,.85)'; c.textAlign='left';
+      c.font='8px "Courier New",monospace';
+      c.fillText('nessuna griglia propria — segue il motore con un impulso di ritardo',padL+4,y+righeH*0.62);
+      return;
+    }
+    for(let k=0;k<e.L;k++){
+      const x=padL+k*larg;
+      const on=e.maschera[k], mute=(e.ogni>1&&(k%e.ogni)!==0);
+      let col;
+      if(on&&!mute) col=(k===idxCorr&&e.attivo)?'rgba(0,255,65,1)':'rgba(0,255,65,.40)';
+      else if(on)   col='rgba(0,255,65,.14)';
+      else          col=(k===idxCorr)?'rgba(0,255,65,.13)':'rgba(0,255,65,.045)';
+      c.fillStyle=col;
+      c.fillRect(x,y+3,Math.max(2,larg-2),righeH-8);
+      if(on&&!mute&&e.attivo&&e.f.ruolo==='cellula'){
+        c.fillStyle=(k===idxCorr)?'#020402':'rgba(2,26,10,.9)';
+        c.textAlign='center'; c.font='8.5px "Courier New",monospace';
+        c.fillText(String(e.motivo[k]),x+larg/2-1,y+righeH*0.66);
+      }
+    }
+    if(e.k!==e.kB){
+      c.fillStyle='#ffb000';
+      c.fillRect(padL+clamp(e.kB,0,e.L)*larg-1,y+3,2,righeH-8);
+    }
+  });
+}
+
+let rafOsc=null;
+function disegnaOscillo(){
+  const cv=$('oscillo');
+  if(!S.inEsecuzione||!analizzatore){ if(rafOsc)cancelAnimationFrame(rafOsc); rafOsc=null; return; }
+  const {c,w,h}=adatta(cv);
+  analizzatore.getFloatTimeDomainData(ondaBuf);
+  c.clearRect(0,0,w,h);
+  c.strokeStyle='rgba(0,255,65,.14)'; c.beginPath(); c.moveTo(0,h/2); c.lineTo(w,h/2); c.stroke();
+  c.strokeStyle='#00ff41'; c.lineWidth=1; c.beginPath();
+  const n=ondaBuf.length;
+  for(let i=0;i<n;i++){
+    const x=i/n*w, y=h/2-ondaBuf[i]*h*0.46;
+    i?c.lineTo(x,y):c.moveTo(x,y);
+  }
+  c.stroke();
+  rafOsc=requestAnimationFrame(disegnaOscillo);
+}
+
+/* ---------- fondo: barene ---------- */
+(function barene(){
+  const cv=$('barene'), c=cv.getContext('2d');
+  let t=0,w=0,hh=0;
+  function dim(){
+    const r=Math.min(window.devicePixelRatio||1,2);
+    w=window.innerWidth; hh=window.innerHeight;
+    cv.width=w*r; cv.height=hh*r; c.setTransform(r,0,0,r,0,0);
+  }
+  dim();
+  window.addEventListener('resize',()=>{dim();disegnaRadar();disegnaFasi();disegnaCelle();});
+  const ridotto=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function passo(){
+    c.clearRect(0,0,w,hh);
+    const umidita=S.par?S.par.nU:0.5, pioggia=S.par?S.par.nR:0.2;
+    for(let l=0;l<7;l++){
+      c.beginPath();
+      const yBase=hh*(0.12+l*0.13);
+      for(let x=-20;x<=w+20;x+=9){
+        const y=yBase
+          +Math.sin(x*0.0042+l*1.7+t*0.14)*(26+l*7)
+          +Math.sin(x*0.0131+l*0.6-t*0.21)*(9+pioggia*22)
+          +Math.cos(x*0.0027-t*0.07)*16;
+        x===-20?c.moveTo(x,y):c.lineTo(x,y);
+      }
+      c.strokeStyle='rgba(0,255,65,'+(0.030+umidita*0.045).toFixed(3)+')';
+      c.lineWidth=1+(l%3===0?0.6:0);
+      c.stroke();
+    }
+    t+=ridotto?0.02:0.16;
+    requestAnimationFrame(passo);
+  }
+  passo();
+})();
+
+/* ==================== CURSORI ==================== */
+const ETICHETTE={temp:'TEMPERATURA',prec:'PRECIPITAZIONE',press:'PRESSIONE',
+                 umid:'UMIDITÀ',vento:'VENTO',nubi:'NUVOLOSITÀ'};
+function costruisciCursori(){
+  document.querySelectorAll('.slider').forEach(el=>{
+    const par=el.dataset.par, mix=el.dataset.mix;
+    const nome=el.dataset.nome||ETICHETTE[par]||par;
+    el.innerHTML='<div class="cap"><span>'+nome+'</span><i>—</i></div>'
+      +'<input type="range" min="'+el.dataset.min+'" max="'+el.dataset.max+'" step="'+el.dataset.step+'">';
+    const inp=el.querySelector('input'), out=el.querySelector('i');
+    if(mix){
+      inp.value=el.dataset.val;
+      const agg=()=>{
+        const v=+inp.value; S.mix[mix]=v;
+        out.innerHTML=el.dataset.suf?v.toFixed(2)+el.dataset.suf:Math.round(v*100)+' %';
+        if(mix==='volume'&&ctx) maestro.gain.setTargetAtTime(v,ctx.currentTime,0.05);
+        if(mix==='deriva') applicaDeriva();
+        aggiornaMappatura();
+      };
+      inp.addEventListener('input',agg); agg();
+    }else{
+      inp.addEventListener('input',()=>{
+        S.scarto[par]=+inp.value; ricalcola(false);
+      });
+      el._par=par; el._inp=inp; el._out=out;
+    }
+  });
+}
+function aggiornaScarti(){
+  const m=meteoEffettivo();
+  document.querySelectorAll('.slider').forEach(el=>{
+    if(!el._par) return;
+    const v=m[el._par];
+    if(document.activeElement!==el._inp) el._inp.value=v;
+    const dec=(el._par==='prec')?2:(el._par==='temp'?1:0);
+    el._out.innerHTML=(+v).toFixed(dec)+el.dataset.suf
+      +(S.scarto[el._par]!=null?' <span class="ancora">M</span>':'');
+  });
+}
+
+/* ==================== REGISTRAZIONE ==================== */
+function registra(){
+  if(!ctx){ log('avvia prima l\'esecuzione: non c\'è nulla da registrare','avv'); return; }
+  if(recorder&&recorder.state==='recording'){ recorder.stop(); return; }
+  try{ recorder=new MediaRecorder(streamDest.stream); }
+  catch(e){ log('registrazione non supportata da questo browser','err'); return; }
+  const pezzi=[];
+  recorder.ondataavailable=e=>{ if(e.data.size) pezzi.push(e.data); };
+  recorder.onstop=()=>{
+    const b=new Blob(pezzi,{type:recorder.mimeType||'audio/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download='isoieta_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.webm';
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    $('btn-reg').textContent='REGISTRA'; $('btn-reg').classList.remove('attivo');
+    log('registrazione salvata ('+(b.size/1024).toFixed(0)+' kB)','imp');
+  };
+  recorder.start();
+  $('btn-reg').textContent='FERMA E SALVA'; $('btn-reg').classList.add('attivo');
+  log('registrazione in corso…','imp');
+}
+
+/* ==================== EVENTI ==================== */
+$('btn-leggi').addEventListener('click',()=>leggi(false));
+$('btn-play').addEventListener('click',avvia);
+$('btn-stop').addEventListener('click',arresta);
+$('btn-reg').addEventListener('click',registra);
+$('btn-semi').addEventListener('click',()=>{
+  S.seme=Math.floor(Math.random()*1e9); S.rigenera=true;
+  costruisciEsecutori(); disegnaCelle();
+  log('nuovi motivi melodici · seme '+S.seme,'imp');
+});
+$('btn-auto').addEventListener('click',()=>{
+  S.scarto={}; ricalcola(true); log('scarti manuali azzerati: torno al dato meteo','imp');
+});
+$('btn-rifonda').addEventListener('click',()=>{
+  S.ancora=null; ricalcola(false);
+  log('centro tonale rifondato su '+nomeNota(S.par.fond)+' '+S.par.modo.nome+': da qui non si muove più','imp');
+});
+$('centro').addEventListener('change',()=>{
+  if($('centro').value==='ancorato'){ S.ancora=null; log('centro tonale ANCORATO: fissato sul dato di adesso','imp'); }
+  else log('centro tonale SEGUE la temperatura: ogni lettura può trasportare il brano','avv');
+  ricalcola(false);
+});
+$('processo').addEventListener('change',()=>{
+  S.processo=$('processo').value; applicaDeriva();
+  aggiornaMappatura(); disegnaFasi();
+  log('fasatura → '+S.processo.toUpperCase(),'imp');
+});
+$('inseguimento').addEventListener('change',()=>{
+  S.inseguimento=$('inseguimento').value;
+  if(S.inseguimento==='immediato'){
+    S.esecutori.forEach(e=>{ e.k=e.kB; rigeneraMaschera(e); e.attivo=attivita(e); });
+    disegnaCelle();
+  }
+  aggiornaMappatura();
+  log('inseguimento → '+S.inseguimento.toUpperCase(),'imp');
+});
+$('ciclo').addEventListener('change',()=>{ S.L=+$('ciclo').value; ricalcola(true); });
+$('cadenza').addEventListener('change',()=>{
+  pianificaLettura();
+  log('cadenza → '+(S.cadenza?('ogni '+S.cadenza+' s'):'manuale'),'imp');
+});
+$('lettura').addEventListener('change',()=>{
+  if($('lettura').value==='previsione'&&S.previsione){
+    S.passoPrev=0; applicaPasso();
+    log('lettura → PREVISIONE: il brano attraverserà '+(S.passiDisponibili*15/60).toFixed(0)+' ore a passi di 15 min','imp');
+  }else log('lettura → ADESSO');
+});
+$('btn-windy').addEventListener('click',()=>{
+  const f=$('windy');
+  if(f.style.display==='block'){
+    f.style.display='none'; f.removeAttribute('src');
+    $('btn-windy').classList.remove('attivo'); return;
+  }
+  f.src='https://embed.windy.com/embed2.html?lat='+(+$('lat').value)+'&lon='+(+$('lon').value)
+    +'&zoom=8&level=surface&overlay=radar&type=map&location=coordinates'
+    +'&metricWind=km%2Fh&metricTemp=%C2%B0C&calendar=now&radarRange=-1';
+  f.style.display='block'; $('btn-windy').classList.add('attivo');
+  log('riquadro radar Windy aperto come riscontro visivo');
+});
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space'&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)){
+    e.preventDefault(); S.inEsecuzione?arresta():avvia();
+  }
+});
+
+/* orologio delle letture */
+setInterval(()=>{
+  aggiornaConto();
+  if(!S.cadenza||S.letturaInCorso) return;
+  if(Date.now()<S.prossimaLettura) return;
+  if(document.visibilityState!=='visible'){ pianificaLettura(); return; }
+  if($('lettura').value==='previsione'){ avanzaPasso(); pianificaLettura(); }
+  else leggi(true);
+},1000);
+
+/* ==================== AVVIO ==================== */
+costruisciCursori();
+log('ISOIETA · pronta. Coordinate iniziali: Monti Berici / bassa vicentina.');
+log('Nove celle, nove funzioni: fondo (basso impulso pedale) · motore (tre cellule) · superficie (metalli risultante).');
+log('Centro tonale ancorato alla prima lettura: le letture successive muovono densità e timbro, non la tonalità.','imp');
+pianificaLettura();
+leggi(false);
+})();
+</script>
+</body>
+</html>
