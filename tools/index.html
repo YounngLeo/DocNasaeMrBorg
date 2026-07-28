@@ -119,7 +119,7 @@
     border-top: 0 solid var(--dim);
   }
   .nav.open .nav-list {
-    max-height: 480px;
+    max-height: 540px;
     border-top: 1px solid var(--dim);
   }
   .nav-list a {
@@ -154,6 +154,8 @@
   .nav-list a.coral-link:hover { background: rgba(255,122,154,0.08); }
   .nav-list a.iso-link { color: #00ff41; }
   .nav-list a.iso-link:hover { background: rgba(0,255,65,0.06); }
+  .nav-list a.spin-link { color: #38bdf8; }
+  .nav-list a.spin-link:hover { background: rgba(56,189,248,0.08); }
 
   /* === SECTIONS === */
   .section {
@@ -228,6 +230,7 @@
   .tool-header.tan { border-bottom-color: #c8a17b; }
   .tool-header.coral { border-bottom-color: #ff7a9a; }
   .tool-header.iso { border-bottom-color: #00ff41; }
+  .tool-header.spin { border-bottom-color: #38bdf8; }
 
   .tool-meta {
     display: flex;
@@ -273,6 +276,8 @@
   .tool-header.coral .right b { color: #ff7a9a; }
   .tool-header.iso .name { color: #00ff41; }
   .tool-header.iso .right b { color: #00ff41; }
+  .tool-header.spin .name { color: #38bdf8; }
+  .tool-header.spin .right b { color: #38bdf8; }
   .section.gold .section-title { color: #fff03a; }
   .section.purple { border-color: var(--purple); }
   .section.purple .section-title { color: var(--purple); }
@@ -291,8 +296,12 @@
   .launch-btn.coral:hover { background: #ff7a9a; color: var(--bg); }
   .launch-btn.iso { border-color: #00ff41; color: #00ff41; }
   .launch-btn.iso:hover { background: #00ff41; color: var(--bg); }
+  .launch-btn.spin { border-color: #38bdf8; color: #38bdf8; }
+  .launch-btn.spin:hover { background: #38bdf8; color: var(--bg); }
   .section.iso { border-color: #00ff41; }
   .section.iso .section-title { color: #00ff41; }
+  .section.spin { border-color: #38bdf8; }
+  .section.spin .section-title { color: #38bdf8; }
   .section.mesh { border-color: #666; }
   .section.mesh .section-title { color: #e8e8e8; }
   .section.fos { border-color: #7CFF9B; }
@@ -519,7 +528,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 08 active</div>
+    <div class="nav-progress" id="navProgress">// 09 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -554,6 +563,10 @@
       <span><span class="marker">▸</span>ISOIETA</span>
       <span class="num">TOOL_08 · METEO FM</span>
     </a>
+    <a href="#ventolino" class="spin-link" data-nav="ventolino">
+      <span><span class="marker">▸</span>VENTOLINO</span>
+      <span class="num">TOOL_09 · LASER</span>
+    </a>
   </div>
 </nav>
 
@@ -562,7 +575,7 @@
 <!-- ============================ -->
 <section class="section">
   <div class="section-title">// SYSTEM_STATUS</div>
-  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">08 / 08</span></div>
+  <div class="row"><span class="label">TOOLS_AVAILABLE</span><span class="value">09 / 09</span></div>
   <div class="row"><span class="label">STUDIO</span><span class="value">DOCTNASA&MRBORG</span></div>
   <div class="row"><span class="label">YEAR</span><span class="value">2026</span></div>
   <div class="row"><span class="label">ACCESS</span><span class="value" id="accessMode">…</span></div>
@@ -1176,8 +1189,67 @@
 
 </div>
 
+<!-- ============================ -->
+<!-- TOOL_09 :: VENTOLINO          -->
+<!-- ============================ -->
+<div class="tool-block" id="ventolino" data-section="ventolino">
+
+  <div class="tool-header spin">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_09 :: LASER</div>
+        <div class="name">VENTOLINO</div>
+        <div class="sub">wind spinner · anelli concentrici · PDF/SVG mm</div>
+      </div>
+      <div class="right">
+        <b>v1</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="ventolino/preview.svg" alt="ventolino preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="ventolino/tool.html" class="launch-btn spin">▶ LAUNCH</a>
+    <a href="ventolino/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section spin">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Designer per wind spinner in alluminio tagliati a laser: forma esterna parametrica o freehand, anelli concentrici con ponticelli sull’asse di torsione, disegno/PNG centrale vettorizzato, preview piatta e 3D aperta, export SVG e PDF in millimetri.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">// WORKFLOW</div>
+        <ul>
+          <li>Scegli forma esterna (fiore / cerchio / rettangolo / punti / libero)</li>
+          <li>Imposta altezza riga, n° anelli, kerf e ponticelli</li>
+          <li>Carica PNG o disegna il centro, poi vettorizza</li>
+          <li>Controlla validazione · export SVG/PDF 1:1 mm</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section spin">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>offset path · Three.js r128</dd>
+          <dt>OUTPUT</dt><dd>SVG mm · PDF 1:1</dd>
+          <dt>USO</dt><dd>laser alluminio · wind spinner</dd>
+          <dt>TAGS</dt><dd>laser · anelli · ponticelli</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
-  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.6</span>
+  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.7</span>
   <span>END_OF_INDEX</span>
 </footer>
 
@@ -1271,10 +1343,11 @@
                   id === 'velario' ? '// viewing VELARIO' :
                   id === 'ventaglio' ? '// viewing VENTAGLIO' :
                   id === 'isoieta' ? '// viewing ISOIETA' :
-                  '// 08 active';
+                  id === 'ventolino' ? '// viewing VENTOLINO' :
+                  '// 09 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 08 active';
+      navProgress.textContent = '// 09 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" fill="none">
+  <rect width="320" height="200" fill="#060a07"/>
+  <rect x="8" y="8" width="304" height="184" stroke="#1c3524" stroke-width="0.5" stroke-dasharray="3,3"/>
+  <text x="14" y="22" fill="#1c4a5a" font-family="monospace" font-size="6" letter-spacing="1.5">// WIND · LASER · ANELLI</text>
+  <g transform="translate(160,105)" stroke="#4af6ff" stroke-width="0.9" fill="none" opacity="0.9">
+    <path d="M0,-70 C18,-68 38,-58 48,-42 C58,-24 58,0 48,20 C36,42 16,58 0,62 C-16,58 -36,42 -48,20 C-58,0 -58,-24 -48,-42 C-38,-58 -18,-68 0,-70Z"/>
+    <path d="M0,-58 C15,-56 30,-48 38,-34 C46,-18 46,0 38,16 C28,34 12,48 0,50 C-12,48 -28,34 -38,16 C-46,0 -46,-18 -38,-34 C-30,-48 -15,-56 0,-58Z" stroke="#7CFF9B" opacity="0.7"/>
+    <path d="M0,-46 C12,-44 22,-38 28,-26 C34,-12 34,0 28,12 C22,26 10,36 0,38 C-10,36 -22,26 -28,12 C-34,0 -34,-12 -28,-26 C-22,-38 -12,-44 0,-46Z" stroke="#7CFF9B" opacity="0.55"/>
+    <path d="M0,-34 C8,-33 14,-28 18,-20 C22,-10 22,0 18,8 C14,18 6,26 0,28 C-6,26 -14,18 -18,8 C-22,0 -22,-10 -18,-20 C-14,-28 -8,-33 0,-34Z" stroke="#7CFF9B" opacity="0.4"/>
+    <line x1="0" y1="-72" x2="0" y2="64" stroke="#4af6ff" stroke-width="0.5" stroke-dasharray="3,3" opacity="0.5"/>
+    <circle cx="0" cy="0" r="8" stroke="#ffb000" stroke-width="0.8"/>
+  </g>
+  <text x="160" y="192" fill="#3f8f56" font-family="monospace" font-size="8" text-anchor="middle" letter-spacing="2">VENTOLINO</text>
+</svg>

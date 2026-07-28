@@ -36,6 +36,10 @@ tools/
 └── isoieta/
     ├── tool.html           ← sintetizzatore FM meteorologico · Open-Meteo
     └── preview.svg
+└── ventolino/
+    ├── tool.html           ← wind spinner laser · PDF/SVG mm
+    ├── ventolino-core.js
+    └── preview.svg
 ```
 
 ## aggiornare un tool
