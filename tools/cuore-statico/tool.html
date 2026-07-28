@@ -1334,7 +1334,7 @@
 </div>
 
 <script src="portal.js?v=17"></script>
-<script src="epiciclo.js?v=2"></script>
+<script src="epiciclo.js?v=6"></script>
 <script>
 'use strict';
 
@@ -3006,8 +3006,10 @@ document.querySelectorAll('.tab').forEach(t => {
     $('tab-' + t.dataset.tab).classList.add('active');
     if (t.dataset.tab === 'grain' && window.CuoreEpiciclo && CuoreEpiciclo.resize) {
       requestAnimationFrame(function () {
-        CuoreEpiciclo.resize();
-        if (CuoreEpiciclo.refresh) CuoreEpiciclo.refresh();
+        requestAnimationFrame(function () {
+          CuoreEpiciclo.resize();
+          if (CuoreEpiciclo.refresh) CuoreEpiciclo.refresh();
+        });
       });
     }
   });

@@ -4,13 +4,13 @@
 window.CuoreEpiciclo = (function () {
   const NAME = '// EPICICLO';
   const PALETTE = ['#ffb000', '#c678ff', '#4af6ff', '#ff2b4a', '#7ec8f8', '#e0533d', '#8a5fe0', '#00ff41'];
-  const COL_RING = 'rgba(0,255,65,0.55)';
+  const COL_RING = 'rgba(0,255,65,0.85)';
   const COL_RING_SEL = '#c678ff';
-  const COL_STRIKE = 'rgba(0,255,65,0.4)';
+  const COL_STRIKE = 'rgba(0,255,65,0.55)';
   const COL_STRIKE_HOT = '#00ff41';
   const COL_STRIKE_SEL = '#c678ff';
   const COL_PREVIEW = '#c678ff';
-  const COL_CROSS = 'rgba(0,255,65,0.35)';
+  const COL_CROSS = 'rgba(0,255,65,0.55)';
 
   let deps = null;
   let cv = null;
@@ -45,12 +45,23 @@ window.CuoreEpiciclo = (function () {
   }
 
   async function audioInit() {
-    if (deps && deps.initAudio) await deps.initAudio();
     if (AC) return;
-    AC = Tone.getContext().rawContext;
-    masterGain = AC.createGain();
-    masterGain.gain.value = 1;
-    connectMaster();
+    try {
+      if (deps && deps.initAudio) await deps.initAudio();
+    } catch (e) {
+      console.warn('epiciclo initAudio', e);
+    }
+    try {
+      if (!Tone || !Tone.getContext) return;
+      AC = Tone.getContext().rawContext;
+      if (!masterGain) {
+        masterGain = AC.createGain();
+        masterGain.gain.value = 1;
+      }
+      connectMaster();
+    } catch (e) {
+      console.warn('epiciclo audio graph', e);
+    }
   }
 
   function connectMaster() {
@@ -123,11 +134,19 @@ window.CuoreEpiciclo = (function () {
       : cv.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-    W = r.width;
-    H = r.height;
-    cv.width = Math.round(W * dpr);
-    cv.height = Math.round(H * dpr);
+    const nextW = r.width;
+    const nextH = r.height;
+    const bufW = Math.round(nextW * dpr);
+    const bufH = Math.round(nextH * dpr);
+    // Reassigning canvas.width clears the bitmap. Skip if unchanged —
+    // otherwise a ResizeObserver on the canvas itself can wipe orbits every frame.
+    if (W === nextW && H === nextH && cv.width === bufW && cv.height === bufH) return;
+    W = nextW;
+    H = nextH;
+    cv.width = bufW;
+    cv.height = bufH;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
   }
 
   function hexA(hex, a) {
@@ -148,11 +167,11 @@ window.CuoreEpiciclo = (function () {
       const selOrbit = S.sel && S.sel.orbit === o && S.sel.kind === 'orbit';
       ctx.beginPath();
       ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
-      ctx.lineWidth = selOrbit ? 1.6 : 1.15;
+      ctx.lineWidth = selOrbit ? 2.2 : 1.75;
       ctx.strokeStyle = selOrbit ? COL_RING_SEL : COL_RING;
       ctx.stroke();
-      ctx.strokeStyle = selOrbit ? 'rgba(198,120,255,0.5)' : COL_CROSS;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = selOrbit ? 'rgba(198,120,255,0.65)' : COL_CROSS;
+      ctx.lineWidth = 1.25;
       ctx.beginPath();
       ctx.moveTo(o.x - 4, o.y);
       ctx.lineTo(o.x + 4, o.y);
@@ -318,15 +337,32 @@ window.CuoreEpiciclo = (function () {
   }
 
   function bindCanvas() {
+    function safeCapture(e) {
+      try { cv.setPointerCapture(e.pointerId); } catch (err) { /* ignore — still allow drawing */ }
+    }
+    function safeRelease(e) {
+      try {
+        if (e && e.pointerId != null) cv.releasePointerCapture(e.pointerId);
+      } catch (err) { /* already released */ }
+    }
+    function defaultOrbitRadius() {
+      return Math.max(48, Math.min(110, Math.min(W, H) * 0.18));
+    }
+
     cv.addEventListener('pointerdown', function (e) {
-      cv.setPointerCapture(e.pointerId);
+      // Unlock audio on first gesture so sample triggers work later.
+      audioInit().catch(function () {});
+      if (e.cancelable) e.preventDefault();
+      safeCapture(e);
       const xy = pointFromEvent(e);
       const x = xy[0];
       const y = xy[1];
       const tool = S.tool;
 
       if (tool === 'orbit') {
-        drag = { mode: 'create', cx: x, cy: y, r: 0 };
+        if (W < 2 || H < 2) resize();
+        // Seed a visible preview radius so a tap (no drag) still creates an orbit.
+        drag = { mode: 'create', cx: x, cy: y, r: defaultOrbitRadius(), fromTap: true };
         return;
       }
       if (tool === 'planet') {
@@ -411,11 +447,18 @@ window.CuoreEpiciclo = (function () {
 
     cv.addEventListener('pointermove', function (e) {
       if (!drag) return;
+      if (e.cancelable) e.preventDefault();
       const xy = pointFromEvent(e);
       const x = xy[0];
       const y = xy[1];
-      if (drag.mode === 'create') drag.r = dist(x, y, drag.cx, drag.cy);
-      else if (drag.mode === 'resize') drag.orbit.r = Math.max(24, dist(x, y, drag.orbit.x, drag.orbit.y));
+      if (drag.mode === 'create') {
+        const rr = dist(x, y, drag.cx, drag.cy);
+        // Once the pointer moves, switch from tap-default to drag sizing.
+        if (rr >= 8) {
+          drag.fromTap = false;
+          drag.r = rr;
+        }
+      } else if (drag.mode === 'resize') drag.orbit.r = Math.max(24, dist(x, y, drag.orbit.x, drag.orbit.y));
       else if (drag.mode === 'moveOrbit') {
         drag.orbit.x = x - drag.ox;
         drag.orbit.y = y - drag.oy;
@@ -424,19 +467,35 @@ window.CuoreEpiciclo = (function () {
       }
     });
 
-    function endDrag() {
-      if (drag && drag.mode === 'create' && drag.r >= 24) {
-        S.orbits.push({
-          id: NID(), x: drag.cx, y: drag.cy, r: drag.r,
-          beats: 4, dir: 1, planets: [], strikes: []
-        });
-        refresh();
+    function endDrag(e) {
+      if (drag && drag.mode === 'create') {
+        const minR = 24;
+        let r = drag.r;
+        if (drag.fromTap) r = defaultOrbitRadius();
+        else if (r < minR) r = 0;
+        if (r >= minR) {
+          const orb = {
+            id: NID(), x: drag.cx, y: drag.cy, r: r,
+            beats: 4, dir: 1, planets: [], strikes: []
+          };
+          S.orbits.push(orb);
+          select(orb, 'orbit', orb.id);
+          refresh();
+          toast('Orbita · r ' + Math.round(r) + 'px');
+        } else {
+          toast('Trascina di più per disegnare l\'orbita');
+        }
       }
       drag = null;
+      safeRelease(e);
       persistDebounced();
     }
     cv.addEventListener('pointerup', endDrag);
     cv.addEventListener('pointercancel', endDrag);
+    cv.addEventListener('lostpointercapture', function () {
+      // If capture is lost mid-drag, commit whatever we have.
+      if (drag) endDrag(null);
+    });
   }
 
   const BEATS = [1, 2, 3, 4, 6, 8, 12, 16];
@@ -691,6 +750,7 @@ window.CuoreEpiciclo = (function () {
     renderSamples();
     updateEphem();
     updateHint();
+    draw();
   }
 
   function updateEphem() {
@@ -916,21 +976,32 @@ window.CuoreEpiciclo = (function () {
     bindUI();
     resize();
     const stage = cv.parentElement;
-    if (stage) new ResizeObserver(resize).observe(stage);
-    new ResizeObserver(resize).observe(cv);
-
-    const stored = hooks.storedState && hooks.storedState.epicicloState
-      ? hooks.storedState.epicicloState
-      : null;
-    if (stored && (stored.samples || stored.orbits)) {
-      await loadPatch(stored);
-    } else {
-      refresh();
+    // Observe only the stage. Observing the canvas itself + setting
+    // canvas.width triggers ResizeObserver feedback that clears drawings.
+    if (stage && typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(resize).observe(stage);
     }
+    window.addEventListener('resize', resize);
 
-    await audioInit();
-    connectMaster();
+    // Start the draw loop immediately. Audio unlock (Tone.start) can hang
+    // without a user gesture — if we await it first, orbits are created in
+    // state but never painted, so the canvas looks broken.
     if (!raf) raf = requestAnimationFrame(loop);
+    refresh();
+
+    // Defer audio + stored patch (needs AudioContext for sample decode).
+    Promise.resolve()
+      .then(function () { return audioInit(); })
+      .then(function () {
+        connectMaster();
+        const stored = hooks.storedState && hooks.storedState.epicicloState
+          ? hooks.storedState.epicicloState
+          : null;
+        if (stored && (stored.samples || stored.orbits)) {
+          return loadPatch(stored);
+        }
+      })
+      .catch(function (e) { console.warn('epiciclo audio/patch', e); });
   }
 
   return {
