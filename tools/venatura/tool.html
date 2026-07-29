@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<script src="../_mirror.js"></script>
+<title>VENATURA // DOCTNASA&MRBORG</title>
+<style>
+:root{
+  --bg:#05070a; --panel:#0a0e11; --panel2:#0d1216; --line:#17241d;
+  --txt:#7f9389; --txt2:#4d5d55; --acc:#00ff88; --acc2:#00c46a; --warn:#e8836f;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font:11px/1.45 'Courier New',Courier,monospace;
+  display:flex; overflow:hidden; -webkit-font-smoothing:antialiased;
+}
+#pannello{
+  width:322px; flex:0 0 322px; height:100vh; overflow-y:auto; overflow-x:hidden;
+  background:var(--panel); border-right:1px solid var(--line); padding:0 0 60px;
+}
+#pannello::-webkit-scrollbar{width:8px}
+#pannello::-webkit-scrollbar-track{background:var(--panel)}
+#pannello::-webkit-scrollbar-thumb{background:#16221c}
+header{padding:16px 14px 12px;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:19px;letter-spacing:6px;color:var(--acc);font-weight:700}
+header p{margin:5px 0 0;font-size:9.5px;letter-spacing:1.4px;color:var(--txt2)}
+.sez{border-bottom:1px solid var(--line)}
+.sez>h2{
+  margin:0;padding:9px 14px;font-size:10px;letter-spacing:2.6px;color:var(--acc2);
+  font-weight:700;cursor:pointer;user-select:none;display:flex;justify-content:space-between;
+  background:var(--panel2);
+}
+.sez>h2:hover{color:var(--acc)}
+.sez>h2 .ch{color:var(--txt2);font-weight:400}
+.corpo{padding:10px 14px 14px}
+.sez.chiusa .corpo{display:none}
+.riga{margin-bottom:9px}
+.riga>label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;font-size:10px;letter-spacing:.6px}
+.riga>label b{color:var(--acc);font-weight:400;font-size:10px}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:14px;background:transparent;cursor:pointer;margin:0
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:#1d2c25}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:9px;height:14px;background:var(--acc);margin-top:-6px;border-radius:0
+}
+input[type=range]::-moz-range-track{height:2px;background:#1d2c25}
+input[type=range]::-moz-range-thumb{width:9px;height:14px;background:var(--acc);border:0;border-radius:0}
+select,input[type=number],input[type=text]{
+  width:100%;background:#0b1114;color:var(--txt);border:1px solid var(--line);
+  padding:5px 6px;font:11px 'Courier New',monospace;outline:none;border-radius:0
+}
+select:focus,input:focus{border-color:var(--acc2);color:var(--acc)}
+.due{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tre{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+button{
+  background:#0b1114;color:var(--txt);border:1px solid var(--line);padding:7px 6px;
+  font:10px 'Courier New',monospace;letter-spacing:1.2px;cursor:pointer;width:100%;border-radius:0
+}
+button:hover{border-color:var(--acc2);color:var(--acc)}
+button:active{background:#0f1a15}
+button.p{border-color:var(--acc2);color:var(--acc)}
+.chk{display:flex;align-items:center;gap:7px;margin-bottom:7px;cursor:pointer;user-select:none;font-size:10px}
+.chk i{
+  width:11px;height:11px;border:1px solid #23342c;display:inline-block;flex:0 0 11px;font-style:normal
+}
+.chk.on i{background:var(--acc);border-color:var(--acc)}
+.chk:hover{color:var(--acc)}
+.nota{font-size:9px;color:var(--txt2);line-height:1.5;margin:2px 0 8px}
+#scena{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:var(--bg);min-width:0}
+#tela{display:block;cursor:crosshair;max-width:100%;max-height:100%}
+#stato{
+  position:absolute;left:0;right:0;bottom:0;padding:6px 12px;font-size:9.5px;letter-spacing:1px;
+  color:var(--txt2);background:linear-gradient(transparent,rgba(5,7,10,.92));display:flex;gap:18px;flex-wrap:wrap
+}
+#stato b{color:var(--acc2);font-weight:400}
+#carico{
+  position:absolute;top:14px;left:14px;font-size:10px;letter-spacing:2px;color:var(--acc);
+  background:rgba(5,7,10,.85);padding:5px 10px;border:1px solid var(--line);display:none
+}
+#carico.on{display:block}
+.emlist{max-height:132px;overflow-y:auto;margin-bottom:8px}
+.em{display:grid;grid-template-columns:1fr 58px 26px;gap:5px;margin-bottom:5px;align-items:center}
+.em select{padding:3px 4px;font-size:10px}
+.em input{padding:3px 4px;font-size:10px;text-align:center}
+.em button{padding:3px;font-size:11px;line-height:1}
+kbd{background:#101a15;border:1px solid var(--line);padding:1px 4px;color:var(--txt);font-size:9px}
+</style>
+</head>
+<body>
+
+<div id="pannello">
+  <header>
+    <a href="../" style="color:var(--txt2);font-size:10px;text-decoration:none;letter-spacing:1px">← tools_index</a>
+    <h1 style="margin-top:6px">VENATURA</h1>
+    <p>voronoi anisotropo geodetico &rarr; spessore biomorfo</p>
+  </header>
+
+  <div class="sez" data-s="campo"><h2>CAMPO VETTORIALE<span class="ch">−</span></h2><div class="corpo">
+    <div class="riga"><label>tipo di base</label>
+      <select id="campoTipo">
+        <option value="curl">curl-noise (flusso turbolento)</option>
+        <option value="lineare">lineare (direzione fissa)</option>
+        <option value="radiale">radiale (esplosione)</option>
+        <option value="vortice">vortice (rotazione)</option>
+        <option value="sella">sella (punto iperbolico)</option>
+        <option value="onda">onda (sinusoide incrociata)</option>
+        <option value="nessuno">nessuno (solo emettitori)</option>
+      </select></div>
+    <div class="riga"><label>scala <b id="v_campoScala"></b></label><input type="range" id="campoScala" min="0.4" max="8" step="0.1"></div>
+    <div class="riga"><label>ottave <b id="v_campoOtt"></b></label><input type="range" id="campoOtt" min="1" max="5" step="1"></div>
+    <div class="riga"><label>rotazione globale <b id="v_campoRot"></b></label><input type="range" id="campoRot" min="0" max="360" step="1"></div>
+    <div class="riga"><label>variabilità intensità <b id="v_magVar"></b></label><input type="range" id="magVar" min="0" max="1" step="0.01"></div>
+    <p class="nota">L'intensità locale modula quanto il campo deforma le celle: dove è bassa il tassello resta isotropo.</p>
+    <div class="riga"><label>seme rumore <b id="v_campoSeed"></b></label><input type="range" id="campoSeed" min="1" max="9999" step="1"></div>
+    <div class="tre">
+      <button id="addSorg">+SORG</button><button id="addVort">+VORT</button><button id="addPozz">+POZZ</button>
+    </div>
+    <div class="emlist" id="emlist"></div>
+    <p class="nota">Trascina gli emettitori sulla tela quando <kbd>mostra campo</kbd> è attivo.</p>
+  </div></div>
+
+  <div class="sez" data-s="semi"><h2>SEMI E METRICA<span class="ch">−</span></h2><div class="corpo">
+    <div class="riga"><label>numero celle <b id="v_nSemi"></b></label><input type="range" id="nSemi" min="20" max="900" step="1"></div>
+    <div class="riga"><label>seme distribuzione <b id="v_semiSeed"></b></label><input type="range" id="semiSeed" min="1" max="9999" step="1"></div>
+    <div class="riga"><label>rilassamento (iterazioni) <b id="v_rilas"></b></label><input type="range" id="rilas" min="0" max="12" step="1"></div>
+    <p class="nota">Lloyd in metrica anisotropa: uniforma le celle mantenendo l'allungamento del campo.</p>
+    <div class="riga"><label>anisotropia <b id="v_aniso"></b></label><input type="range" id="aniso" min="0" max="14" step="0.1"></div>
+    <div class="riga"><label>nitidezza direzionale <b id="v_nitid"></b></label><input type="range" id="nitid" min="0.5" max="8" step="0.1"></div>
+    <label class="chk" id="c_orientato"><i></i>propagazione orientata (a goccia)</label>
+    <p class="nota">Il fronte avanza a costo ridotto lungo il campo: le celle si allungano sulle linee di flusso.</p>
+  </div></div>
+
+  <div class="sez" data-s="spessore"><h2>SPESSORE BIOMORFO<span class="ch">−</span></h2><div class="corpo">
+    <div class="riga"><label>sorgente della modulazione</label>
+      <select id="spSorg">
+        <option value="costante">costante</option>
+        <option value="magnitudine">intensità del campo</option>
+        <option value="rumore">rumore FBM</option>
+        <option value="area">area della cella</option>
+        <option value="geodetica">distanza geodetica dal seme</option>
+        <option value="radiale">distanza dal centro</option>
+        <option value="verticale">gradiente verticale</option>
+        <option value="orizzontale">gradiente orizzontale</option>
+      </select></div>
+    <div class="due">
+      <div class="riga"><label>min <b id="v_spMin"></b></label><input type="range" id="spMin" min="0.2" max="12" step="0.1"></div>
+      <div class="riga"><label>max <b id="v_spMax"></b></label><input type="range" id="spMax" min="0.3" max="24" step="0.1"></div>
+    </div>
+    <div class="riga"><label>curva (gamma) <b id="v_spGamma"></b></label><input type="range" id="spGamma" min="0.2" max="4" step="0.05"></div>
+    <label class="chk" id="c_spInv"><i></i>inverti sorgente</label>
+    <div class="riga"><label>grana di rumore <b id="v_spRum"></b></label><input type="range" id="spRum" min="0" max="1" step="0.01"></div>
+    <div class="riga"><label>scala grana <b id="v_spRumS"></b></label><input type="range" id="spRumS" min="0.5" max="14" step="0.1"></div>
+    <div class="riga"><label>bias gravitazionale <b id="v_spBias"></b></label><input type="range" id="spBias" min="-1" max="1" step="0.01"></div>
+    <p class="nota">Positivo = più materia in basso, come una struttura portante.</p>
+    <div class="riga"><label>rigonfiamento ai nodi <b id="v_nodiF"></b></label><input type="range" id="nodiF" min="0" max="2" step="0.02"></div>
+    <div class="riga"><label>raggio del nodo <b id="v_nodiR"></b></label><input type="range" id="nodiR" min="1" max="30" step="0.5"></div>
+    <p class="nota">Raccordo carnoso alle biforcazioni: è quello che dà la lettura organica, da nervatura fogliare.</p>
+    <label class="chk" id="c_cornice"><i></i>cornice perimetrale</label>
+  </div></div>
+
+  <div class="sez" data-s="resa"><h2>RESA<span class="ch">−</span></h2><div class="corpo">
+    <div class="riga"><label>modalità</label>
+      <select id="modo">
+        <option value="solido">solido (struttura piena)</option>
+        <option value="diagramma">diagramma (stile analisi)</option>
+        <option value="ibrido">ibrido</option>
+      </select></div>
+    <div class="riga"><label>palette</label>
+      <select id="palette">
+        <option value="fosforo">fosforo</option>
+        <option value="rame">rame</option>
+        <option value="osso">osso</option>
+        <option value="ghiaccio">ghiaccio</option>
+        <option value="stampa">stampa (fondo chiaro)</option>
+      </select></div>
+    <label class="chk" id="c_perSp"><i></i>colora per spessore</label>
+    <label class="chk" id="c_mCampo"><i></i>mostra campo vettoriale</label>
+    <label class="chk" id="c_mSemi"><i></i>mostra semi</label>
+    <label class="chk" id="c_mNum"><i></i>mostra valori numerici</label>
+    <div class="riga"><label>densità frecce <b id="v_frecce"></b></label><input type="range" id="frecce" min="8" max="46" step="1"></div>
+    <div class="riga"><label>risoluzione di calcolo <b id="v_res"></b></label><input type="range" id="res" min="160" max="560" step="16"></div>
+    <p class="nota">Alza la risoluzione solo per il rendering finale: il calcolo geodetico cresce col quadrato.</p>
+  </div></div>
+
+  <div class="sez" data-s="esporta"><h2>ESPORTA<span class="ch">−</span></h2><div class="corpo">
+    <div class="due">
+      <div class="riga"><label>larghezza mm <b id="v_larg"></b></label><input type="range" id="larg" min="40" max="600" step="5"></div>
+      <div class="riga"><label>estrusione mm <b id="v_estr"></b></label><input type="range" id="estr" min="0.6" max="60" step="0.2"></div>
+    </div>
+    <div class="riga"><label>risoluzione mesh <b id="v_meshRes"></b></label><input type="range" id="meshRes" min="192" max="800" step="32"></div>
+    <div class="due" style="margin-bottom:8px">
+      <button id="expPNG">PNG</button><button id="expSVG">SVG</button>
+    </div>
+    <div class="due" style="margin-bottom:8px">
+      <button id="expSTL" class="p">STL</button><button id="expJSON">PRESET</button>
+    </div>
+    <button id="impJSON">CARICA PRESET</button>
+    <input type="file" id="fileJSON" accept=".json" style="display:none">
+    <p class="nota" id="notaMesh">—</p>
+  </div></div>
+
+  <div class="sez" data-s="azioni"><h2>AZIONI<span class="ch">−</span></h2><div class="corpo">
+    <div class="due" style="margin-bottom:8px">
+      <button id="randTutto">CASUALE</button><button id="reset">RIPRISTINA</button>
+    </div>
+    <div class="tre">
+      <button data-preset="nervatura">NERVATURA</button>
+      <button data-preset="osso">TRABECOLA</button>
+      <button data-preset="corrente">CORRENTE</button>
+    </div>
+  </div></div>
+</div>
+
+<div id="scena">
+  <canvas id="tela"></canvas>
+  <div id="carico">CALCOLO…</div>
+  <div id="stato">
+    <span>celle <b id="s_celle">—</b></span>
+    <span>spessore reale <b id="s_sp">—</b></span>
+    <span>solido <b id="s_area">—</b></span>
+    <span>calcolo <b id="s_ms">—</b></span>
+  </div>
+</div>
+
+<script>
+// ===== CORE START =====
+const CORE = (() => {
+"use strict";
+
+/* ---------- rumore ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+function makeNoise(seed){
+  const rnd=mulberry32(seed>>>0);
+  const p=new Uint8Array(512), perm=new Uint8Array(256);
+  for(let i=0;i<256;i++)perm[i]=i;
+  for(let i=255;i>0;i--){const j=(rnd()*(i+1))|0;const t=perm[i];perm[i]=perm[j];perm[j]=t}
+  for(let i=0;i<512;i++)p[i]=perm[i&255];
+  const G=[[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+  function fade(t){return t*t*t*(t*(t*6-15)+10)}
+  function grad(h,x,y){const g=G[h&7];return g[0]*x+g[1]*y}
+  function noise2(x,y){
+    const X=Math.floor(x)&255, Y=Math.floor(y)&255;
+    const xf=x-Math.floor(x), yf=y-Math.floor(y);
+    const u=fade(xf), v=fade(yf);
+    const aa=p[p[X]+Y], ab=p[p[X]+Y+1], ba=p[p[X+1]+Y], bb=p[p[X+1]+Y+1];
+    const x1=grad(aa,xf,yf)+u*(grad(ba,xf-1,yf)-grad(aa,xf,yf));
+    const x2=grad(ab,xf,yf-1)+u*(grad(bb,xf-1,yf-1)-grad(ab,xf,yf-1));
+    return x1+v*(x2-x1);
+  }
+  function fbm(x,y,oct){
+    let s=0,a=0.5,f=1,n=0;
+    for(let i=0;i<oct;i++){s+=a*noise2(x*f,y*f);n+=a;a*=0.5;f*=2}
+    return s/n;
+  }
+  return {noise2,fbm,rnd};
+}
+
+/* ---------- campo vettoriale ---------- */
+function buildField(P){
+  const R=P.res, N=R*R;
+  const fx=new Float32Array(N), fy=new Float32Array(N), mg=new Float32Array(N);
+  const nz=makeNoise(P.campoSeed);
+  const sc=P.campoScala, oct=P.campoOtt|0;
+  const rot=P.campoRot*Math.PI/180, cr=Math.cos(rot), sr=Math.sin(rot);
+  const eps=1.0/R;
+  const raw=new Float32Array(N);
+  for(let j=0;j<R;j++){
+    const v=j/(R-1);
+    for(let i=0;i<R;i++){
+      const u=i/(R-1), k=j*R+i;
+      let ax=0, ay=0;
+      switch(P.campoTipo){
+        case 'curl':{
+          const a=nz.fbm((u+0.13)*sc,(v-0.71)*sc,oct);
+          const b=nz.fbm((u+0.13)*sc,(v-0.71+eps)*sc,oct);
+          const c=nz.fbm((u+0.13+eps)*sc,(v-0.71)*sc,oct);
+          ax=(b-a)/eps; ay=-(c-a)/eps; break;
+        }
+        case 'lineare': ax=1; ay=0; break;
+        case 'radiale': ax=u-0.5; ay=v-0.5; break;
+        case 'vortice': ax=-(v-0.5); ay=(u-0.5); break;
+        case 'sella': ax=(u-0.5); ay=-(v-0.5); break;
+        case 'onda': ax=Math.sin(v*sc*3.1); ay=Math.cos(u*sc*3.1); break;
+        default: ax=0; ay=0;
+      }
+      for(let e=0;e<P.emitters.length;e++){
+        const E=P.emitters[e];
+        const dx=u-E.x, dy=v-E.y;
+        const d2=dx*dx+dy*dy+0.0016, d=Math.sqrt(d2), k2=E.s*0.06/d2;
+        if(E.t==='sorgente'){ax+=dx/d*k2; ay+=dy/d*k2}
+        else if(E.t==='pozzo'){ax-=dx/d*k2; ay-=dy/d*k2}
+        else {ax+=-dy/d*k2; ay+=dx/d*k2}
+      }
+      const rx=ax*cr-ay*sr, ry=ax*sr+ay*cr;
+      const m=Math.hypot(rx,ry);
+      raw[k]=m;
+      if(m>1e-9){fx[k]=rx/m; fy[k]=ry/m}else{fx[k]=1;fy[k]=0}
+    }
+  }
+  // normalizzazione robusta al 92° percentile
+  const sample=[];
+  for(let k=0;k<N;k+=7)sample.push(raw[k]);
+  sample.sort((a,b)=>a-b);
+  const p92=sample[Math.min(sample.length-1,Math.floor(sample.length*0.92))]||1;
+  const nz2=makeNoise(P.campoSeed+911);
+  for(let j=0;j<R;j++)for(let i=0;i<R;i++){
+    const k=j*R+i;
+    let m=Math.min(1,raw[k]/(p92||1));
+    m=m*m*(3-2*m);
+    if(P.magVar>0){
+      const g=nz2.fbm(i/R*3.3,j/R*3.3,3)*0.5+0.5;
+      m*= (1-P.magVar) + P.magVar*Math.max(0,Math.min(1,g*1.35));
+    }
+    mg[k]=m;
+  }
+  return {fx,fy,mg,R};
+}
+
+/* ---------- semi (poisson) ---------- */
+function seedSites(P,inset){
+  const R=P.res, rnd=mulberry32(P.semiSeed>>>0);
+  const lo=inset, hi=R-1-inset, span=hi-lo;
+  const n=Math.max(4,P.nSemi|0);
+  const rad=Math.sqrt(span*span/(n*1.9));
+  const cell=rad/Math.SQRT2, gw=Math.max(1,Math.ceil(span/cell));
+  const grid=new Int32Array(gw*gw).fill(-1);
+  const px=[], py=[], active=[];
+  function put(x,y){
+    const id=px.length; px.push(x); py.push(y);
+    const gi=Math.min(gw-1,Math.floor((x-lo)/cell)), gj=Math.min(gw-1,Math.floor((y-lo)/cell));
+    grid[gj*gw+gi]=id; active.push(id); return id;
+  }
+  function ok(x,y){
+    if(x<lo||y<lo||x>hi||y>hi)return false;
+    const gi=Math.floor((x-lo)/cell), gj=Math.floor((y-lo)/cell);
+    for(let jj=Math.max(0,gj-2);jj<=Math.min(gw-1,gj+2);jj++)
+      for(let ii=Math.max(0,gi-2);ii<=Math.min(gw-1,gi+2);ii++){
+        const id=grid[jj*gw+ii];
+        if(id>=0){const dx=px[id]-x,dy=py[id]-y;if(dx*dx+dy*dy<rad*rad)return false}
+      }
+    return true;
+  }
+  put(lo+rnd()*span, lo+rnd()*span);
+  let guard=0;
+  while(active.length && px.length<n && guard++<n*200){
+    const ai=(rnd()*active.length)|0, id=active[ai];
+    let placed=false;
+    for(let t=0;t<24;t++){
+      const a=rnd()*Math.PI*2, r=rad*(1+rnd());
+      const x=px[id]+Math.cos(a)*r, y=py[id]+Math.sin(a)*r;
+      if(ok(x,y)){put(x,y);placed=true;break}
+    }
+    if(!placed)active.splice(ai,1);
+  }
+  guard=0;
+  while(px.length<n && guard++<n*400){
+    const x=lo+rnd()*span, y=lo+rnd()*span;
+    if(ok(x,y))put(x,y);
+  }
+  const out=new Float32Array(px.length*2);
+  for(let i=0;i<px.length;i++){out[i*2]=px[i];out[i*2+1]=py[i]}
+  return out;
+}
+
+/* ---------- heap ---------- */
+function Heap(cap){
+  let key=new Float64Array(cap), val=new Int32Array(cap), n=0;
+  function grow(){
+    const k2=new Float64Array(key.length*2), v2=new Int32Array(val.length*2);
+    k2.set(key); v2.set(val); key=k2; val=v2;
+  }
+  return {
+    get size(){return n},
+    push(k,v){
+      if(n>=key.length)grow();
+      let i=n++; key[i]=k; val[i]=v;
+      while(i>0){const p=(i-1)>>1; if(key[p]<=key[i])break;
+        const tk=key[p];key[p]=key[i];key[i]=tk; const tv=val[p];val[p]=val[i];val[i]=tv; i=p}
+    },
+    pop(){
+      const rv=val[0], rk=key[0];
+      n--; key[0]=key[n]; val[0]=val[n];
+      let i=0;
+      for(;;){
+        const l=i*2+1, r=l+1; let s=i;
+        if(l<n&&key[l]<key[s])s=l;
+        if(r<n&&key[r]<key[s])s=r;
+        if(s===i)break;
+        const tk=key[s];key[s]=key[i];key[i]=tk; const tv=val[s];val[s]=val[i];val[i]=tv; i=s;
+      }
+      return {k:rk,v:rv};
+    }
+  };
+}
+
+/* ---------- dijkstra anisotropo ---------- */
+const OFF=[[1,0,1],[-1,0,1],[0,1,1],[0,-1,1],[1,1,Math.SQRT2],[-1,1,Math.SQRT2],[1,-1,Math.SQRT2],[-1,-1,Math.SQRT2]];
+
+function anisoDijkstra(F,sites,P){
+  const R=F.R, N=R*R;
+  const dist=new Float64Array(N).fill(Infinity);
+  const label=new Int32Array(N).fill(-1);
+  const done=new Uint8Array(N);
+  const h=Heap(Math.max(1024,N>>1));
+  const ns=sites.length>>1;
+  for(let s=0;s<ns;s++){
+    const i=Math.max(0,Math.min(R-1,Math.round(sites[s*2])));
+    const j=Math.max(0,Math.min(R-1,Math.round(sites[s*2+1])));
+    const k=j*R+i;
+    if(dist[k]>0||label[k]<0){dist[k]=0;label[k]=s;h.push(0,k)}
+  }
+  const A=P.aniso, SH=P.nitid, ORI=!!P.orientato;
+  while(h.size){
+    const {k:dk,v:k}=h.pop();
+    if(done[k])continue;
+    if(dk>dist[k])continue;
+    done[k]=1;
+    const i=k%R, j=(k/R)|0;
+    const ux=F.fx[k], uy=F.fy[k], m=F.mg[k];
+    for(let o=0;o<8;o++){
+      const dx=OFF[o][0], dy=OFF[o][1], len=OFF[o][2];
+      const ni=i+dx, nj=j+dy;
+      if(ni<0||nj<0||ni>=R||nj>=R)continue;
+      const nk=nj*R+ni;
+      if(done[nk])continue;
+      const inv=1/len;
+      let al=(dx*inv)*ux+(dy*inv)*uy;
+      al=ORI?Math.max(0,al):Math.abs(al);
+      if(SH!==1)al=Math.pow(al,SH);
+      const cost=len/(1+A*m*al);
+      const nd=dk+cost;
+      if(nd<dist[nk]){dist[nk]=nd;label[nk]=label[k];h.push(nd,nk)}
+    }
+  }
+  return {dist,label};
+}
+
+function lloydStep(label,sites,R){
+  const ns=sites.length>>1;
+  const sx=new Float64Array(ns), sy=new Float64Array(ns), cnt=new Float64Array(ns);
+  for(let j=0;j<R;j++)for(let i=0;i<R;i++){
+    const l=label[j*R+i]; if(l<0)continue;
+    sx[l]+=i; sy[l]+=j; cnt[l]++;
+  }
+  const out=new Float32Array(sites.length);
+  for(let s=0;s<ns;s++){
+    if(cnt[s]>0){out[s*2]=sx[s]/cnt[s];out[s*2+1]=sy[s]/cnt[s]}
+    else{out[s*2]=sites[s*2];out[s*2+1]=sites[s*2+1]}
+  }
+  return out;
+}
+
+/* ---------- bordi, nodi, EDT ---------- */
+function boundaryMask(label,R,frameInset,cornice){
+  const m=new Uint8Array(R*R);
+  for(let j=0;j<R;j++)for(let i=0;i<R;i++){
+    const k=j*R+i, l=label[k];
+    if(i+1<R&&label[k+1]!==l)m[k]=1;
+    else if(j+1<R&&label[k+R]!==l)m[k]=1;
+    else if(i>0&&label[k-1]!==l)m[k]=1;
+    else if(j>0&&label[k-R]!==l)m[k]=1;
+  }
+  if(cornice){
+    const a=frameInset, b=R-1-frameInset;
+    for(let i=a;i<=b;i++){m[a*R+i]=1;m[b*R+i]=1;m[i*R+a]=1;m[i*R+b]=1}
+  }
+  return m;
+}
+
+function junctionMask(label,R){
+  const m=new Uint8Array(R*R);
+  for(let j=1;j<R-1;j++)for(let i=1;i<R-1;i++){
+    const a=label[(j-1)*R+i-1],b=label[(j-1)*R+i],c=label[(j-1)*R+i+1],
+          d=label[j*R+i-1],e=label[j*R+i],f=label[j*R+i+1],
+          g=label[(j+1)*R+i-1],hh=label[(j+1)*R+i],ii=label[(j+1)*R+i+1];
+    let n=0; const seen=[a,b,c,d,e,f,g,hh,ii];
+    const uniq=[];
+    for(let q=0;q<9;q++){let found=false;for(let w=0;w<uniq.length;w++)if(uniq[w]===seen[q]){found=true;break}
+      if(!found){uniq.push(seen[q]);n++;if(n>=3)break}}
+    if(n>=3)m[j*R+i]=1;
+  }
+  return m;
+}
+
+function edt(mask,W,H){
+  const INF=1e12;
+  const f=new Float64Array(Math.max(W,H));
+  const d=new Float64Array(Math.max(W,H));
+  const v=new Int32Array(Math.max(W,H));
+  const z=new Float64Array(Math.max(W,H)+1);
+  const out=new Float64Array(W*H);
+  for(let k=0;k<W*H;k++)out[k]=mask[k]?0:INF;
+  function pass(n,get,set){
+    for(let q=0;q<n;q++)f[q]=get(q);
+    let k=0; v[0]=0; z[0]=-INF; z[1]=INF;
+    for(let q=1;q<n;q++){
+      let s=((f[q]+q*q)-(f[v[k]]+v[k]*v[k]))/(2*q-2*v[k]);
+      while(s<=z[k]){k--;s=((f[q]+q*q)-(f[v[k]]+v[k]*v[k]))/(2*q-2*v[k])}
+      k++;v[k]=q;z[k]=s;z[k+1]=INF;
+    }
+    k=0;
+    for(let q=0;q<n;q++){
+      while(z[k+1]<q)k++;
+      d[q]=(q-v[k])*(q-v[k])+f[v[k]];
+    }
+    for(let q=0;q<n;q++)set(q,d[q]);
+  }
+  for(let i=0;i<W;i++)pass(H,q=>out[q*W+i],(q,val)=>{out[q*W+i]=val});
+  for(let j=0;j<H;j++)pass(W,q=>out[j*W+q],(q,val)=>{out[j*W+q]=val});
+  const r=new Float32Array(W*H);
+  for(let k=0;k<W*H;k++)r[k]=Math.sqrt(out[k]);
+  return r;
+}
+
+/* ---------- campo di spessore ---------- */
+function thicknessField(P,F,D,areas,dJunc,mmPerPx){
+  const R=P.res, N=R*R;
+  const t=new Float32Array(N);
+  const nz=makeNoise(P.campoSeed+4242);
+  const tmin=P.spMin/mmPerPx, tmax=P.spMax/mmPerPx;
+  const lo=Math.min(tmin,tmax), hi=Math.max(tmin,tmax);
+  let maxArea=1, maxGeo=1;
+  if(areas){for(let i=0;i<areas.length;i++)if(areas[i]>maxArea)maxArea=areas[i]}
+  if(D&&P.spSorg==='geodetica'){
+    for(let k=0;k<N;k++){const d=D.dist[k];if(isFinite(d)&&d>maxGeo)maxGeo=d}
+  }
+  const nodeR=Math.max(0.5,P.nodiR);
+  for(let j=0;j<R;j++){
+    const vy=j/(R-1);
+    for(let i=0;i<R;i++){
+      const k=j*R+i, vx=i/(R-1);
+      let s;
+      switch(P.spSorg){
+        case 'magnitudine': s=F.mg[k]; break;
+        case 'rumore': s=nz.fbm(vx*P.spRumS*1.7,vy*P.spRumS*1.7,4)*0.5+0.5; break;
+        case 'area':{const l=D.label[k];s=l>=0?Math.min(1,areas[l]/maxArea):0.5;break}
+        case 'geodetica':{const d=D.dist[k];s=isFinite(d)?Math.min(1,d/maxGeo*3.2):0.5;break}
+        case 'radiale':{const dx=vx-0.5,dy=vy-0.5;s=1-Math.min(1,Math.hypot(dx,dy)/0.7071);break}
+        case 'verticale': s=1-vy; break;
+        case 'orizzontale': s=vx; break;
+        default: s=1;
+      }
+      s=Math.max(0,Math.min(1,s));
+      if(P.spInv)s=1-s;
+      let val=lo+(hi-lo)*Math.pow(s,P.spGamma);
+      if(P.spRum>0){
+        const g=nz.fbm(vx*P.spRumS*4.1+17,vy*P.spRumS*4.1-9,3);
+        val*=1+P.spRum*g;
+      }
+      if(P.spBias!==0)val*=1+P.spBias*(vy-0.5)*1.6;
+      if(P.nodiF>0&&dJunc){
+        const dj=dJunc[k];
+        val+=P.nodiF*hi*Math.exp(-(dj*dj)/(2*nodeR*nodeR));
+      }
+      t[k]=Math.max(0.4,val);
+    }
+  }
+  return t;
+}
+
+/* ---------- bilineare ---------- */
+function sample(arr,R,x,y){
+  if(x<0)x=0; if(y<0)y=0; if(x>R-1.0001)x=R-1.0001; if(y>R-1.0001)y=R-1.0001;
+  const i=x|0, j=y|0, fxr=x-i, fyr=y-j, k=j*R+i;
+  const a=arr[k], b=arr[k+1], c=arr[k+R], d=arr[k+R+1];
+  return a+(b-a)*fxr+(c-a)*fyr+(a-b-c+d)*fxr*fyr;
+}
+
+/* ---------- phi = t/2 - edt su griglia di export ---------- */
+function computePhi(P,ed,th,target){
+  const R=P.res, W=Math.max(32,Math.round(target)), H=W;
+  const k0=(R-1)/(W-1);
+  const phi=new Float32Array(W*H);
+  for(let j=0;j<H;j++){
+    const gy=j*k0;
+    for(let i=0;i<W;i++){
+      const gx=i*k0;
+      const e=sample(ed,R,gx,gy), t=sample(th,R,gx,gy);
+      phi[j*W+i]=t*0.5-e;
+    }
+  }
+  const m=2;
+  for(let j=0;j<H;j++)for(let i=0;i<W;i++)
+    if(i<m||j<m||i>=W-m||j>=H-m)phi[j*W+i]=-1;
+  return {phi,W,H};
+}
+
+/* ---------- marching squares: celle -> triangoli + tagli ---------- */
+function marchCells(phi,W,H){
+  const nH=W*H, crossH=new Float32Array(nH), crossV=new Float32Array(nH);
+  const hasH=new Uint8Array(nH), hasV=new Uint8Array(nH);
+  // I punti di taglio restano staccati dai vertici: evita triangoli e spigoli degeneri.
+  const EPS=1e-4;
+  const clamp01=t=>t<EPS?EPS:(t>1-EPS?1-EPS:t);
+  for(let j=0;j<H;j++)for(let i=0;i<W-1;i++){
+    const k=j*W+i, a=phi[k], b=phi[k+1];
+    if((a>0)!==(b>0)){hasH[k]=1;crossH[k]=i+clamp01(a/(a-b))}
+  }
+  for(let j=0;j<H-1;j++)for(let i=0;i<W;i++){
+    const k=j*W+i, a=phi[k], b=phi[k+W];
+    if((a>0)!==(b>0)){hasV[k]=1;crossV[k]=j+clamp01(a/(a-b))}
+  }
+  const tris=[];   // x0,y0,x1,y1,x2,y2 ...
+  const cuts=[];   // px,py,qx,qy, idFrom, idTo
+  const poly=new Array(16);
+  const isCross=new Array(16);
+  function eid(kind,i,j){return ((j*W+i)<<1)|kind}
+
+  for(let j=0;j<H-1;j++){
+    for(let i=0;i<W-1;i++){
+      const ka=j*W+i, kb=ka+1, kd=ka+W, kc=kd+1;
+      const va=phi[ka], vb=phi[kb], vc=phi[kc], vd=phi[kd];
+      const ia=va>0?1:0, ib=vb>0?1:0, ic=vc>0?1:0, id=vd>0?1:0;
+      const cs=ia|(ib<<1)|(ic<<2)|(id<<3);
+      if(cs===0)continue;
+      if(cs===15){
+        pushTri(tris,i,j,i+1,j,i+1,j+1);
+        pushTri(tris,i,j,i+1,j+1,i,j+1);
+        continue;
+      }
+      const saddle=(cs===5||cs===10);
+      const center=(va+vb+vc+vd)*0.25>0;
+      // punti di attraversamento
+      const p0x=crossH[ka], p0y=j, p0id=eid(0,i,j);            // bordo a-b
+      const p1x=i+1,        p1y=crossV[kb], p1id=eid(1,i+1,j); // bordo b-c
+      const p2x=crossH[kd], p2y=j+1, p2id=eid(0,i,j+1);        // bordo d-c
+      const p3x=i,          p3y=crossV[ka], p3id=eid(1,i,j);   // bordo a-d
+
+      if(saddle&&!center){
+        if(cs===5){
+          emit([[i,j,0,-1],[p0x,p0y,1,p0id],[p3x,p3y,1,p3id]]);
+          emit([[i+1,j+1,0,-1],[p2x,p2y,1,p2id],[p1x,p1y,1,p1id]]);
+        }else{
+          emit([[p0x,p0y,1,p0id],[i+1,j,0,-1],[p1x,p1y,1,p1id]]);
+          emit([[p2x,p2y,1,p2id],[i,j+1,0,-1],[p3x,p3y,1,p3id]]);
+        }
+        continue;
+      }
+      // percorso antiorario: a -> b -> c -> d
+      const seq=[];
+      if(ia)seq.push([i,j,0,-1]);
+      if(ia!==ib)seq.push([p0x,p0y,1,p0id]);
+      if(ib)seq.push([i+1,j,0,-1]);
+      if(ib!==ic)seq.push([p1x,p1y,1,p1id]);
+      if(ic)seq.push([i+1,j+1,0,-1]);
+      if(ic!==id)seq.push([p2x,p2y,1,p2id]);
+      if(id)seq.push([i,j+1,0,-1]);
+      if(id!==ia)seq.push([p3x,p3y,1,p3id]);
+      emit(seq);
+    }
+  }
+  function emit(seq){
+    const n=seq.length;
+    if(n<3)return;
+    for(let q=1;q<n-1;q++)
+      pushTri(tris,seq[0][0],seq[0][1],seq[q][0],seq[q][1],seq[q+1][0],seq[q+1][1]);
+    for(let q=0;q<n;q++){
+      const A=seq[q], B=seq[(q+1)%n];
+      if(A[2]===1&&B[2]===1&&A[3]!==B[3])
+        cuts.push(A[0],A[1],B[0],B[1],A[3],B[3]);
+    }
+  }
+  return {tris,cuts};
+}
+function pushTri(a,x0,y0,x1,y1,x2,y2){a.push(x0,y0,x1,y1,x2,y2)}
+
+/* ---------- contorni chiusi (per SVG) ---------- */
+function traceLoops(cuts){
+  const next=new Map(), pt=new Map();
+  for(let k=0;k<cuts.length;k+=6){
+    const from=cuts[k+4], to=cuts[k+5];
+    next.set(from,to);
+    pt.set(from,[cuts[k],cuts[k+1]]);
+    pt.set(to,[cuts[k+2],cuts[k+3]]);
+  }
+  const seen=new Set(), loops=[];
+  for(const start of next.keys()){
+    if(seen.has(start))continue;
+    const loop=[]; let cur=start, guard=0;
+    while(!seen.has(cur)&&next.has(cur)&&guard++<400000){
+      seen.add(cur);
+      const p=pt.get(cur); loop.push(p[0],p[1]);
+      cur=next.get(cur);
+    }
+    if(loop.length>=6)loops.push(loop);
+  }
+  return loops;
+}
+
+function simplify(loop,tol){
+  if(tol<=0||loop.length<=8)return loop;
+  const n=loop.length>>1, keep=new Uint8Array(n);
+  keep[0]=1; keep[n-1]=1;
+  const st=[[0,n-1]];
+  while(st.length){
+    const [a,b]=st.pop();
+    if(b<=a+1)continue;
+    const ax=loop[a*2],ay=loop[a*2+1],bx=loop[b*2],by=loop[b*2+1];
+    let dx=bx-ax, dy=by-ay; const L=Math.hypot(dx,dy)||1; dx/=L; dy/=L;
+    let best=-1,bd=tol;
+    for(let q=a+1;q<b;q++){
+      const px=loop[q*2]-ax, py=loop[q*2+1]-ay;
+      const d=Math.abs(px*dy-py*dx);
+      if(d>bd){bd=d;best=q}
+    }
+    if(best>=0){keep[best]=1;st.push([a,best],[best,b])}
+  }
+  const out=[];
+  for(let q=0;q<n;q++)if(keep[q])out.push(loop[q*2],loop[q*2+1]);
+  return out.length>=6?out:loop;
+}
+
+/* ---------- STL ---------- */
+function buildMesh(phi,W,H,mmPerCell,heightMM){
+  const M=marchCells(phi,W,H);
+  const tri=[];
+  const yOf=j=>(H-1-j)*mmPerCell;
+  const xOf=i=>i*mmPerCell;
+  // tappi: sopra (z=h) e sotto (z=0). Ordine invertito per compensare lo specchio su Y.
+  const T=M.tris;
+  for(let k=0;k<T.length;k+=6){
+    const x0=xOf(T[k]),y0=yOf(T[k+1]),x1=xOf(T[k+2]),y1=yOf(T[k+3]),x2=xOf(T[k+4]),y2=yOf(T[k+5]);
+    tri.push(x0,y0,heightMM, x2,y2,heightMM, x1,y1,heightMM);
+    tri.push(x0,y0,0, x1,y1,0, x2,y2,0);
+  }
+  const C=M.cuts;
+  for(let k=0;k<C.length;k+=6){
+    const px=xOf(C[k]),py=yOf(C[k+1]),qx=xOf(C[k+2]),qy=yOf(C[k+3]);
+    tri.push(px,py,heightMM, qx,qy,heightMM, qx,qy,0);
+    tri.push(px,py,heightMM, qx,qy,0, px,py,0);
+  }
+  return tri;
+}
+
+function stlBinary(tri){
+  const n=tri.length/9;
+  const buf=new ArrayBuffer(84+n*50), dv=new DataView(buf);
+  const enc='VENATURA — voronoi anisotropo';
+  for(let i=0;i<80;i++)dv.setUint8(i,i<enc.length?enc.charCodeAt(i):32);
+  dv.setUint32(80,n,true);
+  let o=84;
+  for(let k=0;k<tri.length;k+=9){
+    const ux=tri[k+3]-tri[k], uy=tri[k+4]-tri[k+1], uz=tri[k+5]-tri[k+2];
+    const vx=tri[k+6]-tri[k], vy=tri[k+7]-tri[k+1], vz=tri[k+8]-tri[k+2];
+    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz2=ux*vy-uy*vx;
+    const L=Math.hypot(nx,ny,nz2)||1; nx/=L;ny/=L;nz2/=L;
+    dv.setFloat32(o,nx,true);dv.setFloat32(o+4,ny,true);dv.setFloat32(o+8,nz2,true);o+=12;
+    for(let q=0;q<9;q++){dv.setFloat32(o,tri[k+q],true);o+=4}
+    dv.setUint16(o,0,true);o+=2;
+  }
+  return buf;
+}
+
+function meshVolume(tri){
+  let v=0;
+  for(let k=0;k<tri.length;k+=9){
+    const ax=tri[k],ay=tri[k+1],az=tri[k+2];
+    const bx=tri[k+3],by=tri[k+4],bz=tri[k+5];
+    const cx=tri[k+6],cy=tri[k+7],cz=tri[k+8];
+    v+=(ax*(by*cz-bz*cy)-ay*(bx*cz-bz*cx)+az*(bx*cy-by*cx))/6;
+  }
+  return v;
+}
+
+function checkManifold(tri){
+  const dir=new Map();
+  const key=(x,y,z)=>x.toFixed(6)+','+y.toFixed(6)+','+z.toFixed(6);
+  let bad=0;
+  for(let k=0;k<tri.length;k+=9){
+    const p=[key(tri[k],tri[k+1],tri[k+2]),key(tri[k+3],tri[k+4],tri[k+5]),key(tri[k+6],tri[k+7],tri[k+8])];
+    for(let q=0;q<3;q++){
+      const e=p[q]+'|'+p[(q+1)%3];
+      dir.set(e,(dir.get(e)||0)+1);
+    }
+  }
+  let openEdges=0;
+  for(const [e,c] of dir){
+    if(c!==1)bad++;
+    const [a,b]=e.split('|');
+    if(!dir.has(b+'|'+a))openEdges++;
+  }
+  return {triangoli:tri.length/9, direzioniDuplicate:bad, bordiAperti:openEdges};
+}
+
+/* ---------- pipeline completa ---------- */
+function pipeline(P,onStep){
+  const t0=Date.now();
+  const F=buildField(P);
+  const mmPerPx=P.larg/P.res;
+  const inset=Math.ceil((Math.max(P.spMax,P.spMin)/mmPerPx)*0.5)+3;
+  let sites=seedSites(P,inset);
+  let D=anisoDijkstra(F,sites,P);
+  for(let it=0;it<P.rilas;it++){
+    sites=lloydStep(D.label,sites,P.res);
+    D=anisoDijkstra(F,sites,P);
+    if(onStep)onStep(it+1,P.rilas);
+  }
+  const ns=sites.length>>1;
+  const areas=new Float64Array(ns);
+  for(let k=0;k<D.label.length;k++){const l=D.label[k];if(l>=0)areas[l]++}
+  const bm=boundaryMask(D.label,P.res,inset,P.cornice);
+  const ed=edt(bm,P.res,P.res);
+  let dJ=null;
+  if(P.nodiF>0){dJ=edt(junctionMask(D.label,P.res),P.res,P.res)}
+  const th=thicknessField(P,F,D,areas,dJ,mmPerPx);
+  let tmn=Infinity,tmx=-Infinity;
+  for(let k=0;k<th.length;k++){if(th[k]<tmn)tmn=th[k];if(th[k]>tmx)tmx=th[k]}
+  return {F,sites,D,areas,ed,th,mmPerPx,inset,
+          spReale:[tmn*mmPerPx,tmx*mmPerPx], ms:Date.now()-t0};
+}
+
+return {mulberry32,makeNoise,buildField,seedSites,anisoDijkstra,lloydStep,boundaryMask,
+        junctionMask,edt,thicknessField,sample,computePhi,marchCells,traceLoops,simplify,
+        buildMesh,stlBinary,meshVolume,checkManifold,pipeline,Heap};
+})();
+// ===== CORE END =====
+
+/* ================= INTERFACCIA ================= */
+if(typeof document!=='undefined'){(function(){
+"use strict";
+
+const PALETTE={
+  fosforo:{bg:'#05070a',a:'#00ff88',b:'#04563a',lin:'#2f6f55',n:'#3f7a63',fr:['#ffffff','#e8a06f','#6f9de8']},
+  rame:   {bg:'#0c0c0e',a:'#e8836f',b:'#5a2b22',lin:'#7a5049',n:'#8a5a50',fr:['#ffffff','#e8834f','#6f8fe8']},
+  osso:   {bg:'#0a0a09',a:'#ece4d4',b:'#4e4739',lin:'#7a7263',n:'#8c8474',fr:['#ffffff','#d8a06f','#8fa8c8']},
+  ghiaccio:{bg:'#04070d',a:'#7ec8ff',b:'#0d3a5c',lin:'#3d7096',n:'#4d80a6',fr:['#ffffff','#ffc48f','#8fd8ff']},
+  stampa: {bg:'#f2f0e9',a:'#14140f',b:'#9c988a',lin:'#5a564c',n:'#3a382f',fr:['#333333','#b05a30','#3060a0']}
+};
+
+const DEF={
+  res:320,
+  campoTipo:'curl',campoScala:2.4,campoOtt:3,campoRot:0,campoSeed:2317,magVar:0.45,
+  emitters:[{x:0.30,y:0.42,t:'vortice',s:1.0}],
+  nSemi:180,semiSeed:1471,rilas:3,
+  aniso:6.5,nitid:2.4,orientato:false,
+  larg:200,estr:6,meshRes:384,
+  spSorg:'magnitudine',spMin:0.7,spMax:2.4,spGamma:1.0,spInv:false,
+  spRum:0.18,spRumS:4.0,spBias:0.12,nodiF:0.35,nodiR:5,cornice:true,
+  modo:'solido',palette:'fosforo',perSp:true,mCampo:false,mSemi:false,mNum:false,frecce:22
+};
+let P=JSON.parse(JSON.stringify(DEF));
+let S=null, ridisegna=null, occupato=false, inCoda=false;
+
+const $=id=>document.getElementById(id);
+const tela=$('tela'), ctx=tela.getContext('2d',{alpha:false});
+
+/* --- collegamenti UI --- */
+const SLIDER=[
+  ['campoScala',1],['campoOtt',0],['campoRot',0],['magVar',2],['campoSeed',0],
+  ['nSemi',0],['semiSeed',0],['rilas',0],['aniso',1],['nitid',1],
+  ['spMin',1],['spMax',1],['spGamma',2],['spRum',2],['spRumS',1],['spBias',2],
+  ['nodiF',2],['nodiR',1],['frecce',0],['res',0],['larg',0],['estr',1],['meshRes',0]
+];
+const PESANTI=new Set(['campoScala','campoOtt','campoRot','magVar','campoSeed','nSemi','semiSeed','rilas','aniso','nitid','res','larg']);
+const CHECK=[['c_orientato','orientato'],['c_spInv','spInv'],['c_cornice','cornice'],
+             ['c_perSp','perSp'],['c_mCampo','mCampo'],['c_mSemi','mSemi'],['c_mNum','mNum']];
+const SELECT=['campoTipo','spSorg','modo','palette'];
+
+function sincronizza(){
+  for(const [id,dec] of SLIDER){
+    const el=$(id); if(!el)continue;
+    el.value=P[id];
+    const lab=$('v_'+id); if(lab)lab.textContent=(+P[id]).toFixed(dec);
+  }
+  for(const [id,key] of CHECK)$(id).classList.toggle('on',!!P[key]);
+  for(const id of SELECT)$(id).value=P[id];
+  disegnaEmitters();
+}
+
+for(const [id,dec] of SLIDER){
+  const el=$(id); if(!el)continue;
+  el.addEventListener('input',()=>{
+    P[id]=+el.value;
+    const lab=$('v_'+id); if(lab)lab.textContent=(+el.value).toFixed(dec);
+    if(id==='spMin'&&P.spMin>P.spMax){P.spMax=P.spMin;$('spMax').value=P.spMax;$('v_spMax').textContent=P.spMax.toFixed(1)}
+    if(PESANTI.has(id))ricalcolaDebounce(); else programma();
+  });
+}
+for(const [id,key] of CHECK){
+  $(id).addEventListener('click',()=>{
+    P[key]=!P[key];$(id).classList.toggle('on',P[key]);
+    if(key==='orientato'||key==='cornice')ricalcolaDebounce(); else programma();
+  });
+}
+for(const id of SELECT){
+  $(id).addEventListener('change',()=>{
+    P[id]=$(id).value;
+    if(id==='campoTipo')ricalcolaDebounce(); else programma();
+  });
+}
+document.querySelectorAll('.sez>h2').forEach(h=>{
+  h.addEventListener('click',()=>{
+    const s=h.parentElement; s.classList.toggle('chiusa');
+    h.querySelector('.ch').textContent=s.classList.contains('chiusa')?'+':'−';
+  });
+});
+
+/* --- emettitori --- */
+function disegnaEmitters(){
+  const box=$('emlist'); box.innerHTML='';
+  P.emitters.forEach((E,i)=>{
+    const d=document.createElement('div'); d.className='em';
+    d.innerHTML=`<select>
+        <option value="sorgente">sorgente</option>
+        <option value="pozzo">pozzo</option>
+        <option value="vortice">vortice</option>
+      </select><input type="number" step="0.1" value="${E.s}"><button>×</button>`;
+    d.querySelector('select').value=E.t;
+    d.querySelector('select').onchange=e=>{E.t=e.target.value;ricalcolaDebounce()};
+    d.querySelector('input').oninput=e=>{E.s=+e.target.value||0;ricalcolaDebounce()};
+    d.querySelector('button').onclick=()=>{P.emitters.splice(i,1);disegnaEmitters();ricalcolaDebounce()};
+    box.appendChild(d);
+  });
+  if(!P.emitters.length)box.innerHTML='<p class="nota">Nessun emettitore.</p>';
+}
+$('addSorg').onclick=()=>{P.emitters.push({x:0.5,y:0.5,t:'sorgente',s:1});disegnaEmitters();ricalcolaDebounce()};
+$('addVort').onclick=()=>{P.emitters.push({x:0.5,y:0.5,t:'vortice',s:1});disegnaEmitters();ricalcolaDebounce()};
+$('addPozz').onclick=()=>{P.emitters.push({x:0.5,y:0.5,t:'pozzo',s:1});disegnaEmitters();ricalcolaDebounce()};
+
+/* --- calcolo --- */
+let timer=null;
+function ricalcolaDebounce(){clearTimeout(timer);timer=setTimeout(ricalcola,170)}
+function ricalcola(){
+  if(occupato){inCoda=true;return}
+  occupato=true; $('carico').classList.add('on');
+  requestAnimationFrame(()=>setTimeout(()=>{
+    try{ S=CORE.pipeline(P); }catch(e){ console.error(e); }
+    occupato=false; $('carico').classList.remove('on');
+    aggiornaStato(); programma();
+    if(inCoda){inCoda=false;ricalcola()}
+  },10));
+}
+function programma(){
+  if(ridisegna)return;
+  ridisegna=requestAnimationFrame(()=>{ridisegna=null;rendi()});
+}
+
+function aggiornaStato(){
+  if(!S)return;
+  $('s_celle').textContent=(S.sites.length>>1);
+  $('s_sp').textContent=S.spReale[0].toFixed(2)+'–'+S.spReale[1].toFixed(2)+' mm';
+  $('s_ms').textContent=S.ms+' ms';
+  stimaMesh();
+}
+
+function stimaMesh(){
+  const W=P.meshRes;
+  const solido=parseFloat($('s_area').textContent)||35;
+  const tri=Math.round(W*W*(solido/100)*4*1.15);
+  $('notaMesh').textContent=
+    `Griglia ${W}×${W} · passo ${(P.larg/(W-1)).toFixed(3)} mm · circa ${(tri/1000).toFixed(0)}k triangoli, ${((84+tri*50)/1048576).toFixed(1)} MB`;
+}
+
+/* --- rendering --- */
+function dimensiona(){
+  const r=$('scena').getBoundingClientRect();
+  const s=Math.max(240,Math.floor(Math.min(r.width-24,r.height-38)));
+  tela.width=s; tela.height=s;
+  tela.style.width=s+'px'; tela.style.height=s+'px';
+}
+
+function hex(c){const n=parseInt(c.slice(1),16);return [(n>>16)&255,(n>>8)&255,n&255]}
+
+function rendi(){
+  if(!S)return;
+  const PL=PALETTE[P.palette];
+  const W=tela.width, H=tela.height, R=P.res;
+  const img=ctx.createImageData(W,H), px=new Uint32Array(img.data.buffer);
+  const [br,bg,bb]=hex(PL.bg), [ar,ag,ab]=hex(PL.a), [sr,sg,sb]=hex(PL.b);
+  const bgv=(255<<24)|(bb<<16)|(bg<<8)|br;
+  const scale=(R-1)/(W-1);
+  const solido=(P.modo!=='diagramma');
+  const fissa=P.modo==='diagramma'?1.6:0;
+  const mmPerPx=S.mmPerPx;
+  const tmax=Math.max(P.spMax,P.spMin)/mmPerPx;
+  const tmin=Math.min(P.spMax,P.spMin)/mmPerPx;
+  const aa=1.05*scale;
+  let solidi=0;
+  for(let y=0;y<H;y++){
+    const gy=y*scale;
+    for(let x=0;x<W;x++){
+      const gx=x*scale;
+      const e=CORE.sample(S.ed,R,gx,gy);
+      const t=fissa?fissa:CORE.sample(S.th,R,gx,gy);
+      let cov=(t*0.5-e)/aa+0.5;
+      cov=cov<0?0:(cov>1?1:cov);
+      let k=bgv;
+      if(cov>0){
+        if(cov>0.5)solidi++;
+        let rr=ar,gg=ag,bb2=ab;
+        if(P.perSp&&solido&&tmax>tmin){
+          let q=(t-tmin)/(tmax-tmin); q=q<0?0:(q>1?1:q);
+          q=Math.pow(q,0.85);
+          rr=sr+(ar-sr)*q; gg=sg+(ag-sg)*q; bb2=sb+(ab-sb)*q;
+        }
+        const r2=br+(rr-br)*cov, g2=bg+(gg-bg)*cov, b2=bb+(bb2-bb)*cov;
+        k=(255<<24)|((b2|0)<<16)|((g2|0)<<8)|(r2|0);
+      }
+      px[y*W+x]=k;
+    }
+  }
+  ctx.putImageData(img,0,0);
+  $('s_area').textContent=(solidi/(W*H)*100).toFixed(1)+' %';
+  stimaMesh();
+
+  const sc=(W-1)/(R-1);
+  if(P.mCampo)disegnaCampo(sc,PL);
+  if(P.modo!=='solido'||P.mSemi)disegnaSemi(sc,PL);
+  if(P.mNum)disegnaNumeri(sc,PL);
+  if(P.mCampo)disegnaEmitterMarker(PL);
+}
+
+function disegnaCampo(sc,PL){
+  const R=P.res, step=Math.max(4,Math.floor(R/P.frecce));
+  const L=step*sc*0.62;
+  ctx.lineWidth=1;
+  for(let j=step>>1;j<R;j+=step){
+    for(let i=step>>1;i<R;i+=step){
+      const k=j*R+i, m=S.F.mg[k];
+      if(m<0.02)continue;
+      const x=i*sc, y=j*sc;
+      const dx=S.F.fx[k]*L*(0.35+0.65*m), dy=S.F.fy[k]*L*(0.35+0.65*m);
+      ctx.strokeStyle=PL.fr[m<0.33?2:(m<0.66?1:0)];
+      ctx.globalAlpha=0.28+0.55*m;
+      ctx.beginPath();
+      ctx.moveTo(x-dx*0.5,y-dy*0.5); ctx.lineTo(x+dx*0.5,y+dy*0.5);
+      const a=Math.atan2(dy,dx), hL=Math.min(4,L*0.32);
+      ctx.moveTo(x+dx*0.5,y+dy*0.5);
+      ctx.lineTo(x+dx*0.5-Math.cos(a-0.4)*hL,y+dy*0.5-Math.sin(a-0.4)*hL);
+      ctx.moveTo(x+dx*0.5,y+dy*0.5);
+      ctx.lineTo(x+dx*0.5-Math.cos(a+0.4)*hL,y+dy*0.5-Math.sin(a+0.4)*hL);
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha=1;
+}
+function disegnaSemi(sc,PL){
+  ctx.fillStyle=PL.n; ctx.globalAlpha=0.85;
+  for(let s=0;s<S.sites.length;s+=2)
+    ctx.fillRect(S.sites[s]*sc-1,S.sites[s+1]*sc-1,2,2);
+  ctx.globalAlpha=1;
+}
+function disegnaNumeri(sc,PL){
+  ctx.font='9px "Courier New",monospace';
+  ctx.fillStyle=PL.n; ctx.globalAlpha=0.62;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  const R=P.res;
+  for(let s=0;s<S.sites.length;s+=2){
+    const i=Math.round(S.sites[s]), j=Math.round(S.sites[s+1]);
+    const k=Math.max(0,Math.min(R*R-1,j*R+i));
+    const v=S.F.mg[k]*10;
+    ctx.fillText(v.toFixed(3),S.sites[s]*sc,S.sites[s+1]*sc);
+  }
+  ctx.globalAlpha=1; ctx.textAlign='left';
+}
+function disegnaEmitterMarker(PL){
+  const W=tela.width;
+  ctx.strokeStyle=PL.a; ctx.lineWidth=1;
+  P.emitters.forEach(E=>{
+    const x=E.x*W, y=E.y*W;
+    ctx.globalAlpha=0.9;
+    ctx.beginPath(); ctx.arc(x,y,7,0,6.284); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x-3,y); ctx.lineTo(x+3,y); ctx.moveTo(x,y-3); ctx.lineTo(x,y+3); ctx.stroke();
+  });
+  ctx.globalAlpha=1;
+}
+
+/* --- trascinamento emettitori --- */
+let trascina=-1;
+tela.addEventListener('pointerdown',e=>{
+  if(!P.mCampo)return;
+  const r=tela.getBoundingClientRect();
+  const u=(e.clientX-r.left)/r.width, v=(e.clientY-r.top)/r.height;
+  let best=-1,bd=0.04;
+  P.emitters.forEach((E,i)=>{const d=Math.hypot(E.x-u,E.y-v);if(d<bd){bd=d;best=i}});
+  if(best>=0){trascina=best;try{tela.setPointerCapture(e.pointerId)}catch(_){}}
+});
+tela.addEventListener('pointermove',e=>{
+  if(trascina<0)return;
+  const r=tela.getBoundingClientRect();
+  P.emitters[trascina].x=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+  P.emitters[trascina].y=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height));
+  ricalcolaDebounce();
+});
+tela.addEventListener('pointerup',()=>{trascina=-1});
+
+/* --- export --- */
+function scarica(blob,nome){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=nome;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);
+}
+const stamp=()=>new Date().toISOString().slice(0,19).replace(/[:T]/g,'');
+
+$('expPNG').onclick=()=>tela.toBlob(b=>scarica(b,`venatura_${stamp()}.png`));
+
+$('expSVG').onclick=()=>{
+  if(!S)return;
+  const {phi,W,H}=CORE.computePhi(P,S.ed,S.th,P.meshRes);
+  const M=CORE.marchCells(phi,W,H);
+  const loops=CORE.traceLoops(M.cuts).map(l=>CORE.simplify(l,0.14));
+  const mm=P.larg/(W-1);
+  const PL=PALETTE[P.palette];
+  let d='';
+  for(const l of loops){
+    d+='M';
+    for(let k=0;k<l.length;k+=2)
+      d+=(k?'L':'')+(l[k]*mm).toFixed(3)+' '+(l[k+1]*mm).toFixed(3)+' ';
+    d+='Z ';
+  }
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${P.larg}mm" height="${P.larg}mm" viewBox="0 0 ${P.larg} ${P.larg}">
+<rect width="${P.larg}" height="${P.larg}" fill="${PL.bg}"/>
+<path d="${d}" fill="${PL.a}" fill-rule="evenodd" stroke="none"/>
+</svg>`;
+  scarica(new Blob([svg],{type:'image/svg+xml'}),`venatura_${stamp()}.svg`);
+};
+
+$('expSTL').onclick=()=>{
+  if(!S)return;
+  $('carico').classList.add('on'); $('carico').textContent='MESH…';
+  setTimeout(()=>{
+    const {phi,W,H}=CORE.computePhi(P,S.ed,S.th,P.meshRes);
+    const mm=P.larg/(W-1);
+    const tri=CORE.buildMesh(phi,W,H,mm,P.estr);
+    const chk=CORE.checkManifold(tri);
+    const vol=CORE.meshVolume(tri);
+    scarica(new Blob([CORE.stlBinary(tri)],{type:'model/stl'}),`venatura_${stamp()}.stl`);
+    $('notaMesh').textContent=
+      `${chk.triangoli.toLocaleString('it')} triangoli · bordi aperti ${chk.bordiAperti} · volume ${(vol/1000).toFixed(1)} cm³`;
+    $('carico').classList.remove('on'); $('carico').textContent='CALCOLO…';
+  },30);
+};
+
+$('expJSON').onclick=()=>scarica(new Blob([JSON.stringify(P,null,2)],{type:'application/json'}),`venatura_${stamp()}.json`);
+$('impJSON').onclick=()=>$('fileJSON').click();
+$('fileJSON').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{try{P=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(rd.result));sincronizza();ricalcola()}catch(err){alert('Preset non leggibile.')}};
+  rd.readAsText(f); e.target.value='';
+};
+
+/* --- preset --- */
+const PRESET={
+  nervatura:{campoTipo:'curl',campoScala:2.0,campoOtt:3,magVar:0.55,aniso:7.5,nitid:2.8,nSemi:150,rilas:4,
+    orientato:false,spSorg:'geodetica',spMin:0.5,spMax:2.6,spGamma:1.5,spInv:false,nodiF:0.6,nodiR:7,
+    spBias:0.05,spRum:0.12,perSp:true},
+  osso:{campoTipo:'lineare',campoRot:90,magVar:0.25,aniso:4.0,nitid:3.5,nSemi:380,rilas:5,
+    orientato:false,spSorg:'verticale',spMin:0.5,spMax:1.9,spGamma:1.8,spInv:false,nodiF:0.9,nodiR:4,
+    spBias:0.55,spRum:0.22,perSp:true},
+  corrente:{campoTipo:'curl',campoScala:3.4,campoOtt:3,magVar:0.7,aniso:11,nitid:4.0,nSemi:280,rilas:2,
+    orientato:true,spSorg:'magnitudine',spMin:0.45,spMax:2.2,spGamma:0.7,spInv:false,nodiF:0.25,nodiR:4,
+    spBias:0,spRum:0.3,perSp:true}
+};
+document.querySelectorAll('[data-preset]').forEach(b=>{
+  b.onclick=()=>{Object.assign(P,PRESET[b.dataset.preset]);sincronizza();ricalcola()};
+});
+
+$('reset').onclick=()=>{P=JSON.parse(JSON.stringify(DEF));sincronizza();ricalcola()};
+$('randTutto').onclick=()=>{
+  const r=Math.random;
+  const tipi=['curl','curl','curl','vortice','sella','onda','radiale'];
+  Object.assign(P,{
+    campoTipo:tipi[(r()*tipi.length)|0],
+    campoScala:0.8+r()*4.5, campoOtt:1+((r()*4)|0), campoRot:(r()*360)|0,
+    campoSeed:1+((r()*9998)|0), magVar:r()*0.9,
+    nSemi:80+((r()*450)|0), semiSeed:1+((r()*9998)|0), rilas:1+((r()*5)|0),
+    aniso:2+r()*10, nitid:1+r()*4,
+    spSorg:['magnitudine','rumore','area','geodetica','radiale','verticale'][(r()*6)|0],
+    spMin:0.35+r()*0.9, spMax:1.4+r()*2.8, spGamma:0.5+r()*2,
+    nodiF:r()*0.9, nodiR:3+r()*7, spRum:r()*0.4, spBias:(r()-0.5)*0.8
+  });
+  if(P.spMax<P.spMin)P.spMax=P.spMin+0.8;
+  sincronizza(); ricalcola();
+};
+
+/* --- avvio --- */
+window.addEventListener('resize',()=>{dimensiona();programma()});
+dimensiona(); sincronizza(); ricalcola();
+})();}
+</script>
+</body>
+</html>

@@ -35,11 +35,13 @@ tools/
     └── preview.svg
 └── isoieta/
     ├── tool.html           ← sintetizzatore FM meteorologico · Open-Meteo
-    └── preview.svg
+    └── preview.jpg
 └── ventolino/
-    ├── tool.html           ← wind spinner laser · PDF/SVG mm
-    ├── ventolino-core.js
-    └── preview.svg
+    ├── tool.html           ← girandola laser · PDF/SVG/DXF · verifica pezzo
+    └── preview.jpg
+└── venatura/
+    ├── tool.html           ← voronoi anisotropo · PNG/SVG/STL
+    └── preview.jpg
 ```
 
 ## aggiornare un tool

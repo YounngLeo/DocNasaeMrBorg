@@ -1,802 +1,1266 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <script src="../_mirror.js"></script>
 <title>VENTOLINO // DOCTNASA&MRBORG</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="ventolino-core.js?v=1"></script>
 <style>
-  :root {
-    --fg: #7CFF9B; --fg-dim: #3f8f56; --bg: #060a07; --panel: #0a120c;
-    --line: #1c3524; --acc: #4af6ff; --warn: #ffb000; --err: #ff6b5e;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
-  body { background: var(--bg); color: var(--fg); font-family: 'Courier New', monospace; font-size: 12px; }
-  #layout {
-    display: grid; grid-template-columns: 310px 1fr 1fr; grid-template-rows: 1fr auto;
-    height: 100vh; min-height: 0;
-  }
-  #pannello {
-    grid-row: 1 / 3; overflow-y: auto; padding: 14px 12px 40px;
-    border-right: 1px solid var(--line); background: var(--panel);
-  }
-  #pannello::-webkit-scrollbar { width: 6px; }
-  #pannello::-webkit-scrollbar-thumb { background: var(--line); }
-  h1 { font-size: 17px; letter-spacing: 4px; font-weight: normal; color: var(--acc); }
-  .sotto { color: var(--fg-dim); font-size: 10px; margin: 3px 0 14px; letter-spacing: 1px; }
-  .back { font-size: 10px; color: var(--fg-dim); text-decoration: none; letter-spacing: 1px; }
-  .back:hover { color: var(--fg); }
-  .sez { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
-  .sez h2 { font-size: 11px; letter-spacing: 2px; margin-bottom: 8px; color: var(--acc); }
-  .riga { display: flex; align-items: center; gap: 8px; margin: 7px 0; }
-  .riga label { flex: 0 0 118px; color: var(--fg-dim); font-size: 11px; }
-  .riga input[type=range] { flex: 1; accent-color: var(--fg); }
-  .riga .val { flex: 0 0 48px; text-align: right; font-size: 11px; }
-  .riga select, .riga input[type=number] {
-    flex: 1; background: #020402; border: 1px solid var(--line); color: var(--fg);
-    font-family: inherit; font-size: 11px; padding: 4px 6px;
-  }
-  button {
-    background: transparent; color: var(--fg); border: 1px solid var(--fg-dim);
-    font-family: inherit; font-size: 11px; letter-spacing: 1px; padding: 7px 10px;
-    cursor: pointer; width: 100%; margin-top: 6px;
-  }
-  button:hover { background: #0f2416; }
-  button.mini { width: auto; padding: 4px 8px; margin: 0; font-size: 10px; }
-  button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-  button.acc { border-color: var(--acc); color: var(--acc); }
-  .duo { display: flex; gap: 6px; flex-wrap: wrap; }
-  .duo button { flex: 1; }
-  .trio { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-  .hint { color: var(--fg-dim); font-size: 10px; margin-top: 8px; line-height: 1.55; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 8px; }
-  .tabs button { flex: 1; margin-top: 0; }
-  #validateBox {
-    margin-top: 8px; padding: 8px; border: 1px solid var(--line); font-size: 10px; line-height: 1.5;
-    max-height: 120px; overflow-y: auto;
-  }
-  #validateBox.ok { border-color: var(--fg-dim); }
-  #validateBox.bad { border-color: var(--err); color: var(--err); }
-  #validateBox .w { color: var(--warn); }
-  #editorWrap, #vista3d {
-    position: relative; min-height: 0; min-width: 0; background: #040804;
-  }
-  #editorWrap { border-right: 1px solid var(--line); display: flex; flex-direction: column; }
-  #editorHead, #viewHead {
-    flex: 0 0 auto; padding: 8px 12px; font-size: 10px; letter-spacing: 2px;
-    color: var(--fg-dim); border-bottom: 1px solid var(--line);
-    display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  }
-  #editorArea, #viewArea { flex: 1; min-height: 120px; position: relative; }
-  #cFlat, #cDraw, #cOuter { display: block; width: 100%; height: 100%; touch-action: none; }
-  #cDraw, #cOuter { position: absolute; inset: 0; }
-  #cFlat { cursor: crosshair; }
-  #vista3d { display: flex; flex-direction: column; }
-  #vista3d canvas { display: block; width: 100%; height: 100%; }
-  #statusBar {
-    grid-column: 2 / 4; padding: 6px 12px; border-top: 1px solid var(--line);
-    font-size: 10px; color: var(--fg-dim); display: flex; gap: 16px; flex-wrap: wrap;
-  }
-  .hidden { display: none !important; }
-  @media (max-width: 960px) {
-    #layout { grid-template-columns: 1fr; grid-template-rows: auto 280px 280px auto; }
-    #pannello { grid-row: auto; max-height: 42vh; border-right: none; border-bottom: 1px solid var(--line); }
-    #editorWrap { border-right: none; border-bottom: 1px solid var(--line); min-height: 280px; }
-  }
+:root{
+  --bg:#070907; --pan:#0b0f0b; --pan2:#0e140e; --line:#1b2a1c;
+  --g:#5ffb9a; --g2:#2fa864; --gd:#173d28; --txt:#bcd8c4; --dim:#5d7a66;
+  --red:#ff5a52; --blu:#6ab6ff; --amb:#ffc46b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--txt);font-family:'Courier New',Courier,monospace;font-size:12px;overflow:hidden}
+#app{display:flex;height:100vh;width:100vw}
+#side{width:340px;min-width:340px;background:var(--pan);border-right:1px solid var(--line);display:flex;flex-direction:column}
+#brand{padding:10px 12px;border-bottom:1px solid var(--line)}
+#brand h1{font-size:17px;letter-spacing:5px;color:var(--g);font-weight:normal}
+#brand p{font-size:9.5px;color:var(--dim);letter-spacing:1.4px;margin-top:3px}
+#scroll{overflow-y:auto;flex:1;padding-bottom:40px}
+#scroll::-webkit-scrollbar{width:8px}
+#scroll::-webkit-scrollbar-thumb{background:var(--gd)}
+.sec{border-bottom:1px solid var(--line)}
+.sec>h2{font-size:11px;letter-spacing:2.5px;color:var(--g2);padding:8px 12px;cursor:pointer;user-select:none;display:flex;justify-content:space-between;background:var(--pan2)}
+.sec>h2:hover{color:var(--g)}
+.sec.open>h2{color:var(--g)}
+.body{display:none;padding:8px 12px 12px}
+.sec.open .body{display:block}
+.row{display:flex;align-items:center;gap:8px;margin:5px 0}
+.row label{flex:1;color:var(--txt);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .val{width:46px;text-align:right;color:var(--g);font-size:11px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:118px;height:2px;background:var(--gd);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--g);cursor:pointer;border-radius:0}
+input[type=range]::-moz-range-thumb{width:11px;height:11px;background:var(--g);border:0;border-radius:0;cursor:pointer}
+select{background:#000;border:1px solid var(--line);color:var(--g);font-family:inherit;font-size:11px;padding:2px}
+input[type=color]{width:34px;height:19px;background:none;border:1px solid var(--line);padding:0;cursor:pointer}
+input[type=checkbox]{accent-color:var(--g);width:13px;height:13px}
+button{background:#000;border:1px solid var(--gd);color:var(--g2);font-family:inherit;font-size:10.5px;letter-spacing:1px;padding:5px 7px;cursor:pointer}
+button:hover{border-color:var(--g);color:var(--g)}
+button.on{background:var(--gd);color:var(--g);border-color:var(--g)}
+.btns{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.btns button{flex:1;min-width:70px}
+.hint{color:var(--dim);font-size:9.5px;line-height:1.45;margin-top:6px}
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+#top{display:flex;gap:5px;padding:7px 10px;border-bottom:1px solid var(--line);background:var(--pan);align-items:center;flex-wrap:wrap}
+#top .sep{width:1px;height:18px;background:var(--line);margin:0 3px}
+#stage{flex:1;position:relative;overflow:hidden}
+canvas{display:block;position:absolute;inset:0;touch-action:none}
+#hud{position:absolute;left:10px;bottom:10px;color:var(--dim);font-size:10px;line-height:1.6;pointer-events:none;text-shadow:0 0 6px #000}
+#hud b{color:var(--g);font-weight:normal}
+#busy{position:absolute;right:12px;top:10px;color:var(--amb);font-size:10px;letter-spacing:2px;opacity:0;transition:opacity .15s}
+#busy.on{opacity:1}
+#verdict{position:absolute;right:12px;bottom:10px;text-align:right;font-size:11px;letter-spacing:2px;text-shadow:0 0 6px #000;pointer-events:none}
+.ok{color:var(--g)} .warn{color:var(--amb)} .bad{color:var(--red)}
+.lay{display:flex;align-items:center;gap:6px;margin:4px 0}
+.lay span{flex:1;font-size:10.5px}
+#diag{font-size:10.5px;line-height:1.7}
+#diag .kv{display:flex;justify-content:space-between;gap:8px}
+#diag b{font-weight:normal;color:var(--g)}
+#diag .note{display:block;margin-top:5px;line-height:1.4}
+@media(max-width:860px){#app{flex-direction:column}#side{width:100%;min-width:0;height:48vh;border-right:0;border-bottom:1px solid var(--line)}}
 </style>
 </head>
 <body>
-<div id="layout">
-  <div id="pannello">
-    <a class="back" href="../">← tools_index</a>
-    <h1>VENTOLINO</h1>
-    <div class="sotto">wind spinner · laser alluminio · PDF/SVG mm</div>
-
-    <div class="sez">
-      <h2>[ ESTERNO ]</h2>
-      <div class="trio">
-        <button type="button" class="mini on" data-outer="scallop" id="bScallop">FIORE</button>
-        <button type="button" class="mini" data-outer="circle" id="bCircle">CERCHIO</button>
-        <button type="button" class="mini" data-outer="rect" id="bRect">RETT.</button>
-      </div>
-      <div class="duo" style="margin-top:6px">
-        <button type="button" class="mini" data-outer="points" id="bPoints">PUNTI</button>
-        <button type="button" class="mini" data-outer="free" id="bFree">LIBERO</button>
-      </div>
-      <div class="riga"><label>Ø / size (mm)</label><input type="range" id="pSize" min="80" max="400" step="5" value="200"><span class="val" id="vSize">200</span></div>
-      <div class="riga"><label>lobi fiore</label><input type="range" id="pLobes" min="6" max="16" step="1" value="12"><span class="val" id="vLobes">12</span></div>
-      <div class="riga"><label>profondità lobi</label><input type="range" id="pDepth" min="0.04" max="0.28" step="0.01" value="0.12"><span class="val" id="vDepth">0.12</span></div>
-      <div class="riga"><label>risoluzione curva</label><input type="range" id="pRes" min="0" max="4" step="1" value="1"><span class="val" id="vRes">1</span></div>
-      <div class="riga"><label>corner R (rett.)</label><input type="range" id="pCorner" min="0" max="40" step="1" value="12"><span class="val" id="vCorner">12</span></div>
-      <div class="hint">PUNTI: trascina i handle sul canvas. LIBERO: disegna col trackpad, rilascio chiude e semplifica.</div>
-    </div>
-
-    <div class="sez">
-      <h2>[ ANELLI ]</h2>
-      <div class="riga"><label>altezza riga (mm)</label><input type="range" id="pRingH" min="1.5" max="12" step="0.1" value="4"><span class="val" id="vRingH">4.0</span></div>
-      <div class="riga"><label>n° anelli</label><input type="range" id="pRings" min="3" max="20" step="1" value="10"><span class="val" id="vRings">10</span></div>
-      <div class="riga"><label>kerf (mm)</label><input type="range" id="pKerf" min="0" max="0.5" step="0.05" value="0.15"><span class="val" id="vKerf">0.15</span></div>
-      <div class="riga"><label>asse ponticelli °</label><input type="range" id="pAxis" min="-180" max="180" step="1" value="-90"><span class="val" id="vAxis">-90</span></div>
-      <div class="riga"><label>largh. ponticello</label><input type="range" id="pBridge" min="1.5" max="12" step="0.1" value="3.5"><span class="val" id="vBridge">3.5</span></div>
-      <div class="riga"><label>foro appendi Ø</label><input type="range" id="pHang" min="0" max="6" step="0.2" value="3"><span class="val" id="vHang">3.0</span></div>
-    </div>
-
-    <div class="sez">
-      <h2>[ CENTRO ]</h2>
-      <div class="tabs">
-        <button type="button" class="mini on" id="tabPng">PNG</button>
-        <button type="button" class="mini" id="tabDraw">DISEGNO</button>
-      </div>
-      <div id="centerPng">
-        <input type="file" id="filePng" accept="image/png,image/jpeg,image/webp" hidden>
-        <button type="button" id="bLoadPng">⬆ CARICA PNG</button>
-        <div class="riga"><label>soglia</label><input type="range" id="pThr" min="20" max="220" step="1" value="140"><span class="val" id="vThr">140</span></div>
-        <div class="riga"><label>invert</label><input type="checkbox" id="pInv" style="accent-color:var(--fg)"></div>
-        <button type="button" class="mini" id="bTrace">VETTORIZZA</button>
-      </div>
-      <div id="centerDraw" class="hidden">
-        <div class="duo">
-          <button type="button" class="mini on" id="bPen">PENNELLO</button>
-          <button type="button" class="mini" id="bEraser">GOMMA</button>
-        </div>
-        <div class="riga"><label>spessore</label><input type="range" id="pBrush" min="1" max="12" step="1" value="3"><span class="val" id="vBrush">3</span></div>
-        <div class="duo">
-          <button type="button" class="mini" id="bClearDraw">PULISCI</button>
-          <button type="button" class="mini" id="bStrokeVec">→ PATH</button>
-        </div>
-      </div>
-      <button type="button" class="mini" id="bClearCenter" style="margin-top:6px">✕ RIMUOVI CENTRO</button>
-    </div>
-
-    <div class="sez">
-      <h2>[ VISTA ]</h2>
-      <div class="duo">
-        <button type="button" class="mini on" id="bFlat">PIATTO</button>
-        <button type="button" class="mini" id="bOpen3d">APERTO 3D</button>
-      </div>
-      <div class="riga"><label>apertura 3D</label><input type="range" id="pOpen" min="0" max="100" step="1" value="55"><span class="val" id="vOpen">55%</span></div>
-      <div class="riga"><label>laser preview</label><input type="checkbox" id="pLaserPrev" style="accent-color:var(--fg)"></div>
-    </div>
-
-    <div class="sez">
-      <h2>[ EXPORT ]</h2>
-      <button type="button" class="acc" id="bSvg">⬇ SVG (mm)</button>
-      <button type="button" class="acc" id="bPdf">⬇ PDF 1:1</button>
-      <div class="duo">
-        <button type="button" class="mini" id="bSalva">SALVA</button>
-        <button type="button" class="mini" id="bCarica">CARICA</button>
-      </div>
-      <input type="file" id="fileCfg" accept=".json" hidden>
-      <div id="validateBox" class="ok">—</div>
-      <div class="hint">SVG per LightBurn / laser. PDF a scala 1 mm = 1 mm. Controlla errori prima del taglio.</div>
-    </div>
+<div id="app">
+<div id="side">
+  <div id="brand">
+    <a href="../" style="color:var(--dim);font-size:10px;text-decoration:none;letter-spacing:1px">← tools_index</a>
+    <h1 style="margin-top:4px">VENTOLINO</h1>
+    <p>girandola laser · pdf / svg / dxf · verifica pezzo</p>
   </div>
+  <div id="scroll">
 
-  <div id="editorWrap">
-    <div id="editorHead">
-      <span id="editorLabel">// PREVIEW 2D · FORMA</span>
-      <span id="editorMode">edit</span>
-    </div>
-    <div id="editorArea">
-      <canvas id="cFlat"></canvas>
-      <canvas id="cOuter" class="hidden"></canvas>
-      <canvas id="cDraw" class="hidden"></canvas>
-    </div>
-  </div>
+    <div class="sec open" data-sec><h2>SAGOMA ESTERNA<span>−</span></h2><div class="body">
+      <div class="row"><label>tipo</label>
+        <select data-p="forma" data-inv="shape">
+          <option value="festonato">festonato</option>
+          <option value="cerchio">cerchio</option>
+          <option value="rettangolo">rettangolo</option>
+          <option value="poligono">poligono</option>
+          <option value="stella">stella</option>
+        </select></div>
+      <div class="row" data-only="festonato cerchio poligono stella"><label>raggio</label><input type="range" data-p="raggio" data-inv="shape" min="20" max="250" step="1"><span class="val"></span></div>
+      <div class="row" data-only="festonato"><label>lobi</label><input type="range" data-p="lobi" data-inv="shape" min="3" max="24" step="1"><span class="val"></span></div>
+      <div class="row" data-only="festonato"><label>profondità festone</label><input type="range" data-p="festone" data-inv="shape" min="0.02" max="0.45" step="0.01"><span class="val"></span></div>
+      <div class="row" data-only="rettangolo"><label>larghezza</label><input type="range" data-p="larg" data-inv="shape" min="20" max="400" step="1"><span class="val"></span></div>
+      <div class="row" data-only="rettangolo"><label>altezza</label><input type="range" data-p="alt" data-inv="shape" min="20" max="400" step="1"><span class="val"></span></div>
+      <div class="row" data-only="rettangolo"><label>raccordo</label><input type="range" data-p="arrot" data-inv="shape" min="0" max="80" step="1"><span class="val"></span></div>
+      <div class="row" data-only="poligono stella"><label>lati / punte</label><input type="range" data-p="lati" data-inv="shape" min="3" max="24" step="1"><span class="val"></span></div>
+      <div class="row" data-only="stella"><label>rientro punte</label><input type="range" data-p="stellaK" data-inv="shape" min="10" max="95" step="1"><span class="val"></span></div>
+      <div class="row"><label>curva morbida</label><input type="checkbox" data-p="lisci" data-inv="shape"></div>
+      <div class="row"><label>risoluzione curva</label><input type="range" data-p="risCurva" data-inv="shape" min="1" max="40" step="1"><span class="val"></span></div>
+      <div class="btns">
+        <button data-act="mode-shape">MODIFICA PUNTI</button>
+        <button data-act="mode-free">DISEGNA SAGOMA</button>
+        <button data-act="reset-shape">RIGENERA</button>
+      </div>
+      <p class="hint">MODIFICA PUNTI: trascina un punto · click sul contorno = aggiungi · alt+click su un punto = elimina.<br>DISEGNA SAGOMA: traccia una linea chiusa col trackpad, viene ricampionata in punti di controllo.</p>
+    </div></div>
 
-  <div id="vista3d">
-    <div id="viewHead">
-      <span>// PREVIEW 3D · APERTO</span>
-      <span id="viewHint">orbit drag</span>
-    </div>
-    <div id="viewArea"></div>
-  </div>
+    <div class="sec open" data-sec><h2>ANELLI CONCENTRICI<span>−</span></h2><div class="body">
+      <div class="row"><label>attivi</label><input type="checkbox" data-p="anelliOn" data-inv="rings"></div>
+      <div class="row"><label>altezza riga</label><input type="range" data-p="passo" data-inv="rings" min="1.5" max="30" step="0.1"><span class="val"></span></div>
+      <div class="row"><label>banda esterna</label><input type="range" data-p="margBordo" data-inv="rings" min="1" max="40" step="0.5"><span class="val"></span></div>
+      <div class="row"><label>medaglione centrale</label><input type="range" data-p="centro" data-inv="rings" min="0" max="150" step="1"><span class="val"></span></div>
+      <div class="row"><label>numero max</label><input type="range" data-p="maxAnelli" data-inv="rings" min="1" max="90" step="1"><span class="val"></span></div>
+      <div class="row"><label>qualità griglia</label><input type="range" data-p="qualita" data-inv="shape" min="120" max="560" step="10"><span class="val"></span></div>
+      <p class="hint">Gli anelli sono offset esatti del contorno: isolinee del campo di distanza interno. Su forme concave non si auto-intersecano e le rientranze si arrotondano da sole, come nel pezzo di riferimento.</p>
+    </div></div>
 
-  <div id="statusBar">
-    <span id="stRings">anelli —</span>
-    <span id="stSize">size —</span>
-    <span id="stBridge">ponticello —</span>
-    <span id="stValid">validazione —</span>
+    <div class="sec" data-sec><h2>MODULAZIONE ANELLI<span>+</span></h2><div class="body">
+      <div class="row"><label>frequenza (lobi)</label><input type="range" data-p="freq" data-inv="rings" min="0" max="24" step="1"><span class="val"></span></div>
+      <div class="row"><label>ampiezza onda</label><input type="range" data-p="ampiezza" data-inv="rings" min="0" max="20" step="0.1"><span class="val"></span></div>
+      <div class="row"><label>torsione</label><input type="range" data-p="torsione" data-inv="rings" min="-1" max="1" step="0.01"><span class="val"></span></div>
+      <div class="row"><label>fase</label><input type="range" data-p="fase" data-inv="rings" min="0" max="360" step="1"><span class="val"></span></div>
+      <p class="hint">A zero gli anelli sono offset puri, come il riferimento. Alzando l'ampiezza le righe ondulano: la verifica segnala se la banda si strozza sotto il minimo.</p>
+    </div></div>
+
+    <div class="sec open" data-sec><h2>RAZZE DI TENUTA<span>−</span></h2><div class="body">
+      <div class="row"><label>numero</label><input type="range" data-p="pontiN" data-inv="rings" min="1" max="12" step="1"><span class="val"></span></div>
+      <div class="row"><label>larghezza</label><input type="range" data-p="pontiW" data-inv="rings" min="0.8" max="20" step="0.1"><span class="val"></span></div>
+      <div class="row"><label>orientamento</label><input type="range" data-p="pontiFase" data-inv="rings" min="0" max="360" step="1"><span class="val"></span></div>
+      <div class="row"><label>sfasamento/anello</label><input type="range" data-p="pontiSfas" data-inv="rings" min="0" max="90" step="0.5"><span class="val"></span></div>
+      <p class="hint">I varchi allineati formano razze continue dal bordo al medaglione: sono la cerniera attorno a cui le lamelle si inclinano al vento. Con sfasamento 0 i varchi si allineano in razze radiali e le lamelle si inclinano a persiana come nel riferimento. Con sfasamento crescente i varchi ruotano di anello in anello e il pezzo si apre a spirale: la tenuta non cambia, perché ogni banda resta agganciata alla vicina attraverso il varco dell'anello che le separa.</p>
+    </div></div>
+
+    <div class="sec open" data-sec><h2>VERIFICA<span>−</span></h2><div class="body">
+      <div id="diag"></div>
+      <div class="row" style="margin-top:9px"><label>kerf laser</label><input type="range" data-p="kerf" data-inv="check" min="0.02" max="0.6" step="0.01"><span class="val"></span></div>
+      <div class="row"><label>banda minima</label><input type="range" data-p="minBanda" data-inv="check" min="0.3" max="6" step="0.1"><span class="val"></span></div>
+      <div class="row"><label>evidenzia frammenti</label><input type="checkbox" data-p="showFrag" data-inv="view"></div>
+      <p class="hint">Il controllo rasterizza tutti i tagli allargati del kerf e fa un flood fill sul materiale: conta i pezzi realmente separati e verifica banda per banda che restino attaccate al corpo.</p>
+    </div></div>
+
+    <div class="sec" data-sec><h2>DISEGNO INTERNO<span>+</span></h2><div class="body">
+      <div class="row"><label>attivo</label><input type="checkbox" data-p="disegnoOn" data-inv="design"></div>
+      <div class="btns">
+        <button data-act="load-png">CARICA PNG</button>
+        <button data-act="mode-draw">DISEGNA</button>
+        <button data-act="mode-erase">GOMMA</button>
+        <button data-act="clear-draw">SVUOTA</button>
+      </div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+      <div class="row"><label>pennello</label><input type="range" data-p="pennello" min="0.3" max="20" step="0.1"><span class="val"></span></div>
+      <div class="row"><label>uscita</label>
+        <select data-p="dModo" data-inv="design"><option value="contorno">contorno</option><option value="centro">linea centrale</option></select></div>
+      <div class="row"><label>soglia</label><input type="range" data-p="soglia" data-inv="design" min="0.05" max="0.95" step="0.01"><span class="val"></span></div>
+      <div class="row"><label>sfocatura</label><input type="range" data-p="sfoca" data-inv="design" min="0" max="8" step="1"><span class="val"></span></div>
+      <div class="row"><label>semplificazione</label><input type="range" data-p="semplif" data-inv="design" min="0.02" max="2" step="0.02"><span class="val"></span></div>
+      <div class="row"><label>inverti</label><input type="checkbox" data-p="inverti" data-inv="design"></div>
+      <div class="row"><label>scala</label><input type="range" data-p="dScala" data-inv="design" min="0.05" max="3" step="0.01"><span class="val"></span></div>
+      <div class="row"><label>rotazione</label><input type="range" data-p="dRot" data-inv="design" min="0" max="360" step="1"><span class="val"></span></div>
+      <div class="row"><label>sposta X</label><input type="range" data-p="dX" data-inv="design" min="-200" max="200" step="1"><span class="val"></span></div>
+      <div class="row"><label>sposta Y</label><input type="range" data-p="dY" data-inv="design" min="-200" max="200" step="1"><span class="val"></span></div>
+      <div class="row"><label>solo nel medaglione</label><input type="checkbox" data-p="soloCentro" data-inv="design"></div>
+      <div class="row"><label>margine</label><input type="range" data-p="dMarg" data-inv="design" min="0" max="40" step="0.5"><span class="val"></span></div>
+      <div class="row"><label>ruolo</label>
+        <select data-p="dRuolo" data-inv="check"><option value="taglio">taglio</option><option value="incisione">incisione</option></select></div>
+      <p class="hint">Il PNG viene letto in scala di grigi, sfocato, sogliato e tracciato con marching squares. Come taglio entra nel controllo: i pieni che restano isolati vengono contati fra i frammenti.</p>
+    </div></div>
+
+    <div class="sec" data-sec><h2>FORO DI SOSPENSIONE<span>+</span></h2><div class="body">
+      <div class="row"><label>attivo</label><input type="checkbox" data-p="foroOn" data-inv="rings"></div>
+      <div class="row"><label>diametro</label><input type="range" data-p="foroD" data-inv="rings" min="1" max="12" step="0.5"><span class="val"></span></div>
+      <div class="row"><label>secondo foro opposto</label><input type="checkbox" data-p="foro2" data-inv="rings"></div>
+      <p class="hint">Il foro viene posizionato da solo sulla razza, centrato nella banda esterna: così non interrompe né il bordo né il primo anello.</p>
+    </div></div>
+
+    <div class="sec" data-sec><h2>ESPORTAZIONE<span>+</span></h2><div class="body">
+      <div class="row"><label>margine foglio</label><input type="range" data-p="esportaMarg" min="0" max="40" step="1"><span class="val"></span></div>
+      <div class="row"><label>spessore linea</label><input type="range" data-p="lw" min="0.01" max="0.5" step="0.01"><span class="val"></span></div>
+      <div class="lay"><span>taglio esterno</span><input type="color" data-p="colTaglio"></div>
+      <div class="lay"><span>anelli</span><input type="color" data-p="colAnelli"></div>
+      <div class="lay"><span>disegno</span><input type="color" data-p="colDis"></div>
+      <div class="btns">
+        <button data-act="pdf">PDF</button>
+        <button data-act="svg">SVG</button>
+        <button data-act="dxf">DXF</button>
+      </div>
+      <p class="hint">PDF in millimetri reali, tratti vettoriali non riempiti, un colore per ruolo così da mappare potenza e velocità nel software del laser.</p>
+    </div></div>
+
   </div>
 </div>
 
+<div id="main">
+  <div id="top">
+    <button data-act="mode-view" class="on">VISTA</button>
+    <button data-act="mode-shape">SAGOMA</button>
+    <button data-act="mode-free">SAGOMA LIBERA</button>
+    <button data-act="mode-draw">DISEGNO</button>
+    <button data-act="mode-erase">GOMMA</button>
+    <div class="sep"></div>
+    <button data-act="fit">ADATTA</button>
+    <button data-act="toggle-preview">ANTEPRIMA TAGLIO</button>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="busy">CALCOLO…</div>
+    <div id="verdict"></div>
+    <div id="hud"></div>
+  </div>
+</div>
+</div>
+
 <script>
-(function () {
-  'use strict';
-  var V = window.VENTOLINO;
-  if (!V) { document.body.textContent = 'ventolino-core.js mancante'; return; }
+/* ==== CORE START ==== */
+const TAU = Math.PI*2;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+function angDiff(a,b){let d=(a-b)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d;}
 
-  var state = {
-    outerMode: 'scallop',
-    outerPts: null,
-    controlPts: null,
-    freeStrokes: [],
-    centerPaths: [],
-    drawStrokes: [],
-    drawTool: 'pen',
-    model: null,
-    view3d: false,
-    draggingPt: -1,
-    drawing: false
+/* ---------- primitive di sagoma ---------- */
+function makeCircle(cx,cy,r,n){const p=[];for(let i=0;i<n;i++){const a=i/n*TAU;p.push({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r});}return p;}
+function makePoly(cx,cy,r,sides){const p=[];for(let i=0;i<sides;i++){const a=i/sides*TAU-Math.PI/2;p.push({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r});}return p;}
+function makeStar(cx,cy,r,pts,k){const p=[];const n=pts*2;for(let i=0;i<n;i++){const a=i/n*TAU-Math.PI/2;const rr=(i%2===0)?r:r*k;p.push({x:cx+Math.cos(a)*rr,y:cy+Math.sin(a)*rr});}return p;}
+function makeRect(cx,cy,w,h,rad,seg){
+  const hw=w/2,hh=h/2;const r=clamp(rad,0,Math.min(hw,hh));
+  if(r<=0.001)return[{x:cx-hw,y:cy-hh},{x:cx+hw,y:cy-hh},{x:cx+hw,y:cy+hh},{x:cx-hw,y:cy+hh}];
+  const s=Math.max(2,seg|0),out=[];
+  const corners=[[cx+hw-r,cy-hh+r,-Math.PI/2],[cx+hw-r,cy+hh-r,0],[cx-hw+r,cy+hh-r,Math.PI/2],[cx-hw+r,cy-hh+r,Math.PI]];
+  for(const[ox,oy,a0]of corners){for(let i=0;i<=s;i++){const a=a0+i/s*(Math.PI/2);out.push({x:ox+Math.cos(a)*r,y:oy+Math.sin(a)*r});}}
+  return out;
+}
+/* arco di circonferenza per tre punti, campionato da p0 a p1 passando per pm */
+function arcThrough(p0,pm,p1,seg){
+  const ax=p0.x,ay=p0.y,bx=pm.x,by=pm.y,cx=p1.x,cy=p1.y;
+  const d=2*(ax*(by-cy)+bx*(cy-ay)+cx*(ay-by));
+  if(Math.abs(d)<1e-9)return[p0,pm,p1];
+  const sa=ax*ax+ay*ay,sb=bx*bx+by*by,sc=cx*cx+cy*cy;
+  const ux=(sa*(by-cy)+sb*(cy-ay)+sc*(ay-by))/d;
+  const uy=(sa*(cx-bx)+sb*(ax-cx)+sc*(bx-ax))/d;
+  const r=Math.hypot(ax-ux,ay-uy);
+  const t0=Math.atan2(ay-uy,ax-ux);
+  const norm=v=>{while(v<=-Math.PI)v+=TAU;while(v>Math.PI)v-=TAU;return v;};
+  let dm=norm(Math.atan2(by-uy,bx-ux)-t0),d1=norm(Math.atan2(cy-uy,cx-ux)-t0);
+  // il punto intermedio deve cadere fra t0 e t0+d1, altrimenti si prende l'arco maggiore
+  if(d1===0||dm*d1<0||Math.abs(dm)>Math.abs(d1))d1=d1>0?d1-TAU:d1+TAU;
+  const out=[];
+  for(let i=0;i<=seg;i++){const t=t0+d1*i/seg;out.push({x:ux+Math.cos(t)*r,y:uy+Math.sin(t)*r});}
+  return out;
+}
+/* contorno festonato: n lobi ad arco fra cuspidi su un cerchio interno */
+function makeScallop(cx,cy,R,n,depth,perLobe){
+  const nn=Math.max(3,n|0),k=Math.max(2,perLobe|0);
+  const rc=R*(1-clamp(depth,0.02,0.9));
+  const out=[];
+  for(let i=0;i<nn;i++){
+    const a0=i/nn*TAU-Math.PI/2,a1=(i+1)/nn*TAU-Math.PI/2,am=(a0+a1)/2;
+    const p0={x:cx+Math.cos(a0)*rc,y:cy+Math.sin(a0)*rc};
+    const p1={x:cx+Math.cos(a1)*rc,y:cy+Math.sin(a1)*rc};
+    const pm={x:cx+Math.cos(am)*R,y:cy+Math.sin(am)*R};
+    const arc=arcThrough(p0,pm,p1,k);
+    for(let j=0;j<k;j++)out.push(arc[j]);   // l'ultimo punto è la cuspide successiva
+  }
+  return out;
+}
+
+/* ---------- catmull-rom chiuso ---------- */
+function catmullClosed(pts,res){
+  const n=pts.length;if(n<3)return pts.slice();
+  const r=Math.max(1,res|0),out=[];
+  for(let i=0;i<n;i++){
+    const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+    for(let j=0;j<r;j++){
+      const t=j/r,t2=t*t,t3=t2*t;
+      out.push({
+        x:0.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+        y:0.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+      });
+    }
+  }
+  return out;
+}
+
+/* ---------- utilità poligoni ---------- */
+function polyArea(p){let a=0;for(let i=0,n=p.length;i<n;i++){const q=p[(i+1)%n];a+=p[i].x*q.y-q.x*p[i].y;}return a/2;}
+function polyCentroid(p){
+  const a=polyArea(p);if(Math.abs(a)<1e-9){let sx=0,sy=0;for(const q of p){sx+=q.x;sy+=q.y;}return{x:sx/p.length,y:sy/p.length};}
+  let cx=0,cy=0;for(let i=0,n=p.length;i<n;i++){const q=p[(i+1)%n],f=p[i].x*q.y-q.x*p[i].y;cx+=(p[i].x+q.x)*f;cy+=(p[i].y+q.y)*f;}
+  return{x:cx/(6*a),y:cy/(6*a)};
+}
+function bbox(p){let a=Infinity,b=Infinity,c=-Infinity,d=-Infinity;for(const q of p){if(q.x<a)a=q.x;if(q.y<b)b=q.y;if(q.x>c)c=q.x;if(q.y>d)d=q.y;}return{x0:a,y0:b,x1:c,y1:d,w:c-a,h:d-b};}
+function pointInPoly(p,x,y){let in_=false;for(let i=0,n=p.length,j=n-1;i<n;j=i++){if(((p[i].y>y)!==(p[j].y>y))&&(x<(p[j].x-p[i].x)*(y-p[i].y)/(p[j].y-p[i].y)+p[i].x))in_=!in_;}return in_;}
+function polyLength(p,closed){let L=0;for(let i=1;i<p.length;i++)L+=Math.hypot(p[i].x-p[i-1].x,p[i].y-p[i-1].y);if(closed&&p.length>2)L+=Math.hypot(p[0].x-p[p.length-1].x,p[0].y-p[p.length-1].y);return L;}
+function resampleClosed(p,n){
+  const L=polyLength(p,true);if(L<=0||p.length<2)return p.slice();
+  const step=L/n,out=[];const N=p.length;
+  let a={...p[0]},bi=1,rest=step,guard=0;out.push({...a});
+  while(out.length<n&&guard<N*8){
+    const b=p[bi%N];const d=Math.hypot(b.x-a.x,b.y-a.y);
+    if(d>=rest&&d>1e-12){const t=rest/d;a={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};out.push({...a});rest=step;}
+    else{rest-=d;a={...b};bi++;guard++;}
+  }
+  return out;
+}
+
+/* ---------- Douglas-Peucker ---------- */
+function dp(pts,tol){
+  if(pts.length<3)return pts.slice();
+  const keep=new Uint8Array(pts.length);keep[0]=1;keep[pts.length-1]=1;
+  const stack=[[0,pts.length-1]],t2=tol*tol;
+  while(stack.length){
+    const[s,e]=stack.pop();
+    let best=-1,bd=0;
+    const ax=pts[s].x,ay=pts[s].y,bx=pts[e].x,by=pts[e].y;
+    const dx=bx-ax,dy=by-ay,dd=dx*dx+dy*dy;
+    for(let i=s+1;i<e;i++){
+      let t=dd>0?((pts[i].x-ax)*dx+(pts[i].y-ay)*dy)/dd:0;t=clamp(t,0,1);
+      const px=ax+dx*t-pts[i].x,py=ay+dy*t-pts[i].y,d2=px*px+py*py;
+      if(d2>bd){bd=d2;best=i;}
+    }
+    if(best>=0&&bd>t2){keep[best]=1;stack.push([s,best],[best,e]);}
+  }
+  const out=[];for(let i=0;i<pts.length;i++)if(keep[i])out.push(pts[i]);return out;
+}
+
+/* ---------- Chaikin ---------- */
+function chaikin(pts,closed,iter){
+  let p=pts;
+  for(let k=0;k<iter;k++){
+    const n=p.length;if(n<3)break;
+    const out=[];
+    const last=closed?n:n-1;
+    if(!closed)out.push(p[0]);
+    for(let i=0;i<last;i++){
+      const a=p[i],b=p[(i+1)%n];
+      out.push({x:a.x*0.75+b.x*0.25,y:a.y*0.75+b.y*0.25});
+      out.push({x:a.x*0.25+b.x*0.75,y:a.y*0.25+b.y*0.75});
+    }
+    if(!closed)out.push(p[n-1]);
+    p=out;
+  }
+  return p;
+}
+
+/* ---------- campo di distanza con segno ---------- */
+function buildField(poly,cell,pad){
+  const bb=bbox(poly);
+  const x0=bb.x0-pad,y0=bb.y0-pad;
+  const nx=Math.max(3,Math.ceil((bb.w+pad*2)/cell)+1);
+  const ny=Math.max(3,Math.ceil((bb.h+pad*2)/cell)+1);
+  const n=poly.length;
+  const px=new Float64Array(n),py=new Float64Array(n);
+  for(let i=0;i<n;i++){px[i]=poly[i].x;py[i]=poly[i].y;}
+  const F=new Float32Array(nx*ny);
+  for(let j=0;j<ny;j++){
+    const y=y0+j*cell;
+    for(let i=0;i<nx;i++){
+      const x=x0+i*cell;
+      let best=Infinity,inside=false;
+      for(let k=0,m=n-1;k<n;m=k++){
+        const ax=px[k],ay=py[k],bx=px[m],by=py[m];
+        const dx=bx-ax,dy=by-ay;const dd=dx*dx+dy*dy;
+        let t=dd>0?((x-ax)*dx+(y-ay)*dy)/dd:0;t=t<0?0:t>1?1:t;
+        const qx=ax+dx*t-x,qy=ay+dy*t-y;const d2=qx*qx+qy*qy;
+        if(d2<best)best=d2;
+        if(((ay>y)!==(by>y))&&(x<(bx-ax)*(y-ay)/(by-ay)+ax))inside=!inside;
+      }
+      F[j*nx+i]=(inside?1:-1)*Math.sqrt(best);
+    }
+  }
+  return{F,nx,ny,x0,y0,h:cell};
+}
+function sampleField(fl,x,y){
+  const gx=(x-fl.x0)/fl.h,gy=(y-fl.y0)/fl.h;
+  if(gx<0||gy<0||gx>fl.nx-1||gy>fl.ny-1)return -1e6;
+  const i=Math.min(fl.nx-2,Math.floor(gx)),j=Math.min(fl.ny-2,Math.floor(gy));
+  const tx=gx-i,ty=gy-j,F=fl.F,nx=fl.nx;
+  const a=F[j*nx+i],b=F[j*nx+i+1],c=F[(j+1)*nx+i+1],d=F[(j+1)*nx+i];
+  return lerp(lerp(a,b,tx),lerp(d,c,tx),ty);
+}
+function fieldMax(fl){let m=-Infinity;for(let i=0;i<fl.F.length;i++)if(fl.F[i]>m)m=fl.F[i];return m;}
+/* punto più esterno lungo un raggio con distanza dal bordo >= target */
+function pointAtLevel(fl,cen,ang,target,maxR){
+  const dx=Math.cos(ang),dy=Math.sin(ang),step=fl.h*0.5;
+  let best=null;
+  for(let t=0;t<=maxR;t+=step){
+    const x=cen.x+dx*t,y=cen.y+dy*t;
+    if(sampleField(fl,x,y)>=target)best={x,y};
+    else if(best)break;
+  }
+  return best;
+}
+
+/* ---------- marching squares ---------- */
+function marchingSquares(F,nx,ny,x0,y0,h,level){
+  const segs=[];
+  for(let j=0;j<ny-1;j++){
+    for(let i=0;i<nx-1;i++){
+      const a=F[j*nx+i],b=F[j*nx+i+1],c=F[(j+1)*nx+i+1],d=F[(j+1)*nx+i];
+      let id=0;
+      if(a>=level)id|=8;if(b>=level)id|=4;if(c>=level)id|=2;if(d>=level)id|=1;
+      if(id===0||id===15)continue;
+      const bot=()=>({x:x0+(i+(level-a)/(b-a))*h,y:y0+j*h,k:'H'+i+','+j});
+      const top=()=>({x:x0+(i+(level-d)/(c-d))*h,y:y0+(j+1)*h,k:'H'+i+','+(j+1)});
+      const lef=()=>({x:x0+i*h,y:y0+(j+(level-a)/(d-a))*h,k:'V'+i+','+j});
+      const rig=()=>({x:x0+(i+1)*h,y:y0+(j+(level-b)/(c-b))*h,k:'V'+(i+1)+','+j});
+      switch(id){
+        case 1:segs.push([lef(),top()]);break;
+        case 2:segs.push([top(),rig()]);break;
+        case 3:segs.push([lef(),rig()]);break;
+        case 4:segs.push([bot(),rig()]);break;
+        case 5:{const ctr=(a+b+c+d)/4;
+          if(ctr>=level){segs.push([lef(),bot()]);segs.push([top(),rig()]);}
+          else{segs.push([lef(),top()]);segs.push([bot(),rig()]);}break;}
+        case 6:segs.push([bot(),top()]);break;
+        case 7:segs.push([lef(),bot()]);break;
+        case 8:segs.push([lef(),bot()]);break;
+        case 9:segs.push([bot(),top()]);break;
+        case 10:{const ctr=(a+b+c+d)/4;
+          if(ctr>=level){segs.push([lef(),top()]);segs.push([bot(),rig()]);}
+          else{segs.push([lef(),bot()]);segs.push([top(),rig()]);}break;}
+        case 11:segs.push([bot(),rig()]);break;
+        case 12:segs.push([lef(),rig()]);break;
+        case 13:segs.push([top(),rig()]);break;
+        case 14:segs.push([lef(),top()]);break;
+      }
+    }
+  }
+  return linkSegments(segs,h*1e-6);
+}
+function linkSegments(segs,eps){
+  if(!segs.length)return[];
+  const e=Math.max(eps,1e-12);
+  // i punti di marching squares portano la chiave esatta dello spigolo di griglia
+  // su cui giacciono: due celle adiacenti la condividono senza tolleranze numeriche
+  const key=p=>p.k!==undefined?p.k:(Math.round(p.x/e)+'|'+Math.round(p.y/e));
+  const map=new Map();
+  segs.forEach((s,i)=>{
+    for(const end of[0,1]){
+      const k=key(s[end]);
+      if(!map.has(k))map.set(k,[]);
+      map.get(k).push({i,end});
+    }
+  });
+  const used=new Uint8Array(segs.length),out=[];
+  const grab=(k,skip)=>{const l=map.get(k);if(!l)return null;for(const r of l){if(r.i!==skip&&!used[r.i])return r;}return null;};
+  for(let i=0;i<segs.length;i++){
+    if(used[i])continue;
+    used[i]=1;
+    const chain=[segs[i][0],segs[i][1]];
+    let cur=i;
+    for(;;){const r=grab(key(chain[chain.length-1]),cur);if(!r)break;used[r.i]=1;chain.push(segs[r.i][1-r.end]);cur=r.i;}
+    cur=i;
+    for(;;){const r=grab(key(chain[0]),cur);if(!r)break;used[r.i]=1;chain.unshift(segs[r.i][1-r.end]);cur=r.i;}
+    let closed=false;
+    if(chain.length>2&&key(chain[0])===key(chain[chain.length-1])){chain.pop();closed=true;}
+    if(chain.length>=2)out.push({pts:chain.map(p=>({x:p.x,y:p.y})),closed});
+  }
+  return out;
+}
+
+/* ---------- razze ---------- */
+/* infittisce una polilinea: senza questo il varco puo' cadere fra due punti
+   consecutivi e la razza sparisce silenziosamente */
+function densify(pts,maxSeg,closed){
+  if(!(maxSeg>0)||pts.length<2)return pts.slice();
+  const out=[],N=pts.length,last=closed?N:N-1;
+  for(let i=0;i<last;i++){
+    const a=pts[i],b=pts[(i+1)%N];
+    out.push(a);
+    const k=Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/maxSeg);
+    for(let j=1;j<k;j++)out.push({x:lerp(a.x,b.x,j/k),y:lerp(a.y,b.y,j/k)});
+  }
+  if(!closed)out.push(pts[N-1]);
+  return out;
+}
+function applyBridges(pts,cx,cy,cfg,k){
+  if(!cfg.n||cfg.w<=0)return[{pts,closed:true}];
+  const rm=new Array(pts.length);
+  let any=false,all=true;
+  for(let i=0;i<pts.length;i++){
+    const dx=pts[i].x-cx,dy=pts[i].y-cy;
+    const r=Math.max(Math.hypot(dx,dy),1e-6),th=Math.atan2(dy,dx);
+    const hw=(cfg.w/2)/r;
+    let hit=false;
+    for(let b=0;b<cfg.n;b++){
+      const c=cfg.phase+b*TAU/cfg.n+k*cfg.stagger;
+      if(Math.abs(angDiff(th,c))<hw){hit=true;break;}
+    }
+    rm[i]=hit;if(hit)any=true;else all=false;
+  }
+  if(!any)return[{pts,closed:true}];
+  if(all)return[];
+  const N=pts.length,s=rm.indexOf(true),out=[];
+  let cur=null;
+  for(let i=0;i<N;i++){
+    const idx=(s+i)%N;
+    if(rm[idx]){if(cur&&cur.length>1)out.push({pts:cur,closed:false});cur=null;}
+    else{(cur||(cur=[])).push(pts[idx]);}
+  }
+  if(cur&&cur.length>1)out.push({pts:cur,closed:false});
+  return out;
+}
+
+/* ---------- clip su campo ---------- */
+function clipByField(polys,fl,minVal){
+  const out=[];
+  for(const p of polys){
+    const seq=p.closed?p.pts.concat([p.pts[0]]):p.pts;
+    let cur=null,dropped=false;
+    for(const q of seq){
+      if(sampleField(fl,q.x,q.y)>=minVal){(cur||(cur=[])).push(q);}
+      else{dropped=true;if(cur&&cur.length>1)out.push({pts:cur,closed:false});cur=null;}
+    }
+    if(cur&&cur.length>1)out.push({pts:cur,closed:p.closed&&!dropped});
+  }
+  return out;
+}
+
+/* ---------- blur ---------- */
+function boxBlur(buf,w,h,r){
+  if(r<=0)return buf;
+  const tmp=new Float32Array(w*h),out=new Float32Array(w*h);
+  for(let y=0;y<h;y++){let s=0;const row=y*w;
+    for(let x=-r;x<=r;x++)s+=buf[row+clamp(x,0,w-1)];
+    for(let x=0;x<w;x++){tmp[row+x]=s/(2*r+1);
+      s-=buf[row+clamp(x-r,0,w-1)];s+=buf[row+clamp(x+r+1,0,w-1)];}
+  }
+  for(let x=0;x<w;x++){let s=0;
+    for(let y=-r;y<=r;y++)s+=tmp[clamp(y,0,h-1)*w+x];
+    for(let y=0;y<h;y++){out[y*w+x]=s/(2*r+1);
+      s-=tmp[clamp(y-r,0,h-1)*w+x];s+=tmp[clamp(y+r+1,0,h-1)*w+x];}
+  }
+  return out;
+}
+
+/* ---------- trasformazione ---------- */
+function xform(polys,cx,cy,sc,rotDeg,tx,ty){
+  const a=rotDeg*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a);
+  return polys.map(p=>({closed:p.closed,pts:p.pts.map(q=>{
+    const dx=(q.x-cx)*sc,dy=(q.y-cy)*sc;
+    return{x:cx+dx*ca-dy*sa+tx,y:cy+dx*sa+dy*ca+ty};
+  })}));
+}
+
+/* ---------- generazione anelli ---------- */
+function buildRings(fl,P,centroid){
+  const res={paths:[],levels:[],maxD:0,minSpacing:Infinity,sealed:0};
+  const{F,nx,ny,x0,y0,h}=fl;
+  const maxD=fieldMax(fl);
+  res.maxD=maxD;
+  if(!P.anelliOn)return res;
+  const fase=P.fase*Math.PI/180;
+  const mod=P.ampiezza>0&&(P.freq>0||P.torsione!==0);
+  let G=F;
+  if(mod){
+    G=new Float32Array(F.length);
+    for(let j=0;j<ny;j++){
+      const y=y0+j*h;
+      for(let i=0;i<nx;i++){
+        const x=x0+i*h,k=j*nx+i,d=F[k];
+        const th=Math.atan2(y-centroid.y,x-centroid.x);
+        G[k]=d+P.ampiezza*Math.sin(P.freq*th+P.torsione*d+fase);
+      }
+    }
+  }
+  const stop=maxD-P.centro;
+  const bridges={n:P.pontiN|0,w:P.pontiW,phase:P.pontiFase*Math.PI/180,stagger:P.pontiSfas*Math.PI/180};
+  let k=0;
+  for(let lev=P.margBordo;lev<=stop&&k<P.maxAnelli;lev+=P.passo,k++){
+    const loops=marchingSquares(G,nx,ny,x0,y0,h,lev);
+    if(!loops.length)break;
+    res.levels.push(lev);
+    for(const lp of loops){
+      if(lp.pts.length<8)continue;
+      let pts=chaikin(lp.pts,lp.closed,2);
+      pts=dp(pts,h*0.12);
+      if(pts.length<6)continue;
+      if(lp.closed){
+        const dense=bridges.n>0?densify(pts,Math.max(Math.min(bridges.w/10,4),h*0.25),true):pts;
+        const segs=applyBridges(dense,centroid.x,centroid.y,bridges,k);
+        for(const sg of segs)sg.pts=dp(sg.pts,h*0.12);
+        // un anello che resta chiuso non ha ricevuto varchi: se anche il suo vicino
+        // e' chiuso, la banda fra i due si stacca
+        if(segs.length===1&&segs[0].closed)res.sealed++;
+        for(const seg of segs)res.paths.push(seg);
+      }
+      else res.paths.push({pts,closed:false});
+    }
+  }
+  // passo locale reale = passo nominale / |gradiente|: dove il campo modulato è
+  // più ripido le righe si stringono
+  if(res.levels.length){
+    const last=res.levels[res.levels.length-1];
+    for(let j=1;j<ny-1;j++)for(let i=1;i<nx-1;i++){
+      const d=F[j*nx+i];
+      if(d<P.margBordo||d>last)continue;
+      const gx=(G[j*nx+i+1]-G[j*nx+i-1])/(2*h),gy=(G[(j+1)*nx+i]-G[(j-1)*nx+i])/(2*h);
+      const g=Math.hypot(gx,gy);
+      if(g>1e-6){const sp=P.passo/g;if(sp<res.minSpacing)res.minSpacing=sp;}
+    }
+  }
+  if(!isFinite(res.minSpacing))res.minSpacing=P.passo;
+  return res;
+}
+
+/* ---------- verifica di fattibilità ----------
+   rasterizza il materiale, sottrae i tagli allargati del kerf e conta i pezzi
+   realmente separati con un flood fill a 4 vicini                            */
+function analyzePiece(fl,cuts,opt){
+  const cell=opt.cell,x0=fl.x0,y0=fl.y0;
+  const spanX=(fl.nx-1)*fl.h,spanY=(fl.ny-1)*fl.h;
+  const nx=Math.max(4,Math.ceil(spanX/cell)+1),ny=Math.max(4,Math.ceil(spanY/cell)+1);
+  const mask=new Uint8Array(nx*ny);
+  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++)
+    mask[j*nx+i]=sampleField(fl,x0+i*cell,y0+j*cell)>0?1:0;
+  // la barriera deve essere la piu sottile possibile: marcando la sola cella che
+  // contiene il punto, con passo <= 0.4 celle, si ottiene una catena 8-connessa che
+  // blocca il flood fill a 4 vicini senza allargare artificialmente il taglio
+  const rad=opt.kerf/2,rc=Math.floor(rad/cell);
+  const mark=(x,y)=>{
+    const ci=Math.round((x-x0)/cell),cj=Math.round((y-y0)/cell);
+    for(let dj=-rc;dj<=rc;dj++)for(let di=-rc;di<=rc;di++){
+      const i=ci+di,j=cj+dj;
+      if(i<0||j<0||i>=nx||j>=ny)continue;
+      if(Math.hypot(di*cell,dj*cell)<=rad)mask[j*nx+i]=0;
+    }
+    if(ci>=0&&cj>=0&&ci<nx&&cj<ny)mask[cj*nx+ci]=0;
   };
-
-  function $(id) { return document.getElementById(id); }
-  function val(id, el) {
-    var n = parseFloat($(id).value);
-    if (el) $(el).textContent = Number.isInteger(n) && $(id).step === '1' ? String(n) : n.toFixed($(id).step.indexOf('.') >= 0 ? String($(id).step).split('.')[1].length : 0);
-    return n;
-  }
-
-  function bindRange(id, el, cb) {
-    $(id).addEventListener('input', function () { val(id, el); cb(); });
-    val(id, el);
-  }
-
-  function buildOuterBase() {
-    var size = val('pSize', 'vSize');
-    var res = val('pRes', 'vRes') | 0;
-    var segs = 48 + res * 24;
-    var mode = state.outerMode;
-    var pts;
-    if (mode === 'circle') {
-      pts = V.makeCircle(0, 0, size / 2, segs);
-    } else if (mode === 'rect') {
-      pts = V.makeRect(0, 0, size * 0.92, size * 0.92, val('pCorner', 'vCorner'), 6 + res * 2);
-    } else if (mode === 'scallop') {
-      pts = V.makeScallop(0, 0, size / 2, val('pLobes', 'vLobes') | 0, val('pDepth', 'vDepth'), segs);
-    } else if (mode === 'points' && state.controlPts && state.controlPts.length >= 3) {
-      pts = V.subdivide(state.controlPts, res);
-    } else if (mode === 'free' && state.outerPts && state.outerPts.length >= 3) {
-      pts = V.subdivide(state.outerPts, Math.min(2, res));
-    } else {
-      pts = V.makeScallop(0, 0, size / 2, 12, 0.12, segs);
-    }
-    if (res > 0 && mode !== 'points' && mode !== 'free') pts = V.subdivide(pts, Math.min(2, res));
-    return pts;
-  }
-
-  function ensureControlPts() {
-    if (state.controlPts && state.controlPts.length >= 3) return;
-    var base = V.makeScallop(0, 0, val('pSize') / 2, 8, 0.1, 16);
-    state.controlPts = base.filter(function (_, i) { return i % 2 === 0; });
-  }
-
-  function rebuild() {
-    var outer = buildOuterBase();
-    state.model = V.buildModel({
-      outer: outer,
-      sizeMm: val('pSize'),
-      ringHeight: val('pRingH', 'vRingH'),
-      ringCount: val('pRings', 'vRings') | 0,
-      kerf: val('pKerf', 'vKerf'),
-      axisDeg: val('pAxis', 'vAxis'),
-      bridgeMm: val('pBridge', 'vBridge'),
-      hangHoleMm: val('pHang', 'vHang'),
-      centerPaths: state.centerPaths
-    });
-    showValidation();
-    drawFlat();
-    update3D();
-    var m = state.model;
-    $('stRings').textContent = 'anelli ' + (m.params ? m.params.ringCount : 0);
-    $('stSize').textContent = 'size ' + val('pSize') + ' mm';
-    $('stBridge').textContent = 'ponticello ' + val('pBridge').toFixed(1) + ' mm @ ' + val('pAxis') + '°';
-    $('stValid').textContent = m.ok ? 'OK' : 'ERRORI';
-  }
-
-  function showValidation() {
-    var m = state.model;
-    var box = $('validateBox');
-    if (!m) { box.textContent = '—'; return; }
-    var lines = [];
-    if (m.ok) lines.push('✓ modello fattibile · ' + m.params.ringCount + ' anelli');
-    else lines.push('✗ export bloccato');
-    (m.errors || []).forEach(function (e) { lines.push('ERR: ' + e); });
-    (m.warnings || []).forEach(function (w) { lines.push('<span class="w">AVV: ' + w + '</span>'); });
-    box.innerHTML = lines.join('<br>');
-    box.className = m.ok ? 'ok' : 'bad';
-  }
-
-  // ——— Flat canvas ———
-  var cFlat = $('cFlat');
-  var ctxF = cFlat.getContext('2d');
-  var cOuter = $('cOuter');
-  var ctxO = cOuter.getContext('2d');
-  var cDraw = $('cDraw');
-  var ctxD = cDraw.getContext('2d');
-
-  function resizeCanvases() {
-    var area = $('editorArea');
-    var r = area.getBoundingClientRect();
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    [cFlat, cOuter, cDraw].forEach(function (c) {
-      c.width = Math.round(r.width * dpr);
-      c.height = Math.round(r.height * dpr);
-      c.style.width = r.width + 'px';
-      c.style.height = r.height + 'px';
-      c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
-    });
-    drawFlat();
-    drawOuterOverlay();
-    redrawDrawLayer();
-  }
-
-  function viewTransform(model) {
-    var area = $('editorArea').getBoundingClientRect();
-    var bb = V.bbox(model.outer);
-    var pad = 20;
-    var sx = (area.width - pad * 2) / (bb.w || 1);
-    var sy = (area.height - pad * 2) / (bb.h || 1);
-    var s = Math.min(sx, sy);
-    var cx = (bb.minX + bb.maxX) / 2;
-    var cy = (bb.minY + bb.maxY) / 2;
-    return {
-      s: s,
-      ox: area.width / 2 - cx * s,
-      oy: area.height / 2 - cy * s,
-      toScreen: function (p) { return { x: this.ox + p.x * this.s, y: this.oy + p.y * this.s }; },
-      toWorld: function (x, y) { return { x: (x - this.ox) / this.s, y: (y - this.oy) / this.s }; }
-    };
-  }
-
-  function drawPath(ctx, pts, closed, stroke, width) {
-    if (!pts || pts.length < 2) return;
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    if (closed) ctx.closePath();
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = width || 1.2;
-    ctx.stroke();
-  }
-
-  function drawFlat() {
-    var area = $('editorArea').getBoundingClientRect();
-    var laser = $('pLaserPrev').checked;
-    ctxF.save();
-    ctxF.setTransform(1, 0, 0, 1, 0, 0);
-    ctxF.clearRect(0, 0, cFlat.width, cFlat.height);
-    ctxF.restore();
-    var W = area.width, H = area.height;
-    ctxF.fillStyle = laser ? '#f4f4f0' : '#040804';
-    ctxF.fillRect(0, 0, W, H);
-    if (!state.model || !state.model.outer) return;
-    var T = viewTransform(state.model);
-    var stroke = laser ? '#111' : '#7CFF9B';
-    var dim = laser ? '#888' : '#3f8f56';
-
-    // rings guide
-    (state.model.rings || []).forEach(function (ring, i) {
-      var scr = ring.map(function (p) { return T.toScreen(p); });
-      drawPath(ctxF, scr, true, i === 0 ? stroke : dim, i === 0 ? 1.6 : 0.7);
-    });
-
-    // cut paths (bridges = gaps already)
-    (state.model.cuts || []).forEach(function (cut) {
-      var col = cut.kind === 'center' ? (laser ? '#c62828' : '#4af6ff')
-        : cut.kind === 'hang' ? (laser ? '#111' : '#ffb000')
-        : stroke;
-      (cut.paths || []).forEach(function (path) {
-        var scr = path.map(function (p) { return T.toScreen(p); });
-        drawPath(ctxF, scr, !!cut.closed && cut.kind !== 'ring' && cut.kind !== 'center', col, cut.kind === 'ring' ? 1.1 : 1.4);
-      });
-    });
-
-    // axis
-    var axis = (val('pAxis') * Math.PI) / 180;
-    var R = Math.max(V.bbox(state.model.outer).w, V.bbox(state.model.outer).h) * 0.55;
-    var a1 = T.toScreen({ x: Math.cos(axis) * R, y: Math.sin(axis) * R });
-    var a2 = T.toScreen({ x: -Math.cos(axis) * R, y: -Math.sin(axis) * R });
-    ctxF.setLineDash([4, 4]);
-    ctxF.beginPath();
-    ctxF.moveTo(a1.x, a1.y);
-    ctxF.lineTo(a2.x, a2.y);
-    ctxF.strokeStyle = laser ? '#999' : 'rgba(74,246,255,0.45)';
-    ctxF.lineWidth = 1;
-    ctxF.stroke();
-    ctxF.setLineDash([]);
-
-    if (state.outerMode === 'points' && state.controlPts) {
-      state.controlPts.forEach(function (p) {
-        var s = T.toScreen(p);
-        ctxF.beginPath();
-        ctxF.arc(s.x, s.y, 5, 0, Math.PI * 2);
-        ctxF.fillStyle = '#4af6ff';
-        ctxF.fill();
-      });
+  for(const p of cuts){
+    if(!p||p.pts.length<2)continue;
+    const seq=p.closed?p.pts.concat([p.pts[0]]):p.pts;
+    for(let i=1;i<seq.length;i++){
+      const a=seq[i-1],b=seq[i];
+      const L=Math.hypot(b.x-a.x,b.y-a.y);
+      const n=Math.max(1,Math.ceil(L/(cell*0.4)));
+      for(let s=0;s<=n;s++)mark(lerp(a.x,b.x,s/n),lerp(a.y,b.y,s/n));
     }
   }
-
-  function drawOuterOverlay() {
-    // freehand overlay uses cOuter when in free mode during draw - mostly unused; free draws on cFlat interaction
-  }
-
-  function redrawDrawLayer() {
-    var area = $('editorArea').getBoundingClientRect();
-    ctxD.save();
-    ctxD.setTransform(1, 0, 0, 1, 0, 0);
-    ctxD.clearRect(0, 0, cDraw.width, cDraw.height);
-    ctxD.restore();
-    ctxD.fillStyle = 'rgba(0,0,0,0.35)';
-    ctxD.fillRect(0, 0, area.width, area.height);
-    ctxD.lineCap = 'round';
-    ctxD.lineJoin = 'round';
-    var brush = val('pBrush', 'vBrush');
-    state.drawStrokes.forEach(function (s) {
-      if (s.length < 2) return;
-      ctxD.beginPath();
-      ctxD.moveTo(s[0].x, s[0].y);
-      for (var i = 1; i < s.length; i++) ctxD.lineTo(s[i].x, s[i].y);
-      ctxD.strokeStyle = '#7CFF9B';
-      ctxD.lineWidth = brush;
-      ctxD.stroke();
-    });
-  }
-
-  // ——— Pointer: outer points / freehand / center draw ———
-  function pointerPos(e, canvas) {
-    var r = canvas.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
-  }
-
-  cFlat.addEventListener('pointerdown', function (e) {
-    if ($('tabDraw').classList.contains('on') && !$('centerDraw').classList.contains('hidden')) return;
-    try { cFlat.setPointerCapture(e.pointerId); } catch (err) {}
-    var p = pointerPos(e, cFlat);
-    if (state.outerMode === 'points' && state.model) {
-      ensureControlPts();
-      var T = viewTransform(state.model);
-      var best = -1, bd = 12;
-      state.controlPts.forEach(function (cp, i) {
-        var s = T.toScreen(cp);
-        var d = Math.hypot(s.x - p.x, s.y - p.y);
-        if (d < bd) { bd = d; best = i; }
-      });
-      state.draggingPt = best;
-      return;
+  const lab=new Int32Array(nx*ny);
+  const stack=new Int32Array(nx*ny);
+  const comps=[];let id=0;
+  for(let s0=0;s0<nx*ny;s0++){
+    if(!mask[s0]||lab[s0])continue;
+    id++;let sp=0,cnt=0;stack[sp++]=s0;lab[s0]=id;
+    while(sp){
+      const c=stack[--sp];cnt++;
+      const ci=c%nx,cj=(c/nx)|0;
+      if(ci>0&&mask[c-1]&&!lab[c-1]){lab[c-1]=id;stack[sp++]=c-1;}
+      if(ci<nx-1&&mask[c+1]&&!lab[c+1]){lab[c+1]=id;stack[sp++]=c+1;}
+      if(cj>0&&mask[c-nx]&&!lab[c-nx]){lab[c-nx]=id;stack[sp++]=c-nx;}
+      if(cj<ny-1&&mask[c+nx]&&!lab[c+nx]){lab[c+nx]=id;stack[sp++]=c+nx;}
     }
-    if (state.outerMode === 'free') {
-      state.drawing = true;
-      state.freeStrokes = [[p]];
-      return;
+    comps.push({id,area:cnt*cell*cell});
+  }
+  return{nx,ny,x0,y0,cell,mask,lab,comps};
+}
+function labelAt(an,x,y){
+  const i=Math.round((x-an.x0)/an.cell),j=Math.round((y-an.y0)/an.cell);
+  if(i<0||j<0||i>=an.nx||j>=an.ny)return 0;
+  return an.lab[j*an.nx+i];
+}
+/* per ogni banda anulare campiona 72 angoli e verifica che appartenga al corpo */
+function bandStatus(an,fl,cen,levels,P,maxR,mainId){
+  const maxD=fieldMax(fl);
+  const mids=[P.margBordo*0.5];
+  for(let i=0;i<levels.length;i++){
+    const a=levels[i],b=(i+1<levels.length)?levels[i+1]:maxD;
+    mids.push((a+b)/2);
+  }
+  const out=[];
+  for(const mid of mids){
+    let found=0,loose=0;
+    for(let a=0;a<72;a++){
+      const p=pointAtLevel(fl,cen,a/72*TAU,mid,maxR);
+      if(!p)continue;
+      const l=labelAt(an,p.x,p.y);
+      if(!l)continue;
+      found++;
+      if(l!==mainId)loose++;
     }
-  });
-  cFlat.addEventListener('pointermove', function (e) {
-    var p = pointerPos(e, cFlat);
-    if (state.draggingPt >= 0 && state.model) {
-      var T = viewTransform(state.model);
-      state.controlPts[state.draggingPt] = T.toWorld(p.x, p.y);
-      rebuild();
-      return;
-    }
-    if (state.drawing && state.outerMode === 'free') {
-      state.freeStrokes[0].push(p);
-      drawFlat();
-      // paint free stroke preview
-      var s = state.freeStrokes[0];
-      if (s.length > 1) {
-        ctxF.beginPath();
-        ctxF.moveTo(s[0].x, s[0].y);
-        for (var i = 1; i < s.length; i++) ctxF.lineTo(s[i].x, s[i].y);
-        ctxF.strokeStyle = '#4af6ff';
-        ctxF.lineWidth = 1.5;
-        ctxF.stroke();
+    out.push({mid,found,loose,frac:found?loose/found:0,ok:found>0&&loose/found<=0.2});
+  }
+  return out;
+}
+
+/* ---------- esportatori ---------- */
+function hex2rgb(h){
+  const s=h.replace('#','');
+  return[parseInt(s.substr(0,2),16)/255,parseInt(s.substr(2,2),16)/255,parseInt(s.substr(4,2),16)/255];
+}
+const fnum=v=>{const s=(Math.round(v*1000)/1000).toString();return s==='-0'?'0':s;};
+
+function buildPDF(layers,opt){
+  const K=72/25.4;
+  const W=opt.pageW*K,H=opt.pageH*K;
+  let s='';
+  for(const L of layers){
+    if(!L.paths.length)continue;
+    const c=hex2rgb(L.color);
+    s+=fnum(c[0])+' '+fnum(c[1])+' '+fnum(c[2])+' RG\n';
+    s+=fnum(opt.lw*K)+' w\n1 J\n1 j\n';
+    for(const p of L.paths){
+      if(p.pts.length<2)continue;
+      for(let i=0;i<p.pts.length;i++){
+        const x=(p.pts[i].x-opt.ox)*K;
+        const y=(opt.pageH-(p.pts[i].y-opt.oy))*K;
+        s+=fnum(x)+' '+fnum(y)+' '+(i?'l':'m')+'\n';
       }
+      s+=p.closed?'h S\n':'S\n';
     }
-  });
-  cFlat.addEventListener('pointerup', function () {
-    if (state.draggingPt >= 0) { state.draggingPt = -1; return; }
-    if (state.drawing && state.outerMode === 'free') {
-      state.drawing = false;
-      var s = state.freeStrokes[0] || [];
-      if (s.length >= 8 && state.model) {
-        var T = viewTransform(state.model);
-        var world = s.map(function (pt) { return T.toWorld(pt.x, pt.y); });
-        if (Math.hypot(world[0].x - world[world.length - 1].x, world[0].y - world[world.length - 1].y) > 1) {
-          world.push({ x: world[0].x, y: world[0].y });
-        }
-        state.outerPts = V.simplify(world, 0.8);
-        rebuild();
+  }
+  const objs=[null,
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+fnum(W)+' '+fnum(H)+'] /Contents 4 0 R /Resources << >> >>',
+    '<< /Length '+s.length+' >>\nstream\n'+s+'endstream'
+  ];
+  let pdf='%PDF-1.4\n';
+  const off=[0];
+  for(let i=1;i<objs.length;i++){
+    off[i]=pdf.length;
+    pdf+=i+' 0 obj\n'+objs[i]+'\nendobj\n';
+  }
+  const xref=pdf.length;
+  pdf+='xref\n0 '+objs.length+'\n0000000000 65535 f \n';
+  for(let i=1;i<objs.length;i++)pdf+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+  pdf+='trailer\n<< /Size '+objs.length+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n';
+  return pdf;
+}
+function buildSVG(layers,opt){
+  let s='<?xml version="1.0" encoding="UTF-8"?>\n';
+  s+='<svg xmlns="http://www.w3.org/2000/svg" width="'+fnum(opt.pageW)+'mm" height="'+fnum(opt.pageH)+'mm" viewBox="0 0 '+fnum(opt.pageW)+' '+fnum(opt.pageH)+'">\n';
+  for(const L of layers){
+    if(!L.paths.length)continue;
+    s+='<g id="'+L.name+'" fill="none" stroke="'+L.color+'" stroke-width="'+fnum(opt.lw)+'" stroke-linecap="round">\n';
+    for(const p of L.paths){
+      if(p.pts.length<2)continue;
+      let d='';
+      p.pts.forEach((q,i)=>{d+=(i?'L':'M')+fnum(q.x-opt.ox)+' '+fnum(q.y-opt.oy)+' ';});
+      if(p.closed)d+='Z';
+      s+='<path d="'+d.trim()+'"/>\n';
+    }
+    s+='</g>\n';
+  }
+  return s+'</svg>\n';
+}
+function buildDXF(layers,opt){
+  const L=[];const put=(c,v)=>{L.push(String(c));L.push(String(v));};
+  put(0,'SECTION');put(2,'HEADER');put(9,'$ACADVER');put(1,'AC1009');put(0,'ENDSEC');
+  put(0,'SECTION');put(2,'TABLES');put(0,'TABLE');put(2,'LAYER');put(70,layers.length);
+  const ci={taglio:1,anelli:5,disegno:7};
+  for(const ly of layers){put(0,'LAYER');put(2,ly.name.toUpperCase());put(70,0);put(62,ci[ly.name]||7);put(6,'CONTINUOUS');}
+  put(0,'ENDTAB');put(0,'ENDSEC');
+  put(0,'SECTION');put(2,'ENTITIES');
+  for(const ly of layers){
+    const nm=ly.name.toUpperCase();
+    for(const p of ly.paths){
+      if(p.pts.length<2)continue;
+      put(0,'POLYLINE');put(8,nm);put(66,1);put(70,p.closed?1:0);put(10,0);put(20,0);put(30,0);
+      for(const q of p.pts){
+        put(0,'VERTEX');put(8,nm);
+        put(10,fnum(q.x-opt.ox));put(20,fnum(opt.pageH-(q.y-opt.oy)));put(30,0);
       }
-    }
-  });
-
-  // Center draw canvas
-  cDraw.addEventListener('pointerdown', function (e) {
-    cDraw.setPointerCapture(e.pointerId);
-    state.drawing = true;
-    var p = pointerPos(e, cDraw);
-    state.drawStrokes.push([p]);
-  });
-  cDraw.addEventListener('pointermove', function (e) {
-    if (!state.drawing) return;
-    var p = pointerPos(e, cDraw);
-    var stroke = state.drawStrokes[state.drawStrokes.length - 1];
-    if (state.drawTool === 'eraser') {
-      // erase nearby points from all strokes
-      state.drawStrokes = state.drawStrokes.map(function (s) {
-        return s.filter(function (q) { return Math.hypot(q.x - p.x, q.y - p.y) > 10; });
-      }).filter(function (s) { return s.length >= 2; });
-      redrawDrawLayer();
-      return;
-    }
-    stroke.push(p);
-    redrawDrawLayer();
-  });
-  cDraw.addEventListener('pointerup', function () { state.drawing = false; });
-
-  // ——— 3D ———
-  var viewArea = $('viewArea');
-  var renderer, scene, camera, root, anim = 0;
-  function init3D() {
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-    renderer.setClearColor(0x040804);
-    viewArea.appendChild(renderer.domElement);
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(42, 1, 0.1, 2000);
-    camera.position.set(0, -180, 160);
-    camera.lookAt(0, 0, 0);
-    scene.add(new THREE.AmbientLight(0x668866, 0.85));
-    var dir = new THREE.DirectionalLight(0xaaffcc, 0.7);
-    dir.position.set(40, -60, 120);
-    scene.add(dir);
-    root = new THREE.Group();
-    scene.add(root);
-    var dragging = false, lx = 0, ly = 0;
-    renderer.domElement.addEventListener('pointerdown', function (e) {
-      dragging = true; lx = e.clientX; ly = e.clientY;
-      renderer.domElement.setPointerCapture(e.pointerId);
-    });
-    renderer.domElement.addEventListener('pointermove', function (e) {
-      if (!dragging) return;
-      root.rotation.z += (e.clientX - lx) * 0.005;
-      root.rotation.x += (e.clientY - ly) * 0.005;
-      lx = e.clientX; ly = e.clientY;
-    });
-    renderer.domElement.addEventListener('pointerup', function () { dragging = false; });
-    function loop() {
-      anim = requestAnimationFrame(loop);
-      var r = viewArea.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) return;
-      renderer.setSize(r.width, r.height, false);
-      camera.aspect = r.width / r.height;
-      camera.updateProjectionMatrix();
-      renderer.render(scene, camera);
-    }
-    loop();
-  }
-
-  function ringToShape(pts) {
-    var sh = new THREE.Shape();
-    if (!pts.length) return sh;
-    sh.moveTo(pts[0].x, pts[0].y);
-    for (var i = 1; i < pts.length; i++) sh.lineTo(pts[i].x, pts[i].y);
-    sh.closePath();
-    return sh;
-  }
-
-  function update3D() {
-    if (!root || !state.model) return;
-    while (root.children.length) {
-      var ch = root.children.pop();
-      if (ch.geometry) ch.geometry.dispose();
-      if (ch.material) ch.material.dispose();
-    }
-    var open = val('pOpen', 'vOpen') / 100;
-    var bands = V.buildBands(state.model, open, 0.7);
-    var axis = bands[0] && bands[0].axis ? bands[0].axis : { x: 0, y: 1, z: 0 };
-    var axisV = new THREE.Vector3(axis.x, axis.y, axis.z).normalize();
-
-    bands.forEach(function (band, i) {
-      try {
-        var outer = ringToShape(band.outer);
-        var hole = ringToShape(band.inner);
-        outer.holes.push(hole);
-        var geo = new THREE.ExtrudeGeometry(outer, { depth: band.thickness, bevelEnabled: false, curveSegments: 1 });
-        geo.translate(0, 0, -band.thickness / 2);
-        var mat = new THREE.MeshStandardMaterial({
-          color: i % 2 ? 0x5eff7e : 0x3a9a5a,
-          metalness: 0.55,
-          roughness: 0.35,
-          side: THREE.DoubleSide
-        });
-        var mesh = new THREE.Mesh(geo, mat);
-        mesh.rotation.setFromQuaternion(new THREE.Quaternion().setFromAxisAngle(axisV, band.rot));
-        root.add(mesh);
-      } catch (err) { /* skip bad band */ }
-    });
-
-    // center flat
-    if (state.model.centerCuts && state.model.centerCuts.length) {
-      var g = new THREE.Group();
-      state.model.centerCuts.forEach(function (path) {
-        if (path.length < 2) return;
-        var pts = path.map(function (p) { return new THREE.Vector3(p.x, p.y, 0.4); });
-        var curve = new THREE.BufferGeometry().setFromPoints(pts);
-        g.add(new THREE.Line(curve, new THREE.LineBasicMaterial({ color: 0x4af6ff })));
-      });
-      root.add(g);
+      put(0,'SEQEND');put(8,nm);
     }
   }
+  put(0,'ENDSEC');put(0,'EOF');
+  return L.join('\n')+'\n';
+}
+/* ==== CORE END ==== */
 
-  // ——— UI wiring ———
-  function setOuterMode(mode) {
-    state.outerMode = mode;
-    document.querySelectorAll('[data-outer]').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-outer') === mode);
-    });
-    $('editorMode').textContent = mode;
-    if (mode === 'points') ensureControlPts();
-    cDraw.classList.add('hidden');
-    rebuild();
+/* ================= APPLICAZIONE ================= */
+const P={
+  forma:'festonato',raggio:100,lobi:10,festone:0.2,larg:160,alt:120,arrot:16,lati:6,stellaK:55,
+  lisci:true,risCurva:8,
+  anelliOn:true,passo:4.5,margBordo:7,centro:45,maxAnelli:60,qualita:340,
+  freq:0,ampiezza:0,torsione:0,fase:0,
+  pontiN:2,pontiW:3,pontiFase:270,pontiSfas:0,
+  kerf:0.15,minBanda:1.2,showFrag:true,
+  disegnoOn:true,pennello:3,dModo:'contorno',soglia:0.5,sfoca:1,semplif:0.3,inverti:false,
+  dScala:1,dRot:0,dX:0,dY:0,soloCentro:true,dMarg:3,dRuolo:'taglio',
+  foroOn:true,foroD:3,foro2:false,
+  esportaMarg:8,lw:0.05,colTaglio:'#ff0000',colAnelli:'#0000ff',colDis:'#000000'
+};
+
+const S={
+  ctrl:[],outline:[],field:null,rings:[],levels:[],maxD:0,minSpacing:0,design:[],holes:[],
+  centroid:{x:0,y:0},maxR:0,sealed:0,analysis:null,bands:[],notes:[],
+  mode:'view',preview:false,drag:-1,view:{s:2.4,x:0,y:0},
+  strokes:[],raster:null,rctx:null,area:{x:-110,y:-110,w:220,h:220},
+  hasImg:false,painting:false,lastPt:null,fragCanvas:null
+};
+
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),stage=document.getElementById('stage');
+const busy=document.getElementById('busy'),hud=document.getElementById('hud');
+const diag=document.getElementById('diag'),verdict=document.getElementById('verdict');
+
+function fmt(v){return (Math.round(v*100)/100).toString();}
+function syncUI(){
+  document.querySelectorAll('[data-p]').forEach(el=>{
+    const k=el.dataset.p;
+    if(el.type==='checkbox')el.checked=!!P[k];else el.value=P[k];
+    const v=el.parentElement.querySelector('.val');
+    if(v)v.textContent=fmt(P[k]);
+  });
+  document.querySelectorAll('[data-only]').forEach(el=>{
+    el.style.display=el.dataset.only.split(' ').includes(P.forma)?'':'none';
+  });
+}
+document.querySelectorAll('[data-p]').forEach(el=>{
+  const k=el.dataset.p,inv=el.dataset.inv||'';
+  const ev=(el.type==='range'||el.type==='color')?'input':'change';
+  el.addEventListener(ev,()=>{
+    P[k]=el.type==='checkbox'?el.checked:(el.type==='number'||el.type==='range')?parseFloat(el.value):el.value;
+    const v=el.parentElement.querySelector('.val');if(v)v.textContent=fmt(P[k]);
+    if(k==='forma'){syncUI();rebuildCtrl();return;}
+    if(inv==='shape')schedule(rebuildShape);
+    else if(inv==='rings')schedule(rebuildRings);
+    else if(inv==='design')schedule(rebuildDesign);
+    else if(inv==='check')schedule(runCheck);
+    else draw();
+  });
+});
+document.querySelectorAll('[data-sec]>h2').forEach(h=>{
+  h.addEventListener('click',()=>{
+    const s=h.parentElement;s.classList.toggle('open');
+    h.querySelector('span').textContent=s.classList.contains('open')?'−':'+';
+  });
+});
+
+/* ---- geometrie ---- */
+function rebuildCtrl(){
+  const r=P.raggio;
+  if(P.forma==='festonato')S.ctrl=makeScallop(0,0,r,P.lobi,P.festone,4);
+  else if(P.forma==='cerchio')S.ctrl=makeCircle(0,0,r,12);
+  else if(P.forma==='rettangolo')S.ctrl=makeRect(0,0,P.larg,P.alt,P.arrot,4);
+  else if(P.forma==='poligono')S.ctrl=makePoly(0,0,r,P.lati);
+  else S.ctrl=makeStar(0,0,r,P.lati,P.stellaK/100);
+  rebuildShape();fitView();
+}
+function outlineFrom(ctrl){
+  if(ctrl.length<3)return ctrl.slice();
+  return P.lisci?catmullClosed(ctrl,P.risCurva):ctrl.slice();
+}
+function rebuildShape(){
+  S.outline=outlineFrom(S.ctrl);
+  if(S.outline.length<3){draw();return;}
+  S.centroid=polyCentroid(S.outline);
+  const bb=bbox(S.outline);
+  S.maxR=0;
+  for(const q of S.outline)S.maxR=Math.max(S.maxR,Math.hypot(q.x-S.centroid.x,q.y-S.centroid.y));
+  if(!S.hasImg&&!S.strokes.length){
+    const pad=6,na={x:bb.x0-pad,y:bb.y0-pad,w:bb.w+pad*2,h:bb.h+pad*2};
+    if(Math.abs(na.w-S.area.w)>0.5||Math.abs(na.h-S.area.h)>0.5||Math.abs(na.x-S.area.x)>0.5||Math.abs(na.y-S.area.y)>0.5){
+      S.area=na;S.raster=null;S.rctx=null;
+    }
   }
-  document.querySelectorAll('[data-outer]').forEach(function (b) {
-    b.addEventListener('click', function () { setOuterMode(b.getAttribute('data-outer')); });
-  });
+  const cell=Math.max(bb.w,bb.h)/P.qualita;
+  const fieldPoly=S.outline.length>460?resampleClosed(S.outline,460):S.outline;
+  S.field=buildField(fieldPoly,cell,cell*3);
+  rebuildRings();
+}
+function rebuildRings(){
+  if(!S.field){draw();return;}
+  const r=buildRings(S.field,P,S.centroid);
+  S.rings=r.paths;S.levels=r.levels;S.maxD=r.maxD;S.minSpacing=r.minSpacing;S.sealed=r.sealed;
+  S.holes=[];
+  if(P.foroOn){
+    const band=Math.min(P.margBordo,S.maxD);
+    const angs=[P.pontiFase*Math.PI/180];
+    if(P.foro2&&P.pontiN>=2)angs.push(P.pontiFase*Math.PI/180+TAU/P.pontiN);
+    for(const a of angs){
+      const c=pointAtLevel(S.field,S.centroid,a,band*0.5,S.maxR*1.2);
+      if(c)S.holes.push({pts:makeCircle(c.x,c.y,P.foroD/2,40),closed:true});
+    }
+  }
+  rebuildDesign();
+}
+function ensureRaster(){
+  if(S.raster)return;
+  const c=document.createElement('canvas');
+  c.width=820;c.height=Math.max(40,Math.round(820*S.area.h/S.area.w));
+  S.raster=c;S.rctx=c.getContext('2d',{willReadFrequently:true});
+  S.rctx.fillStyle='#fff';S.rctx.fillRect(0,0,c.width,c.height);
+  S.rctx.lineCap='round';S.rctx.lineJoin='round';
+}
+function m2r(p){ensureRaster();return{x:(p.x-S.area.x)/S.area.w*S.raster.width,y:(p.y-S.area.y)/S.area.h*S.raster.height};}
+function paintSeg(a,b,erase){
+  ensureRaster();
+  const A=m2r(a),B=m2r(b);
+  const w=P.pennello/S.area.w*S.raster.width;
+  S.rctx.strokeStyle=erase?'#fff':'#000';
+  S.rctx.lineWidth=Math.max(1,erase?w*1.6:w);
+  S.rctx.beginPath();S.rctx.moveTo(A.x,A.y);S.rctx.lineTo(B.x,B.y);S.rctx.stroke();
+}
+function clearRaster(){S.raster=null;S.strokes=[];S.hasImg=false;ensureRaster();schedule(rebuildDesign);}
+function rebuildDesign(){
+  S.design=[];
+  if(!P.disegnoOn||!S.field){runCheck();return;}
+  let polys=[];
+  if(P.dModo==='centro'&&!S.hasImg){
+    polys=S.strokes.filter(s=>s.length>1).map(s=>({pts:dp(s,P.semplif),closed:false}));
+  }else if(S.raster){
+    const w=S.raster.width,h=S.raster.height;
+    const img=S.rctx.getImageData(0,0,w,h).data;
+    let buf=new Float32Array(w*h);
+    for(let i=0,n=w*h;i<n;i++){
+      const g=(img[i*4]*0.299+img[i*4+1]*0.587+img[i*4+2]*0.114)/255;
+      const a=img[i*4+3]/255;
+      buf[i]=P.inverti?(g*a+(1-a)):(1-(g*a+(1-a)));
+    }
+    buf=boxBlur(buf,w,h,P.sfoca|0);
+    const cell=S.area.w/w;
+    const loops=marchingSquares(buf,w,h,S.area.x,S.area.y,cell,P.soglia);
+    polys=loops.map(l=>({pts:dp(chaikin(l.pts,l.closed,1),P.semplif),closed:l.closed})).filter(l=>l.pts.length>2);
+  }
+  polys=xform(polys,S.centroid.x,S.centroid.y,P.dScala,P.dRot,P.dX,P.dY);
+  const inner=(P.soloCentro&&S.levels.length)?S.levels[S.levels.length-1]:0;
+  S.design=clipByField(polys,S.field,inner+P.dMarg);
+  runCheck();
+}
 
-  ['pSize','pLobes','pDepth','pRes','pCorner','pRingH','pRings','pKerf','pAxis','pBridge','pHang','pOpen'].forEach(function (id) {
-    var map = {
-      pSize:'vSize', pLobes:'vLobes', pDepth:'vDepth', pRes:'vRes', pCorner:'vCorner',
-      pRingH:'vRingH', pRings:'vRings', pKerf:'vKerf', pAxis:'vAxis', pBridge:'vBridge',
-      pHang:'vHang', pOpen:'vOpen'
-    };
-    bindRange(id, map[id], function () {
-      if (id === 'pOpen') update3D();
-      else rebuild();
+/* ---- verifica ---- */
+function allCuts(){
+  const c=[];
+  if(S.outline.length>2)c.push({pts:S.outline,closed:true});
+  for(const h of S.holes)c.push(h);
+  for(const r of S.rings)c.push(r);
+  if(P.dRuolo==='taglio')for(const d of S.design)c.push(d);
+  return c;
+}
+function runCheck(){
+  S.notes=[];S.analysis=null;S.bands=[];S.fragCanvas=null;
+  if(!S.field||S.outline.length<3){draw();return;}
+  // la cella deve stare almeno 4 volte dentro la feature netta piu sottile,
+  // altrimenti le bande si spezzano nel raster e la verifica mente
+  const feat=Math.min(P.passo,P.pontiW,P.margBordo,S.minSpacing)-P.kerf;
+  let cell=clamp(feat/4,0.15,1.2);
+  const bb0=bbox(S.outline);
+  while((bb0.w/cell)*(bb0.h/cell)>900000)cell*=1.25;
+  const an=analyzePiece(S.field,allCuts(),{cell,kerf:P.kerf});
+  S.analysis=an;
+  const probe=pointAtLevel(S.field,S.centroid,P.pontiFase*Math.PI/180+0.35,P.margBordo*0.5,S.maxR*1.2);
+  let mainId=probe?labelAt(an,probe.x,probe.y):0;
+  if(!mainId){let ba=-1;for(const c of an.comps)if(c.area>ba){ba=c.area;mainId=c.id;}}
+  an.mainId=mainId;
+  const minA=Math.max(1,cell*cell*3);
+  const waste=new Set();          // gli sfridi dei fori sono rifiuto voluto
+  for(const hl of S.holes){
+    const b=bbox(hl.pts);
+    const l=labelAt(an,(b.x0+b.x1)/2,(b.y0+b.y1)/2);
+    if(l&&l!==mainId)waste.add(l);
+  }
+  an.frags=an.comps.filter(c=>c.id!==mainId&&c.area>=minA&&!waste.has(c.id));
+  S.bands=bandStatus(an,S.field,S.centroid,S.levels,P,S.maxR*1.2,mainId);
+  const looseBands=S.bands.filter(b=>!b.ok).length;
+  const hasDesignCuts=P.dRuolo==='taglio'&&S.design.length>0;
+
+  const webNet=P.passo-P.kerf,bridgeNet=P.pontiW-P.kerf,bandNet=P.margBordo-P.kerf;
+  const spacingNet=S.minSpacing-P.kerf;
+  if(looseBands>0)S.notes.push(['bad',looseBands+' bande su '+S.bands.length+' si staccano dal corpo']);
+  else if(an.frags.length===0)S.notes.push(['ok','pezzo unico, tutte le bande in presa']);
+  else S.notes.push(['ok','tutte le bande in presa']);
+  if(an.frags.length)S.notes.push([hasDesignCuts?'warn':'bad',
+    an.frags.length+' frammenti liberi ('+fmt(an.frags.reduce((s,c)=>s+c.area,0))+' mm²)'+(hasDesignCuts?', verifica che siano gli sfridi del disegno':'')]);
+  if(webNet<P.minBanda)S.notes.push(['bad','banda fra anelli '+fmt(webNet)+' mm, sotto il minimo']);
+  if(S.minSpacing<P.passo-1e-6&&spacingNet<P.minBanda)S.notes.push(['bad','la modulazione strozza la banda a '+fmt(spacingNet)+' mm']);
+  if(bridgeNet<P.minBanda)S.notes.push(['bad','razza '+fmt(bridgeNet)+' mm, sotto il minimo']);
+  if(bandNet<P.minBanda)S.notes.push(['warn','banda esterna '+fmt(bandNet)+' mm molto sottile']);
+  if(P.foroOn&&P.foroD+2*P.minBanda>P.margBordo)S.notes.push(['warn','il foro lascia meno di '+fmt(P.minBanda)+' mm per lato nella banda esterna']);
+  if(P.pontiN<1)S.notes.push(['bad','nessuna razza: ogni corona cade via']);
+  if(S.sealed>0)S.notes.push(['bad',S.sealed+' anelli chiusi senza varco: su questa sagoma qualche anello si spezza in più contorni e le razze non li intercettano tutti']);
+  if(P.pontiN===1)S.notes.push(['warn','una sola razza: il pezzo tiene, ma le lamelle restano appese da un lato']);
+  if(P.pontiN>3)S.notes.push(['warn',P.pontiN+' razze irrigidiscono il pezzo, ruoterà poco']);
+
+  if(an.frags.length&&P.showFrag){
+    const ids=new Set(an.frags.map(f=>f.id));
+    const c=document.createElement('canvas');c.width=an.nx;c.height=an.ny;
+    const g=c.getContext('2d'),im=g.createImageData(an.nx,an.ny);
+    for(let i=0;i<an.nx*an.ny;i++)if(ids.has(an.lab[i])){
+      im.data[i*4]=255;im.data[i*4+1]=196;im.data[i*4+2]=107;im.data[i*4+3]=155;
+    }
+    g.putImageData(im,0,0);S.fragCanvas=c;
+  }
+  renderDiag();
+  draw();
+}
+function renderDiag(){
+  const an=S.analysis;
+  if(!an){diag.innerHTML='—';verdict.innerHTML='';return;}
+  const rows=[
+    ['anelli',S.levels.length],
+    ['bande in presa',S.bands.filter(b=>b.ok).length+'/'+S.bands.length],
+    ['banda peggiore',S.bands.length?fmt(100*(1-Math.max(...S.bands.map(b=>b.frac))))+' %':'—'],
+    ['frammenti liberi',an.frags.length],
+    ['banda netta',fmt(P.passo-P.kerf)+' mm'],
+    ['razza netta',fmt(P.pontiW-P.kerf)+' mm'],
+    ['anelli senza varco',S.sealed],
+    ['passo minimo',fmt(S.minSpacing-P.kerf)+' mm']
+  ];
+  let h='';
+  for(const[a,b]of rows)h+='<div class="kv"><span>'+a+'</span><b>'+b+'</b></div>';
+  for(const[cls,msg]of S.notes)h+='<div class="note '+cls+'">'+(cls==='ok'?'✓ ':'⚠ ')+msg+'</div>';
+  diag.innerHTML=h;
+  const bad=S.notes.some(n=>n[0]==='bad'),warn=S.notes.some(n=>n[0]==='warn');
+  verdict.innerHTML=bad?'<span class="bad">NON FATTIBILE</span>':warn?'<span class="warn">FATTIBILE CON RISERVA</span>':'<span class="ok">FATTIBILE</span>';
+}
+
+/* ---- debounce ---- */
+let tmr=null,pend=null;
+function schedule(fn){
+  pend=fn;busy.classList.add('on');
+  clearTimeout(tmr);
+  tmr=setTimeout(()=>{const f=pend;pend=null;try{f();}finally{busy.classList.remove('on');}},110);
+}
+
+/* ---- vista ---- */
+function fitView(){
+  if(!S.outline.length)return;
+  const bb=bbox(S.outline);
+  const w=stage.clientWidth,h=stage.clientHeight;
+  S.view.s=Math.min(w/(bb.w+40),h/(bb.h+40));
+  S.view.x=w/2-(bb.x0+bb.w/2)*S.view.s;
+  S.view.y=h/2-(bb.y0+bb.h/2)*S.view.s;
+  draw();
+}
+const toScr=p=>({x:p.x*S.view.s+S.view.x,y:p.y*S.view.s+S.view.y});
+const toMod=(x,y)=>({x:(x-S.view.x)/S.view.s,y:(y-S.view.y)/S.view.s});
+function resize(){
+  const r=stage.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);
+  cv.width=r.width*dpr;cv.height=r.height*dpr;
+  cv.style.width=r.width+'px';cv.style.height=r.height+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+addEventListener('resize',resize);
+function strokePath(p,col,w){
+  if(p.pts.length<2)return;
+  ctx.strokeStyle=col;ctx.lineWidth=w;
+  ctx.beginPath();
+  p.pts.forEach((q,i)=>{const s=toScr(q);i?ctx.lineTo(s.x,s.y):ctx.moveTo(s.x,s.y);});
+  if(p.closed)ctx.closePath();
+  ctx.stroke();
+}
+function draw(){
+  const dpr=Math.min(2,devicePixelRatio||1);
+  const w=cv.width/dpr,h=cv.height/dpr;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#070907';ctx.fillRect(0,0,w,h);
+  if(S.outline.length){
+    const bb=bbox(S.outline),m=P.esportaMarg;
+    const a=toScr({x:bb.x0-m,y:bb.y0-m}),b=toScr({x:bb.x1+m,y:bb.y1+m});
+    ctx.strokeStyle='#152015';ctx.lineWidth=1;ctx.strokeRect(a.x,a.y,b.x-a.x,b.y-a.y);
+  }
+  if(!S.preview&&S.raster&&P.disegnoOn){
+    const a=toScr({x:S.area.x,y:S.area.y});
+    ctx.globalAlpha=0.14;
+    ctx.drawImage(S.raster,a.x,a.y,S.area.w*S.view.s,S.area.h*S.view.s);
+    ctx.globalAlpha=1;
+  }
+  if(S.fragCanvas&&P.showFrag){
+    const an=S.analysis,a=toScr({x:an.x0,y:an.y0});
+    ctx.imageSmoothingEnabled=false;
+    ctx.drawImage(S.fragCanvas,a.x,a.y,an.nx*an.cell*S.view.s,an.ny*an.cell*S.view.s);
+    ctx.imageSmoothingEnabled=true;
+  }
+  ctx.lineJoin='round';ctx.lineCap='round';
+  for(const r of S.rings)strokePath(r,S.preview?P.colAnelli:'#4aa3e0',1.1);
+  for(const d of S.design)strokePath(d,S.preview?P.colDis:(P.dRuolo==='taglio'?'#ff8a6b':'#d8ead9'),1);
+  if(S.outline.length>2)strokePath({pts:S.outline,closed:true},S.preview?P.colTaglio:'#5ffb9a',1.6);
+  for(const hl of S.holes)strokePath(hl,S.preview?P.colTaglio:'#5ffb9a',1.4);
+  if(S.mode==='shape'){
+    S.ctrl.forEach((p,i)=>{
+      const s=toScr(p);
+      ctx.fillStyle=i===S.drag?'#fff':'#5ffb9a';
+      ctx.fillRect(s.x-3.5,s.y-3.5,7,7);
     });
-  });
-  $('pLaserPrev').addEventListener('change', drawFlat);
+  }
+  if(S.mode==='draw'||S.mode==='erase'){
+    const a=toScr({x:S.area.x,y:S.area.y});
+    ctx.strokeStyle='#243424';ctx.setLineDash([4,4]);
+    ctx.strokeRect(a.x,a.y,S.area.w*S.view.s,S.area.h*S.view.s);
+    ctx.setLineDash([]);
+  }
+  updHud();
+}
+function updHud(){
+  let L=polyLength(S.outline,true);
+  for(const hl of S.holes)L+=polyLength(hl.pts,true);
+  for(const r of S.rings)L+=polyLength(r.pts,r.closed);
+  let Ld=0;for(const d of S.design)Ld+=polyLength(d.pts,d.closed);
+  const bb=S.outline.length?bbox(S.outline):{w:0,h:0};
+  hud.innerHTML='modo <b>'+S.mode+'</b> · ingombro <b>'+fmt(bb.w)+'×'+fmt(bb.h)+'</b> mm<br>'+
+    'anelli <b>'+S.levels.length+'</b> · archi <b>'+S.rings.length+'</b> · punti controllo <b>'+S.ctrl.length+'</b><br>'+
+    'taglio <b>'+fmt(L/10)+'</b> cm · disegno <b>'+fmt(Ld/10)+'</b> cm';
+}
 
-  $('tabPng').addEventListener('click', function () {
-    $('tabPng').classList.add('on'); $('tabDraw').classList.remove('on');
-    $('centerPng').classList.remove('hidden'); $('centerDraw').classList.add('hidden');
-    cDraw.classList.add('hidden');
-  });
-  $('tabDraw').addEventListener('click', function () {
-    $('tabDraw').classList.add('on'); $('tabPng').classList.remove('on');
-    $('centerDraw').classList.remove('hidden'); $('centerPng').classList.add('hidden');
-    cDraw.classList.remove('hidden');
-    redrawDrawLayer();
-  });
-  $('bPen').addEventListener('click', function () {
-    state.drawTool = 'pen'; $('bPen').classList.add('on'); $('bEraser').classList.remove('on');
-  });
-  $('bEraser').addEventListener('click', function () {
-    state.drawTool = 'eraser'; $('bEraser').classList.add('on'); $('bPen').classList.remove('on');
-  });
-  bindRange('pBrush', 'vBrush', redrawDrawLayer);
-  bindRange('pThr', 'vThr', function () {});
-  $('bClearDraw').addEventListener('click', function () { state.drawStrokes = []; redrawDrawLayer(); });
-  $('bStrokeVec').addEventListener('click', function () {
-    // map screen strokes to world using current transform
-    if (!state.model) return;
-    var T = viewTransform(state.model);
-    var worldStrokes = state.drawStrokes.map(function (s) {
-      return s.map(function (p) { return T.toWorld(p.x, p.y); });
-    });
-    state.centerPaths = V.strokesToPaths(worldStrokes, 0.6);
-    rebuild();
-  });
-  $('bClearCenter').addEventListener('click', function () {
-    state.centerPaths = [];
-    state.drawStrokes = [];
-    redrawDrawLayer();
-    rebuild();
-  });
+/* ---- interazione ---- */
+function setMode(m){
+  S.mode=m;
+  document.querySelectorAll('#top button[data-act^=mode]').forEach(b=>b.classList.remove('on'));
+  const map={view:'mode-view',shape:'mode-shape',free:'mode-free',draw:'mode-draw',erase:'mode-erase'};
+  const b=document.querySelector('#top button[data-act="'+map[m]+'"]');if(b)b.classList.add('on');
+  draw();
+}
+let panning=false,panLast=null,freePts=null;
+cv.addEventListener('pointerdown',e=>{
+  try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+  const m=toMod(px,py);
+  if(e.button===1||e.shiftKey||S.mode==='view'){panning=true;panLast={x:px,y:py};return;}
+  if(S.mode==='shape'){
+    let bi=-1,bd=12;
+    S.ctrl.forEach((p,i)=>{const s=toScr(p),d=Math.hypot(s.x-px,s.y-py);if(d<bd){bd=d;bi=i;}});
+    if(bi>=0){
+      if(e.altKey&&S.ctrl.length>3){S.ctrl.splice(bi,1);schedule(rebuildShape);return;}
+      S.drag=bi;draw();return;
+    }
+    let seg=-1,sd=Infinity;
+    for(let i=0;i<S.ctrl.length;i++){
+      const a=toScr(S.ctrl[i]),b=toScr(S.ctrl[(i+1)%S.ctrl.length]);
+      const dx=b.x-a.x,dy=b.y-a.y,dd=dx*dx+dy*dy;
+      let t=dd>0?((px-a.x)*dx+(py-a.y)*dy)/dd:0;t=clamp(t,0,1);
+      const d=Math.hypot(a.x+dx*t-px,a.y+dy*t-py);
+      if(d<sd){sd=d;seg=i;}
+    }
+    if(seg>=0&&sd<22){S.ctrl.splice(seg+1,0,m);S.drag=seg+1;draw();}
+    return;
+  }
+  if(S.mode==='free'){freePts=[m];return;}
+  if(S.mode==='draw'||S.mode==='erase'){
+    S.painting=true;S.lastPt=m;
+    if(S.mode==='draw')S.strokes.push([m]);
+    paintSeg(m,{x:m.x+0.01,y:m.y},S.mode==='erase');
+    draw();return;
+  }
+});
+cv.addEventListener('pointermove',e=>{
+  const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+  const m=toMod(px,py);
+  if(panning){S.view.x+=px-panLast.x;S.view.y+=py-panLast.y;panLast={x:px,y:py};draw();return;}
+  if(S.mode==='shape'&&S.drag>=0){S.ctrl[S.drag]=m;S.outline=outlineFrom(S.ctrl);draw();return;}
+  if(S.mode==='free'&&freePts){
+    const l=freePts[freePts.length-1];
+    if(Math.hypot(m.x-l.x,m.y-l.y)>1.5){
+      freePts.push(m);
+      ctx.strokeStyle='#5ffb9a';ctx.lineWidth=1.4;
+      const a=toScr(l),b=toScr(m);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    }
+    return;
+  }
+  if(S.painting){
+    if(Math.hypot(m.x-S.lastPt.x,m.y-S.lastPt.y)<0.4)return;
+    paintSeg(S.lastPt,m,S.mode==='erase');
+    if(S.mode==='draw')S.strokes[S.strokes.length-1].push(m);
+    else eraseStrokes(m,P.pennello*0.9);
+    S.lastPt=m;draw();return;
+  }
+});
+function eraseStrokes(c,r){
+  const out=[];
+  for(const s of S.strokes){
+    let cur=null;
+    for(const q of s){
+      if(Math.hypot(q.x-c.x,q.y-c.y)>r){(cur||(cur=[])).push(q);}
+      else{if(cur&&cur.length>1)out.push(cur);cur=null;}
+    }
+    if(cur&&cur.length>1)out.push(cur);
+  }
+  S.strokes=out;
+}
+function endPointer(){
+  if(panning)panning=false;
+  if(S.drag>=0){S.drag=-1;schedule(rebuildShape);}
+  if(freePts){
+    if(freePts.length>8){
+      const n=clamp(Math.round(polyLength(freePts,true)/6),6,90);
+      S.ctrl=resampleClosed(freePts,n);
+      schedule(rebuildShape);
+    }else draw();
+    freePts=null;
+  }
+  if(S.painting){S.painting=false;schedule(rebuildDesign);}
+}
+cv.addEventListener('pointerup',endPointer);
+cv.addEventListener('pointercancel',endPointer);
+cv.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+  if(e.ctrlKey||e.metaKey){
+    const before=toMod(px,py);
+    S.view.s=clamp(S.view.s*Math.exp(-e.deltaY*0.01),0.15,60);
+    const after=toMod(px,py);
+    S.view.x+=(after.x-before.x)*S.view.s;
+    S.view.y+=(after.y-before.y)*S.view.s;
+  }else{S.view.x-=e.deltaX;S.view.y-=e.deltaY;}
+  draw();
+},{passive:false});
 
-  $('bLoadPng').addEventListener('click', function () { $('filePng').click(); });
-  $('filePng').addEventListener('change', function (e) {
-    var f = e.target.files && e.target.files[0];
-    if (!f) return;
-    var img = new Image();
-    img.onload = function () {
-      var c = document.createElement('canvas');
-      var max = 512;
-      var sc = Math.min(1, max / Math.max(img.width, img.height));
-      c.width = Math.round(img.width * sc);
-      c.height = Math.round(img.height * sc);
-      var cx = c.getContext('2d');
-      cx.fillStyle = '#fff';
-      cx.fillRect(0, 0, c.width, c.height);
-      cx.drawImage(img, 0, 0, c.width, c.height);
-      window._ventolinoImg = cx.getImageData(0, 0, c.width, c.height);
-      $('bTrace').textContent = 'VETTORIZZA (' + c.width + '×' + c.height + ')';
-    };
-    img.src = URL.createObjectURL(f);
-  });
-  $('bTrace').addEventListener('click', function () {
-    if (!window._ventolinoImg || !state.model) return;
-    var paths = V.traceBitmap(window._ventolinoImg, {
-      threshold: val('pThr'),
-      invert: $('pInv').checked,
-      simplify: 1.4,
-      maxPaths: 20
-    });
-    // pixel → normalize around 0
-    var w = window._ventolinoImg.width, h = window._ventolinoImg.height;
-    state.centerPaths = paths.map(function (path) {
-      return path.map(function (p) {
-        return { x: p.x - w / 2, y: p.y - h / 2 };
-      });
-    });
-    rebuild();
-  });
+/* ---- azioni ---- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const a=b.dataset.act;
+  if(a==='mode-view')setMode('view');
+  else if(a==='mode-shape')setMode('shape');
+  else if(a==='mode-free')setMode('free');
+  else if(a==='mode-draw'){ensureRaster();setMode('draw');}
+  else if(a==='mode-erase'){ensureRaster();setMode('erase');}
+  else if(a==='reset-shape')rebuildCtrl();
+  else if(a==='fit')fitView();
+  else if(a==='clear-draw')clearRaster();
+  else if(a==='load-png')document.getElementById('file').click();
+  else if(a==='toggle-preview'){S.preview=!S.preview;b.classList.toggle('on',S.preview);draw();}
+  else if(a==='pdf'||a==='svg'||a==='dxf')exportFile(a);
+});
+document.getElementById('file').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const img=new Image();
+  img.onload=()=>{
+    ensureRaster();
+    const c=S.raster,x=S.rctx;
+    x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+    const s=Math.min(c.width/img.width,c.height/img.height)*0.92;
+    const w=img.width*s,h=img.height*s;
+    x.drawImage(img,(c.width-w)/2,(c.height-h)/2,w,h);
+    S.hasImg=true;S.strokes=[];
+    P.dModo='contorno';syncUI();
+    schedule(rebuildDesign);
+    URL.revokeObjectURL(img.src);
+  };
+  img.src=URL.createObjectURL(f);
+  e.target.value='';
+});
 
-  $('bFlat').addEventListener('click', function () {
-    state.view3d = false;
-    $('bFlat').classList.add('on'); $('bOpen3d').classList.remove('on');
-  });
-  $('bOpen3d').addEventListener('click', function () {
-    state.view3d = true;
-    $('bOpen3d').classList.add('on'); $('bFlat').classList.remove('on');
-    update3D();
-  });
+/* ---- export ---- */
+function collectLayers(){
+  const cut=[];
+  if(S.outline.length>2)cut.push({pts:S.outline,closed:true});
+  for(const h of S.holes)cut.push(h);
+  const dis=S.design.map(d=>({pts:d.pts,closed:d.closed}));
+  const layers=[{name:'taglio',color:P.colTaglio,paths:cut},{name:'anelli',color:P.colAnelli,paths:S.rings}];
+  if(P.dRuolo==='taglio')layers[0].paths=cut.concat(dis);
+  else layers.push({name:'disegno',color:P.colDis,paths:dis});
+  return layers;
+}
+function exportFile(kind){
+  if(S.outline.length<3){alert('Nessuna sagoma da esportare.');return;}
+  const bad=S.notes.filter(n=>n[0]==='bad');
+  if(bad.length&&!confirm('La verifica segnala problemi:\n\n'+bad.map(n=>'· '+n[1]).join('\n')+'\n\nEsportare lo stesso?'))return;
+  const bb=bbox(S.outline),m=P.esportaMarg;
+  const opt={ox:bb.x0-m,oy:bb.y0-m,pageW:bb.w+2*m,pageH:bb.h+2*m,lw:P.lw};
+  const layers=collectLayers();
+  let data,mime,ext;
+  if(kind==='pdf'){data=buildPDF(layers,opt);mime='application/pdf';ext='pdf';}
+  else if(kind==='svg'){data=buildSVG(layers,opt);mime='image/svg+xml';ext='svg';}
+  else{data=buildDXF(layers,opt);mime='application/dxf';ext='dxf';}
+  const blob=new Blob([data],{type:mime});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  const st=new Date().toISOString().slice(0,19).replace(/[:T-]/g,'');
+  a.href=url;a.download='ventolino_'+st+'.'+ext;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
 
-  $('bSvg').addEventListener('click', function () {
-    if (!state.model || !state.model.ok) { alert('Modello non valido — correggi gli errori'); return; }
-    var svg = V.modelToSVG(state.model, { title: 'ventolino' });
-    V.downloadText('ventolino.svg', svg, 'image/svg+xml');
-  });
-  $('bPdf').addEventListener('click', function () {
-    if (!state.model || !state.model.ok) { alert('Modello non valido — correggi gli errori'); return; }
-    var pdf = V.modelToPDF(state.model, { title: 'ventolino' });
-    V.downloadPdf('ventolino.pdf', pdf);
-  });
-
-  $('bSalva').addEventListener('click', function () {
-    var cfg = {
-      outerMode: state.outerMode,
-      controlPts: state.controlPts,
-      outerPts: state.outerPts,
-      centerPaths: state.centerPaths,
-      params: {
-        size: val('pSize'), lobes: val('pLobes'), depth: val('pDepth'), res: val('pRes'),
-        corner: val('pCorner'), ringH: val('pRingH'), rings: val('pRings'), kerf: val('pKerf'),
-        axis: val('pAxis'), bridge: val('pBridge'), hang: val('pHang')
-      }
-    };
-    V.downloadText('ventolino-config.json', JSON.stringify(cfg), 'application/json');
-  });
-  $('bCarica').addEventListener('click', function () { $('fileCfg').click(); });
-  $('fileCfg').addEventListener('change', function (e) {
-    var f = e.target.files && e.target.files[0];
-    if (!f) return;
-    var reader = new FileReader();
-    reader.onload = function () {
-      try {
-        var cfg = JSON.parse(reader.result);
-        if (cfg.params) {
-          $('pSize').value = cfg.params.size; $('pLobes').value = cfg.params.lobes;
-          $('pDepth').value = cfg.params.depth; $('pRes').value = cfg.params.res;
-          $('pCorner').value = cfg.params.corner; $('pRingH').value = cfg.params.ringH;
-          $('pRings').value = cfg.params.rings; $('pKerf').value = cfg.params.kerf;
-          $('pAxis').value = cfg.params.axis; $('pBridge').value = cfg.params.bridge;
-          $('pHang').value = cfg.params.hang;
-        }
-        state.controlPts = cfg.controlPts || null;
-        state.outerPts = cfg.outerPts || null;
-        state.centerPaths = cfg.centerPaths || [];
-        setOuterMode(cfg.outerMode || 'scallop');
-      } catch (err) { alert('JSON non valido'); }
-    };
-    reader.readAsText(f);
-  });
-
-  window.addEventListener('resize', function () {
-    resizeCanvases();
-    update3D();
-  });
-
-  init3D();
-  setOuterMode('scallop');
-  resizeCanvases();
-  rebuild();
-})();
+syncUI();
+rebuildCtrl();
+resize();
+setMode('view');
 </script>
 </body>
 </html>
