@@ -42,6 +42,9 @@ tools/
 └── venatura/
     ├── tool.html           ← voronoi anisotropo · PNG/SVG/STL
     └── preview.jpg
+└── quinconce/
+    ├── tool.html           ← muri coltivazione argilla · STL
+    └── preview.jpg
 ```
 
 ## aggiornare un tool

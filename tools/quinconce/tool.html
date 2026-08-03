@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<script src="../_mirror.js"></script>
+<title>QUINCONCE // DOCTNASA&MRBORG</title>
+<style>
+:root{
+  --bg:#050705; --panel:#0a0d0a; --line:#1b241c;
+  --fg:#7CFF9B; --fg-dim:#3e6b4a; --fg-faint:#22402c;
+  --warn:#ffcf7c; --clay:#e8e2d4;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:'Courier New',Courier,monospace; font-size:12px;
+  display:flex; flex-direction:column;
+}
+header{
+  display:flex; align-items:baseline; gap:14px;
+  padding:10px 16px; border-bottom:1px solid var(--line);
+  flex-shrink:0;
+}
+header h1{font-size:15px; letter-spacing:.35em; font-weight:bold}
+header .sub{color:var(--fg-dim); font-size:11px; letter-spacing:.06em}
+#tabs{margin-left:auto; display:flex; gap:8px}
+.tab{
+  background:none; border:1px solid var(--fg-dim); color:var(--fg-dim);
+  font:inherit; letter-spacing:.2em; padding:4px 14px; cursor:pointer;
+}
+.tab.on{border-color:var(--fg); color:var(--fg); background:var(--fg-faint)}
+#main{flex:1; display:flex; min-height:0}
+#side{
+  width:296px; flex-shrink:0; overflow-y:auto;
+  border-right:1px solid var(--line); background:var(--panel);
+  padding:10px 14px 90px;
+}
+#side::-webkit-scrollbar{width:6px}
+#side::-webkit-scrollbar-thumb{background:var(--fg-faint)}
+details{border-bottom:1px solid var(--line); padding:6px 0}
+summary{
+  cursor:pointer; letter-spacing:.25em; color:var(--fg);
+  font-weight:bold; padding:4px 0; list-style:none; user-select:none;
+}
+summary::before{content:'▸ '; color:var(--fg-dim)}
+details[open] summary::before{content:'▾ '}
+.row{display:flex; align-items:center; gap:8px; margin:7px 0}
+.row label{flex:1; color:var(--fg-dim); letter-spacing:.05em; font-size:11px}
+.row .val{width:52px; text-align:right; color:var(--fg); font-size:11px}
+input[type=range]{
+  flex:1.2; -webkit-appearance:none; appearance:none; height:2px;
+  background:var(--fg-faint); outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:10px; height:10px;
+  background:var(--fg); cursor:pointer;
+}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;background:var(--fg);border:0;cursor:pointer}
+input[type=checkbox]{accent-color:var(--fg)}
+input[type=number], input[type=text]{
+  background:var(--bg); border:1px solid var(--fg-dim); color:var(--fg);
+  font:inherit; width:64px; padding:2px 4px; text-align:right;
+}
+select{
+  background:var(--bg); border:1px solid var(--fg-dim); color:var(--fg);
+  font:inherit; padding:2px 4px;
+}
+#viewport{flex:1; position:relative; min-width:0}
+canvas{display:block}
+#stats{
+  position:absolute; top:12px; right:14px; text-align:right;
+  color:var(--fg-dim); font-size:11px; line-height:1.7; pointer-events:none;
+  text-shadow:0 0 6px #000;
+}
+#stats b{color:var(--fg); font-weight:normal}
+#actions{
+  position:fixed; bottom:0; left:0; width:296px;
+  background:var(--panel); border-top:1px solid var(--line);
+  border-right:1px solid var(--line); padding:10px 14px;
+  display:flex; flex-direction:column; gap:6px;
+}
+button.act{
+  background:none; border:1px solid var(--fg); color:var(--fg);
+  font:inherit; letter-spacing:.18em; padding:7px 0; cursor:pointer;
+}
+button.act:hover{background:var(--fg-faint)}
+button.act:disabled{border-color:var(--fg-faint); color:var(--fg-faint); cursor:wait}
+button.act.sec{border-color:var(--fg-dim); color:var(--fg-dim)}
+#status{
+  padding:5px 16px; border-top:1px solid var(--line); flex-shrink:0;
+  color:var(--fg-dim); font-size:11px; letter-spacing:.08em;
+  display:flex; justify-content:space-between;
+}
+#status .busy{color:var(--warn)}
+.hint{color:var(--fg-faint); font-size:10px; line-height:1.5; margin:4px 0 6px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a href="../" style="color:var(--fg-dim);font-size:10px;text-decoration:none;letter-spacing:1px">← tools_index</a>
+    <h1 style="margin-top:4px">QUINCONCE</h1>
+  </div>
+  <span class="sub">muri di coltivazione e ventilazione · tasche / meandri / giroide · stampa 3D argilla</span>
+  <div id="tabs">
+    <button class="tab on" data-v="modulo">MODULO</button>
+    <button class="tab" data-v="muro">MURO</button>
+  </div>
+</header>
+
+<div id="main">
+  <div id="side">
+
+    <details open>
+      <summary>MOTIVO</summary>
+      <div class="row"><label>motivo</label>
+        <select id="motif">
+          <option value="tasche" selected>TASCHE · quilt</option>
+          <option value="meandri">MEANDRI · termite</option>
+          <option value="giroide">GIROIDE · TPMS</option>
+        </select>
+      </div>
+      <div class="hint">TASCHE: muro di coltivazione a sacche · MEANDRI: canali reazione-diffusione passanti · GIROIDE: lamina minima, doppia rete di canali interconnessi</div>
+      <div class="row"><label>forma</label>
+        <select id="forma">
+          <option value="pannello" selected>PANNELLO</option>
+          <option value="colonna">COLONNA</option>
+        </select>
+      </div>
+      <div class="row" id="rowDia" style="display:none"><label>Ø corpo mm</label><input type="range" id="dia" min="100" max="400" step="5" value="140"><span class="val" id="diav"></span></div>
+      <div class="hint" id="hintCol" style="display:none">tamburi anulari impilabili sul palo (il foro centrale è l'infilaggio) · pattern avvolto: chiusura periodica esatta · Eazao Potter 150×150×240 → resta ≤ Ø128 · h≤205 col ritiro 14.5%</div>
+    </details>
+
+    <details open id="dModulo">
+      <summary>MODULO</summary>
+      <div class="row" id="rowW"><label>larghezza mm</label><input type="range" id="W" min="200" max="600" step="10" value="400"><span class="val" id="Wv"></span></div>
+      <div class="row"><label>altezza mm</label><input type="range" id="H" min="250" max="800" step="10" value="500"><span class="val" id="Hv"></span></div>
+      <div class="row"><label>spessore pannello</label><input type="range" id="tBase" min="12" max="40" step="1" value="18"><span class="val" id="tBasev"></span></div>
+      <div class="row"><label>profondità sacche</label><input type="range" id="D" min="40" max="160" step="2" value="100"><span class="val" id="Dv"></span></div>
+      <div class="row"><label>bordo organico</label><input type="range" id="eA" min="0" max="25" step="1" value="12"><span class="val" id="eAv"></span></div>
+      <div class="row"><label>svasatura base %</label><input type="range" id="flare" min="0" max="40" step="2" value="12"><span class="val" id="flarev"></span></div>
+      <div class="hint">bordi ondulati complementari: i corsi impilati si incastrano · file dispari → il motivo continua tra i corsi</div>
+    </details>
+
+    <details open id="dTasche">
+      <summary>TASCHE</summary>
+      <div class="row"><label>colonne</label><input type="range" id="nc" min="1" max="4" step="1" value="2"><span class="val" id="ncv"></span></div>
+      <div class="row"><label>file</label><input type="range" id="nr" min="1" max="6" step="1" value="3"><span class="val" id="nrv"></span></div>
+      <div class="row"><label>sesto sfalsato</label><input type="checkbox" id="stagger" checked></div>
+      <div class="row"><label>appuntimento</label><input type="range" id="kp" min="0.8" max="3.5" step="0.1" value="1.4"><span class="val" id="kpv"></span></div>
+      <div class="row"><label>rotondità</label><input type="range" id="ku" min="1" max="4" step="0.1" value="1.4"><span class="val" id="kuv"></span></div>
+      <div class="row"><label>ventre</label><input type="range" id="belly" min="-0.5" max="0.2" step="0.05" value="-0.2"><span class="val" id="bellyv"></span></div>
+      <div class="row"><label>solco</label><input type="range" id="qn" min="1.5" max="6" step="0.25" value="3"><span class="val" id="qnv"></span></div>
+      <div class="row"><label>irregolarità %</label><input type="range" id="jit" min="0" max="25" step="1" value="0"><span class="val" id="jitv"></span></div>
+      <div class="row"><label>seed</label><input type="number" id="seed" value="7" step="1"></div>
+    </details>
+
+    <details open id="dSacca">
+      <summary>SACCA</summary>
+      <div class="row"><label>parete sacca</label><input type="range" id="tw" min="8" max="22" step="1" value="12"><span class="val" id="twv"></span></div>
+      <div class="row"><label>parete posteriore</label><input type="range" id="zb" min="5" max="14" step="1" value="7"><span class="val" id="zbv"></span></div>
+      <div class="row"><label>bocca larghezza %</label><input type="range" id="mW" min="25" max="80" step="1" value="62"><span class="val" id="mWv"></span></div>
+      <div class="row"><label>bocca altezza %</label><input type="range" id="mH" min="12" max="50" step="1" value="24"><span class="val" id="mHv"></span></div>
+      <div class="row"><label>posizione bocca</label><input type="range" id="mP" min="0.2" max="0.7" step="0.05" value="0.5"><span class="val" id="mPv"></span></div>
+      <div class="row"><label>fori drenaggio</label><input type="checkbox" id="drain" checked></div>
+      <div class="hint">la bocca si apre solo sulla parete della propria sacca (non fora le lenti sovrastanti) · la fila in cima resta a trogolo aperto, piantabile dall'alto</div>
+    </details>
+
+    <details open id="dStruttura" style="display:none">
+      <summary>STRUTTURA</summary>
+      <div class="row"><label>spessore muro</label><input type="range" id="TS" min="40" max="160" step="5" value="80"><span class="val" id="TSv"></span></div>
+      <div class="row"><label>cornice mm</label><input type="range" id="frame" min="0" max="35" step="1" value="14"><span class="val" id="framev"></span></div>
+      <div class="row"><label>fondo chiuso</label><input type="checkbox" id="closedBack"></div>
+      <div class="hint">cornice piena lungo i bordi organici: incastro e rigidezza · fondo chiuso trasforma il traforo in pannello a rilievo</div>
+    </details>
+
+    <details open id="dMeandri" style="display:none">
+      <summary>MEANDRI</summary>
+      <div class="row"><label>trama mm</label><input type="range" id="trama" min="10" max="40" step="1" value="20"><span class="val" id="tramav"></span></div>
+      <div class="row"><label>stile</label>
+        <select id="gsStyle">
+          <option value="labirinto" selected>LABIRINTO</option>
+          <option value="vermi">VERMI</option>
+          <option value="macchie">MACCHIE</option>
+        </select>
+      </div>
+      <div class="row"><label>pieni %</label><input type="range" id="thr" min="30" max="70" step="1" value="50"><span class="val" id="thrv"></span></div>
+      <div class="row"><label>inverti</label><input type="checkbox" id="invert"></div>
+      <div class="hint">pattern periodico: si raccorda tra moduli affiancati e corsi · MACCHIE→attiva inverti per fori ovali · VERMI→consigliato fondo chiuso (segmenti isolati)</div>
+    </details>
+
+    <details open id="dGiroide" style="display:none">
+      <summary>GIROIDE</summary>
+      <div class="row"><label>cella mm</label><input type="range" id="cell" min="30" max="140" step="5" value="70"><span class="val" id="cellv"></span></div>
+      <div class="row"><label>lamina mm</label><input type="range" id="lam" min="6" max="18" step="1" value="10"><span class="val" id="lamv"></span></div>
+      <div class="hint">celle intere in larghezza e altezza → il reticolo continua tra i moduli</div>
+    </details>
+
+    <details id="dFissaggio">
+      <summary>FISSAGGIO</summary>
+      <div class="row"><label>scanalature tondino</label><input type="checkbox" id="rebar" checked></div>
+      <div class="row"><label>Ø tondino mm</label><input type="range" id="rebarD" min="10" max="30" step="1" value="20"><span class="val" id="rebarDv"></span></div>
+      <div class="hint">2 gole verticali sul retro: il modulo si infila su tondini/picchetti piantati nel terreno e si impilano i corsi successivi</div>
+    </details>
+
+    <details>
+      <summary>STAMPA</summary>
+      <div class="row"><label>ritiro argilla %</label><input type="range" id="shrink" min="0" max="20" step="0.5" value="14.5"><span class="val" id="shrinkv"></span></div>
+      <div class="row"><label>risoluzione</label>
+        <select id="vox">
+          <option value="3.5">BOZZA 3.5mm</option>
+          <option value="2.5" selected>MEDIA 2.5mm</option>
+          <option value="1.8">FINE 1.8mm</option>
+        </select>
+      </div>
+      <div class="hint" id="shrinkHint"></div>
+    </details>
+
+    <details>
+      <summary>MURO</summary>
+      <div class="row"><label>moduli orizz.</label><input type="range" id="wx" min="1" max="10" step="1" value="4"><span class="val" id="wxv"></span></div>
+      <div class="row"><label>moduli vert.</label><input type="range" id="wy" min="1" max="5" step="1" value="2"><span class="val" id="wyv"></span></div>
+      <div class="row"><label>fuga mm</label><input type="range" id="gap" min="0" max="30" step="1" value="6"><span class="val" id="gapv"></span></div>
+      <div class="row"><label>corsi sfalsati</label><input type="checkbox" id="bond"></div>
+    </details>
+
+  </div>
+
+  <div id="viewport">
+    <div id="stats"></div>
+  </div>
+</div>
+
+<div id="actions">
+  <button class="act" id="btnGen">RIGENERA</button>
+  <button class="act" id="btnSTL">ESPORTA STL MODULO ▸ ritiro</button>
+  <button class="act sec" id="btnSTLwall">ESPORTA STL MURO ▸ 1:1</button>
+</div>
+
+<div id="status"><span id="statusMsg">pronto</span><span>DoctNasa&amp;MrBorg · QUINCONCE v1.0</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// [CORE-BEGIN] ─── geometria pura, testabile headless (nessun DOM) ───────────
+
+function defaultParams(){
+  return {
+    motif:'tasche', forma:'pannello', dia:140,
+    W:400, H:500, tBase:18, D:100,
+    nc:2, nr:3, stagger:true, kp:1.4, ku:1.4, belly:-0.2, qn:3, jit:0, seed:7,
+    eA:12, flare:0.12,
+    tw:12, zb:7, mW:0.62, mH:0.24, mP:0.5, drain:true, drainR:3.5,
+    rebar:true, rebarD:20,
+    TS:80, frame:14, closedBack:false,          // struttura traforata (meandri/giroide)
+    trama:20, gsStyle:'labirinto', thr:0.5, invert:false,  // meandri
+    cell:70, lam:10,                             // giroide
+    shrink:14.5, vox:2.5
+  };
+}
+
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+
+// disposizione a quinconce a tutto campo: lenti fino ai bordi, mezze tasche
+// incluse (si completano tra moduli adiacenti / corsi impilati)
+function makePockets(p,wrap){
+  const rx=p.W/(2*p.nc);
+  const ry=p.H/(p.nr+1);
+  const rnd=mulberry32(p.seed|0);
+  const j=p.jit/100;
+  const out=[];
+  for(let k=0;k<=p.nr+1;k++){          // k=0 e k=nr+1: mezze file sui bordi
+    const cy=ry*k;
+    const odd=p.stagger && (k%2===1);
+    const n=(odd&&!wrap)? p.nc+1 : p.nc; // avvolto: la lente a x=W coincide con x=0
+    for(let i=0;i<n;i++){
+      const cx=odd? 2*rx*i : rx+2*rx*i;
+      const edge=!wrap&&odd&&(i===0||i===n-1); // niente jitter sulle metà da combaciare
+      const jx=edge?0:(rnd()-0.5)*2*rx*j*0.5;
+      const jy=edge?0:(rnd()-0.5)*2*ry*j*0.4;
+      const jr=edge?0:(rnd()-0.5)*j;
+      const pk={cx:cx+jx, cy:cy+jy, rx:rx*(1+jr), ry:ry*(1+jr*0.8)};
+      pk.mouth = (pk.cy+pk.ry*p.mP+pk.ry*p.mH) < p.H-3;  // la fila in cima resta a trogolo aperto
+      pk.drain = p.drain && (pk.cy-0.5*pk.ry) > 4;
+      out.push(pk);
+    }
+  }
+  return out;
+}
+
+// lente a goccia: ventre spostato in basso (belly<0), punte in alto/basso
+function pocketShape(pk,x,y,kp,ku,belly){
+  const v=(y-pk.cy)/pk.ry;
+  if(v<=-0.999||v>=0.999) return 0;
+  const t=v<belly ? (v-belly)/(1+belly) : (v-belly)/(1-belly);
+  const w=Math.pow(Math.cos(Math.PI*t/2),kp);
+  if(w<=1e-4) return 0;
+  const u=(x-pk.cx)/pk.rx;
+  if(u<=-w||u>=w) return 0;
+  return Math.pow(Math.cos(Math.PI*u/(2*w)),ku)*w;
+}
+
+// reazione-diffusione Gray-Scott, condizioni periodiche → il motivo si
+// raccorda senza cuciture tra moduli affiancati e corsi impilati
+let _gsCache={key:'',data:null};
+function buildGS(p){
+  const key=[p.W,p.H,p.trama,p.gsStyle,p.seed].join('|');
+  if(_gsCache.key===key) return _gsCache.data;
+  const h=Math.max(1.6, p.trama/9);
+  const gw=Math.max(24, Math.round(p.W/h));
+  const gh=Math.max(24, Math.round(p.H/h));
+  const n=gw*gh;
+  let U=new Float32Array(n).fill(1), V=new Float32Array(n);
+  let U2=new Float32Array(n), V2=new Float32Array(n);
+  const rnd=mulberry32((p.seed|0)*7919+101);
+  const nSeeds=Math.max(6, Math.round(n/350));
+  for(let s=0;s<nSeeds;s++){
+    const cx=(rnd()*gw)|0, cy=(rnd()*gh)|0;
+    for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+      const i=((cy+dy+gh)%gh)*gw+((cx+dx+gw)%gw);
+      V[i]=0.9; U[i]=0.3;
+    }
+  }
+  const styles={labirinto:[0.029,0.057], vermi:[0.054,0.063], macchie:[0.026,0.059]};
+  const FK=styles[p.gsStyle]||styles.labirinto;
+  const F=FK[0], K=FK[1], Du=0.16, Dv=0.08;
+  const iter=4500;
+  for(let it=0;it<iter;it++){
+    for(let y=0;y<gh;y++){
+      const yu=((y+1)%gh)*gw, yd=((y-1+gh)%gh)*gw, y0=y*gw;
+      for(let x=0;x<gw;x++){
+        const xl=(x-1+gw)%gw, xr=(x+1)%gw;
+        const i=y0+x;
+        const u=U[i], v=V[i];
+        const lu=U[y0+xl]+U[y0+xr]+U[yu+x]+U[yd+x]-4*u;
+        const lv=V[y0+xl]+V[y0+xr]+V[yu+x]+V[yd+x]-4*v;
+        const uvv=u*v*v;
+        U2[i]=u+Du*lu-uvv+F*(1-u);
+        V2[i]=v+Dv*lv+uvv-(F+K)*v;
+      }
+    }
+    let t=U;U=U2;U2=t; t=V;V=V2;V2=t;
+  }
+  // normalizza V in [0,1]
+  let mn=Infinity,mx=-Infinity;
+  for(let i=0;i<n;i++){ if(V[i]<mn)mn=V[i]; if(V[i]>mx)mx=V[i]; }
+  const inv=mx>mn?1/(mx-mn):1;
+  for(let i=0;i<n;i++) V[i]=(V[i]-mn)*inv;
+  const data={V,gw,gh};
+  _gsCache={key,data};
+  return data;
+}
+
+// campionamento bilineare periodico del pattern GS in coordinate modulo
+function sampleGS(gs,px,py,W,H){
+  const {V,gw,gh}=gs;
+  let fx=(px/W)*gw, fy=(py/H)*gh;
+  fx-=Math.floor(fx/gw)*gw; fy-=Math.floor(fy/gh)*gh;
+  const x0=Math.floor(fx)%gw, y0=Math.floor(fy)%gh;
+  const x1=(x0+1)%gw, y1=(y0+1)%gh;
+  const tx=fx-Math.floor(fx), ty=fy-Math.floor(fy);
+  return V[y0*gw+x0]*(1-tx)*(1-ty)+V[y0*gw+x1]*tx*(1-ty)
+        +V[y1*gw+x0]*(1-tx)*ty+V[y1*gw+x1]*tx*ty;
+}
+
+// campo scalare firmato (approssimato): negativo = argilla
+function buildField(p){
+  const motif=p.motif||'tasche';
+  const vox=p.vox;
+
+  // ════ COLONNA: tamburo anulare, pattern avvolti sulla circonferenza ════
+  if((p.forma||'pannello')==='colonna'){
+    const R=p.dia/2;
+    const Tw = motif==='tasche' ? p.tBase : p.TS;
+    const Rin=Math.max(12, R-Tw);
+    const C=2*Math.PI*R;                       // sviluppo dell'arco
+    const pockets = motif==='tasche' ? makePockets({...p,W:C}, true) : [];
+    const gs = motif==='meandri' ? buildGS({...p,W:C}) : null;
+    const bulge = motif==='tasche' ? p.D*(1+p.flare) : 0;
+    const Rmax=R+bulge;
+    const padR=2*vox, padY=p.eA+2*vox;
+    const nx=Math.ceil((2*Rmax+2*padR)/vox)+1;
+    const nzg=nx;
+    const nyg=Math.ceil((p.H+2*padY)/vox)+1;
+    const ox=-Rmax-padR+0.5*vox, oz=ox, oy=-padY+0.5*vox;
+    const f=new Float32Array(nx*nyg*nzg);
+    const nWv=Math.max(3,2*p.nc);              // onde intere sugli orli
+    const mouthZ0=p.zb+2;
+    const hemH=p.H*0.25;
+    const iq=1/p.qn;
+    let kgx=0,kgy=0,kgz=0,isoG=0;
+    if(motif==='giroide'){
+      const cc=Math.max(3,Math.round(C/p.cell));
+      const cyc=Math.max(1,Math.round(p.H/p.cell));
+      kgx=2*Math.PI*cc/C; kgy=2*Math.PI*cyc/p.H; kgz=2*Math.PI/p.cell;
+      isoG=Math.min(1.4,p.lam*kgz/2);
+    }
+    const gsScale=p.trama*0.5;
+
+    for(let iz=0;iz<nzg;iz++){
+      const z=oz+iz*vox;
+      for(let ix=0;ix<nx;ix++){
+        const x=ox+ix*vox;
+        const r=Math.sqrt(x*x+z*z);
+        const col0=iz*nx*nyg+ix;
+        if(r<Rin-3*vox || r>Rmax+3*vox){       // foro centrale / esterno
+          const dq=Math.max(Rin-r, r-Rmax);
+          for(let iy=0;iy<nyg;iy++) f[col0+iy*nx]=dq;
+          continue;
+        }
+        const th=Math.atan2(z,x);
+        const s=(th/(2*Math.PI)+0.5)*C;
+        const eY=p.eA*0.5*(1+Math.cos(nWv*th));
+        const zc=r-Rin;                        // ≡ z del pannello
+
+        if(motif==='tasche'){
+          const near=[];
+          for(let k=0;k<pockets.length;k++){
+            const pk=pockets[k];
+            let ds=s-pk.cx; ds-=Math.round(ds/C)*C;   // distanza avvolta
+            if(Math.abs(ds)<pk.rx+p.drainR+vox) near.push([pk,ds]);
+          }
+          for(let iy=0;iy<nyg;iy++){
+            const y=oy+iy*vox;
+            const by=Math.max(eY-y, y-p.H-eY);
+            const hv=y<hemH?1-Math.max(0,y)/hemH:0;
+            const mult=1+p.flare*hv*hv;
+            let sq=0, sub=Infinity;
+            for(let q2=0;q2<near.length;q2++){
+              const pk=near[q2][0], ds=near[q2][1];
+              const adx=Math.abs(ds), ady=Math.abs(y-pk.cy);
+              if(adx>=pk.rx||ady>=pk.ry){
+                if(pk.drain&&adx<p.drainR+vox){
+                  const ddy=y-(pk.cy-pk.ry*0.5);
+                  const dd=Math.sqrt(adx*adx+ddy*ddy)-p.drainR;
+                  if(dd<sub) sub=dd;
+                }
+                continue;
+              }
+              const sxl=pk.cx+ds;
+              const sh=pocketShape(pk,sxl,y,p.kp,p.ku,p.belly);
+              if(sh>0) sq+=Math.pow(sh,p.qn);
+              const rxi=pk.rx-p.tw, ryi=pk.ry-p.tw;
+              if(rxi>4&&ryi>4){
+                const si=pocketShape({cx:pk.cx,cy:pk.cy,rx:rxi,ry:ryi},sxl,y,p.kp,p.ku,p.belly);
+                if(si>0){
+                  const top=p.tBase+p.D*sh*mult-p.tw;
+                  const lat=-si*Math.min(rxi,ryi)*0.9;
+                  const yCut=y-(pk.cy+pk.ry*0.85);
+                  const dc=Math.max(p.zb-zc, zc-top, Math.max(lat,yCut));
+                  if(dc<sub) sub=dc;
+                }
+              }
+              if(pk.mouth){
+                const mw=pk.rx*p.mW, mh=pk.ry*p.mH;
+                const ex=ds/mw, ey2=(y-(pk.cy+pk.ry*p.mP))/mh;
+                const e=(Math.sqrt(ex*ex+ey2*ey2)-1)*Math.min(mw,mh);
+                if(e<2*vox){
+                  const dm=Math.max(e, mouthZ0-zc, zc-(p.tBase+p.D*sh*mult+1.5));
+                  if(dm<sub) sub=dm;
+                }
+              }
+              if(pk.drain){
+                const ddy=y-(pk.cy-pk.ry*0.5);
+                const dd=Math.sqrt(adx*adx+ddy*ddy)-p.drainR;
+                if(dd<sub) sub=dd;
+              }
+            }
+            const S=sq>0?Math.pow(sq,iq):0;
+            const F=p.tBase+p.D*Math.min(S,1.15)*mult;
+            let d=Math.max(by, Rin-r, r-(Rin+F));
+            d=Math.max(d,-sub);
+            if(d>-1e-3&&d<1e-3)d=1e-3;
+            f[col0+iy*nx]=d;
+          }
+
+        }else if(motif==='meandri'){
+          for(let iy=0;iy<nyg;iy++){
+            const y=oy+iy*vox;
+            const by=Math.max(eY-y, y-p.H-eY);
+            const vN=sampleGS(gs,s,y,C,p.H);
+            const solid=p.invert?(p.thr-vN):(vN-p.thr);
+            let sub=Math.max(solid*gsScale, by+p.frame);
+            if(p.closedBack) sub=Math.max(sub, p.zb-zc);  // pelle interna
+            let d=Math.max(by, Rin-r, r-R);
+            d=Math.max(d,-sub);
+            if(d>-1e-3&&d<1e-3)d=1e-3;
+            f[col0+iy*nx]=d;
+          }
+
+        }else{
+          const sgx=Math.sin(kgx*s), cgx=Math.cos(kgx*s);
+          const czc=Math.cos(kgz*zc), szc=Math.sin(kgz*zc);
+          for(let iy=0;iy<nyg;iy++){
+            const y=oy+iy*vox;
+            const by=Math.max(eY-y, y-p.H-eY);
+            const g=sgx*Math.cos(kgy*y)+Math.sin(kgy*y)*czc+szc*cgx;
+            let sub=Math.max((isoG-Math.abs(g))/kgz, by+p.frame);
+            if(p.closedBack) sub=Math.max(sub, p.zb-zc);
+            let d=Math.max(by, Rin-r, r-R);
+            d=Math.max(d,-sub);
+            if(d>-1e-3&&d<1e-3)d=1e-3;
+            f[col0+iy*nx]=d;
+          }
+        }
+      }
+    }
+    return {f,nx,ny:nyg,nz:nzg,ox,oy,oz,vox,pockets,T:Rmax*2};
+  }
+
+  // ════ PANNELLO ════
+  const pockets = motif==='tasche' ? makePockets(p) : [];
+  const gs = motif==='meandri' ? buildGS(p) : null;
+  const rx0=p.W/(2*p.nc), ry0=p.H/(p.nr+1);
+  const eSide=p.eA*0.35;                    // ondulazione fianchi
+  const padX=eSide+2*vox, padY=p.eA+2*vox, padZ=2*vox;
+  const T = motif==='tasche' ? p.tBase+p.D*(1+p.flare) : p.TS;
+  const nx=Math.ceil((p.W+2*padX)/vox)+1;
+  const ny=Math.ceil((p.H+2*padY)/vox)+1;
+  const nz=Math.ceil((T+2*padZ)/vox)+1;
+  const ox=-padX+0.5*vox, oy=-padY+0.5*vox, oz=-padZ+0.5*vox;
+  const f=new Float32Array(nx*ny*nz);
+
+  const rebarR=p.rebarD/2+1;                // gioco 1mm
+  const gx=[p.W*0.25,p.W*0.75];             // posizioni gole
+  const mouthZ0=p.zb+2;
+  const hemH=p.H*0.25;                      // fascia di svasatura
+  const iq=1/p.qn;
+
+  // giroide: numero intero di celle in W e H → raccordo tra moduli
+  let kgx=0,kgy=0,kgz=0,isoG=0;
+  if(motif==='giroide'){
+    const cx=Math.max(1,Math.round(p.W/p.cell));
+    const cy=Math.max(1,Math.round(p.H/p.cell));
+    kgx=2*Math.PI*cx/p.W; kgy=2*Math.PI*cy/p.H; kgz=2*Math.PI/p.cell;
+    isoG=Math.min(1.4, p.lam*kgz/2);        // lamina ≈ 2·iso/|∇g|
+  }
+  const gsScale=p.trama*0.5;                // pendenza pseudo-distanza meandri
+
+  for(let iy=0;iy<ny;iy++){
+    const y=oy+iy*vox;
+    const hv=y<hemH ? 1-Math.max(0,y)/hemH : 0;
+    const mult=1+p.flare*hv*hv;             // svasatura (solo tasche)
+    const eX=eSide*Math.cos(Math.PI*y/ry0); // fianchi ondulati
+    for(let ix=0;ix<nx;ix++){
+      const x=ox+ix*vox;
+      // bordi organici complementari tra corsi impilati
+      const eY=p.eA*0.5*(1+Math.cos(Math.PI*x/rx0));
+      const bx=Math.max(eX-x, x-p.W-eX, eY-y, y-p.H-eY);
+
+      // gole tondino sul retro (comuni a tutti i motivi)
+      let zbL=p.zb;
+      let g0=Infinity,g1=Infinity;
+      if(p.rebar){
+        const d0=Math.abs(x-gx[0]), d1=Math.abs(x-gx[1]);
+        if(d0<rebarR) zbL=Math.max(zbL,Math.sqrt(rebarR*rebarR-d0*d0)+5);
+        if(d1<rebarR) zbL=Math.max(zbL,Math.sqrt(rebarR*rebarR-d1*d1)+5);
+        g0=d0; g1=d1;
+      }
+      const base=(iy*nx+ix);
+
+      if(motif==='tasche'){
+        // ── quilting a lenti con sacche ──
+        let sq=0;
+        const cav=[]; const mouths=[]; let drainD=Infinity;
+        for(let k=0;k<pockets.length;k++){
+          const pk=pockets[k];
+          const ady=Math.abs(y-pk.cy), adx=Math.abs(x-pk.cx);
+          if(ady>=pk.ry||adx>=pk.rx){
+            if(pk.drain&&adx<p.drainR+vox){
+              const ddy=y-(pk.cy-pk.ry*0.5);
+              const dd=Math.sqrt(adx*adx+ddy*ddy)-p.drainR;
+              if(dd<drainD) drainD=dd;
+            }
+            continue;
+          }
+          const s=pocketShape(pk,x,y,p.kp,p.ku,p.belly);
+          if(s>0) sq+=Math.pow(s,p.qn);
+          const rxi=pk.rx-p.tw, ryi=pk.ry-p.tw;
+          if(rxi>4&&ryi>4){
+            const si=pocketShape({cx:pk.cx,cy:pk.cy,rx:rxi,ry:ryi},x,y,p.kp,p.ku,p.belly);
+            if(si>0){
+              const top=p.tBase+p.D*s*mult-p.tw;
+              const lat=-si*Math.min(rxi,ryi)*0.9;
+              const yCut=y-(pk.cy+pk.ry*0.85);
+              cav.push([top,Math.max(lat,yCut)]);
+            }
+          }
+          if(pk.mouth){
+            const mw=pk.rx*p.mW, mh=pk.ry*p.mH;
+            const dx=(x-pk.cx)/mw, dy=(y-(pk.cy+pk.ry*p.mP))/mh;
+            const e=(Math.sqrt(dx*dx+dy*dy)-1)*Math.min(mw,mh);
+            if(e<2*vox) mouths.push([e, p.tBase+p.D*s*mult+1.5]);
+          }
+          if(pk.drain){
+            const ddx=x-pk.cx, ddy=y-(pk.cy-pk.ry*0.5);
+            const dd=Math.sqrt(ddx*ddx+ddy*ddy)-p.drainR;
+            if(dd<drainD) drainD=dd;
+          }
+        }
+        const S=sq>0?Math.pow(sq,iq):0;
+        const F=p.tBase+p.D*Math.min(S,1.15)*mult;
+
+        for(let iz=0;iz<nz;iz++){
+          const z=oz+iz*vox;
+          let d=Math.max(bx,-z,z-F);
+          let sub=drainD;
+          for(let c=0;c<cav.length;c++){
+            const cc=cav[c];
+            const dc=Math.max(zbL-z, z-cc[0], cc[1]);
+            if(dc<sub) sub=dc;
+          }
+          for(let m=0;m<mouths.length;m++){
+            const mm=mouths[m];
+            const dm=Math.max(mm[0], mouthZ0-z, z-mm[1]);
+            if(dm<sub) sub=dm;
+          }
+          if(p.rebar){
+            const dg=Math.min(Math.sqrt(g0*g0+z*z),Math.sqrt(g1*g1+z*z))-rebarR;
+            if(dg<sub) sub=dg;
+          }
+          d=Math.max(d,-sub);
+          if(d>-1e-3&&d<1e-3) d=1e-3;
+          f[iz*nx*ny+base]=d;
+        }
+
+      }else if(motif==='meandri'){
+        // ── canali reazione-diffusione passanti (ventilazione alla termite) ──
+        const vN=sampleGS(gs,x,y,p.W,p.H);
+        const solid = p.invert ? (p.thr-vN) : (vN-p.thr);   // >0 dove argilla
+        const dVoidXY=Math.max(solid*gsScale, bx+p.frame);  // vuoto fuori cornice
+        for(let iz=0;iz<nz;iz++){
+          const z=oz+iz*vox;
+          let d=Math.max(bx,-z,z-T);
+          let sub=dVoidXY;
+          if(p.closedBack) sub=Math.max(sub, p.zb-z);       // fondo chiuso
+          if(p.rebar){
+            const dg=Math.min(Math.sqrt(g0*g0+z*z),Math.sqrt(g1*g1+z*z))-rebarR;
+            if(dg<sub) sub=dg;
+          }
+          d=Math.max(d,-sub);
+          if(d>-1e-3&&d<1e-3) d=1e-3;
+          f[iz*nx*ny+base]=d;
+        }
+
+      }else{
+        // ── giroide a lamina: due reti di canali interconnessi ──
+        const sgx=Math.sin(kgx*x), cgx=Math.cos(kgx*x);
+        const sgy=Math.sin(kgy*y), cgy=Math.cos(kgy*y);
+        const frameT=bx+p.frame;
+        for(let iz=0;iz<nz;iz++){
+          const z=oz+iz*vox;
+          let d=Math.max(bx,-z,z-T);
+          const g=sgx*cgy+sgy*Math.cos(kgz*z)+Math.sin(kgz*z)*cgx;
+          let sub=Math.max((isoG-Math.abs(g))/kgz, frameT);  // vuoto dove |g|>iso
+          if(p.closedBack) sub=Math.max(sub, p.zb-z);
+          if(p.rebar){
+            const dg=Math.min(Math.sqrt(g0*g0+z*z),Math.sqrt(g1*g1+z*z))-rebarR;
+            if(dg<sub) sub=dg;
+          }
+          d=Math.max(d,-sub);
+          if(d>-1e-3&&d<1e-3) d=1e-3;
+          f[iz*nx*ny+base]=d;
+        }
+      }
+    }
+  }
+  return {f,nx,ny,nz,ox,oy,oz,vox,pockets,T};
+}
+
+// marching tetrahedra su triangolazione di Freudenthal (mesh chiusa garantita)
+const TETS=[[0,1,3,7],[0,1,5,7],[0,2,3,7],[0,2,6,7],[0,4,5,7],[0,4,6,7]];
+
+function marchingTets(grid){
+  const {f,nx,ny,nz,ox,oy,oz,vox}=grid;
+  const pos=[];
+  const cx=new Float64Array(8),cy=new Float64Array(8),cz=new Float64Array(8),cv=new Float64Array(8);
+  const px=new Float64Array(4),py=new Float64Array(4),pz=new Float64Array(4),pv=new Float64Array(4);
+  const ex=new Float64Array(4),ey=new Float64Array(4),ez=new Float64Array(4);
+
+  function interp(a,b){
+    const t=pv[a]/(pv[a]-pv[b]);
+    return [px[a]+t*(px[b]-px[a]), py[a]+t*(py[b]-py[a]), pz[a]+t*(pz[b]-pz[a])];
+  }
+  function emit(A,B,C,inX,inY,inZ,outX,outY,outZ){
+    const ux=B[0]-A[0],uy=B[1]-A[1],uz=B[2]-A[2];
+    const vx=C[0]-A[0],vy=C[1]-A[1],vz=C[2]-A[2];
+    const nX=uy*vz-uz*vy, nY=uz*vx-ux*vz, nZ=ux*vy-uy*vx;
+    const rx=outX-inX, ry=outY-inY, rz=outZ-inZ;
+    if(nX*rx+nY*ry+nZ*rz>=0){ pos.push(A[0],A[1],A[2],B[0],B[1],B[2],C[0],C[1],C[2]); }
+    else{ pos.push(A[0],A[1],A[2],C[0],C[1],C[2],B[0],B[1],B[2]); }
+  }
+
+  const sxy=nx*ny;
+  for(let iz=0;iz<nz-1;iz++){
+    for(let iy=0;iy<ny-1;iy++){
+      let idx=iz*sxy+iy*nx;
+      for(let ix=0;ix<nx-1;ix++,idx++){
+        const v0=f[idx],        v1=f[idx+1],
+              v2=f[idx+nx],     v3=f[idx+nx+1],
+              v4=f[idx+sxy],    v5=f[idx+sxy+1],
+              v6=f[idx+sxy+nx], v7=f[idx+sxy+nx+1];
+        // scarta cubi tutti dentro o tutti fuori
+        if((v0<0&&v1<0&&v2<0&&v3<0&&v4<0&&v5<0&&v6<0&&v7<0)||
+           (v0>=0&&v1>=0&&v2>=0&&v3>=0&&v4>=0&&v5>=0&&v6>=0&&v7>=0)) continue;
+        const x0=ox+ix*vox, y0=oy+iy*vox, z0=oz+iz*vox;
+        cv[0]=v0;cv[1]=v1;cv[2]=v2;cv[3]=v3;cv[4]=v4;cv[5]=v5;cv[6]=v6;cv[7]=v7;
+        for(let c=0;c<8;c++){
+          cx[c]=x0+((c&1)?vox:0);
+          cy[c]=y0+((c&2)?vox:0);
+          cz[c]=z0+((c&4)?vox:0);
+        }
+        for(let t=0;t<6;t++){
+          const T=TETS[t];
+          let mask=0, nIn=0;
+          for(let k=0;k<4;k++){
+            const ci=T[k];
+            px[k]=cx[ci];py[k]=cy[ci];pz[k]=cz[ci];pv[k]=cv[ci];
+            if(pv[k]<0){mask|=(1<<k);nIn++;}
+          }
+          if(nIn===0||nIn===4) continue;
+          // baricentri dentro/fuori per orientare le normali
+          let iX=0,iY=0,iZ=0,oX=0,oY=0,oZ=0;
+          for(let k=0;k<4;k++){
+            if(mask&(1<<k)){iX+=px[k];iY+=py[k];iZ+=pz[k];}
+            else{oX+=px[k];oY+=py[k];oZ+=pz[k];}
+          }
+          iX/=nIn;iY/=nIn;iZ/=nIn;
+          oX/=(4-nIn);oY/=(4-nIn);oZ/=(4-nIn);
+          if(nIn===1||nIn===3){
+            const inv=(nIn===3);
+            let a=-1; const others=[];
+            for(let k=0;k<4;k++){
+              const isIn=!!(mask&(1<<k));
+              if(isIn!==inv) a=k; else others.push(k);
+            }
+            const A=interp(a,others[0]),B=interp(a,others[1]),C=interp(a,others[2]);
+            emit(A,B,C,iX,iY,iZ,oX,oY,oZ);
+          }else{
+            const ins=[],outs=[];
+            for(let k=0;k<4;k++){ if(mask&(1<<k)) ins.push(k); else outs.push(k); }
+            const A=interp(ins[0],outs[0]),B=interp(ins[0],outs[1]),
+                  C=interp(ins[1],outs[1]),Dq=interp(ins[1],outs[0]);
+            emit(A,B,C,iX,iY,iZ,oX,oY,oZ);
+            emit(A,C,Dq,iX,iY,iZ,oX,oY,oZ);
+          }
+        }
+      }
+    }
+  }
+  return new Float32Array(pos);
+}
+
+function meshVolume(pos){ // teorema divergenza, mm³
+  let v=0;
+  for(let i=0;i<pos.length;i+=9){
+    const ax=pos[i],ay=pos[i+1],az=pos[i+2];
+    const bx=pos[i+3],by=pos[i+4],bz=pos[i+5];
+    const cx=pos[i+6],cy=pos[i+7],cz=pos[i+8];
+    v+=ax*(by*cz-bz*cy)+ay*(bz*cx-bx*cz)+az*(bx*cy-by*cx);
+  }
+  return Math.abs(v/6);
+}
+
+// rimuove le isole solide scollegate (frammenti che cadrebbero dal traforo):
+// resta solo la componente connessa più grande
+function pruneIslands(grid){
+  const {f,nx,ny,nz}=grid;
+  const n=f.length;
+  const label=new Int32Array(n);       // 0 = non visitato
+  let best=0, bestSize=0, cur=0;
+  const stack=[];
+  for(let s=0;s<n;s++){
+    if(f[s]>=0||label[s]) continue;
+    cur++; let size=0;
+    stack.length=0; stack.push(s); label[s]=cur;
+    while(stack.length){
+      const i=stack.pop(); size++;
+      const ix=i%nx, iy=((i/nx)|0)%ny, iz=(i/(nx*ny))|0;
+      if(ix>0){const j=i-1;if(!label[j]&&f[j]<0){label[j]=cur;stack.push(j);}}
+      if(ix<nx-1){const j=i+1;if(!label[j]&&f[j]<0){label[j]=cur;stack.push(j);}}
+      if(iy>0){const j=i-nx;if(!label[j]&&f[j]<0){label[j]=cur;stack.push(j);}}
+      if(iy<ny-1){const j=i+nx;if(!label[j]&&f[j]<0){label[j]=cur;stack.push(j);}}
+      if(iz>0){const j=i-nx*ny;if(!label[j]&&f[j]<0){label[j]=cur;stack.push(j);}}
+      if(iz<nz-1){const j=i+nx*ny;if(!label[j]&&f[j]<0){label[j]=cur;stack.push(j);}}
+    }
+    if(size>bestSize){bestSize=size;best=cur;}
+  }
+  if(cur<=1) return 0;
+  let pruned=0;
+  for(let i=0;i<n;i++){
+    if(f[i]<0&&label[i]!==best){f[i]=grid.vox*0.5;pruned++;}
+  }
+  return pruned;
+}
+
+function buildGeometry(p){
+  const t0=Date.now();
+  const grid=buildField(p);
+  if((p.motif||'tasche')!=='tasche') pruneIslands(grid);
+  const positions=marchingTets(grid);
+  return {
+    positions,
+    pockets:grid.pockets,
+    tris:positions.length/9,
+    volume:meshVolume(positions),
+    ms:Date.now()-t0
+  };
+}
+
+// STL binario; instances = lista di [tx,ty,tz], scale uniforme
+function buildSTL(positions, scale, instances){
+  const inst=instances&&instances.length?instances:[[0,0,0]];
+  const nTri=(positions.length/9)*inst.length;
+  const buf=new ArrayBuffer(84+nTri*50);
+  const dv=new DataView(buf);
+  dv.setUint32(80,nTri,true);
+  let o=84;
+  for(let q=0;q<inst.length;q++){
+    const [tx,ty,tz]=inst[q];
+    for(let i=0;i<positions.length;i+=9){
+      const ax=(positions[i]+tx)*scale,   ay=(positions[i+1]+ty)*scale,   az=(positions[i+2]+tz)*scale;
+      const bx=(positions[i+3]+tx)*scale, by=(positions[i+4]+ty)*scale,   bz=(positions[i+5]+tz)*scale;
+      const cx=(positions[i+6]+tx)*scale, cy=(positions[i+7]+ty)*scale,   cz=(positions[i+8]+tz)*scale;
+      let nX=(by-ay)*(cz-az)-(bz-az)*(cy-ay);
+      let nY=(bz-az)*(cx-ax)-(bx-ax)*(cz-az);
+      let nZ=(bx-ax)*(cy-ay)-(by-ay)*(cx-ax);
+      const l=Math.sqrt(nX*nX+nY*nY+nZ*nZ)||1;
+      dv.setFloat32(o,nX/l,true);dv.setFloat32(o+4,nY/l,true);dv.setFloat32(o+8,nZ/l,true);
+      dv.setFloat32(o+12,ax,true);dv.setFloat32(o+16,ay,true);dv.setFloat32(o+20,az,true);
+      dv.setFloat32(o+24,bx,true);dv.setFloat32(o+28,by,true);dv.setFloat32(o+32,bz,true);
+      dv.setFloat32(o+36,cx,true);dv.setFloat32(o+40,cy,true);dv.setFloat32(o+44,cz,true);
+      dv.setUint16(o+48,0,true);
+      o+=50;
+    }
+  }
+  return buf;
+}
+// [CORE-END] ─────────────────────────────────────────────────────────────────
+
+// ─── UI ──────────────────────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const sliders=['W','H','tBase','D','eA','flare','nc','nr','kp','ku','belly','qn','jit','tw','zb','mW','mH','mP','rebarD','shrink','wx','wy','gap','TS','frame','trama','thr','cell','lam','dia'];
+const checks=['stagger','drain','rebar','bond','closedBack','invert'];
+
+function readParams(){
+  const p=defaultParams();
+  for(const s of sliders){ if(!['wx','wy','gap'].includes(s)) p[s]=parseFloat($(s).value); }
+  p.mW/=100; p.mH/=100; p.flare/=100; p.thr/=100;
+  p.motif=$('motif').value;
+  p.forma=$('forma').value;
+  p.gsStyle=$('gsStyle').value;
+  for(const c of ['stagger','drain','rebar']) p[c]=$(c).checked;
+  p.seed=parseInt($('seed').value)||0;
+  p.vox=parseFloat($('vox').value);
+  return p;
+}
+function refreshLabels(){
+  for(const s of sliders){ const el=$(s+'v'); if(el) el.textContent=$(s).value; }
+  const r=parseFloat($('shrink').value);
+  const sc=1/(1-r/100);
+  $('shrinkHint').textContent='fattore scala verde: ×'+sc.toFixed(4)+' — l’STL modulo esce già maggiorato';
+}
+
+// ─── scena three.js ──────────────────────────────────────────────────────────
+let renderer,scene,camera,gModule,gWall,current=null,view='modulo';
+const vp=$('viewport');
+
+function initScene(){
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  vp.appendChild(renderer.domElement);
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x050705);
+  scene.fog=new THREE.Fog(0x050705,3000,9000);
+  camera=new THREE.PerspectiveCamera(42,1,1,20000);
+
+  scene.add(new THREE.HemisphereLight(0xdfe8dd,0x101510,0.9));
+  const sun=new THREE.DirectionalLight(0xfff3e0,0.9);
+  sun.position.set(600,1200,900); scene.add(sun);
+  const back=new THREE.DirectionalLight(0x7cff9b,0.12);
+  back.position.set(-500,300,-800); scene.add(back);
+
+  const grid=new THREE.GridHelper(6000,60,0x2a4a33,0x14231a);
+  grid.position.y=0; scene.add(grid);
+
+  gModule=new THREE.Group(); gWall=new THREE.Group();
+  scene.add(gModule,gWall);
+  resize();
+  window.addEventListener('resize',resize);
+  orbit();
+  animate();
+}
+function resize(){
+  const w=vp.clientWidth,h=vp.clientHeight;
+  renderer.setSize(w,h);
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+
+// orbit minimale
+const cam={theta:0.6,phi:1.15,dist:1300,tx:0,ty:260,tz:0};
+function applyCam(){
+  camera.position.set(
+    cam.tx+cam.dist*Math.sin(cam.phi)*Math.sin(cam.theta),
+    cam.ty+cam.dist*Math.cos(cam.phi),
+    cam.tz+cam.dist*Math.sin(cam.phi)*Math.cos(cam.theta));
+  camera.lookAt(cam.tx,cam.ty,cam.tz);
+}
+function orbit(){
+  let drag=false,pan=false,lx=0,ly=0;
+  const el=renderer.domElement;
+  el.addEventListener('pointerdown',e=>{drag=e.button===0;pan=e.button===2;lx=e.clientX;ly=e.clientY;try{el.setPointerCapture(e.pointerId);}catch(_){}});
+  el.addEventListener('pointermove',e=>{
+    const dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX;ly=e.clientY;
+    if(drag){cam.theta-=dx*0.006;cam.phi=Math.min(2.9,Math.max(0.15,cam.phi-dy*0.006));applyCam();}
+    else if(pan){
+      const s=cam.dist*0.0014;
+      cam.tx-=(dx*Math.cos(cam.theta))*s; cam.tz+=(dx*Math.sin(cam.theta))*s;
+      cam.ty+=dy*s; applyCam();
+    }
+  });
+  el.addEventListener('pointerup',()=>{drag=pan=false;});
+  el.addEventListener('wheel',e=>{e.preventDefault();cam.dist=Math.min(15000,Math.max(200,cam.dist*(1+e.deltaY*0.001)));applyCam();},{passive:false});
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+  applyCam();
+}
+function animate(){requestAnimationFrame(animate);renderer.render(scene,camera);}
+
+const clayMat=new THREE.MeshStandardMaterial({color:0xe8e2d4,roughness:0.93,metalness:0.0,side:THREE.DoubleSide});
+
+function rebuildScene(){
+  // svuota
+  for(const g of [gModule,gWall]) while(g.children.length){const m=g.children.pop();m.geometry&&m.geometry.dispose();}
+  if(!current) return;
+  const p=current.params;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(current.positions,3));
+  geo.computeVertexNormals();
+
+  const isCol=p.forma==='colonna';
+  const diaT=isCol?(p.dia+(p.motif==='tasche'?2*p.D*(1+p.flare):0)):0;
+  const m0=new THREE.Mesh(geo,clayMat);
+  m0.position.set(isCol?0:-p.W/2,0,0);
+  gModule.add(m0);
+
+  // muro / colonnato
+  const wx=parseInt($('wx').value),wy=parseInt($('wy').value),gap=parseFloat($('gap').value);
+  const bond=$('bond').checked&&!isCol;
+  const sx=isCol?diaT+Math.max(gap,40):p.W+gap;
+  const totW=wx*sx-(isCol?Math.max(gap,40):gap);
+  for(let j=0;j<wy;j++){
+    const off=bond&&(j%2===1)?sx/2:0;
+    for(let i=0;i<wx;i++){
+      const m=new THREE.Mesh(geo,clayMat);
+      const xPos=isCol? -totW/2+diaT/2+i*sx : -totW/2+i*sx+off;
+      m.position.set(xPos, j*(p.H+gap), 0);
+      gWall.add(m);
+    }
+  }
+  setView(view);
+  updateStats();
+}
+
+function setView(v){
+  view=v;
+  gModule.visible=(v==='modulo');
+  gWall.visible=(v==='muro');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
+  if(!current) return;
+  const p=current.params;
+  if(v==='modulo'){const uW=p.forma==='colonna'?p.dia+2*p.D:p.W;cam.dist=Math.max(p.H,uW)*2.4;cam.ty=p.H/2;}
+  else{
+    const wx=parseInt($('wx').value),wy=parseInt($('wy').value);
+    const uW=p.forma==='colonna'?(p.dia+(p.motif==='tasche'?2*p.D:0)+60):p.W;
+    cam.dist=Math.max(wx*uW,wy*p.H)*1.5+600;
+    cam.ty=wy*p.H/2;
+  }
+  cam.tx=0;cam.tz=0;applyCam();
+  updateStats();
+}
+
+function updateStats(){
+  if(!current){$('stats').innerHTML='';return;}
+  const p=current.params, c=current;
+  const sc=1/(1-p.shrink/100);
+  const kg=(c.volume/1e6*1.9).toFixed(1);
+  let html='';
+  const isCol=p.forma==='colonna';
+  const T=p.motif==='tasche'?Math.round(p.tBase+p.D):p.TS;
+  const diaT=isCol?Math.round(p.dia+(p.motif==='tasche'?2*p.D*(1+p.flare):0)):0;
+  const solidRef=isCol? Math.PI*(Math.pow(p.dia/2,2)-Math.pow(Math.max(12,p.dia/2-(p.motif==='tasche'?p.tBase:p.TS)),2))*p.H : p.W*p.H*p.TS;
+  const por=p.motif==='tasche'?null:(1-c.volume/solidRef)*100;
+  const dims=isCol?`Ø${diaT}×${p.H}`:`${p.W}×${p.H}×${T}`;
+  const dimsV=isCol?`Ø${Math.round(diaT*sc)}×${Math.round(p.H*sc)}`:`${Math.round(p.W*sc)}×${Math.round(p.H*sc)}×${Math.round(T*sc)}`;
+  if(view==='modulo'){
+    html=
+      `${isCol?'TAMBURO':'MODULO'} <b>${dims}</b> mm<br>`+
+      `verde (con ritiro) <b>${dimsV}</b> mm<br>`+
+      (p.motif==='tasche'
+        ? `tasche <b>${c.pockets.length}</b> · triangoli <b>${(c.tris/1000).toFixed(0)}k</b><br>`
+        : `porosità <b>${por.toFixed(0)}%</b> · triangoli <b>${(c.tris/1000).toFixed(0)}k</b><br>`)+
+      `volume solido <b>${(c.volume/1e6).toFixed(2)} L</b> · ~<b>${kg} kg</b> crudo<br>`+
+      `<span style="color:var(--fg-faint)">campo ${c.ms} ms</span>`;
+  }else{
+    const wx=parseInt($('wx').value),wy=parseInt($('wy').value),gap=parseFloat($('gap').value);
+    const uW=isCol?diaT+Math.max(gap,40):p.W+gap;
+    const tW=wx*uW-(isCol?Math.max(gap,40):gap), tH=wy*p.H+(wy-1)*gap;
+    html=
+      `${isCol?'COLONNATO':'MURO'} <b>${wx}×${wy}</b> = <b>${wx*wy}</b> ${isCol?'tamburi':'moduli'}<br>`+
+      `ingombro <b>${(tW/1000).toFixed(2)}×${(tH/1000).toFixed(2)}</b> m<br>`+
+      (p.motif==='tasche'?`tasche totali <b>${c.pockets.length*wx*wy}</b><br>`:`porosità <b>${por.toFixed(0)}%</b> · canali passanti<br>`)+
+      `argilla totale ~<b>${(c.volume/1e6*wx*wy*1.9).toFixed(0)} kg</b> crudo`;
+  }
+  $('stats').innerHTML=html;
+}
+
+// ─── generazione ────────────────────────────────────────────────────────────
+let busy=false;
+function regenerate(){
+  if(busy) return;
+  busy=true;
+  $('btnGen').disabled=true;
+  $('statusMsg').innerHTML='<span class="busy">calcolo campo + marching…</span>';
+  setTimeout(()=>{
+    try{
+      const p=readParams();
+      const g=buildGeometry(p);
+      current={...g,params:p};
+      rebuildScene();
+      $('statusMsg').textContent=`ok · ${g.tris} tri · ${g.ms} ms`;
+    }catch(err){
+      $('statusMsg').textContent='errore: '+err.message;
+      console.error(err);
+    }
+    busy=false;
+    $('btnGen').disabled=false;
+  },30);
+}
+
+let deb=null;
+function scheduleRegen(){clearTimeout(deb);deb=setTimeout(regenerate,450);}
+
+function download(buf,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([buf],{type:'application/octet-stream'}));
+  a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+$('btnSTL').onclick=()=>{
+  if(!current) return;
+  const p=current.params;
+  const sc=1/(1-p.shrink/100);
+  download(buildSTL(current.positions,sc,null),
+    `quinconce_${p.forma}_${p.motif}_${p.forma==='colonna'?'d'+p.dia:p.W}x${p.H}_ritiro${p.shrink}.stl`);
+  $('statusMsg').textContent=`STL modulo esportato · scala ×${sc.toFixed(4)}`;
+};
+$('btnSTLwall').onclick=()=>{
+  if(!current) return;
+  const p=current.params;
+  const wx=parseInt($('wx').value),wy=parseInt($('wy').value),gap=parseFloat($('gap').value);
+  const isCol=p.forma==='colonna';
+  const diaT=isCol?p.dia+(p.motif==='tasche'?2*p.D*(1+p.flare):0):0;
+  const sx=isCol?diaT+Math.max(gap,40):p.W+gap;
+  const bond=$('bond').checked&&!isCol;
+  const inst=[];
+  for(let j=0;j<wy;j++){
+    const off=bond&&(j%2===1)?sx/2:0;
+    for(let i=0;i<wx;i++) inst.push([i*sx+off, j*(p.H+gap), 0]);
+  }
+  download(buildSTL(current.positions,1,inst),`quinconce_${p.forma==='colonna'?'colonnato':'muro'}_${p.motif}_${wx}x${wy}.stl`);
+  $('statusMsg').textContent='STL muro esportato · scala 1:1';
+};
+$('btnGen').onclick=regenerate;
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setView(t.dataset.v));
+
+for(const s of sliders){
+  $(s).addEventListener('input',()=>{
+    refreshLabels();
+    if(['wx','wy','gap'].includes(s)){ if(current) rebuildScene(); }
+    else scheduleRegen();
+  });
+}
+for(const c of checks){
+  $(c).addEventListener('change',()=>{
+    if(c==='bond'){ if(current) rebuildScene(); }
+    else scheduleRegen();
+  });
+}
+$('seed').addEventListener('change',scheduleRegen);
+$('vox').addEventListener('change',scheduleRegen);
+
+function updateMotifUI(){
+  const m=$('motif').value;
+  const col=$('forma').value==='colonna';
+  const t=m==='tasche';
+  $('dTasche').style.display   = t?'':'none';
+  $('dSacca').style.display    = t?'':'none';
+  $('dStruttura').style.display= t?'none':'';
+  $('dMeandri').style.display  = m==='meandri'?'':'none';
+  $('dGiroide').style.display  = m==='giroide'?'':'none';
+  $('rowDia').style.display    = col?'':'none';
+  $('hintCol').style.display   = col?'':'none';
+  $('rowW').style.display      = col?'none':'';
+  $('dFissaggio').style.display= col?'none':'';
+}
+$('motif').addEventListener('change',()=>{updateMotifUI();scheduleRegen();});
+$('forma').addEventListener('change',()=>{updateMotifUI();scheduleRegen();});
+$('gsStyle').addEventListener('change',()=>{
+  if($('gsStyle').value==='macchie') $('invert').checked=true;
+  scheduleRegen();
+});
+
+updateMotifUI();
+refreshLabels();
+initScene();
+regenerate();
+</script>
+</body>
+</html>

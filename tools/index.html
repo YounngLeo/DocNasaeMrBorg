@@ -158,6 +158,8 @@
   .nav-list a.spin-link:hover { background: rgba(56,189,248,0.08); }
   .nav-list a.vein-link { color: #00ff88; }
   .nav-list a.vein-link:hover { background: rgba(0,255,136,0.08); }
+  .nav-list a.clay-link { color: #e8e2d4; }
+  .nav-list a.clay-link:hover { background: rgba(232,226,212,0.08); }
 
   /* === SECTIONS === */
   .section {
@@ -234,6 +236,7 @@
   .tool-header.iso { border-bottom-color: #00ff41; }
   .tool-header.spin { border-bottom-color: #38bdf8; }
   .tool-header.vein { border-bottom-color: #00ff88; }
+  .tool-header.clay { border-bottom-color: #e8e2d4; }
 
   .tool-meta {
     display: flex;
@@ -283,6 +286,8 @@
   .tool-header.spin .right b { color: #38bdf8; }
   .tool-header.vein .name { color: #00ff88; }
   .tool-header.vein .right b { color: #00ff88; }
+  .tool-header.clay .name { color: #e8e2d4; }
+  .tool-header.clay .right b { color: #e8e2d4; }
   .section.gold .section-title { color: #fff03a; }
   .section.purple { border-color: var(--purple); }
   .section.purple .section-title { color: var(--purple); }
@@ -305,12 +310,16 @@
   .launch-btn.spin:hover { background: #38bdf8; color: var(--bg); }
   .launch-btn.vein { border-color: #00ff88; color: #00ff88; }
   .launch-btn.vein:hover { background: #00ff88; color: var(--bg); }
+  .launch-btn.clay { border-color: #e8e2d4; color: #e8e2d4; }
+  .launch-btn.clay:hover { background: #e8e2d4; color: var(--bg); }
   .section.iso { border-color: #00ff41; }
   .section.iso .section-title { color: #00ff41; }
   .section.spin { border-color: #38bdf8; }
   .section.spin .section-title { color: #38bdf8; }
   .section.vein { border-color: #00ff88; }
   .section.vein .section-title { color: #00ff88; }
+  .section.clay { border-color: #e8e2d4; }
+  .section.clay .section-title { color: #e8e2d4; }
   .section.mesh { border-color: #666; }
   .section.mesh .section-title { color: #e8e8e8; }
   .section.fos { border-color: #7CFF9B; }
@@ -537,7 +546,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 10 active</div>
+    <div class="nav-progress" id="navProgress">// 11 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -579,6 +588,10 @@
     <a href="#venatura" class="vein-link" data-nav="venatura">
       <span><span class="marker">▸</span>VENATURA</span>
       <span class="num">TOOL_10 · VORONOI</span>
+    </a>
+    <a href="#quinconce" class="clay-link" data-nav="quinconce">
+      <span><span class="marker">▸</span>QUINCONCE</span>
+      <span class="num">TOOL_11 · CLAY</span>
     </a>
   </div>
 </nav>
@@ -1320,8 +1333,67 @@
 
 </div>
 
+<!-- ============================ -->
+<!-- TOOL_11 :: QUINCONCE          -->
+<!-- ============================ -->
+<div class="tool-block" id="quinconce" data-section="quinconce">
+
+  <div class="tool-header clay">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_11 :: CLAY</div>
+        <div class="name">QUINCONCE</div>
+        <div class="sub">muri coltivazione · tasche / meandri / giroide · STL argilla</div>
+      </div>
+      <div class="right">
+        <b>v1</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="quinconce/preview.jpg" alt="quinconce preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="quinconce/tool.html" class="launch-btn clay">▶ LAUNCH</a>
+    <a href="quinconce/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section clay">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Generatore di muri di coltivazione e ventilazione in argilla stampata: moduli a tasche (quilt), meandri passanti o giroide TPMS, vista modulo/muro, export STL con compensazione ritiro.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">// WORKFLOW</div>
+        <ul>
+          <li>Scegli motivo (tasche / meandri / giroide) e forma</li>
+          <li>Regola modulo, sacche o struttura canali</li>
+          <li>Anteprima 3D · composizione muro</li>
+          <li>Export STL modulo o muro intero</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section clay">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>SDF · marching cubes · Three.js r128</dd>
+          <dt>OUTPUT</dt><dd>STL (modulo / muro)</dd>
+          <dt>USO</dt><dd>stampa 3D argilla · muri verdi</dd>
+          <dt>TAGS</dt><dd>argilla · tasche · giroide · muro</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
-  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.8</span>
+  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.9</span>
   <span>END_OF_INDEX</span>
 </footer>
 
@@ -1417,10 +1489,11 @@
                   id === 'isoieta' ? '// viewing ISOIETA' :
                   id === 'ventolino' ? '// viewing VENTOLINO' :
                   id === 'venatura' ? '// viewing VENATURA' :
-                  '// 10 active';
+                  id === 'quinconce' ? '// viewing QUINCONCE' :
+                  '// 11 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 10 active';
+      navProgress.textContent = '// 11 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });
