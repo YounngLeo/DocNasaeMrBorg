@@ -160,6 +160,8 @@
   .nav-list a.vein-link:hover { background: rgba(0,255,136,0.08); }
   .nav-list a.clay-link { color: #e8e2d4; }
   .nav-list a.clay-link:hover { background: rgba(232,226,212,0.08); }
+  .nav-list a.cal-link { color: #3dff88; }
+  .nav-list a.cal-link:hover { background: rgba(61,255,136,0.08); }
 
   /* === SECTIONS === */
   .section {
@@ -237,6 +239,7 @@
   .tool-header.spin { border-bottom-color: #38bdf8; }
   .tool-header.vein { border-bottom-color: #00ff88; }
   .tool-header.clay { border-bottom-color: #e8e2d4; }
+  .tool-header.cal { border-bottom-color: #3dff88; }
 
   .tool-meta {
     display: flex;
@@ -288,6 +291,8 @@
   .tool-header.vein .right b { color: #00ff88; }
   .tool-header.clay .name { color: #e8e2d4; }
   .tool-header.clay .right b { color: #e8e2d4; }
+  .tool-header.cal .name { color: #3dff88; }
+  .tool-header.cal .right b { color: #3dff88; }
   .section.gold .section-title { color: #fff03a; }
   .section.purple { border-color: var(--purple); }
   .section.purple .section-title { color: var(--purple); }
@@ -312,6 +317,8 @@
   .launch-btn.vein:hover { background: #00ff88; color: var(--bg); }
   .launch-btn.clay { border-color: #e8e2d4; color: #e8e2d4; }
   .launch-btn.clay:hover { background: #e8e2d4; color: var(--bg); }
+  .launch-btn.cal { border-color: #3dff88; color: #3dff88; }
+  .launch-btn.cal:hover { background: #3dff88; color: var(--bg); }
   .section.iso { border-color: #00ff41; }
   .section.iso .section-title { color: #00ff41; }
   .section.spin { border-color: #38bdf8; }
@@ -320,6 +327,8 @@
   .section.vein .section-title { color: #00ff88; }
   .section.clay { border-color: #e8e2d4; }
   .section.clay .section-title { color: #e8e2d4; }
+  .section.cal { border-color: #3dff88; }
+  .section.cal .section-title { color: #3dff88; }
   .section.mesh { border-color: #666; }
   .section.mesh .section-title { color: #e8e8e8; }
   .section.fos { border-color: #7CFF9B; }
@@ -546,7 +555,7 @@
 <nav class="nav" id="nav">
   <div class="nav-bar" id="navBar">
     <div class="nav-label">TOOLS <span class="arrow">▼</span></div>
-    <div class="nav-progress" id="navProgress">// 11 active</div>
+    <div class="nav-progress" id="navProgress">// 12 active</div>
   </div>
   <div class="nav-list">
     <a href="#cuore-statico" class="amber-link" data-nav="cuore-statico">
@@ -592,6 +601,10 @@
     <a href="#quinconce" class="clay-link" data-nav="quinconce">
       <span><span class="marker">▸</span>QUINCONCE</span>
       <span class="num">TOOL_11 · CLAY</span>
+    </a>
+    <a href="#calamina" class="cal-link" data-nav="calamina">
+      <span><span class="marker">▸</span>CALAMINA</span>
+      <span class="num">TOOL_12 · RHYTHM</span>
     </a>
   </div>
 </nav>
@@ -1392,8 +1405,67 @@
 
 </div>
 
+<!-- ============================ -->
+<!-- TOOL_12 :: CALAMINA           -->
+<!-- ============================ -->
+<div class="tool-block" id="calamina" data-section="calamina">
+
+  <div class="tool-header cal">
+    <div class="tool-meta">
+      <div class="left">
+        <div class="brand">// TOOL_12 :: RHYTHM</div>
+        <div class="name">CALAMINA</div>
+        <div class="sub">banco ritmico · drone · rumore · Web Audio · iPad</div>
+      </div>
+      <div class="right">
+        <b>v1</b> · 2026<br>
+        STATUS <b>ACTIVE</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-strip">
+    <img src="calamina/preview.jpg" alt="calamina preview">
+  </div>
+
+  <div class="launch-bar">
+    <a href="calamina/tool.html" class="launch-btn cal">▶ LAUNCH</a>
+    <a href="calamina/tool.html" target="_blank" class="launch-btn secondary">↗ NEW TAB</a>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <section class="section cal">
+        <div class="section-title">// OVERVIEW</div>
+        <p>Banco ritmico / drone / rumore self-contained (Web Audio, senza dipendenze): sequencer a passi, campioni procedurali, droni Karplus-Strong, bus effetti e alea — pensato anche per iPad.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">// WORKFLOW</div>
+        <ul>
+          <li>Tocca per avviare l’audio · ▶ play</li>
+          <li>Programma la griglia sequencer e i campioni</li>
+          <li>Regola droni, rumori e bus (eco / filtro)</li>
+          <li>Salva / carica patch dallo stato interno</li>
+        </ul>
+      </section>
+    </div>
+    <div>
+      <section class="section cal">
+        <div class="section-title">// METADATA</div>
+        <dl class="meta-grid">
+          <dt>ENGINE</dt><dd>Web Audio API · Karplus-Strong</dd>
+          <dt>OUTPUT</dt><dd>audio live · patch stato</dd>
+          <dt>USO</dt><dd>live · iPad · studio</dd>
+          <dt>TAGS</dt><dd>ritmo · drone · rumore · sequencer</dd>
+        </dl>
+      </section>
+    </div>
+  </div>
+
+</div>
+
 <footer>
-  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v1.9</span>
+  <span>// DOCTNASA&MRBORG // STUDIO_TOOLS // v2.0</span>
   <span>END_OF_INDEX</span>
 </footer>
 
@@ -1490,10 +1562,11 @@
                   id === 'ventolino' ? '// viewing VENTOLINO' :
                   id === 'venatura' ? '// viewing VENATURA' :
                   id === 'quinconce' ? '// viewing QUINCONCE' :
-                  '// 11 active';
+                  id === 'calamina' ? '// viewing CALAMINA' :
+                  '// 12 active';
       navProgress.textContent = label;
     } else {
-      navProgress.textContent = '// 11 active';
+      navProgress.textContent = '// 12 active';
     }
   }
   window.addEventListener('scroll', updateNavProgress, { passive: true });

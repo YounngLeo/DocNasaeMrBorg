@@ -45,6 +45,9 @@ tools/
 └── quinconce/
     ├── tool.html           ← muri coltivazione argilla · STL
     └── preview.jpg
+└── calamina/
+    ├── tool.html           ← banco ritmico · drone · rumore · Web Audio
+    └── preview.jpg
 ```
 
 ## aggiornare un tool

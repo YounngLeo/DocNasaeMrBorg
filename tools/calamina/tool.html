@@ -1,0 +1,2985 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<meta name="robots" content="noindex,nofollow">
+<script src="../_mirror.js"></script>
+<title>CALAMINA // DOCTNASA&MRBORG</title>
+<style>
+:root{
+  --fondo:#05070800; --fondo0:#050708; --fondo1:#0a0f11; --fondo2:#101719; --fondo3:#162024;
+  --linea:#1b282c; --linea2:#2c4147;
+  --verde:#3dff88; --verde2:#1fbf60; --verde3:#0d5b31; --verde-velo:rgba(61,255,136,.13);
+  --ambra:#ffb347; --rosso:#ff4f63; --viola:#b18cff;
+  --testo:#a9d9be; --testo2:#5f8271; --testo3:#3b5548;
+  --fnt:"Courier New",Courier,monospace;
+  --r:2px;
+  --tocco:44px;
+  --sicuroT:env(safe-area-inset-top,0px);
+  --sicuroB:env(safe-area-inset-bottom,0px);
+  --sicuroL:env(safe-area-inset-left,0px);
+  --sicuroR:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;width:100%;overflow:hidden;overscroll-behavior:none;background:var(--fondo0);}
+body{
+  position:fixed;inset:0;
+  font-family:var(--fnt);font-size:13px;color:var(--testo);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(120% 80% at 50% -10%, #0b1416 0%, #050708 60%),
+    repeating-linear-gradient(0deg, rgba(61,255,136,.028) 0 1px, transparent 1px 3px);
+}
+#app{position:absolute;inset:0;display:grid;grid-template-rows:auto auto 1fr;
+  padding:var(--sicuroT) var(--sicuroR) var(--sicuroB) var(--sicuroL);}
+
+/* ─── barra di trasporto ─── */
+.trasporto{display:flex;align-items:stretch;gap:6px;padding:6px 8px;border-bottom:1px solid var(--linea);
+  background:linear-gradient(180deg,#0b1214,#070c0e);}
+.marchio{display:flex;flex-direction:column;justify-content:center;padding:0 10px 0 4px;min-width:118px;}
+.marchio a{color:var(--testo3);font-size:9px;letter-spacing:.12em;text-decoration:none;margin-bottom:3px;}
+.marchio a:hover{color:var(--verde);}
+.marchio b{font-size:17px;letter-spacing:.30em;color:var(--verde);font-weight:700;line-height:1;}
+.marchio small{font-size:9px;letter-spacing:.14em;color:var(--testo3);margin-top:3px;}
+.btn{
+  min-height:var(--tocco);min-width:var(--tocco);padding:0 12px;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:var(--fondo2);color:var(--testo);border:1px solid var(--linea2);border-radius:var(--r);
+  font-family:var(--fnt);font-size:12px;letter-spacing:.10em;text-transform:uppercase;
+  touch-action:manipulation;cursor:pointer;transition:background .09s linear,color .09s linear;
+}
+.btn:active{background:var(--verde3);}
+.btn.acceso{background:var(--verde);color:#04120a;border-color:var(--verde);font-weight:700;}
+.btn.allarme.acceso{background:var(--rosso);border-color:var(--rosso);color:#1a0409;}
+.btn.largo{flex:1;}
+.btn:focus-visible{outline:2px solid var(--verde);outline-offset:2px;}
+.btn[disabled]{opacity:.35;}
+.orologio{display:flex;flex-direction:column;justify-content:center;min-width:96px;padding:0 8px;
+  border:1px solid var(--linea);border-radius:var(--r);background:#070d0f;}
+.orologio .grande{font-size:20px;color:var(--verde);line-height:1;letter-spacing:.04em;}
+.orologio .piccolo{font-size:9px;color:var(--testo3);letter-spacing:.12em;margin-top:3px;}
+.spazio{flex:1;}
+
+/* ─── schede ─── */
+.schede{display:flex;gap:0;border-bottom:1px solid var(--linea);background:#070b0d;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.schede::-webkit-scrollbar{display:none;}
+.scheda{flex:1 0 auto;min-width:96px;height:40px;display:flex;align-items:center;justify-content:center;
+  font-size:11px;letter-spacing:.18em;color:var(--testo3);background:transparent;border:0;
+  border-right:1px solid var(--linea);border-bottom:2px solid transparent;
+  font-family:var(--fnt);touch-action:manipulation;cursor:pointer;text-transform:uppercase;}
+.scheda.attiva{color:var(--verde);border-bottom-color:var(--verde);background:var(--verde-velo);}
+
+/* ─── pannelli ─── */
+.pannelli{position:relative;overflow:hidden;}
+.pannello{position:absolute;inset:0;display:none;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:8px 8px 90px;}
+.pannello.attivo{display:block;}
+.colonne{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px;align-items:start;}
+.blocco{border:1px solid var(--linea);border-radius:var(--r);background:linear-gradient(180deg,#0a1113,#080d0f);}
+.blocco>h3{margin:0;padding:7px 10px;font-size:10px;letter-spacing:.22em;color:var(--testo2);
+  text-transform:uppercase;border-bottom:1px solid var(--linea);background:#0c1416;font-weight:400;
+  display:flex;justify-content:space-between;align-items:center;}
+.blocco>h3 em{font-style:normal;color:var(--testo3);letter-spacing:.06em;text-transform:none;font-size:10px;}
+.corpo{padding:6px 8px 9px;}
+.riga{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;}
+.riga>*{flex:1 1 auto;}
+.nota{font-size:10px;color:var(--testo3);line-height:1.5;letter-spacing:.02em;padding:2px 2px 6px;}
+
+/* ─── cursore (slider) ─── */
+.cur{position:relative;height:var(--tocco);margin:3px 0;border:1px solid var(--linea);border-radius:var(--r);
+  background:#070d0f;overflow:hidden;touch-action:none;cursor:ew-resize;}
+.cur .riemp{position:absolute;left:0;top:0;bottom:0;width:0;
+  background:linear-gradient(180deg,rgba(61,255,136,.30),rgba(61,255,136,.13));border-right:1px solid var(--verde);}
+.cur .tacche{position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 25%);}
+.cur .et{position:absolute;left:9px;top:0;bottom:0;display:flex;align-items:center;
+  font-size:11px;letter-spacing:.08em;color:var(--testo);pointer-events:none;text-transform:uppercase;
+  text-shadow:0 0 6px #000;white-space:nowrap;}
+.cur .vl{position:absolute;right:9px;top:0;bottom:0;display:flex;align-items:center;
+  font-size:12px;color:var(--verde);pointer-events:none;text-shadow:0 0 6px #000;white-space:nowrap;}
+.cur.fine .riemp{background:linear-gradient(180deg,rgba(255,179,71,.32),rgba(255,179,71,.12));border-right-color:var(--ambra);}
+.cur.fine .vl{color:var(--ambra);}
+.cur.mod .et:after{content:" ~";color:var(--viola);}
+.cur.presa{border-color:var(--verde);}
+.cur.interruttore .riemp{background:linear-gradient(180deg,rgba(61,255,136,.42),rgba(61,255,136,.18));}
+.scelta{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 7px;}
+.scelta button{min-height:36px;padding:0 10px;flex:1 1 auto;font-size:11px;letter-spacing:.06em;
+  background:var(--fondo2);border:1px solid var(--linea2);color:var(--testo2);border-radius:var(--r);
+  font-family:var(--fnt);touch-action:manipulation;text-transform:uppercase;}
+.scelta button.attivo{background:var(--verde);border-color:var(--verde);color:#04120a;font-weight:700;}
+.etg{font-size:9px;letter-spacing:.24em;color:var(--testo3);margin:11px 2px 3px;text-transform:uppercase;
+  border-top:1px dashed var(--linea);padding-top:8px;}
+.etg:first-child{border-top:0;margin-top:2px;}
+
+/* ─── griglia sequencer ─── */
+.trama{display:flex;flex-direction:column;gap:2px;min-width:min-content;}
+.trigaR{display:flex;align-items:stretch;gap:2px;}
+.nomeT{width:104px;min-width:104px;display:flex;align-items:center;gap:4px;padding:0 4px;
+  border:1px solid var(--linea);border-radius:var(--r);background:#0a1113;}
+.nomeT .tt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;
+  letter-spacing:.05em;color:var(--testo);background:none;border:0;font-family:var(--fnt);text-align:left;padding:0;}
+.nomeT.sel{border-color:var(--verde);background:var(--verde-velo);}
+.mini{width:22px;min-width:22px;height:26px;font-size:9px;line-height:28px;text-align:center;
+  border:1px solid var(--linea2);border-radius:var(--r);background:#0d1518;color:var(--testo3);
+  font-family:var(--fnt);padding:0;}
+.mini.acceso{background:var(--ambra);color:#160a00;border-color:var(--ambra);}
+.mini.solo.acceso{background:var(--verde);color:#04120a;border-color:var(--verde);}
+.cella{flex:1;min-width:36px;height:38px;position:relative;border:1px solid var(--linea);
+  border-radius:var(--r);background:#080e10;touch-action:none;overflow:hidden;}
+.cella.quarto{border-left-color:var(--linea2);background:#0b1214;}
+.cella.attiva{background:var(--verde3);border-color:var(--verde2);}
+.cella .lv{position:absolute;left:0;right:0;bottom:0;background:var(--verde);opacity:.85;height:0;}
+.cella.fuori{opacity:.22;}
+.cella .rip{position:absolute;top:2px;right:3px;font-size:9px;color:var(--ambra);}
+.cella.corrente{box-shadow:inset 0 0 0 2px var(--verde);}
+.testataT{display:flex;gap:2px;margin-bottom:3px;}
+.testataT .vuoto{width:104px;min-width:104px;}
+.testataT .n{flex:1;min-width:38px;text-align:center;font-size:9px;color:var(--testo3);padding:2px 0;
+  border-bottom:1px solid var(--linea);}
+.testataT .n.batt{color:var(--testo2);border-bottom-color:var(--linea2);}
+.testataT .n.qui{color:var(--verde);background:var(--verde-velo);}
+.tramaAvvolgi{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;}
+
+/* ─── forma d'onda ─── */
+.onda{position:relative;width:100%;height:120px;border:1px solid var(--linea);border-radius:var(--r);
+  background:#060b0c;touch-action:none;overflow:hidden;}
+.onda canvas{display:block;width:100%;height:100%;}
+.maniglia{position:absolute;top:0;bottom:0;width:32px;margin-left:-16px;display:flex;align-items:flex-start;
+  justify-content:center;}
+.maniglia:after{content:"";position:absolute;top:0;bottom:0;left:15px;width:2px;background:var(--ambra);}
+.maniglia b{position:relative;top:2px;font-size:9px;color:#160a00;background:var(--ambra);padding:1px 4px;
+  border-radius:var(--r);}
+.maniglia.fine:after{background:var(--viola);}
+.maniglia.fine b{background:var(--viola);color:#12061f;}
+
+/* ─── varie ─── */
+.gocce{border:1px dashed var(--linea2);border-radius:var(--r);padding:14px 10px;text-align:center;
+  color:var(--testo3);font-size:11px;letter-spacing:.06em;background:#070d0f;}
+.gocce.sopra{border-color:var(--verde);color:var(--verde);background:var(--verde-velo);}
+input[type=file]{display:none;}
+.striscia{display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;
+  scrollbar-width:none;}
+.striscia::-webkit-scrollbar{display:none;height:0;}
+.striscia button{flex:0 0 auto;min-width:74px;height:52px;display:flex;flex-direction:column;
+  align-items:flex-start;justify-content:center;padding:0 8px;gap:2px;
+  background:var(--fondo2);border:1px solid var(--linea2);border-radius:var(--r);color:var(--testo2);
+  font-family:var(--fnt);font-size:11px;letter-spacing:.06em;touch-action:manipulation;}
+.striscia button small{font-size:9px;color:var(--testo3);letter-spacing:.02em;}
+.striscia button.attivo{border-color:var(--verde);color:var(--verde);background:var(--verde-velo);}
+.striscia button.attivo small{color:var(--verde2);}
+.striscia button.carico small{color:var(--ambra);}
+.misuratore{height:6px;border:1px solid var(--linea);border-radius:var(--r);background:#060b0c;overflow:hidden;margin:5px 0;}
+.misuratore i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--verde2),var(--verde) 70%,var(--ambra) 88%,var(--rosso));}
+.avviso{position:fixed;left:50%;bottom:calc(16px + var(--sicuroB));transform:translateX(-50%);
+  background:#0c1417;border:1px solid var(--verde);color:var(--verde);padding:9px 16px;border-radius:var(--r);
+  font-size:11px;letter-spacing:.08em;z-index:60;pointer-events:none;opacity:0;transition:opacity .18s linear;
+  max-width:80vw;text-align:center;}
+.avviso.vedi{opacity:1;}
+.velo{position:fixed;inset:0;background:rgba(3,5,6,.94);z-index:80;display:flex;align-items:center;
+  justify-content:center;flex-direction:column;gap:18px;padding:24px;text-align:center;}
+.velo h1{font-size:30px;letter-spacing:.38em;color:var(--verde);margin:0;font-weight:700;}
+.velo p{font-size:11px;color:var(--testo2);letter-spacing:.10em;margin:0;line-height:1.7;max-width:420px;}
+.tabellina{width:100%;border-collapse:collapse;font-size:11px;}
+.tabellina td{padding:3px 4px;border-bottom:1px solid var(--linea);color:var(--testo2);}
+.tabellina td:last-child{text-align:right;color:var(--verde);}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+@media (max-width:820px){
+  .marchio{min-width:74px;}.marchio b{font-size:14px;letter-spacing:.20em;}
+  .nomeT,.testataT .vuoto{width:86px;min-width:86px;}
+  .cella{min-width:34px;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ==========================================================================
+   CALAMINA — banco ritmico / drone / rumore per iPad
+   DoctNasa&MrBorg · file singolo, nessuna dipendenza esterna
+   --------------------------------------------------------------------------
+   NOMENCLATURA CANONICA
+     identificatore parametro = <dominio><Oggetto><Proprieta><Unita>
+       dominio : trs seq smp drn noi bus ale        (3 lettere minuscole)
+       unita   : Hz Db Ms Sec St Ct Oct Ratio Norm Pct Bpm Idx Cnt Flag
+     esempi  : smpFiltroTaglioHz · drnGranoDensitaHz · busEcoRitornoNorm
+     verifica: API.verificaNomenclatura() — eseguita anche dalla suite di test
+   CONVENZIONI CODICE
+     costanti      MAIUSCOLO_CON_TRATTINI
+     funzioni pure verbo + complemento, in italiano (normAValore, euclideo)
+     nodi audio    sostantivo italiano (ingresso, uscita, filtro, mandataEco)
+     stato          unica sorgente di verita: STATO; l'audio la legge, mai il DOM
+   ========================================================================== */
+(function (glob) {
+'use strict';
+
+var SENZA_DOM = (typeof document === 'undefined') || !!glob.__HEADLESS__;
+
+/* ── 1. costanti ─────────────────────────────────────────────────────────── */
+var DOMINI = ['trs','seq','smp','bas','chi','lea','drn','noi','bus','ale'];
+var UNITA  = ['Hz','Db','Ms','Sec','St','Ct','Oct','Ratio','Norm','Pct','Bpm','Idx','Cnt','Flag'];
+var RE_IDENTIFICATORE = new RegExp('^(' + DOMINI.join('|') + ')[A-Z][A-Za-z0-9]*(' + UNITA.join('|') + ')$');
+
+var SLOT_CNT = 8, DRONE_CNT = 2, RUMORE_CNT = 2, BASSO_CNT = 1, CHITARRA_CNT = 1, LEAD_CNT = 1;
+var PASSI_MAX = 64, PASSI_PAGINA = 16;
+var LOOKAHEAD_SEC = 0.12, INTERVALLO_MS = 25;
+var FREQ_BASE_HZ = 55;                       /* LA1 = grado 0 dei droni       */
+
+var DIVISORI = [
+  {et:'1/4',  fattore:4},   {et:'1/8',  fattore:2},   {et:'1/8T', fattore:4/3},
+  {et:'1/16', fattore:1},   {et:'1/16T',fattore:2/3}, {et:'1/32', fattore:0.5}
+];
+var DIREZIONI = ['avanti','indietro','pendolo','casuale','bruniano'];
+var SCALE = {
+  et:['cromatica','minore','dorico','frigio','pentatonica','esatonale','armonica'],
+  gradi:[[0,1,2,3,4,5,6,7,8,9,10,11],[0,2,3,5,7,8,10],[0,2,3,5,7,9,10],[0,1,3,5,7,8,10],
+         [0,3,5,7,10],[0,2,4,6,8,10],[0,2,3,5,7,8,11]]
+};
+var ACCORDI = {
+  et:['unisono','quinta','ottava','minore','maggiore','tritono','sospesa','grappolo'],
+  gradi:[[0],[0,7],[0,12],[0,3,7],[0,4,7],[0,6],[0,5,7],[0,1,2,3]]
+};
+var FORME_ONDA = ['sine','triangle','sawtooth','square'];
+var TIPI_FILTRO = ['lowpass','highpass','bandpass','notch','allpass'];
+var ET_FILTRO = ['passa-basso','passa-alto','passa-banda','elimina-banda','passa-tutto'];
+var TIPI_RUMORE = ['bianco','rosa','bruno','crepitio','metallico','campione'];
+var MODI_CANCELLO = ['continuo','da sequencer','invertito'];
+var DIV_ECO = [
+  {et:'1/32',fattore:0.5},{et:'1/16T',fattore:2/3},{et:'1/16',fattore:1},{et:'1/8T',fattore:4/3},
+  {et:'1/8',fattore:2},{et:'1/4T',fattore:8/3},{et:'3/16',fattore:3},{et:'1/4',fattore:4},
+  {et:'3/8',fattore:6},{et:'1/2',fattore:8}
+];
+var CAMPIONI_INTERNI = ['cassa','rullante','charleston','charleston aperto','battimano','tom','metallo','scarica'];
+
+/* ── 2. utilita pure ─────────────────────────────────────────────────────── */
+function limita(v, a, b){ return v < a ? a : (v > b ? b : v); }
+function daDb(db){ return Math.pow(10, db / 20); }
+function aFreq(semitoni){ return FREQ_BASE_HZ * Math.pow(2, semitoni / 12); }
+function arrotonda(v, d){ var m = Math.pow(10, d||0); return Math.round(v*m)/m; }
+
+/* generatore pseudocasuale deterministico (mulberry32) */
+function creaCaso(seme){
+  var s = (seme >>> 0) || 1;
+  return function(){
+    s |= 0; s = (s + 0x6D2B79F5) | 0;
+    var t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function bipolare(caso){ return caso() * 2 - 1; }
+
+function quantizzaAScala(semitoni, scalaIdx){
+  var gradi = SCALE.gradi[limita(scalaIdx|0, 0, SCALE.gradi.length-1)];
+  var ott = Math.floor(semitoni / 12), resto = semitoni - ott * 12;
+  var migliore = gradi[0], dist = 1e9;
+  for (var i = 0; i < gradi.length; i++){
+    var d = Math.abs(gradi[i] - resto);
+    if (d < dist){ dist = d; migliore = gradi[i]; }
+  }
+  return ott * 12 + migliore;
+}
+
+/* euclideo(pulsazioni, passi, rotazione) -> array di 0/1 (Bjorklund semplificato) */
+function euclideo(pulsazioniCnt, passiCnt, rotazioneCnt){
+  passiCnt = Math.max(1, passiCnt|0);
+  pulsazioniCnt = limita(pulsazioniCnt|0, 0, passiCnt);
+  var fuori = new Array(passiCnt), i;
+  for (i = 0; i < passiCnt; i++) fuori[i] = 0;
+  if (pulsazioniCnt === 0) return fuori;
+  var contatore = 0;
+  for (i = 0; i < passiCnt; i++){
+    contatore += pulsazioniCnt;
+    if (contatore >= passiCnt){ contatore -= passiCnt; fuori[i] = 1; }
+  }
+  var r = ((rotazioneCnt|0) % passiCnt + passiCnt) % passiCnt;
+  if (!r) return fuori;
+  return fuori.slice(passiCnt - r).concat(fuori.slice(0, passiCnt - r));
+}
+
+function durataPassoSec(bpm){ return 15 / limita(bpm, 20, 400); }   /* un 1/16 */
+function offsetSwingSec(passoIdx, swingNorm, passoSec){
+  return (passoIdx % 2) ? swingNorm * 0.5 * passoSec : 0;
+}
+function avanzaIndice(idx, lunghezzaCnt, direzioneIdx, senso, caso){
+  var L = Math.max(1, lunghezzaCnt|0);
+  switch (direzioneIdx|0){
+    case 1: return { idx:(idx - 1 + L) % L, senso:-1 };
+    case 2:
+      var n = idx + senso;
+      if (n >= L){ return { idx: Math.max(0, L - 2), senso:-1 }; }
+      if (n < 0) { return { idx: Math.min(L - 1, 1), senso: 1 }; }
+      return { idx:n, senso:senso };
+    case 3: return { idx: Math.floor(caso() * L), senso:1 };
+    case 4: return { idx: (idx + (caso() < 0.5 ? 1 : (caso() < 0.5 ? 2 : L - 1))) % L, senso:1 };
+    default: return { idx:(idx + 1) % L, senso:1 };
+  }
+}
+
+/* ── 3. registro parametri ───────────────────────────────────────────────── */
+function P(id, etichetta, min, max, dif, curva, extra){
+  var d = { id:id, etichetta:etichetta, min:min, max:max, dif:dif, curva:curva || 'lin' };
+  if (extra) for (var k in extra) d[k] = extra[k];
+  return d;
+}
+function E(id, etichetta, opzioni, dif){
+  return P(id, etichetta, 0, opzioni.length - 1, dif || 0, 'enum', { opzioni:opzioni });
+}
+function F(id, etichetta, dif){ return P(id, etichetta, 0, 1, dif || 0, 'flag'); }
+
+var DESCRITTORI = {};
+
+DESCRITTORI.trs = [
+  P('trsTempoBpm','tempo',40,220,124,'lin',{passo:0.5,unita:'BPM'}),
+  P('trsSwingNorm','swing',0,0.75,0,'lin',{pct:true}),
+  P('trsPassiCnt','lunghezza pattern',1,PASSI_MAX,16,'int'),
+  P('trsTonicaSt','tonica',-24,24,0,'int',{unita:'st'}),
+  E('trsScalaIdx','scala',SCALE.et,0),
+  P('trsUmanizzaMs','umanizza',0,40,0,'lin',{unita:'ms'})
+];
+
+DESCRITTORI.seq = [
+  P('seqLunghezzaCnt','lunghezza traccia',1,PASSI_MAX,16,'int',{unita:'passi'}),
+  E('seqDivisoreIdx','divisione',DIVISORI.map(function(d){return d.et;}),3),
+  E('seqDirezioneIdx','direzione',DIREZIONI,0),
+  P('seqMutaNorm','mutazione continua',0,1,0,'lin',{pct:true}),
+  P('seqPulsazioniCnt','pulsazioni euclidee',0,PASSI_MAX,4,'int'),
+  F('seqMutoFlag','muto',0),
+  F('seqSoloFlag','solo',0)
+];
+
+DESCRITTORI.smp = [
+  { gruppo:'sorgente' },
+  P('smpPuntoInizioNorm','inizio',0,1,0,'lin',{pct:true}),
+  P('smpPuntoFineNorm','fine',0,1,1,'lin',{pct:true}),
+  F('smpInversioneFlag','inversione',0),
+  P('smpIntonazioneSt','intonazione',-36,36,0,'int',{unita:'st'}),
+  P('smpStonaturaCt','stonatura',-100,100,0,'lin',{unita:'ct'}),
+  { gruppo:'inviluppo' },
+  P('smpAttaccoMs','attacco',0.1,600,1,'exp',{unita:'ms'}),
+  P('smpTenutaMs','tenuta',0.1,2000,10,'exp',{unita:'ms'}),
+  P('smpRilascioMs','rilascio',3,6000,400,'exp',{unita:'ms'}),
+  P('smpCurvaNorm','curva rilascio',0,1,0.35,'lin',{pct:true}),
+  { gruppo:'timbro' },
+  E('smpFiltroTipoIdx','filtro',ET_FILTRO.concat(['nessuno']),5),
+  P('smpFiltroTaglioHz','taglio',20,20000,20000,'exp',{unita:'Hz'}),
+  P('smpFiltroQRatio','risonanza',0.1,24,0.7,'exp'),
+  P('smpFiltroEnvOct','env → taglio',-6,6,0,'lin',{unita:'ott'}),
+  P('smpSaturazioneNorm','saturazione',0,1,0,'lin',{pct:true}),
+  P('smpQuantizzBitCnt','riduzione bit',2,16,16,'int',{unita:'bit'}),
+  { gruppo:'uscita' },
+  P('smpLivelloDb','livello',-60,6,-6,'lin',{unita:'dB'}),
+  P('smpPanNorm','panorama',-1,1,0,'lin'),
+  P('smpMandataEcoNorm','mandata eco',0,1,0,'lin',{pct:true}),
+  P('smpMandataRiverberoNorm','mandata riverbero',0,1,0,'lin',{pct:true}),
+  P('smpGruppoChokeIdx','gruppo esclusione',0,8,0,'int'),
+  P('smpProbabilitaNorm','probabilita traccia',0,1,1,'lin',{pct:true}),
+  { gruppo:'variazione (± per colpo)' },
+  P('smpVarIntonazioneSt','∆ intonazione',0,24,0,'lin',{unita:'st'}),
+  P('smpVarPuntoInizioNorm','∆ inizio',0,1,0,'lin',{pct:true}),
+  P('smpVarLivelloDb','∆ livello',0,24,0,'lin',{unita:'dB'}),
+  P('smpVarPanNorm','∆ panorama',0,1,0,'lin',{pct:true}),
+  P('smpVarFiltroTaglioOct','∆ taglio',0,5,0,'lin',{unita:'ott'}),
+  P('smpVarRilascioNorm','∆ rilascio',0,1,0,'lin',{pct:true}),
+  P('smpVarProbabilitaNorm','∆ probabilita',0,1,0,'lin',{pct:true})
+];
+
+
+/* ── strumenti intonati: basso (da DIAPASON), chitarra (da SCORIA), lead (da CUORE STATICO) ── */
+DESCRITTORI.bas = [
+  { gruppo:'voce' },
+  F('basAttivoFlag','attivo',1),
+  P('basGradoSt','grado',-36,36,0,'int',{unita:'st'}),
+  E('basFormaIdx','forma',['dente di sega','quadra','triangolo'],0),
+  P('basSubLivelloDb','sub',-60,6,-12,'lin',{unita:'dB'}),
+  P('basGlideMs','glide',1,400,60,'exp',{unita:'ms'}),
+  E('basGlideModoIdx','glide quando',['legato','sempre','mai'],0),
+  P('basAccentoNorm','accento',0,1,0.6,'lin',{pct:true}),
+  { gruppo:'filtro' },
+  P('basFiltroTaglioHz','taglio',40,8000,320,'exp',{unita:'Hz'}),
+  P('basFiltroQRatio','risonanza',0.5,24,8,'exp'),
+  P('basFiltroEnvOct','env → taglio',0,6,2.4,'lin',{unita:'ott'}),
+  P('basFiltroDecadimentoMs','decadimento env',10,2000,220,'exp',{unita:'ms'}),
+  { gruppo:'inviluppo' },
+  P('basAttaccoMs','attacco',0.1,200,3,'exp',{unita:'ms'}),
+  P('basDecadimentoMs','decadimento',10,3000,260,'exp',{unita:'ms'}),
+  P('basSostegnoNorm','sostegno',0,1,0.15,'lin',{pct:true}),
+  P('basRilascioMs','rilascio',5,3000,120,'exp',{unita:'ms'}),
+  { gruppo:'uscita' },
+  P('basSaturazioneNorm','saturazione',0,1,0.25,'lin',{pct:true}),
+  P('basQuantizzBitCnt','riduzione bit',2,16,16,'int',{unita:'bit'}),
+  P('basLivelloDb','livello',-60,6,-9,'lin',{unita:'dB'}),
+  P('basPanNorm','panorama',-1,1,0,'lin'),
+  P('basMandataEcoNorm','mandata eco',0,1,0,'lin',{pct:true}),
+  P('basMandataRiverberoNorm','mandata riverbero',0,1,0.05,'lin',{pct:true}),
+  P('basProbabilitaNorm','probabilita traccia',0,1,1,'lin',{pct:true}),
+  { gruppo:'variazione' },
+  P('basVarGradoSt','∆ grado',0,24,0,'lin',{unita:'st'}),
+  P('basVarFiltroTaglioOct','∆ taglio',0,6,0,'lin',{unita:'ott'}),
+  P('basVarLivelloDb','∆ livello',0,18,0,'lin',{unita:'dB'}),
+  P('basVarDecadimentoNorm','∆ decadimento',0,1,0,'lin',{pct:true})
+];
+
+DESCRITTORI.chi = [
+  { gruppo:'esecuzione' },
+  F('chiAttivoFlag','attivo',1),
+  P('chiGradoSt','grado',-36,36,24,'int',{unita:'st'}),
+  E('chiAccordoIdx','accordo',ACCORDI.et,4),
+  P('chiCordeCnt','corde',1,6,4,'int'),
+  P('chiStrumMs','strum',0,120,14,'lin',{unita:'ms'}),
+  E('chiStrumModoIdx','verso strum',['giu','su','alternato','casuale'],2),
+  P('chiStonaturaCt','stonatura corde',0,40,4,'lin',{unita:'ct'}),
+  { gruppo:'corda (Karplus-Strong)' },
+  P('chiBrillantezzaHz','brillantezza anello',300,12000,3200,'exp',{unita:'Hz'}),
+  P('chiSostegnoNorm','sostegno',0,1,0.72,'lin',{pct:true}),
+  P('chiPizzicoNorm','posizione plettro',0,1,0.3,'lin',{pct:true}),
+  P('chiPlettroMs','durata plettro',0.5,60,6,'exp',{unita:'ms'}),
+  P('chiSmorzoNorm','smorzo palmo',0,1,0,'lin',{pct:true}),
+  { gruppo:'amplificatore' },
+  P('chiDistorsioneNorm','distorsione',0,1,0.45,'lin',{pct:true}),
+  P('chiQuantizzBitCnt','riduzione bit',2,16,16,'int',{unita:'bit'}),
+  P('chiCorpoHz','corpo',80,3000,420,'exp',{unita:'Hz'}),
+  P('chiCorpoQRatio','corpo Q',0.3,12,1.6,'exp'),
+  P('chiCassaTaglioHz','cassa',800,12000,3800,'exp',{unita:'Hz'}),
+  P('chiPresenzaDb','presenza',-12,12,3,'lin',{unita:'dB'}),
+  { gruppo:'uscita' },
+  P('chiLivelloDb','livello',-60,6,-10,'lin',{unita:'dB'}),
+  P('chiPanNorm','panorama',-1,1,0,'lin'),
+  P('chiMandataEcoNorm','mandata eco',0,1,0.12,'lin',{pct:true}),
+  P('chiMandataRiverberoNorm','mandata riverbero',0,1,0.2,'lin',{pct:true}),
+  P('chiProbabilitaNorm','probabilita traccia',0,1,1,'lin',{pct:true}),
+  { gruppo:'variazione' },
+  P('chiVarGradoSt','∆ grado',0,24,0,'lin',{unita:'st'}),
+  P('chiVarBrillantezzaOct','∆ brillantezza',0,5,0,'lin',{unita:'ott'}),
+  P('chiVarLivelloDb','∆ livello',0,18,0,'lin',{unita:'dB'}),
+  P('chiVarStrumNorm','∆ strum',0,1,0,'lin',{pct:true})
+];
+
+DESCRITTORI.lea = [
+  { gruppo:'voce' },
+  F('leaAttivoFlag','attivo',1),
+  P('leaGradoSt','grado',-36,36,24,'int',{unita:'st'}),
+  E('leaFormaIdx','forma',['sinusoide','triangolo','dente di sega','quadra'],2),
+  P('leaVociCnt','unisono',1,5,3,'int'),
+  P('leaStonaturaCt','stonatura',0,50,9,'lin',{unita:'ct'}),
+  P('leaLarghezzaNorm','larghezza stereo',0,1,0.5,'lin',{pct:true}),
+  P('leaSubLivelloDb','sub',-60,0,-30,'lin',{unita:'dB'}),
+  P('leaGlideMs','glide',0.5,600,45,'exp',{unita:'ms'}),
+  { gruppo:'filtro' },
+  E('leaFiltroTipoIdx','filtro',ET_FILTRO,0),
+  P('leaFiltroTaglioHz','taglio',80,16000,1800,'exp',{unita:'Hz'}),
+  P('leaFiltroQRatio','risonanza',0.1,20,3,'exp'),
+  P('leaFiltroEnvOct','env → taglio',-6,6,2,'lin',{unita:'ott'}),
+  P('leaFiltroDecadimentoMs','decadimento env',10,3000,300,'exp',{unita:'ms'}),
+  { gruppo:'inviluppo e vibrato' },
+  P('leaAttaccoMs','attacco',0.5,2000,8,'exp',{unita:'ms'}),
+  P('leaDecadimentoMs','decadimento',10,3000,400,'exp',{unita:'ms'}),
+  P('leaSostegnoNorm','sostegno',0,1,0.5,'lin',{pct:true}),
+  P('leaRilascioMs','rilascio',5,4000,350,'exp',{unita:'ms'}),
+  P('leaVibratoHz','vibrato',0.1,12,5,'exp',{unita:'Hz'}),
+  P('leaVibratoCt','profondita vibrato',0,80,12,'lin',{unita:'ct'}),
+  P('leaVibratoRitardoMs','ritardo vibrato',0,1500,220,'lin',{unita:'ms'}),
+  { gruppo:'uscita' },
+  P('leaSaturazioneNorm','saturazione',0,1,0.15,'lin',{pct:true}),
+  P('leaLivelloDb','livello',-60,6,-13,'lin',{unita:'dB'}),
+  P('leaPanNorm','panorama',-1,1,0,'lin'),
+  P('leaMandataEcoNorm','mandata eco',0,1,0.3,'lin',{pct:true}),
+  P('leaMandataRiverberoNorm','mandata riverbero',0,1,0.35,'lin',{pct:true}),
+  P('leaProbabilitaNorm','probabilita traccia',0,1,1,'lin',{pct:true}),
+  { gruppo:'variazione' },
+  P('leaVarGradoSt','∆ grado',0,24,0,'lin',{unita:'st'}),
+  P('leaVarFiltroTaglioOct','∆ taglio',0,6,0,'lin',{unita:'ott'}),
+  P('leaVarLivelloDb','∆ livello',0,18,0,'lin',{unita:'dB'}),
+  P('leaVarGlideNorm','∆ glide',0,1,0,'lin',{pct:true})
+];
+
+DESCRITTORI.drn = [
+  { gruppo:'sorgente' },
+  F('drnAttivoFlag','attivo',1),
+  E('drnModoIdx','modo',['oscillatori','granulare','ibrido'],0),
+  P('drnSorgenteSlotIdx','slot sorgente',0,SLOT_CNT-1,0,'int'),
+  P('drnGradoSt','grado',-36,36,0,'int',{unita:'st'}),
+  E('drnAccordoIdx','accordo',ACCORDI.et,3),
+  P('drnVociCnt','voci',1,8,3,'int'),
+  P('drnStonaturaCt','stonatura',0,80,11,'lin',{unita:'ct'}),
+  P('drnLarghezzaNorm','larghezza stereo',0,1,0.6,'lin',{pct:true}),
+  E('drnFormaIdx','forma',['sinusoide','triangolo','dente di sega','quadra'],1),
+  P('drnSubLivelloDb','sub',-60,0,-16,'lin',{unita:'dB'}),
+  { gruppo:'filtro' },
+  E('drnFiltroTipoIdx','filtro',ET_FILTRO,0),
+  P('drnFiltroTaglioHz','taglio',30,16000,900,'exp',{unita:'Hz'}),
+  P('drnFiltroQRatio','risonanza',0.1,20,1,'exp'),
+  { gruppo:'movimento' },
+  E('drnLfoFormaIdx','lfo forma',['sinusoide','triangolo','quadra','campiona e tieni'],0),
+  P('drnLfoFrequenzaHz','lfo frequenza',0.01,20,0.09,'exp',{unita:'Hz'}),
+  P('drnLfoProfonditaOct','lfo → taglio',0,6,0.8,'lin',{unita:'ott'}),
+  P('drnDerivaFrequenzaHz','deriva velocita',0.005,4,0.05,'exp',{unita:'Hz'}),
+  P('drnDerivaProfonditaCt','deriva ampiezza',0,300,18,'lin',{unita:'ct'}),
+  P('drnBattimentoHz','battimento',0,8,0,'lin',{unita:'Hz'}),
+  { gruppo:'grani' },
+  P('drnGranoDurataMs','durata grano',5,900,140,'exp',{unita:'ms'}),
+  P('drnGranoDensitaHz','densita',0.5,120,16,'exp',{unita:'Hz'}),
+  P('drnGranoPosizioneNorm','posizione',0,1,0.2,'lin',{pct:true}),
+  P('drnGranoDerivaNorm','deriva posizione',0,1,0.08,'lin',{pct:true}),
+  P('drnGranoDispersioneNorm','dispersione',0,1,0.3,'lin',{pct:true}),
+  P('drnGranoIntonazioneSt','intonazione grano',-24,24,0,'int',{unita:'st'}),
+  P('drnGranoVarIntonazioneSt','∆ intonazione grano',0,24,0,'lin',{unita:'st'}),
+  F('drnGranoInversioneFlag','grani invertiti',0),
+  { gruppo:'inviluppo e uscita' },
+  E('drnCancelloIdx','cancello',MODI_CANCELLO,0),
+  P('drnAttaccoSec','attacco',0.01,20,3,'exp',{unita:'s'}),
+  P('drnRilascioSec','rilascio',0.01,30,5,'exp',{unita:'s'}),
+  P('drnSaturazioneNorm','saturazione',0,1,0.08,'lin',{pct:true}),
+  P('drnLivelloDb','livello',-60,6,-15,'lin',{unita:'dB'}),
+  P('drnPanNorm','panorama',-1,1,0,'lin'),
+  P('drnMandataEcoNorm','mandata eco',0,1,0.1,'lin',{pct:true}),
+  P('drnMandataRiverberoNorm','mandata riverbero',0,1,0.35,'lin',{pct:true}),
+  { gruppo:'variazione' },
+  P('drnVarGradoSt','∆ grado',0,24,0,'lin',{unita:'st'}),
+  P('drnVarFiltroTaglioOct','∆ taglio',0,6,0,'lin',{unita:'ott'}),
+  P('drnVarLivelloDb','∆ livello',0,18,0,'lin',{unita:'dB'})
+];
+
+DESCRITTORI.noi = [
+  { gruppo:'sorgente' },
+  F('noiAttivoFlag','attivo',1),
+  E('noiTipoIdx','tipo',TIPI_RUMORE,1),
+  P('noiSorgenteSlotIdx','slot sorgente',0,SLOT_CNT-1,0,'int'),
+  P('noiDensitaHz','densita grani',0.2,300,24,'exp',{unita:'Hz'}),
+  P('noiGranoDurataMs','durata grano',1,400,28,'exp',{unita:'ms'}),
+  P('noiGranoDispersioneNorm','dispersione',0,1,0.5,'lin',{pct:true}),
+  { gruppo:'filtro' },
+  E('noiFiltroTipoIdx','filtro',ET_FILTRO,2),
+  P('noiFiltroTaglioHz','taglio',30,18000,2200,'exp',{unita:'Hz'}),
+  P('noiFiltroQRatio','risonanza',0.1,30,4,'exp'),
+  P('noiSpazzolaProfonditaOct','spazzata',0,6,0,'lin',{unita:'ott'}),
+  P('noiSpazzolaFrequenzaHz','spazzata frequenza',0.01,30,0.25,'exp',{unita:'Hz'}),
+  P('noiTenutaFrequenzaHz','campiona e tieni',0.1,60,4,'exp',{unita:'Hz'}),
+  P('noiTenutaProfonditaOct','c&t → taglio',0,6,0,'lin',{unita:'ott'}),
+  { gruppo:'risuonatore' },
+  F('noiRisuonatoreFlag','risuonatore',0),
+  P('noiRisuonatoreHz','frequenza',40,3000,220,'exp',{unita:'Hz'}),
+  P('noiRisuonatoreRitornoNorm','ritorno',0,0.97,0.6,'lin',{pct:true}),
+  P('noiRisuonatoreTaglioHz','smorzamento',200,18000,4000,'exp',{unita:'Hz'}),
+  { gruppo:'inviluppo' },
+  E('noiCancelloIdx','cancello',MODI_CANCELLO,1),
+  P('noiAttaccoMs','attacco',0.1,3000,2,'exp',{unita:'ms'}),
+  P('noiDecadimentoMs','decadimento',2,6000,180,'exp',{unita:'ms'}),
+  P('noiSostegnoNorm','sostegno',0,1,0,'lin',{pct:true}),
+  P('noiRilascioMs','rilascio',2,8000,300,'exp',{unita:'ms'}),
+  { gruppo:'uscita' },
+  P('noiSaturazioneNorm','saturazione',0,1,0,'lin',{pct:true}),
+  P('noiLivelloDb','livello',-60,6,-18,'lin',{unita:'dB'}),
+  P('noiPanNorm','panorama',-1,1,0,'lin'),
+  P('noiMandataEcoNorm','mandata eco',0,1,0.15,'lin',{pct:true}),
+  P('noiMandataRiverberoNorm','mandata riverbero',0,1,0.3,'lin',{pct:true}),
+  P('noiProbabilitaNorm','probabilita traccia',0,1,1,'lin',{pct:true}),
+  { gruppo:'variazione' },
+  P('noiVarFiltroTaglioOct','∆ taglio',0,6,0,'lin',{unita:'ott'}),
+  P('noiVarLivelloDb','∆ livello',0,24,0,'lin',{unita:'dB'}),
+  P('noiVarDecadimentoNorm','∆ decadimento',0,1,0,'lin',{pct:true}),
+  P('noiVarPanNorm','∆ panorama',0,1,0,'lin',{pct:true})
+];
+
+DESCRITTORI.bus = [
+  { gruppo:'colore' },
+  P('busSaturazioneNorm','saturazione',0,1,0.1,'lin',{pct:true}),
+  P('busQuantizzBitCnt','riduzione bit',2,16,16,'int',{unita:'bit'}),
+  P('busPassaAltoHz','passa-alto',20,1000,24,'exp',{unita:'Hz'}),
+  P('busPassaBassoHz','passa-basso',500,20000,18000,'exp',{unita:'Hz'}),
+  { gruppo:'eco' },
+  E('busEcoDivisoreIdx','divisione',DIV_ECO.map(function(d){return d.et;}),4),
+  P('busEcoRitornoNorm','ritorno',0,0.95,0.38,'lin',{pct:true}),
+  P('busEcoTaglioHz','smorzamento',300,16000,3200,'exp',{unita:'Hz'}),
+  P('busEcoLivelloDb','livello',-60,0,-10,'lin',{unita:'dB'}),
+  { gruppo:'riverbero' },
+  P('busRiverberoDurataSec','durata',0.2,12,3.4,'exp',{unita:'s'}),
+  P('busRiverberoDecadimentoNorm','decadimento',0,1,0.5,'lin',{pct:true}),
+  P('busRiverberoTaglioHz','smorzamento',300,16000,5000,'exp',{unita:'Hz'}),
+  P('busRiverberoLivelloDb','livello',-60,0,-12,'lin',{unita:'dB'}),
+  { gruppo:'compressione e uscita' },
+  P('busCompSogliaDb','soglia',-60,0,-14,'lin',{unita:'dB'}),
+  P('busCompRapportoRatio','rapporto',1,20,4,'lin'),
+  P('busCompRilascioMs','rilascio',20,1000,220,'exp',{unita:'ms'}),
+  P('busLivelloDb','livello generale',-60,6,-3,'lin',{unita:'dB'})
+];
+
+DESCRITTORI.ale = [
+  P('aleQuantitaNorm','quantita globale',0,1,0.25,'lin',{pct:true}),
+  P('aleEvoluzioneNorm','evoluzione per ciclo',0,1,0,'lin',{pct:true}),
+  P('aleDensitaNorm','densita generatore',0,1,0.4,'lin',{pct:true}),
+  P('aleSemeCnt','seme',1,9999,1,'int')
+];
+
+function soloParametri(lista){
+  var f = [];
+  for (var i = 0; i < lista.length; i++) if (lista[i].id) f.push(lista[i]);
+  return f;
+}
+function trovaDescrittore(id){
+  for (var g in DESCRITTORI){
+    var l = DESCRITTORI[g];
+    for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i];
+  }
+  return null;
+}
+
+/* ── 4. verifica nomenclatura ────────────────────────────────────────────── */
+function verificaNomenclatura(){
+  var errori = [], visti = {};
+  for (var dominio in DESCRITTORI){
+    soloParametri(DESCRITTORI[dominio]).forEach(function(d){
+      if (!RE_IDENTIFICATORE.test(d.id)) errori.push('forma non canonica: ' + d.id);
+      if (d.id.slice(0,3) !== dominio)   errori.push('dominio incoerente: ' + d.id + ' in ' + dominio);
+      if (visti[d.id])                    errori.push('identificatore duplicato: ' + d.id);
+      visti[d.id] = 1;
+      if (!(d.dif >= d.min && d.dif <= d.max)) errori.push('valore iniziale fuori scala: ' + d.id);
+      if (d.curva === 'exp' && d.min <= 0)     errori.push('curva esponenziale con minimo <= 0: ' + d.id);
+      if (d.curva === 'enum' && (!d.opzioni || d.opzioni.length !== d.max - d.min + 1))
+        errori.push('enumerazione incoerente: ' + d.id);
+      if (!d.etichetta)                        errori.push('etichetta mancante: ' + d.id);
+    });
+  }
+  return errori;
+}
+
+/* ── 5. scale valore <-> normalizzato ────────────────────────────────────── */
+function normAValore(d, n){
+  n = limita(n, 0, 1);
+  switch (d.curva){
+    case 'exp':  return d.min * Math.pow(d.max / d.min, n);
+    case 'int':
+    case 'enum': return Math.round(d.min + (d.max - d.min) * n);
+    case 'flag': return n >= 0.5 ? 1 : 0;
+    default:     return d.min + (d.max - d.min) * n;
+  }
+}
+function valoreANorm(d, v){
+  v = limita(v, d.min, d.max);
+  switch (d.curva){
+    case 'exp':  return Math.log(v / d.min) / Math.log(d.max / d.min);
+    case 'flag': return v ? 1 : 0;
+    default:     return (d.max - d.min) === 0 ? 0 : (v - d.min) / (d.max - d.min);
+  }
+}
+function formattaValore(d, v){
+  if (d.curva === 'flag') return v ? 'SI' : 'NO';
+  if (d.curva === 'enum') return String(d.opzioni[limita(Math.round(v), 0, d.opzioni.length-1)]).toUpperCase();
+  if (d.pct) return Math.round(v * 100) + '%';
+  var u = d.unita ? ' ' + d.unita : '';
+  if (d.curva === 'int') return v + u;
+  if (Math.abs(v) >= 1000) return Math.round(v) + u;
+  if (Math.abs(v) >= 100)  return arrotonda(v, 1) + u;
+  return arrotonda(v, 2) + u;
+}
+/* valore con variazione casuale simmetrica, limitato alla scala del parametro */
+function valoreVariato(d, base, ampiezza, caso, macroNorm){
+  if (!ampiezza) return base;
+  var a = ampiezza * (macroNorm === undefined ? 1 : (0.25 + 0.75 * macroNorm));
+  return limita(base + bipolare(caso) * a, d.min, d.max);
+}
+
+/* ── 6. stato iniziale ───────────────────────────────────────────────────── */
+function valoriIniziali(dominio){
+  var v = {};
+  soloParametri(DESCRITTORI[dominio]).forEach(function(d){ v[d.id] = d.dif; });
+  return v;
+}
+function passoIniziale(){
+  return { attivoFlag:0, velocitaNorm:0.85, probabilitaNorm:1, ripetizioniCnt:1, microMs:0, intonazioneSt:0 };
+}
+function sequenzaIniziale(lunghezzaCnt){
+  var p = [], i;
+  for (i = 0; i < PASSI_MAX; i++) p.push(passoIniziale());
+  return {
+    passi:p, seqLunghezzaCnt:lunghezzaCnt || 16, seqDivisoreIdx:3, seqDirezioneIdx:0, seqPulsazioniCnt:4,
+    seqMutaNorm:0, seqMutoFlag:0, seqSoloFlag:0
+  };
+}
+function statoIniziale(){
+  var s = { versioneCnt:1, nome:'CALAMINA', trs:valoriIniziali('trs'), bus:valoriIniziali('bus'),
+            ale:valoriIniziali('ale'), slot:[], bas:[], chi:[], lea:[], drn:[], noi:[] }, i;
+  for (i = 0; i < SLOT_CNT; i++){
+    s.slot.push({ nome:CAMPIONI_INTERNI[i].toUpperCase(), origine:'interno', internoIdx:i,
+                  par:valoriIniziali('smp'), seq:sequenzaIniziale(16) });
+  }
+  for (i = 0; i < BASSO_CNT; i++)
+    s.bas.push({ nome:'BASSO', par:valoriIniziali('bas'), seq:sequenzaIniziale(16) });
+  for (i = 0; i < CHITARRA_CNT; i++)
+    s.chi.push({ nome:'CHITARRA', par:valoriIniziali('chi'), seq:sequenzaIniziale(16) });
+  for (i = 0; i < LEAD_CNT; i++)
+    s.lea.push({ nome:'LEAD', par:valoriIniziali('lea'), seq:sequenzaIniziale(16) });
+  for (i = 0; i < DRONE_CNT; i++){
+    var d = valoriIniziali('drn');
+    d.drnGradoSt = i ? 7 : 0;
+    d.drnLivelloDb = i ? -21 : -15;
+    s.drn.push({ nome:'DRONE ' + (i+1), par:d, seq:sequenzaIniziale(16) });
+  }
+  for (i = 0; i < RUMORE_CNT; i++){
+    var n = valoriIniziali('noi');
+    n.noiTipoIdx = i ? 3 : 1;
+    s.noi.push({ nome:'RUMORE ' + (i+1), par:n, seq:sequenzaIniziale(16) });
+  }
+  /* pattern d'avvio: qualcosa suona subito */
+  [[0,[0,4,8,12]],[1,[4,12]],[2,[0,2,4,6,8,10,12,14]],[4,[7,15]]].forEach(function(coppia){
+    coppia[1].forEach(function(k){ s.slot[coppia[0]].seq.passi[k].attivoFlag = 1; });
+  });
+  [0,3,6,8,11,14].forEach(function(k){ s.bas[0].seq.passi[k].attivoFlag = 1; });
+  s.bas[0].seq.passi[0].velocitaNorm = 1;
+  s.bas[0].seq.passi[6].velocitaNorm = 1;
+  s.bas[0].seq.passi[3].intonazioneSt = 3;
+  s.bas[0].seq.passi[11].intonazioneSt = 7;
+  [2,10].forEach(function(k){ s.chi[0].seq.passi[k].attivoFlag = 1; });
+  [0,7].forEach(function(k){ s.lea[0].seq.passi[k].attivoFlag = 1; });
+  s.lea[0].seq.passi[7].intonazioneSt = 5;
+  s.drn[0].par.drnCancelloIdx = 0;
+  s.noi[0].seq.passi[6].attivoFlag = 1;
+  s.noi[0].seq.passi[14].attivoFlag = 1;
+  return s;
+}
+
+/* elenco piatto: slot → basso → chitarra → lead → droni → rumori */
+function elencoTracce(stato){
+  var t = [], i;
+  for (i = 0; i < stato.slot.length; i++) t.push({ genere:'smp', idx:i, rif:stato.slot[i], sigla:'S' + (i+1) });
+  for (i = 0; i < stato.bas.length; i++) t.push({ genere:'bas', idx:i, rif:stato.bas[i], sigla:'B' + (i+1) });
+  for (i = 0; i < stato.chi.length; i++) t.push({ genere:'chi', idx:i, rif:stato.chi[i], sigla:'C' + (i+1) });
+  for (i = 0; i < stato.lea.length; i++) t.push({ genere:'lea', idx:i, rif:stato.lea[i], sigla:'L' + (i+1) });
+  for (i = 0; i < stato.drn.length; i++) t.push({ genere:'drn', idx:i, rif:stato.drn[i], sigla:'D' + (i+1) });
+  for (i = 0; i < stato.noi.length; i++) t.push({ genere:'noi', idx:i, rif:stato.noi[i], sigla:'R' + (i+1) });
+  return t;
+}
+
+/* ── 7. preset ───────────────────────────────────────────────────────────── */
+function serializzaPreset(stato){
+  var copia = JSON.parse(JSON.stringify(stato));
+  copia.slot.forEach(function(s){ delete s.datiCampione; });
+  return JSON.stringify({ formato:'calamina', versioneCnt:1, stato:copia });
+}
+function deserializzaPreset(testo){
+  var oggetto = JSON.parse(testo);
+  if (!oggetto || oggetto.formato !== 'calamina') throw new Error('formato non riconosciuto');
+  var base = statoIniziale();
+  var fuso = fondi(base, oggetto.stato);
+  return fuso;
+}
+function fondi(base, sopra){
+  if (sopra === null || sopra === undefined) return base;
+  if (Array.isArray(base)){
+    if (!Array.isArray(sopra)) return base;
+    return base.map(function(v, i){ return i < sopra.length ? fondi(v, sopra[i]) : v; });
+  }
+  if (typeof base === 'object'){
+    if (typeof sopra !== 'object') return base;
+    var f = {};
+    for (var k in base) f[k] = (k in sopra) ? fondi(base[k], sopra[k]) : base[k];
+    return f;
+  }
+  return (typeof sopra === typeof base) ? sopra : base;
+}
+
+/* ── 8. decisione di un passo ────────────────────────────────────────────── */
+function decidiPasso(passo, probabilitaTracciaNorm, varProbNorm, caso, macroNorm){
+  if (!passo.attivoFlag) return { suona:false, ripetizioniCnt:0, velocitaNorm:0 };
+  var p = passo.probabilitaNorm * probabilitaTracciaNorm;
+  if (varProbNorm) p = limita(p + bipolare(caso) * varProbNorm * (0.25 + 0.75 * (macroNorm || 0)), 0, 1);
+  if (caso() > p) return { suona:false, ripetizioniCnt:0, velocitaNorm:0 };
+  return { suona:true, ripetizioniCnt:Math.max(1, passo.ripetizioniCnt|0), velocitaNorm:passo.velocitaNorm };
+}
+
+/* ── 9. campioni procedurali (dati grezzi, nessun AudioContext) ──────────── */
+function generaCampioneProceduraleDati(nome, frequenzaCampionamentoHz){
+  var sr = frequenzaCampionamentoHz || 44100;
+  var caso = creaCaso(nome.length * 7717 + 13);
+  var durataSec = 1.2, n, i, t, dati, env;
+  function alloca(sec){ n = Math.max(1, Math.round(sr * sec)); dati = new Float32Array(n); return dati; }
+  var passaAltoStato = 0, passaBassoStato = 0;
+  function pb(x, k){ passaBassoStato += k * (x - passaBassoStato); return passaBassoStato; }
+  function pa(x, k){ passaAltoStato += k * (x - passaAltoStato); return x - passaAltoStato; }
+
+  switch (nome){
+    case 'cassa':
+      alloca(0.75);
+      for (i = 0; i < n; i++){
+        t = i / sr;
+        var f = 46 + 118 * Math.exp(-t * 42);
+        env = Math.exp(-t * 7.4);
+        var clic = Math.exp(-t * 420) * 0.55 * bipolare(caso);
+        dati[i] = Math.tanh((Math.sin(2*Math.PI*f*t) * env * 1.4) + clic * env);
+      }
+      break;
+    case 'rullante':
+      alloca(0.42);
+      for (i = 0; i < n; i++){
+        t = i / sr;
+        env = Math.exp(-t * 17);
+        var corpo = (Math.sin(2*Math.PI*186*t) + Math.sin(2*Math.PI*331*t) * 0.7) * Math.exp(-t*26) * 0.45;
+        var pelle = pa(bipolare(caso), 0.32) * env;
+        dati[i] = Math.tanh((corpo + pelle * 0.9) * 1.25);
+      }
+      break;
+    case 'charleston':
+    case 'charleston aperto':
+      var aperto = nome.indexOf('aperto') >= 0;
+      alloca(aperto ? 0.62 : 0.13);
+      var parziali = [2437, 3011, 3673, 4211, 5301, 6421];
+      for (i = 0; i < n; i++){
+        t = i / sr;
+        env = Math.exp(-t * (aperto ? 6.2 : 46));
+        var somma = 0;
+        for (var q = 0; q < parziali.length; q++) somma += Math.sign(Math.sin(2*Math.PI*parziali[q]*t));
+        dati[i] = pa(somma / parziali.length * 0.8 + bipolare(caso) * 0.35, 0.55) * env;
+      }
+      break;
+    case 'battimano':
+      alloca(0.55);
+      var colpi = [0, 0.011, 0.021, 0.032];
+      for (i = 0; i < n; i++){
+        t = i / sr; env = 0;
+        for (var c = 0; c < colpi.length; c++) if (t >= colpi[c]) env += Math.exp(-(t - colpi[c]) * 78);
+        env += Math.exp(-t * 9) * 0.42;
+        dati[i] = pa(bipolare(caso), 0.42) * env * 0.5;
+      }
+      break;
+    case 'tom':
+      alloca(0.85);
+      for (i = 0; i < n; i++){
+        t = i / sr;
+        var ft = 132 + 96 * Math.exp(-t * 22);
+        env = Math.exp(-t * 5.6);
+        dati[i] = Math.tanh(Math.sin(2*Math.PI*ft*t) * env * 1.2 + bipolare(caso) * Math.exp(-t*140) * 0.3);
+      }
+      break;
+    case 'metallo':
+      alloca(1.1);
+      var mp = [287, 419, 571, 733, 941, 1187, 1523];
+      for (i = 0; i < n; i++){
+        t = i / sr;
+        var s = 0;
+        for (var m = 0; m < mp.length; m++) s += Math.sin(2*Math.PI*mp[m]*t*(1 + 0.0007*m)) * Math.exp(-t*(2.2 + m*0.9));
+        dati[i] = Math.tanh(s / mp.length * 2.4);
+      }
+      break;
+    case 'scarica':
+      alloca(0.5);
+      for (i = 0; i < n; i++){
+        t = i / sr;
+        var fs = 1800 * Math.exp(-t * 11) + 60;
+        env = Math.exp(-t * 8);
+        dati[i] = pb(Math.sin(2*Math.PI*fs*t + Math.sin(2*Math.PI*fs*2.31*t) * 3.2), 0.62) * env;
+      }
+      break;
+    default:
+      alloca(0.3);
+      for (i = 0; i < n; i++){ t = i / sr; dati[i] = bipolare(caso) * Math.exp(-t * 20); }
+  }
+  /* normalizzazione di picco */
+  var picco = 0;
+  for (i = 0; i < n; i++) if (Math.abs(dati[i]) > picco) picco = Math.abs(dati[i]);
+  if (picco > 0){ var g = 0.94 / picco; for (i = 0; i < n; i++) dati[i] *= g; }
+  return { dati:dati, frequenzaCampionamentoHz:sr, durataSec:n / sr };
+}
+
+/* rumori a spettro definito, dati grezzi */
+function generaRumoreDati(tipo, durataSec, frequenzaCampionamentoHz, seme){
+  var sr = frequenzaCampionamentoHz || 44100;
+  var n = Math.max(1, Math.round(sr * (durataSec || 3)));
+  var dati = new Float32Array(n), caso = creaCaso(seme || 7), i, x;
+  var b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0, ultimo=0;
+  for (i = 0; i < n; i++){
+    var bianco = bipolare(caso);
+    if (tipo === 'rosa'){
+      b0=0.99886*b0+bianco*0.0555179; b1=0.99332*b1+bianco*0.0750759; b2=0.96900*b2+bianco*0.1538520;
+      b3=0.86650*b3+bianco*0.3104856; b4=0.55000*b4+bianco*0.5329522; b5=-0.7616*b5-bianco*0.0168980;
+      x = (b0+b1+b2+b3+b4+b5+b6+bianco*0.5362)*0.11; b6 = bianco*0.115926;
+    } else if (tipo === 'bruno'){
+      ultimo = (ultimo + 0.02 * bianco) / 1.02; x = ultimo * 3.5;
+    } else if (tipo === 'metallico'){
+      var t = i / sr, s = 0, fp = [1237,1873,2411,3167,4271,5813];
+      for (var q = 0; q < fp.length; q++) s += Math.sin(2*Math.PI*fp[q]*t + bianco*0.15);
+      x = s / fp.length * 0.9;
+    } else {
+      x = bianco;
+    }
+    dati[i] = limita(x, -1, 1);
+  }
+  return { dati:dati, frequenzaCampionamentoHz:sr, durataSec:n / sr };
+}
+
+/* ── 10. codifica WAV 16 bit ─────────────────────────────────────────────── */
+function codificaWav(canali, frequenzaCampionamentoHz){
+  var canaliCnt = canali.length, campioniCnt = canali[0].length;
+  var byteDati = campioniCnt * canaliCnt * 2;
+  var buf = new ArrayBuffer(44 + byteDati), vista = new DataView(buf), off = 0;
+  function testo(s){ for (var i = 0; i < s.length; i++) vista.setUint8(off++, s.charCodeAt(i)); }
+  function u32(v){ vista.setUint32(off, v, true); off += 4; }
+  function u16(v){ vista.setUint16(off, v, true); off += 2; }
+  testo('RIFF'); u32(36 + byteDati); testo('WAVE'); testo('fmt '); u32(16); u16(1); u16(canaliCnt);
+  u32(frequenzaCampionamentoHz); u32(frequenzaCampionamentoHz * canaliCnt * 2); u16(canaliCnt * 2); u16(16);
+  testo('data'); u32(byteDati);
+  for (var i = 0; i < campioniCnt; i++){
+    for (var c = 0; c < canaliCnt; c++){
+      var v = limita(canali[c][i], -1, 1);
+      vista.setInt16(off, v < 0 ? v * 0x8000 : v * 0x7FFF, true); off += 2;
+    }
+  }
+  return new Uint8Array(buf);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOTORE AUDIO
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var CURVE_SAT = {}, CURVE_BIT = {};
+function curvaSaturazione(ctx, quantitaNorm){
+  var k = Math.round(quantitaNorm * 40) / 40;
+  if (CURVE_SAT[k]) return CURVE_SAT[k];
+  var n = 2048, c = new Float32Array(n), a = k * 60;
+  for (var i = 0; i < n; i++){
+    var x = i * 2 / (n - 1) - 1;
+    c[i] = a < 0.001 ? x : (1 + a) * x / (1 + a * Math.abs(x));
+  }
+  CURVE_SAT[k] = c; return c;
+}
+function curvaQuantizzazione(bitCnt){
+  var b = limita(Math.round(bitCnt), 2, 16);
+  if (CURVE_BIT[b]) return CURVE_BIT[b];
+  var n = 4096, c = new Float32Array(n), livelli = Math.pow(2, b - 1);
+  for (var i = 0; i < n; i++){
+    var x = i * 2 / (n - 1) - 1;
+    c[i] = Math.round(x * livelli) / livelli;
+  }
+  CURVE_BIT[b] = c; return c;
+}
+function bufferDaDati(ctx, pacchetto){
+  var b = ctx.createBuffer(1, pacchetto.dati.length, ctx.sampleRate);
+  var canale = b.getChannelData(0), sorgente = pacchetto.dati;
+  var rapporto = pacchetto.frequenzaCampionamentoHz / ctx.sampleRate;
+  if (Math.abs(rapporto - 1) < 1e-6){ canale.set(sorgente.subarray(0, canale.length)); return b; }
+  for (var i = 0; i < canale.length; i++){
+    var p = i * rapporto, i0 = Math.floor(p), f = p - i0;
+    canale[i] = (sorgente[i0] || 0) * (1 - f) + (sorgente[i0 + 1] || 0) * f;
+  }
+  return b;
+}
+function inverteBuffer(ctx, buffer){
+  var b = ctx.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+  for (var c = 0; c < buffer.numberOfChannels; c++){
+    var src = buffer.getChannelData(c), dst = b.getChannelData(c);
+    for (var i = 0, n = buffer.length; i < n; i++) dst[i] = src[n - 1 - i];
+  }
+  return b;
+}
+function creaImpulso(ctx, durataSec, decadimentoNorm){
+  var n = Math.max(1, Math.round(ctx.sampleRate * limita(durataSec, 0.05, 14)));
+  var b = ctx.createBuffer(2, n, ctx.sampleRate), caso = creaCaso(4242);
+  var esp = 1.2 + (1 - decadimentoNorm) * 5.5;
+  for (var c = 0; c < 2; c++){
+    var d = b.getChannelData(c);
+    for (var i = 0; i < n; i++){
+      var t = i / n;
+      var diffusione = i < ctx.sampleRate * 0.012 ? (i / (ctx.sampleRate * 0.012)) : 1;
+      d[i] = bipolare(caso) * Math.pow(1 - t, esp) * diffusione;
+    }
+  }
+  return b;
+}
+function panoramizza(ctx, nodo){
+  if (ctx.createStereoPanner) return ctx.createStereoPanner();
+  var p = ctx.createPanner(); p.panningModel = 'equalpower'; return p;
+}
+function impostaPan(nodo, v){
+  if (nodo.pan) nodo.pan.value = limita(v, -1, 1);
+  else if (nodo.setPosition) nodo.setPosition(limita(v,-1,1), 0, 1 - Math.abs(limita(v,-1,1)));
+}
+
+/* ── bus principale ──────────────────────────────────────────────────────── */
+function creaBus(ctx){
+  var b = {};
+  b.ingresso   = ctx.createGain();
+  b.sommaFx    = ctx.createGain();
+  b.saturatore = ctx.createWaveShaper(); b.saturatore.oversample = '2x';
+  b.quantizz   = ctx.createWaveShaper();
+  b.passaAlto  = ctx.createBiquadFilter(); b.passaAlto.type = 'highpass';
+  b.passaBasso = ctx.createBiquadFilter(); b.passaBasso.type = 'lowpass';
+  b.compressore = ctx.createDynamicsCompressor();
+  b.uscita     = ctx.createGain();
+  b.analizzatore = ctx.createAnalyser(); b.analizzatore.fftSize = 1024;
+
+  b.ingresso.connect(b.sommaFx);
+  b.sommaFx.connect(b.saturatore); b.saturatore.connect(b.quantizz);
+  b.quantizz.connect(b.passaAlto); b.passaAlto.connect(b.passaBasso);
+  b.passaBasso.connect(b.compressore); b.compressore.connect(b.uscita);
+  b.uscita.connect(b.analizzatore);
+  b.uscita.connect(ctx.destination);
+
+  /* eco a rimbalzo */
+  b.mandataEco = ctx.createGain(); b.mandataEco.gain.value = 1;
+  b.ecoSin = ctx.createDelay(4); b.ecoDes = ctx.createDelay(4);
+  b.ecoFiltro = ctx.createBiquadFilter(); b.ecoFiltro.type = 'lowpass';
+  b.ecoRitorno = ctx.createGain();
+  b.panSin = panoramizza(ctx); impostaPan(b.panSin, -0.85);
+  b.panDes = panoramizza(ctx); impostaPan(b.panDes,  0.85);
+  b.ecoLivello = ctx.createGain();
+  b.mandataEco.connect(b.ecoSin);
+  b.ecoSin.connect(b.panSin); b.panSin.connect(b.ecoLivello);
+  b.ecoSin.connect(b.ecoDes);
+  b.ecoDes.connect(b.panDes); b.panDes.connect(b.ecoLivello);
+  b.ecoDes.connect(b.ecoFiltro); b.ecoFiltro.connect(b.ecoRitorno); b.ecoRitorno.connect(b.ecoSin);
+  b.ecoLivello.connect(b.sommaFx);
+
+  /* riverbero a convoluzione */
+  b.mandataRiverbero = ctx.createGain(); b.mandataRiverbero.gain.value = 1;
+  b.convolutore = ctx.createConvolver();
+  b.riverberoFiltro = ctx.createBiquadFilter(); b.riverberoFiltro.type = 'lowpass';
+  b.riverberoLivello = ctx.createGain();
+  b.mandataRiverbero.connect(b.convolutore); b.convolutore.connect(b.riverberoFiltro);
+  b.riverberoFiltro.connect(b.riverberoLivello); b.riverberoLivello.connect(b.sommaFx);
+  b.impulsoChiave = '';
+  return b;
+}
+
+/* ── drone ───────────────────────────────────────────────────────────────── */
+function creaDrone(ctx, bus){
+  var d = { voci:[], sub:null, grani:0, prossimoGranoSec:0, derivaFase:0, tenuta:0, aperto:false };
+  d.somma      = ctx.createGain();
+  d.filtro     = ctx.createBiquadFilter();
+  d.saturatore = ctx.createWaveShaper(); d.saturatore.oversample = '2x';
+  d.cancello   = ctx.createGain(); d.cancello.gain.value = 0;
+  d.pan        = panoramizza(ctx);
+  d.livello    = ctx.createGain();
+  d.mandataEco = ctx.createGain(); d.mandataRiverbero = ctx.createGain();
+  d.somma.connect(d.filtro); d.filtro.connect(d.saturatore); d.saturatore.connect(d.cancello);
+  d.cancello.connect(d.pan); d.pan.connect(d.livello);
+  d.livello.connect(bus.ingresso);
+  d.livello.connect(d.mandataEco); d.mandataEco.connect(bus.mandataEco);
+  d.livello.connect(d.mandataRiverbero); d.mandataRiverbero.connect(bus.mandataRiverbero);
+  d.lfo = ctx.createOscillator(); d.lfoAmpiezza = ctx.createGain();
+  d.lfo.connect(d.lfoAmpiezza); d.lfoAmpiezza.connect(d.filtro.detune);
+  d.lfoAmpiezza.gain.value = 0; d.lfo.start();
+  d.subOsc = ctx.createOscillator(); d.subGuadagno = ctx.createGain();
+  d.subOsc.type = 'sine'; d.subGuadagno.gain.value = 0;
+  d.subOsc.connect(d.subGuadagno); d.subGuadagno.connect(d.somma); d.subOsc.start();
+  return d;
+}
+function sincronizzaVociDrone(ctx, d, quante){
+  while (d.voci.length < quante){
+    var o = ctx.createOscillator(), g = ctx.createGain(), p = panoramizza(ctx);
+    g.gain.value = 0.0001;
+    o.connect(g); g.connect(p); p.connect(d.somma);
+    o.start();
+    d.voci.push({ osc:o, guadagno:g, pan:p, deriva:0, obiettivo:0 });
+  }
+  while (d.voci.length > quante){
+    var v = d.voci.pop();
+    try { v.osc.stop(); } catch (e) {}
+    try { v.osc.disconnect(); v.guadagno.disconnect(); v.pan.disconnect(); } catch (e) {}
+  }
+}
+
+/* ── rumore ──────────────────────────────────────────────────────────────── */
+function creaRumore(ctx, bus){
+  var r = { sorgente:null, tipoCorrente:null, prossimoGranoSec:0, tenutaValore:0, prossimaTenutaSec:0, aperto:false };
+  r.continuo   = ctx.createGain(); r.continuo.gain.value = 0;
+  r.grani      = ctx.createGain(); r.grani.gain.value = 1;
+  r.filtro     = ctx.createBiquadFilter();
+  r.secco      = ctx.createGain();
+  r.risIngresso= ctx.createGain(); r.risIngresso.gain.value = 0;
+  r.ritardo    = ctx.createDelay(0.5);
+  r.risFiltro  = ctx.createBiquadFilter(); r.risFiltro.type = 'lowpass';
+  r.risRitorno = ctx.createGain();
+  r.saturatore = ctx.createWaveShaper(); r.saturatore.oversample = '2x';
+  r.cancello   = ctx.createGain(); r.cancello.gain.value = 0;
+  r.pan        = panoramizza(ctx);
+  r.livello    = ctx.createGain();
+  r.mandataEco = ctx.createGain(); r.mandataRiverbero = ctx.createGain();
+
+  r.continuo.connect(r.filtro); r.grani.connect(r.filtro);
+  r.filtro.connect(r.secco); r.secco.connect(r.saturatore);
+  r.filtro.connect(r.risIngresso); r.risIngresso.connect(r.ritardo);
+  r.ritardo.connect(r.risFiltro); r.risFiltro.connect(r.risRitorno); r.risRitorno.connect(r.ritardo);
+  r.ritardo.connect(r.saturatore);
+  r.saturatore.connect(r.cancello); r.cancello.connect(r.pan); r.pan.connect(r.livello);
+  r.livello.connect(bus.ingresso);
+  r.livello.connect(r.mandataEco); r.mandataEco.connect(bus.mandataEco);
+  r.livello.connect(r.mandataRiverbero); r.mandataRiverbero.connect(bus.mandataRiverbero);
+  return r;
+}
+function impostaSorgenteRumore(ctx, r, tipo, bufferRumori){
+  if (r.tipoCorrente === tipo) return;
+  r.tipoCorrente = tipo;
+  if (r.sorgente){ try { r.sorgente.stop(); r.sorgente.disconnect(); } catch (e) {} r.sorgente = null; }
+  if (tipo === 'crepitio' || tipo === 'campione'){ r.continuo.gain.value = 0; return; }
+  var s = ctx.createBufferSource();
+  s.buffer = bufferRumori[tipo] || bufferRumori.bianco;
+  s.loop = true; s.connect(r.continuo); s.start();
+  r.sorgente = s;
+}
+
+/* ── grano generico (usato da droni granulari e rumori a campione) ───────── */
+function suonaGrano(ctx, destinazione, buffer, tempoSec, cfg){
+  if (!buffer) return;
+  var durata = Math.max(0.004, cfg.durataSec);
+  var s = ctx.createBufferSource();
+  s.buffer = buffer;
+  s.playbackRate.value = limita(cfg.rapporto || 1, 0.03, 16);
+  var g = ctx.createGain();
+  var p = panoramizza(ctx); impostaPan(p, cfg.panNorm || 0);
+  s.connect(g); g.connect(p); p.connect(destinazione);
+  var picco = limita(cfg.ampiezza, 0.0001, 4);
+  g.gain.setValueAtTime(0.0001, tempoSec);
+  g.gain.linearRampToValueAtTime(picco, tempoSec + durata * 0.5);
+  g.gain.linearRampToValueAtTime(0.0001, tempoSec + durata);
+  var massimo = Math.max(0, buffer.duration - durata * s.playbackRate.value - 0.001);
+  var partenza = limita(cfg.posizioneSec || 0, 0, massimo);
+  try { s.start(tempoSec, partenza, durata * s.playbackRate.value + 0.01); } catch (e) { return; }
+  s.stop(tempoSec + durata + 0.02);
+  s.onended = function(){ try { s.disconnect(); g.disconnect(); p.disconnect(); } catch (e) {} };
+}
+
+/* ── voce campionatore ───────────────────────────────────────────────────── */
+function curvaInviluppo(picco, curvaNorm, punti){
+  var n = punti || 48, c = new Float32Array(n);
+  var esp = 0.5 + (1 - limita(curvaNorm, 0, 1)) * 3.6;
+  for (var i = 0; i < n; i++) c[i] = Math.max(0.0001, picco * Math.pow(1 - i / (n - 1), esp));
+  return c;
+}
+function suonaCampione(m, slotIdx, tempoSec, evento){
+  var ctx = m.ctx, slotStato = m.stato.slot[slotIdx], slotAudio = m.slot[slotIdx];
+  var buffer = evento.inversione ? slotAudio.bufferInverso : slotAudio.buffer;
+  if (!buffer) return;
+  var s = ctx.createBufferSource();
+  s.buffer = buffer;
+  s.playbackRate.value = limita(Math.pow(2, (evento.intonazioneSt + evento.stonaturaCt / 100) / 12), 0.03, 16);
+
+  var catena = s, filtro = null;
+  if (evento.filtroTipoIdx < TIPI_FILTRO.length){
+    filtro = ctx.createBiquadFilter();
+    filtro.type = TIPI_FILTRO[evento.filtroTipoIdx];
+    filtro.Q.value = evento.filtroQRatio;
+    catena.connect(filtro); catena = filtro;
+  }
+  var saturatore = null;
+  if (evento.saturazioneNorm > 0.001){
+    saturatore = ctx.createWaveShaper();
+    saturatore.curve = curvaSaturazione(ctx, evento.saturazioneNorm);
+    saturatore.oversample = '2x';
+    catena.connect(saturatore); catena = saturatore;
+  }
+  var quantizz = null;
+  if (evento.quantizzBitCnt < 16){
+    quantizz = ctx.createWaveShaper();
+    quantizz.curve = curvaQuantizzazione(evento.quantizzBitCnt);
+    catena.connect(quantizz); catena = quantizz;
+  }
+  var cancello = ctx.createGain();
+  var pan = panoramizza(ctx); impostaPan(pan, evento.panNorm);
+  catena.connect(cancello); cancello.connect(pan);
+  pan.connect(m.bus.ingresso);
+  var mandataEco = null, mandataRiverbero = null;
+  if (evento.mandataEcoNorm > 0.001){
+    mandataEco = ctx.createGain(); mandataEco.gain.value = evento.mandataEcoNorm;
+    pan.connect(mandataEco); mandataEco.connect(m.bus.mandataEco);
+  }
+  if (evento.mandataRiverberoNorm > 0.001){
+    mandataRiverbero = ctx.createGain(); mandataRiverbero.gain.value = evento.mandataRiverberoNorm;
+    pan.connect(mandataRiverbero); mandataRiverbero.connect(m.bus.mandataRiverbero);
+  }
+
+  var durataBuffer = buffer.duration;
+  var inizio = limita(Math.min(evento.puntoInizioNorm, evento.puntoFineNorm), 0, 0.999) * durataBuffer;
+  var fine   = limita(Math.max(evento.puntoInizioNorm, evento.puntoFineNorm), 0.001, 1) * durataBuffer;
+  var estensioneSec = Math.max(0.005, (fine - inizio) / s.playbackRate.value);
+
+  var att = evento.attaccoMs / 1000, ten = evento.tenutaMs / 1000, ril = evento.rilascioMs / 1000;
+  var picco = limita(evento.ampiezza, 0.0001, 4);
+  var g = cancello.gain;
+  g.setValueAtTime(0.0001, tempoSec);
+  if (att > 0.001) g.linearRampToValueAtTime(picco, tempoSec + att); else g.setValueAtTime(picco, tempoSec + 0.0005);
+  var inizioRilascio = tempoSec + att + ten;
+  g.setValueAtTime(picco, inizioRilascio);
+  try { g.setValueCurveAtTime(curvaInviluppo(picco, evento.curvaNorm), inizioRilascio, Math.max(0.01, ril)); }
+  catch (e) { g.exponentialRampToValueAtTime(0.0001, inizioRilascio + Math.max(0.01, ril)); }
+
+  if (filtro){
+    var base = evento.filtroTaglioHz;
+    var partenza = limita(base * Math.pow(2, evento.filtroEnvOct), 20, 20000);
+    filtro.frequency.setValueAtTime(partenza, tempoSec);
+    if (Math.abs(evento.filtroEnvOct) > 0.01)
+      filtro.frequency.exponentialRampToValueAtTime(limita(base, 20, 20000), inizioRilascio + Math.max(0.02, ril * 0.7));
+  }
+
+  var durataTotale = Math.min(estensioneSec, att + ten + ril + 0.05);
+  try { s.start(tempoSec, inizio, estensioneSec + 0.02); } catch (e) { return; }
+  var spegnimento = tempoSec + durataTotale + 0.06;
+  s.stop(spegnimento);
+
+  var voce = { cancello:cancello, sorgente:s, fineSec:spegnimento };
+  s.onended = function(){
+    try { s.disconnect(); cancello.disconnect(); pan.disconnect(); } catch (e) {}
+    if (filtro) try { filtro.disconnect(); } catch (e) {}
+    if (saturatore) try { saturatore.disconnect(); } catch (e) {}
+    if (quantizz) try { quantizz.disconnect(); } catch (e) {}
+    if (mandataEco) try { mandataEco.disconnect(); } catch (e) {}
+    if (mandataRiverbero) try { mandataRiverbero.disconnect(); } catch (e) {}
+    if (m.vociAttive > 0) m.vociAttive--;
+  };
+  m.vociAttive++;
+
+  var gruppo = evento.gruppoChokeIdx | 0;
+  if (gruppo > 0){
+    var precedente = m.esclusioni[gruppo];
+    if (precedente && precedente !== voce && precedente.fineSec > tempoSec){
+      try {
+        precedente.cancello.gain.cancelScheduledValues(tempoSec);
+        precedente.cancello.gain.setTargetAtTime(0.0001, tempoSec, 0.004);
+        precedente.sorgente.stop(tempoSec + 0.03);
+      } catch (e) {}
+    }
+    m.esclusioni[gruppo] = voce;
+  }
+  slotAudio.ultimaVoce = voce;
+}
+
+/* ── costruzione motore ──────────────────────────────────────────────────── */
+function creaMotore(ctx, stato){
+  var m = { ctx:ctx, stato:stato, bus:creaBus(ctx), slot:[], bassi:[], chitarre:[], lead:[],
+            droni:[], rumori:[], esclusioni:{}, vociAttive:0, bufferRumori:{},
+            registratore:null, blocchi:null };
+  ['bianco','rosa','bruno','metallico'].forEach(function(t){
+    m.bufferRumori[t] = bufferDaDati(ctx, generaRumoreDati(t, 4, ctx.sampleRate, t.length * 31 + 7));
+  });
+  for (var i = 0; i < SLOT_CNT; i++){
+    var pacchetto = generaCampioneProceduraleDati(CAMPIONI_INTERNI[i], ctx.sampleRate);
+    var buf = bufferDaDati(ctx, pacchetto);
+    m.slot.push({ buffer:buf, bufferInverso:inverteBuffer(ctx, buf), ultimaVoce:null, forma:null });
+  }
+  for (i = 0; i < BASSO_CNT; i++) m.bassi.push(creaBasso(ctx, m.bus));
+  for (i = 0; i < CHITARRA_CNT; i++) m.chitarre.push(creaChitarra(ctx, m.bus));
+  for (i = 0; i < LEAD_CNT; i++) m.lead.push(creaLead(ctx, m.bus));
+  for (i = 0; i < DRONE_CNT; i++) m.droni.push(creaDrone(ctx, m.bus));
+  for (i = 0; i < RUMORE_CNT; i++){
+    var r = creaRumore(ctx, m.bus);
+    impostaSorgenteRumore(ctx, r, TIPI_RUMORE[stato.noi[i].par.noiTipoIdx] || 'bianco', m.bufferRumori);
+    m.rumori.push(r);
+  }
+  m.bus.saturatore.curve = curvaSaturazione(ctx, stato.bus.busSaturazioneNorm);
+  m.bus.quantizz.curve = curvaQuantizzazione(stato.bus.busQuantizzBitCnt);
+  m.bus.convolutore.buffer = creaImpulso(ctx, stato.bus.busRiverberoDurataSec, stato.bus.busRiverberoDecadimentoNorm);
+  m.bus.impulsoChiave = arrotonda(stato.bus.busRiverberoDurataSec,2) + '/' + arrotonda(stato.bus.busRiverberoDecadimentoNorm,2);
+  return m;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   STRUMENTI INTONATI
+   basso  — monofonico con glide e accento, dalla traccia BASSO di DIAPASON
+   chitarra — Karplus-Strong + amplificatore saturo, dal canale CHITARRA di SCORIA
+   lead   — unisono con filtro e vibrato, dal canale LEAD di CUORE STATICO
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── modello dell'anello Karplus-Strong ──────────────────────────────────── */
+/* ritardo di fase di un polo singolo y = (1-a)x + a·y⁻¹, in campioni        */
+function ritardoFasePolo(a, omega){
+  if (omega < 1e-9) return a / (1 - a);
+  return Math.atan2(a * Math.sin(omega), 1 - a * Math.cos(omega)) / omega;
+}
+/* ritardo di fase dell'interpolazione lineare di una frazione α, in campioni */
+function ritardoFaseInterpolazione(alfa, omega){
+  if (omega < 1e-9 || alfa < 1e-12) return alfa;
+  return Math.atan2(alfa * Math.sin(omega), (1 - alfa) + alfa * Math.cos(omega)) / omega;
+}
+/* lunghezza d'anello che rende esatta la fondamentale: inversione numerica  */
+function anelloKarplus(freqHz, coefficientePolo, frequenzaCampionamentoHz){
+  var omega = 2 * Math.PI * freqHz / frequenzaCampionamentoHz;
+  var bersaglio = frequenzaCampionamentoHz / freqHz;
+  var faseFiltro = ritardoFasePolo(coefficientePolo, omega);
+  function totale(D){
+    var N = Math.floor(D), alfa = D - N;
+    return N + ritardoFaseInterpolazione(alfa, omega) + faseFiltro;
+  }
+  var basso = 1, alto = Math.max(2, bersaglio);
+  for (var i = 0; i < 60; i++){
+    var medio = (basso + alto) / 2;
+    if (totale(medio) < bersaglio) basso = medio; else alto = medio;
+  }
+  var D = (basso + alto) / 2;
+  var N2 = Math.floor(D);
+  return { interoCnt:Math.max(1, N2), frazioneNorm:limita(D - N2, 0, 0.999999),
+           totaleCnt:D, erroreCnt:totale(D) - bersaglio };
+}
+/* sintesi di una corda pizzicata, dati grezzi (nessun AudioContext)         */
+function sintetizzaCordaDati(freqHz, opzioni, frequenzaCampionamentoHz){
+  var sr = frequenzaCampionamentoHz || 44100;
+  var o = opzioni || {};
+  var brillantezzaHz = limita(o.brillantezzaHz || 3000, 200, sr * 0.45);
+  var sostegnoNorm = limita(o.sostegnoNorm === undefined ? 0.7 : o.sostegnoNorm, 0, 1);
+  var smorzoNorm = limita(o.smorzoNorm || 0, 0, 1);
+  var pizzicoNorm = limita(o.pizzicoNorm === undefined ? 0.3 : o.pizzicoNorm, 0.02, 0.98);
+  var plettroMs = limita(o.plettroMs || 6, 0.3, 80);
+  var seme = o.seme || 1;
+
+  /* l'anello resta sempre sopra la fondamentale: sotto, la corda non suonerebbe */
+  brillantezzaHz = limita(Math.max(brillantezzaHz, freqHz * 4), 200, sr * 0.45);
+  var polo = Math.exp(-2 * Math.PI * brillantezzaHz / (1 + smorzoNorm * 6) / sr);
+  polo = limita(polo, 0, 0.999);
+  var f0 = limita(freqHz, 20, sr / 4);
+  var anello = anelloKarplus(f0, polo, sr);
+  var N = anello.interoCnt, alfa = anello.frazioneNorm;
+
+  /* guadagno d'anello compensato sulla perdita del filtro alla fondamentale:
+     il decadimento dipende dal sostegno, non dall'altezza della nota          */
+  var omega0 = 2 * Math.PI * f0 / sr;
+  var modulo = (1 - polo) / Math.sqrt(1 - 2 * polo * Math.cos(omega0) + polo * polo);
+  var perPeriodo = (0.955 + sostegnoNorm * 0.0445) * (1 - smorzoNorm * 0.06);
+  var guadagnoAnello = limita(perPeriodo / Math.max(1e-6, modulo), 0, 0.9995);
+  var perdita = limita(guadagnoAnello * modulo, 0.0001, 0.99999);
+  var periodi = Math.log(0.001) / Math.log(perdita);
+  var durataSec = limita(periodi / f0, 0.25, 3.2);
+  var n = Math.max(64, Math.round(sr * durataSec));
+
+  /* eccitazione: rumore con comb di posizione del plettro, iniettata nell'anello */
+  var caso = creaCaso((o.seme || 1) * 2654435761 % 2147483647 || 7);
+  var eccitazioneCnt = Math.max(2, Math.round(sr * plettroMs / 1000));
+  var scarto = Math.max(1, Math.round(pizzicoNorm * N));
+  var grezzo = new Float32Array(eccitazioneCnt + scarto);
+  for (var i = 0; i < eccitazioneCnt; i++) grezzo[i] = bipolare(caso);
+  var eccitazione = new Float32Array(eccitazioneCnt + scarto);
+  for (i = 0; i < eccitazione.length; i++){
+    var av = i < grezzo.length ? grezzo[i] : 0;
+    var bv = (i - scarto) >= 0 ? grezzo[i - scarto] : 0;
+    eccitazione[i] = (av - bv) * 0.5;
+  }
+
+  var linea = new Float32Array(N + 2), fuori = new Float32Array(n);
+  var scrittura = 0, memoria = 0;
+  for (i = 0; i < n; i++){
+    var lettura = scrittura - N;
+    while (lettura < 0) lettura += linea.length;
+    var lettura2 = (lettura - 1 + linea.length) % linea.length;
+    var campione = linea[lettura] * (1 - alfa) + linea[lettura2] * alfa;
+    memoria = (1 - polo) * campione + polo * memoria;
+    linea[scrittura] = memoria * guadagnoAnello + (i < eccitazione.length ? eccitazione[i] : 0);
+    scrittura = (scrittura + 1) % linea.length;
+    fuori[i] = campione;
+  }
+  /* dissolvenza finale per evitare il taglio netto */
+  var coda = Math.min(n, Math.round(sr * 0.012));
+  for (i = 0; i < coda; i++) fuori[n - 1 - i] *= i / coda;
+  var picco = 0;
+  for (i = 0; i < n; i++) if (Math.abs(fuori[i]) > picco) picco = Math.abs(fuori[i]);
+  if (picco > 0){ var g = 0.9 / picco; for (i = 0; i < n; i++) fuori[i] *= g; }
+  return { dati:fuori, frequenzaCampionamentoHz:sr, durataSec:n / sr,
+           anelloCnt:anello.totaleCnt, erroreCnt:anello.erroreCnt };
+}
+
+/* ── basso ───────────────────────────────────────────────────────────────── */
+function creaBasso(ctx, bus){
+  var b = { ultimoAttivo:false, ultimaFreqHz:55 };
+  b.osc = ctx.createOscillator(); b.osc.type = 'sawtooth';
+  b.sub = ctx.createOscillator(); b.sub.type = 'sine';
+  b.oscGuadagno = ctx.createGain(); b.oscGuadagno.gain.value = 0.8;
+  b.subGuadagno = ctx.createGain(); b.subGuadagno.gain.value = 0.25;
+  b.somma = ctx.createGain();
+  b.filtro = ctx.createBiquadFilter(); b.filtro.type = 'lowpass';
+  b.saturatore = ctx.createWaveShaper(); b.saturatore.oversample = '2x';
+  b.quantizz = ctx.createWaveShaper();
+  b.ampiezza = ctx.createGain(); b.ampiezza.gain.value = 0.0001;
+  b.pan = panoramizza(ctx);
+  b.livello = ctx.createGain();
+  b.mandataEco = ctx.createGain(); b.mandataRiverbero = ctx.createGain();
+  b.osc.connect(b.oscGuadagno); b.oscGuadagno.connect(b.somma);
+  b.sub.connect(b.subGuadagno); b.subGuadagno.connect(b.somma);
+  b.somma.connect(b.filtro); b.filtro.connect(b.saturatore); b.saturatore.connect(b.quantizz);
+  b.quantizz.connect(b.ampiezza); b.ampiezza.connect(b.pan); b.pan.connect(b.livello);
+  b.livello.connect(bus.ingresso);
+  b.livello.connect(b.mandataEco); b.mandataEco.connect(bus.mandataEco);
+  b.livello.connect(b.mandataRiverbero); b.mandataRiverbero.connect(bus.mandataRiverbero);
+  b.osc.start(); b.sub.start();
+  return b;
+}
+function suonaBasso(m, idx, tempoSec, evento){
+  var b = m.bassi[idx], p = m.stato.bas[idx].par;
+  var glide = evento.glide ? Math.max(0.001, evento.glideMs / 1000) : 0.002;
+  b.osc.type = ['sawtooth','square','triangle'][limita(p.basFormaIdx | 0, 0, 2)];
+  b.osc.frequency.cancelScheduledValues(tempoSec);
+  b.osc.frequency.setValueAtTime(b.ultimaFreqHz, tempoSec);
+  b.osc.frequency.exponentialRampToValueAtTime(Math.max(1, evento.freqHz), tempoSec + glide);
+  b.sub.frequency.cancelScheduledValues(tempoSec);
+  b.sub.frequency.setValueAtTime(Math.max(1, b.ultimaFreqHz / 2), tempoSec);
+  b.sub.frequency.exponentialRampToValueAtTime(Math.max(1, evento.freqHz / 2), tempoSec + glide);
+  b.ultimaFreqHz = Math.max(1, evento.freqHz);
+
+  var accento = evento.accentoNorm;
+  var taglio = limita(evento.filtroTaglioHz, 30, 18000);
+  var apertura = limita(taglio * Math.pow(2, evento.filtroEnvOct + accento * 1.2), 30, 18000);
+  b.filtro.frequency.cancelScheduledValues(tempoSec);
+  b.filtro.frequency.setValueAtTime(apertura, tempoSec);
+  b.filtro.frequency.exponentialRampToValueAtTime(taglio, tempoSec + evento.filtroDecadimentoMs / 1000);
+  b.filtro.Q.setValueAtTime(limita(evento.filtroQRatio * (1 + accento * 0.5), 0.1, 30), tempoSec);
+
+  var picco = limita(evento.ampiezza * (1 + accento * 0.45), 0.0001, 4);
+  var g = b.ampiezza.gain;
+  g.cancelScheduledValues(tempoSec);
+  g.setValueAtTime(Math.max(0.0001, g.value), tempoSec);
+  g.linearRampToValueAtTime(picco, tempoSec + evento.attaccoMs / 1000);
+  g.setTargetAtTime(Math.max(0.0001, picco * evento.sostegnoNorm),
+                    tempoSec + evento.attaccoMs / 1000, Math.max(0.004, evento.decadimentoMs / 3000));
+  b.spegniSec = tempoSec + evento.durataSec;
+}
+function rilasciaBasso(m, idx, tempoSec, rilascioMs){
+  var b = m.bassi[idx];
+  chiudiCancello(b.ampiezza.gain, tempoSec, rilascioMs / 1000);
+}
+
+/* ── chitarra ────────────────────────────────────────────────────────────── */
+function creaChitarra(ctx, bus){
+  var c = { cache:{}, chiaviCnt:0, alternanza:1 };
+  c.ingresso = ctx.createGain();
+  c.corpo = ctx.createBiquadFilter(); c.corpo.type = 'peaking'; c.corpo.gain.value = 5;
+  c.distorsione = ctx.createWaveShaper(); c.distorsione.oversample = '2x';
+  c.quantizz = ctx.createWaveShaper();
+  c.cassa = ctx.createBiquadFilter(); c.cassa.type = 'lowpass';
+  c.presenza = ctx.createBiquadFilter(); c.presenza.type = 'peaking'; c.presenza.frequency.value = 2600;
+  c.pan = panoramizza(ctx);
+  c.livello = ctx.createGain();
+  c.mandataEco = ctx.createGain(); c.mandataRiverbero = ctx.createGain();
+  c.ingresso.connect(c.corpo); c.corpo.connect(c.distorsione); c.distorsione.connect(c.quantizz);
+  c.quantizz.connect(c.cassa); c.cassa.connect(c.presenza); c.presenza.connect(c.pan);
+  c.pan.connect(c.livello);
+  c.livello.connect(bus.ingresso);
+  c.livello.connect(c.mandataEco); c.mandataEco.connect(bus.mandataEco);
+  c.livello.connect(c.mandataRiverbero); c.mandataRiverbero.connect(bus.mandataRiverbero);
+  return c;
+}
+function bufferCorda(m, idx, freqHz, p){
+  var c = m.chitarre[idx];
+  var chiave = [Math.round(Math.log(freqHz) * 1731.234), Math.round(p.chiBrillantezzaHz),
+                Math.round(p.chiSostegnoNorm * 50), Math.round(p.chiPizzicoNorm * 20),
+                Math.round(p.chiPlettroMs), Math.round(p.chiSmorzoNorm * 10)].join('|');
+  if (c.cache[chiave]) return c.cache[chiave];
+  if (c.chiaviCnt > 96){ c.cache = {}; c.chiaviCnt = 0; }
+  var pacchetto = sintetizzaCordaDati(freqHz, {
+    brillantezzaHz:p.chiBrillantezzaHz, sostegnoNorm:p.chiSostegnoNorm, smorzoNorm:p.chiSmorzoNorm,
+    pizzicoNorm:p.chiPizzicoNorm, plettroMs:p.chiPlettroMs, seme:Math.round(freqHz * 7) + 1
+  }, m.ctx.sampleRate);
+  var buffer = bufferDaDati(m.ctx, pacchetto);
+  c.cache[chiave] = buffer; c.chiaviCnt++;
+  return buffer;
+}
+function suonaChitarra(m, idx, tempoSec, evento){
+  var ctx = m.ctx, c = m.chitarre[idx], p = m.stato.chi[idx].par;
+  var gradi = ACCORDI.gradi[limita(p.chiAccordoIdx|0, 0, ACCORDI.gradi.length-1)];
+  var corde = limita(p.chiCordeCnt|0, 1, 6);
+  var ordine = [];
+  for (var i = 0; i < corde; i++) ordine.push(i);
+  var verso = p.chiStrumModoIdx|0;
+  if (verso === 1) ordine.reverse();
+  else if (verso === 2){ if (c.alternanza < 0) ordine.reverse(); c.alternanza = -c.alternanza; }
+  else if (verso === 3 && evento.caso() < 0.5) ordine.reverse();
+  var strum = (p.chiStrumMs / 1000) * (1 + bipolare(evento.caso) * p.chiVarStrumNorm);
+  for (i = 0; i < ordine.length; i++){
+    var corda = ordine[i];
+    var intervallo = gradi[corda % gradi.length] + 12 * Math.floor(corda / gradi.length);
+    var st = evento.gradoSt + intervallo;
+    var stonatura = bipolare(evento.caso) * p.chiStonaturaCt;
+    var freq = aFreq(quantizzaAScala(st, evento.scalaIdx)) * Math.pow(2, stonatura / 1200);
+    var buffer = bufferCorda(m, idx, limita(freq, 30, 2200), p);
+    var sorgente = ctx.createBufferSource();
+    sorgente.buffer = buffer;
+    var guadagno = ctx.createGain();
+    guadagno.gain.value = limita(evento.ampiezza * (0.72 + 0.28 * (1 - i / Math.max(1, ordine.length))), 0.0001, 4);
+    sorgente.connect(guadagno); guadagno.connect(c.ingresso);
+    var quando = tempoSec + i * Math.abs(strum);
+    try { sorgente.start(quando); } catch (e) { continue; }
+    sorgente.stop(quando + buffer.duration + 0.05);
+    m.vociAttive++;
+    (function(s, g){
+      s.onended = function(){ try { s.disconnect(); g.disconnect(); } catch (e) {} if (m.vociAttive > 0) m.vociAttive--; };
+    })(sorgente, guadagno);
+  }
+}
+
+/* ── lead ────────────────────────────────────────────────────────────────── */
+function creaLead(ctx, bus){
+  var l = { voci:[], ultimaFreqHz:220 };
+  l.somma = ctx.createGain();
+  l.sub = ctx.createOscillator(); l.sub.type = 'sine';
+  l.subGuadagno = ctx.createGain(); l.subGuadagno.gain.value = 0;
+  l.sub.connect(l.subGuadagno); l.subGuadagno.connect(l.somma); l.sub.start();
+  l.filtro = ctx.createBiquadFilter(); l.filtro.type = 'lowpass';
+  l.saturatore = ctx.createWaveShaper(); l.saturatore.oversample = '2x';
+  l.ampiezza = ctx.createGain(); l.ampiezza.gain.value = 0.0001;
+  l.pan = panoramizza(ctx);
+  l.livello = ctx.createGain();
+  l.mandataEco = ctx.createGain(); l.mandataRiverbero = ctx.createGain();
+  l.somma.connect(l.filtro); l.filtro.connect(l.saturatore); l.saturatore.connect(l.ampiezza);
+  l.ampiezza.connect(l.pan); l.pan.connect(l.livello);
+  l.livello.connect(bus.ingresso);
+  l.livello.connect(l.mandataEco); l.mandataEco.connect(bus.mandataEco);
+  l.livello.connect(l.mandataRiverbero); l.mandataRiverbero.connect(bus.mandataRiverbero);
+  l.vibrato = ctx.createOscillator(); l.vibrato.type = 'sine';
+  l.vibratoAmpiezza = ctx.createGain(); l.vibratoAmpiezza.gain.value = 0;
+  l.vibrato.connect(l.vibratoAmpiezza); l.vibrato.start();
+  return l;
+}
+function sincronizzaVociLead(ctx, l, quante){
+  while (l.voci.length < quante){
+    var o = ctx.createOscillator(), g = ctx.createGain(), p = panoramizza(ctx);
+    g.gain.value = 0.0001;
+    o.connect(g); g.connect(p); p.connect(l.somma);
+    l.vibratoAmpiezza.connect(o.detune);
+    o.start();
+    l.voci.push({ osc:o, guadagno:g, pan:p });
+  }
+  while (l.voci.length > quante){
+    var v = l.voci.pop();
+    try { v.osc.stop(); v.osc.disconnect(); v.guadagno.disconnect(); v.pan.disconnect(); } catch (e) {}
+  }
+}
+function suonaLead(m, idx, tempoSec, evento){
+  var l = m.lead[idx], p = m.stato.lea[idx].par;
+  var glide = Math.max(0.0005, evento.glideMs / 1000);
+  for (var i = 0; i < l.voci.length; i++){
+    var f = l.voci[i].osc.frequency;
+    f.cancelScheduledValues(tempoSec);
+    f.setValueAtTime(Math.max(1, l.ultimaFreqHz), tempoSec);
+    f.exponentialRampToValueAtTime(Math.max(1, evento.freqHz), tempoSec + glide);
+  }
+  l.sub.frequency.cancelScheduledValues(tempoSec);
+  l.sub.frequency.setValueAtTime(Math.max(1, l.ultimaFreqHz / 2), tempoSec);
+  l.sub.frequency.exponentialRampToValueAtTime(Math.max(1, evento.freqHz / 2), tempoSec + glide);
+  l.ultimaFreqHz = Math.max(1, evento.freqHz);
+
+  var taglio = limita(evento.filtroTaglioHz, 40, 18000);
+  var apertura = limita(taglio * Math.pow(2, evento.filtroEnvOct), 40, 18000);
+  l.filtro.frequency.cancelScheduledValues(tempoSec);
+  l.filtro.frequency.setValueAtTime(apertura, tempoSec);
+  l.filtro.frequency.exponentialRampToValueAtTime(taglio, tempoSec + evento.filtroDecadimentoMs / 1000);
+
+  var picco = limita(evento.ampiezza, 0.0001, 4);
+  var g = l.ampiezza.gain;
+  g.cancelScheduledValues(tempoSec);
+  g.setValueAtTime(Math.max(0.0001, g.value), tempoSec);
+  g.linearRampToValueAtTime(picco, tempoSec + evento.attaccoMs / 1000);
+  g.setTargetAtTime(Math.max(0.0001, picco * evento.sostegnoNorm),
+                    tempoSec + evento.attaccoMs / 1000, Math.max(0.004, evento.decadimentoMs / 3000));
+
+  l.vibratoAmpiezza.gain.cancelScheduledValues(tempoSec);
+  l.vibratoAmpiezza.gain.setValueAtTime(0, tempoSec);
+  l.vibratoAmpiezza.gain.linearRampToValueAtTime(p.leaVibratoCt,
+    tempoSec + p.leaVibratoRitardoMs / 1000 + 0.01);
+}
+function rilasciaLead(m, idx, tempoSec, rilascioMs){
+  chiudiCancello(m.lead[idx].ampiezza.gain, tempoSec, rilascioMs / 1000);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   AGGIORNAMENTO CONTINUO + SEQUENZIATORE
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function apriCancello(param, t, attSec, decSec, sostegnoNorm, picco){
+  try { param.cancelScheduledValues(t); } catch (e) {}
+  param.setValueAtTime(Math.max(0.0001, param.value), t);
+  param.linearRampToValueAtTime(picco, t + Math.max(0.001, attSec));
+  var s = Math.max(0.0001, picco * sostegnoNorm);
+  param.setTargetAtTime(s, t + Math.max(0.001, attSec), Math.max(0.004, decSec / 3));
+}
+function chiudiCancello(param, t, relSec){
+  try { param.cancelScheduledValues(t); } catch (e) {}
+  param.setValueAtTime(Math.max(0.0001, param.value), t);
+  param.setTargetAtTime(0.0001, t, Math.max(0.004, relSec / 3));
+}
+
+function aggiornaContinui(m, oraSec){
+  var ctx = m.ctx, st = m.stato, b = m.bus, P = st.bus, k = 0.04, i;
+
+  b.saturatore.curve = curvaSaturazione(ctx, P.busSaturazioneNorm);
+  b.quantizz.curve = curvaQuantizzazione(P.busQuantizzBitCnt);
+  b.passaAlto.frequency.setTargetAtTime(P.busPassaAltoHz, oraSec, k);
+  b.passaBasso.frequency.setTargetAtTime(P.busPassaBassoHz, oraSec, k);
+  b.compressore.threshold.value = P.busCompSogliaDb;
+  b.compressore.ratio.value = P.busCompRapportoRatio;
+  b.compressore.release.value = P.busCompRilascioMs / 1000;
+  b.compressore.knee.value = 6;
+  b.uscita.gain.setTargetAtTime(daDb(P.busLivelloDb), oraSec, k);
+
+  var passoSec = durataPassoSec(st.trs.trsTempoBpm);
+  var tempoEco = limita(passoSec * DIV_ECO[P.busEcoDivisoreIdx].fattore, 0.005, 3.9);
+  b.ecoSin.delayTime.setTargetAtTime(tempoEco, oraSec, 0.08);
+  b.ecoDes.delayTime.setTargetAtTime(tempoEco, oraSec, 0.08);
+  b.ecoRitorno.gain.setTargetAtTime(P.busEcoRitornoNorm, oraSec, k);
+  b.ecoFiltro.frequency.setTargetAtTime(P.busEcoTaglioHz, oraSec, k);
+  b.ecoLivello.gain.setTargetAtTime(P.busEcoLivelloDb <= -60 ? 0 : daDb(P.busEcoLivelloDb), oraSec, k);
+
+  var chiave = arrotonda(P.busRiverberoDurataSec,2) + '/' + arrotonda(P.busRiverberoDecadimentoNorm,2);
+  if (chiave !== b.impulsoChiave){
+    b.impulsoChiave = chiave;
+    b.convolutore.buffer = creaImpulso(ctx, P.busRiverberoDurataSec, P.busRiverberoDecadimentoNorm);
+  }
+  b.riverberoFiltro.frequency.setTargetAtTime(P.busRiverberoTaglioHz, oraSec, k);
+  b.riverberoLivello.gain.setTargetAtTime(P.busRiverberoLivelloDb <= -60 ? 0 : daDb(P.busRiverberoLivelloDb), oraSec, k);
+
+  /* basso */
+  for (i = 0; i < m.bassi.length; i++){
+    var bb = m.bassi[i], pb = st.bas[i].par;
+    var bAcceso = !!pb.basAttivoFlag && !mutoEffettivo(st, 'bas', i);
+    bb.saturatore.curve = curvaSaturazione(ctx, pb.basSaturazioneNorm);
+    bb.quantizz.curve = curvaQuantizzazione(pb.basQuantizzBitCnt);
+    bb.subGuadagno.gain.setTargetAtTime(pb.basSubLivelloDb <= -59 ? 0 : daDb(pb.basSubLivelloDb) * 0.5, oraSec, k);
+    impostaPan(bb.pan, pb.basPanNorm);
+    bb.livello.gain.setTargetAtTime(bAcceso ? daDb(pb.basLivelloDb + (bb.varLivelloDb || 0)) : 0, oraSec, 0.06);
+    bb.mandataEco.gain.setTargetAtTime(pb.basMandataEcoNorm, oraSec, k);
+    bb.mandataRiverbero.gain.setTargetAtTime(pb.basMandataRiverberoNorm, oraSec, k);
+  }
+  /* chitarra */
+  for (i = 0; i < m.chitarre.length; i++){
+    var cc = m.chitarre[i], pc = st.chi[i].par;
+    var cAcceso = !!pc.chiAttivoFlag && !mutoEffettivo(st, 'chi', i);
+    cc.corpo.frequency.setTargetAtTime(pc.chiCorpoHz, oraSec, k);
+    cc.corpo.Q.setTargetAtTime(pc.chiCorpoQRatio, oraSec, k);
+    cc.distorsione.curve = curvaSaturazione(ctx, pc.chiDistorsioneNorm);
+    cc.quantizz.curve = curvaQuantizzazione(pc.chiQuantizzBitCnt);
+    cc.cassa.frequency.setTargetAtTime(pc.chiCassaTaglioHz, oraSec, k);
+    cc.presenza.gain.setTargetAtTime(pc.chiPresenzaDb, oraSec, k);
+    cc.ingresso.gain.setTargetAtTime(1 / (1 + pc.chiDistorsioneNorm * 1.6), oraSec, k);
+    impostaPan(cc.pan, pc.chiPanNorm);
+    cc.livello.gain.setTargetAtTime(cAcceso ? daDb(pc.chiLivelloDb + (cc.varLivelloDb || 0)) : 0, oraSec, 0.06);
+    cc.mandataEco.gain.setTargetAtTime(pc.chiMandataEcoNorm, oraSec, k);
+    cc.mandataRiverbero.gain.setTargetAtTime(pc.chiMandataRiverberoNorm, oraSec, k);
+  }
+  /* lead */
+  for (i = 0; i < m.lead.length; i++){
+    var ll = m.lead[i], pl = st.lea[i].par;
+    var lAcceso = !!pl.leaAttivoFlag && !mutoEffettivo(st, 'lea', i);
+    sincronizzaVociLead(ctx, ll, limita(pl.leaVociCnt | 0, 1, 5));
+    var formaLead = FORME_ONDA[limita(pl.leaFormaIdx | 0, 0, 3)];
+    for (var vl = 0; vl < ll.voci.length; vl++){
+      var voceLead = ll.voci[vl];
+      if (voceLead.osc.type !== formaLead) voceLead.osc.type = formaLead;
+      voceLead.osc.detune.setTargetAtTime((vl - (ll.voci.length - 1) / 2) * pl.leaStonaturaCt, oraSec, 0.05);
+      voceLead.guadagno.gain.setTargetAtTime(0.85 / Math.max(1, ll.voci.length), oraSec, k);
+      impostaPan(voceLead.pan, ll.voci.length === 1 ? 0
+        : ((vl / (ll.voci.length - 1)) * 2 - 1) * pl.leaLarghezzaNorm);
+    }
+    ll.subGuadagno.gain.setTargetAtTime(pl.leaSubLivelloDb <= -59 ? 0 : daDb(pl.leaSubLivelloDb), oraSec, k);
+    ll.filtro.type = TIPI_FILTRO[pl.leaFiltroTipoIdx] || 'lowpass';
+    ll.filtro.Q.setTargetAtTime(pl.leaFiltroQRatio, oraSec, k);
+    ll.saturatore.curve = curvaSaturazione(ctx, pl.leaSaturazioneNorm);
+    ll.vibrato.frequency.setTargetAtTime(pl.leaVibratoHz, oraSec, 0.05);
+    impostaPan(ll.pan, pl.leaPanNorm);
+    ll.livello.gain.setTargetAtTime(lAcceso ? daDb(pl.leaLivelloDb + (ll.varLivelloDb || 0)) : 0, oraSec, 0.06);
+    ll.mandataEco.gain.setTargetAtTime(pl.leaMandataEcoNorm, oraSec, k);
+    ll.mandataRiverbero.gain.setTargetAtTime(pl.leaMandataRiverberoNorm, oraSec, k);
+  }
+
+  /* droni */
+  for (i = 0; i < m.droni.length; i++){
+    var d = m.droni[i], p = st.drn[i].par;
+    var acceso = !!p.drnAttivoFlag && !mutoEffettivo(st, 'drn', i);
+    var vociCnt = acceso ? (p.drnModoIdx === 1 ? 0 : p.drnVociCnt | 0) : 0;
+    sincronizzaVociDrone(ctx, d, vociCnt);
+    var gradi = ACCORDI.gradi[p.drnAccordoIdx] || [0];
+    var forma = FORME_ONDA[p.drnFormaIdx] || 'sine';
+    for (var v = 0; v < d.voci.length; v++){
+      var voce = d.voci[v];
+      var intervallo = gradi[v % gradi.length] + 12 * Math.floor(v / gradi.length);
+      var st0 = st.trs.trsTonicaSt + p.drnGradoSt + intervallo + (d.varGradoSt || 0);
+      var scarto = (v - (d.voci.length - 1) / 2) * p.drnStonaturaCt + voce.deriva;
+      if (voce.osc.type !== forma) voce.osc.type = forma;
+      voce.osc.frequency.setTargetAtTime(aFreq(quantizzaAScala(st0, st.trs.trsScalaIdx)) + p.drnBattimentoHz * (v % 2 ? 1 : -1) * 0.5, oraSec, 0.09);
+      voce.osc.detune.setTargetAtTime(scarto, oraSec, 0.12);
+      voce.guadagno.gain.setTargetAtTime(0.9 / Math.max(1, d.voci.length), oraSec, k);
+      impostaPan(voce.pan, d.voci.length === 1 ? 0 : ((v / (d.voci.length - 1)) * 2 - 1) * p.drnLarghezzaNorm);
+    }
+    d.subOsc.frequency.setTargetAtTime(aFreq(st.trs.trsTonicaSt + p.drnGradoSt - 12), oraSec, 0.09);
+    d.subGuadagno.gain.setTargetAtTime(acceso && p.drnSubLivelloDb > -59 ? daDb(p.drnSubLivelloDb) : 0, oraSec, k);
+    d.filtro.type = TIPI_FILTRO[p.drnFiltroTipoIdx] || 'lowpass';
+    var taglio = p.drnFiltroTaglioHz * Math.pow(2, (d.varTaglioOct || 0) + (d.tenuta || 0));
+    d.filtro.frequency.setTargetAtTime(limita(taglio, 20, 20000), oraSec, 0.05);
+    d.filtro.Q.setTargetAtTime(p.drnFiltroQRatio, oraSec, k);
+    var casuale = p.drnLfoFormaIdx === 3;
+    d.lfo.type = casuale ? 'sine' : (FORME_ONDA[p.drnLfoFormaIdx] || 'sine');
+    d.lfo.frequency.setTargetAtTime(p.drnLfoFrequenzaHz, oraSec, 0.1);
+    d.lfoAmpiezza.gain.setTargetAtTime(casuale ? 0 : p.drnLfoProfonditaOct * 1200, oraSec, 0.1);
+    d.saturatore.curve = curvaSaturazione(ctx, p.drnSaturazioneNorm);
+    impostaPan(d.pan, p.drnPanNorm);
+    d.livello.gain.setTargetAtTime(acceso ? daDb(p.drnLivelloDb + (d.varLivelloDb || 0)) : 0, oraSec, 0.06);
+    d.mandataEco.gain.setTargetAtTime(p.drnMandataEcoNorm, oraSec, k);
+    d.mandataRiverbero.gain.setTargetAtTime(p.drnMandataRiverberoNorm, oraSec, k);
+    if (p.drnCancelloIdx === 0 && acceso && !d.aperto){
+      d.aperto = true; apriCancello(d.cancello.gain, oraSec, p.drnAttaccoSec, 0.5, 1, 1);
+    } else if ((p.drnCancelloIdx === 0 && !acceso) && d.aperto){
+      d.aperto = false; chiudiCancello(d.cancello.gain, oraSec, p.drnRilascioSec);
+    } else if (p.drnCancelloIdx === 2 && acceso && !d.aperto){
+      d.aperto = true; apriCancello(d.cancello.gain, oraSec, p.drnAttaccoSec, 0.5, 1, 1);
+    }
+    if (p.drnCancelloIdx !== 0 && p.drnCancelloIdx !== 2 && !acceso && d.aperto){
+      d.aperto = false; chiudiCancello(d.cancello.gain, oraSec, p.drnRilascioSec);
+    }
+  }
+
+  /* rumori */
+  for (i = 0; i < m.rumori.length; i++){
+    var r = m.rumori[i], q = st.noi[i].par;
+    var attivo = !!q.noiAttivoFlag && !mutoEffettivo(st, 'noi', i);
+    var tipo = TIPI_RUMORE[q.noiTipoIdx] || 'bianco';
+    impostaSorgenteRumore(ctx, r, tipo, m.bufferRumori);
+    var granulare = (tipo === 'crepitio' || tipo === 'campione');
+    r.continuo.gain.setTargetAtTime(granulare ? 0 : 1, oraSec, 0.02);
+    r.filtro.type = TIPI_FILTRO[q.noiFiltroTipoIdx] || 'bandpass';
+    var mod = (r.spazzataOct || 0) + (r.tenutaValore || 0) + (r.varTaglioOct || 0);
+    r.filtro.frequency.setTargetAtTime(limita(q.noiFiltroTaglioHz * Math.pow(2, mod), 20, 20000), oraSec, 0.03);
+    r.filtro.Q.setTargetAtTime(q.noiFiltroQRatio, oraSec, k);
+    r.risIngresso.gain.setTargetAtTime(q.noiRisuonatoreFlag ? 0.7 : 0, oraSec, 0.03);
+    r.secco.gain.setTargetAtTime(q.noiRisuonatoreFlag ? 0.45 : 1, oraSec, 0.03);
+    r.ritardo.delayTime.setTargetAtTime(limita(1 / q.noiRisuonatoreHz, 0.0004, 0.49), oraSec, 0.05);
+    r.risRitorno.gain.setTargetAtTime(q.noiRisuonatoreRitornoNorm, oraSec, k);
+    r.risFiltro.frequency.setTargetAtTime(q.noiRisuonatoreTaglioHz, oraSec, k);
+    r.saturatore.curve = curvaSaturazione(ctx, q.noiSaturazioneNorm);
+    impostaPan(r.pan, limita(q.noiPanNorm + (r.varPanNorm || 0), -1, 1));
+    r.livello.gain.setTargetAtTime(attivo ? daDb(q.noiLivelloDb + (r.varLivelloDb || 0)) : 0, oraSec, 0.06);
+    r.mandataEco.gain.setTargetAtTime(q.noiMandataEcoNorm, oraSec, k);
+    r.mandataRiverbero.gain.setTargetAtTime(q.noiMandataRiverberoNorm, oraSec, k);
+    if (q.noiCancelloIdx === 0){
+      if (!r.aperto){ r.aperto = true; apriCancello(r.cancello.gain, oraSec, q.noiAttaccoMs/1000, q.noiDecadimentoMs/1000, 1, 1); }
+    } else if (r.aperto && q.noiCancelloIdx === 1 && !attivo){
+      r.aperto = false; chiudiCancello(r.cancello.gain, oraSec, q.noiRilascioMs/1000);
+    }
+  }
+}
+
+function mutoEffettivo(stato, genere, idx){
+  var tracce = elencoTracce(stato), soloAttivo = false, mia = null;
+  for (var i = 0; i < tracce.length; i++){
+    if (tracce[i].rif.seq.seqSoloFlag) soloAttivo = true;
+    if (tracce[i].genere === genere && tracce[i].idx === idx) mia = tracce[i];
+  }
+  if (!mia) return false;
+  if (mia.rif.seq.seqMutoFlag) return true;
+  return soloAttivo && !mia.rif.seq.seqSoloFlag;
+}
+
+/* ── sequenziatore ───────────────────────────────────────────────────────── */
+function creaSequenziatore(m, stato, alGiro){
+  var S = {
+    attivo:false, timer:null, caso:creaCaso(stato.ale.aleSemeCnt),
+    orologi:[], visivoIdx:0, prossimoVisivoSec:0, cicloCnt:0, ultimoAvanzamentoSec:0
+  };
+  function azzera(){
+    S.orologi = elencoTracce(stato).map(function(){ return { idx:0, senso:1, prossimoSec:0, cicli:0 }; });
+    S.visivoIdx = 0; S.cicloCnt = 0;
+  }
+  azzera();
+
+  S.avvia = function(){
+    if (S.attivo) return;
+    S.attivo = true;
+    S.caso = creaCaso(stato.ale.aleSemeCnt);
+    var ora = m.ctx.currentTime + 0.08;
+    azzera();
+    S.orologi.forEach(function(o){ o.prossimoSec = ora; });
+    S.prossimoVisivoSec = ora;
+    m.droni.forEach(function(d){ d.prossimoGranoSec = ora; });
+    m.rumori.forEach(function(r){ r.prossimoGranoSec = ora; r.prossimaTenutaSec = ora; });
+    S.timer = setInterval(battito, INTERVALLO_MS);
+    battito();
+  };
+  S.ferma = function(){
+    if (!S.attivo) return;
+    S.attivo = false;
+    clearInterval(S.timer); S.timer = null;
+    var ora = m.ctx.currentTime;
+    m.droni.forEach(function(d){ if (d.aperto){ d.aperto = false; chiudiCancello(d.cancello.gain, ora, 0.4); } });
+    m.rumori.forEach(function(r){ if (r.aperto){ r.aperto = false; chiudiCancello(r.cancello.gain, ora, 0.3); } });
+  };
+  S.aggiornaSoloContinui = function(){ aggiornaContinui(m, m.ctx.currentTime); };
+
+  function battito(){
+    var ora = m.ctx.currentTime, limite = ora + LOOKAHEAD_SEC;
+    aggiornaContinui(m, ora);
+    pianificaGrani(limite);
+    var tracce = elencoTracce(stato);
+    var passoBaseSec = durataPassoSec(stato.trs.trsTempoBpm);
+
+    while (S.prossimoVisivoSec < limite){
+      S.visivoIdx = (S.visivoIdx + 1) % Math.max(1, stato.trs.trsPassiCnt);
+      S.prossimoVisivoSec += passoBaseSec;
+      if (S.visivoIdx === 0){ S.cicloCnt++; evolvi(); }
+    }
+
+    for (var t = 0; t < tracce.length; t++){
+      var traccia = tracce[t], o = S.orologi[t];
+      if (!o) { o = S.orologi[t] = { idx:0, senso:1, prossimoSec:ora, cicli:0 }; }
+      var seq = traccia.rif.seq;
+      var durata = passoBaseSec * DIVISORI[seq.seqDivisoreIdx].fattore;
+      var lunghezza = Math.min(seq.seqLunghezzaCnt, stato.trs.trsPassiCnt);
+      var guardia = 0;
+      while (o.prossimoSec < limite && guardia++ < 256){
+        var passo = seq.passi[o.idx % PASSI_MAX];
+        var quando = o.prossimoSec + offsetSwingSec(o.idx, stato.trs.trsSwingNorm, durata)
+                   + (stato.trs.trsUmanizzaMs / 1000) * bipolare(S.caso);
+        if (!mutoEffettivo(stato, traccia.genere, traccia.idx))
+          scatena(traccia, passo, Math.max(ora, quando), durata);
+        var avanti = avanzaIndice(o.idx, lunghezza, seq.seqDirezioneIdx, o.senso, S.caso);
+        o.idx = avanti.idx; o.senso = avanti.senso;
+        o.prossimoSec += durata;
+        if (seq.seqMutaNorm > 0 && S.caso() < seq.seqMutaNorm * 0.06) mutaPasso(seq, o.idx);
+      }
+    }
+    if (alGiro) alGiro(S.visivoIdx);
+  }
+
+  function scatena(traccia, passo, quando, durataPassoSec_){
+    var macro = stato.ale.aleQuantitaNorm;
+    if (traccia.genere === 'smp'){
+      var p = traccia.rif.par;
+      var esito = decidiPasso(passo, p.smpProbabilitaNorm, p.smpVarProbabilitaNorm, S.caso, macro);
+      if (!esito.suona) return;
+      for (var r = 0; r < esito.ripetizioniCnt; r++){
+        var t = quando + (durataPassoSec_ / esito.ripetizioniCnt) * r + passo.microMs / 1000;
+        suonaCampione(m, traccia.idx, t, eventoCampione(p, passo, esito, r, esito.ripetizioniCnt, macro));
+      }
+    } else if (traccia.genere === 'bas'){
+      var pb2 = traccia.rif.par;
+      if (!pb2.basAttivoFlag) return;
+      var eb = decidiPasso(passo, pb2.basProbabilitaNorm, 0, S.caso, macro);
+      var bv = m.bassi[traccia.idx];
+      if (!eb.suona){ bv.ultimoAttivo = false; return; }
+      bv.varLivelloDb = bipolare(S.caso) * pb2.basVarLivelloDb * (0.25 + 0.75 * macro);
+      var stBas = stato.trs.trsTonicaSt + pb2.basGradoSt + passo.intonazioneSt +
+                  Math.round(bipolare(S.caso) * pb2.basVarGradoSt * (0.25 + 0.75 * macro));
+      var glideBas = pb2.basGlideModoIdx === 1 ? true
+                   : pb2.basGlideModoIdx === 2 ? false : bv.ultimoAttivo;
+      var accento = passo.velocitaNorm >= 0.8 ? pb2.basAccentoNorm : 0;
+      var durataBas = durataPassoSec_ * eb.ripetizioniCnt;
+      suonaBasso(m, traccia.idx, quando, {
+        freqHz: aFreq(quantizzaAScala(stBas, stato.trs.trsScalaIdx)),
+        glide: glideBas, glideMs: pb2.basGlideMs,
+        accentoNorm: accento, ampiezza: passo.velocitaNorm,
+        filtroTaglioHz: limita(pb2.basFiltroTaglioHz * Math.pow(2, bipolare(S.caso) * pb2.basVarFiltroTaglioOct * (0.25 + 0.75 * macro)), 30, 18000),
+        filtroQRatio: pb2.basFiltroQRatio, filtroEnvOct: pb2.basFiltroEnvOct,
+        filtroDecadimentoMs: pb2.basFiltroDecadimentoMs,
+        attaccoMs: pb2.basAttaccoMs,
+        decadimentoMs: pb2.basDecadimentoMs * (1 + bipolare(S.caso) * pb2.basVarDecadimentoNorm * 0.8),
+        sostegnoNorm: pb2.basSostegnoNorm, durataSec: durataBas
+      });
+      rilasciaBasso(m, traccia.idx, quando + durataBas * 0.95, pb2.basRilascioMs);
+      bv.ultimoAttivo = true;
+    } else if (traccia.genere === 'chi'){
+      var pc2 = traccia.rif.par;
+      if (!pc2.chiAttivoFlag) return;
+      var ec = decidiPasso(passo, pc2.chiProbabilitaNorm, 0, S.caso, macro);
+      if (!ec.suona) return;
+      var cv = m.chitarre[traccia.idx];
+      cv.varLivelloDb = bipolare(S.caso) * pc2.chiVarLivelloDb * (0.25 + 0.75 * macro);
+      suonaChitarra(m, traccia.idx, quando, {
+        gradoSt: stato.trs.trsTonicaSt + pc2.chiGradoSt + passo.intonazioneSt +
+                 Math.round(bipolare(S.caso) * pc2.chiVarGradoSt * (0.25 + 0.75 * macro)),
+        scalaIdx: stato.trs.trsScalaIdx, ampiezza: passo.velocitaNorm, caso: S.caso
+      });
+    } else if (traccia.genere === 'lea'){
+      var pl2 = traccia.rif.par;
+      if (!pl2.leaAttivoFlag) return;
+      var el = decidiPasso(passo, pl2.leaProbabilitaNorm, 0, S.caso, macro);
+      if (!el.suona) return;
+      var lv = m.lead[traccia.idx];
+      lv.varLivelloDb = bipolare(S.caso) * pl2.leaVarLivelloDb * (0.25 + 0.75 * macro);
+      var stLea = stato.trs.trsTonicaSt + pl2.leaGradoSt + passo.intonazioneSt +
+                  Math.round(bipolare(S.caso) * pl2.leaVarGradoSt * (0.25 + 0.75 * macro));
+      var durataLea = durataPassoSec_ * el.ripetizioniCnt;
+      suonaLead(m, traccia.idx, quando, {
+        freqHz: aFreq(quantizzaAScala(stLea, stato.trs.trsScalaIdx)),
+        glideMs: pl2.leaGlideMs * (1 + bipolare(S.caso) * pl2.leaVarGlideNorm * 0.9),
+        ampiezza: passo.velocitaNorm,
+        filtroTaglioHz: limita(pl2.leaFiltroTaglioHz * Math.pow(2, bipolare(S.caso) * pl2.leaVarFiltroTaglioOct * (0.25 + 0.75 * macro)), 40, 18000),
+        filtroEnvOct: pl2.leaFiltroEnvOct, filtroDecadimentoMs: pl2.leaFiltroDecadimentoMs,
+        attaccoMs: pl2.leaAttaccoMs, decadimentoMs: pl2.leaDecadimentoMs,
+        sostegnoNorm: pl2.leaSostegnoNorm
+      });
+      rilasciaLead(m, traccia.idx, quando + durataLea * 0.95, pl2.leaRilascioMs);
+    } else if (traccia.genere === 'drn'){
+      var pd = traccia.rif.par;
+      if (!pd.drnAttivoFlag) return;
+      var d = m.droni[traccia.idx];
+      d.varGradoSt = Math.round(bipolare(S.caso) * pd.drnVarGradoSt * (0.25 + 0.75 * macro)) + passo.intonazioneSt;
+      d.varTaglioOct = bipolare(S.caso) * pd.drnVarFiltroTaglioOct * (0.25 + 0.75 * macro);
+      d.varLivelloDb = bipolare(S.caso) * pd.drnVarLivelloDb * (0.25 + 0.75 * macro);
+      if (pd.drnCancelloIdx === 1){
+        var e = decidiPasso(passo, 1, 0, S.caso, macro);
+        if (!e.suona) return;
+        d.aperto = true;
+        apriCancello(d.cancello.gain, quando, pd.drnAttaccoSec, 0.6, 1, passo.velocitaNorm);
+        chiudiCancello(d.cancello.gain, quando + durataPassoSec_ * e.ripetizioniCnt, pd.drnRilascioSec);
+      } else if (pd.drnCancelloIdx === 2 && passo.attivoFlag){
+        chiudiCancello(d.cancello.gain, quando, Math.min(0.4, pd.drnRilascioSec));
+        apriCancello(d.cancello.gain, quando + durataPassoSec_ * 0.98, pd.drnAttaccoSec, 0.6, 1, 1);
+      }
+      if (pd.drnLfoFormaIdx === 3 && S.caso() < 0.5)
+        d.tenuta = bipolare(S.caso) * pd.drnLfoProfonditaOct;
+    } else {
+      var pn = traccia.rif.par;
+      if (!pn.noiAttivoFlag) return;
+      var rr = m.rumori[traccia.idx];
+      var es = decidiPasso(passo, pn.noiProbabilitaNorm, 0, S.caso, macro);
+      rr.varTaglioOct = bipolare(S.caso) * pn.noiVarFiltroTaglioOct * (0.25 + 0.75 * macro);
+      rr.varLivelloDb = bipolare(S.caso) * pn.noiVarLivelloDb * (0.25 + 0.75 * macro);
+      rr.varPanNorm  = bipolare(S.caso) * pn.noiVarPanNorm * (0.25 + 0.75 * macro);
+      if (pn.noiCancelloIdx === 0) return;
+      var dec = pn.noiDecadimentoMs / 1000 * (1 + bipolare(S.caso) * pn.noiVarDecadimentoNorm);
+      if (pn.noiCancelloIdx === 1){
+        if (!es.suona) return;
+        rr.aperto = true;
+        apriCancello(rr.cancello.gain, quando, pn.noiAttaccoMs/1000, dec, pn.noiSostegnoNorm, passo.velocitaNorm);
+        chiudiCancello(rr.cancello.gain, quando + durataPassoSec_ * es.ripetizioniCnt * 0.98, pn.noiRilascioMs/1000);
+      } else if (passo.attivoFlag){
+        chiudiCancello(rr.cancello.gain, quando, pn.noiRilascioMs/1000);
+        apriCancello(rr.cancello.gain, quando + durataPassoSec_ * 0.98, pn.noiAttaccoMs/1000, dec, 1, 1);
+      }
+    }
+  }
+
+  function eventoCampione(p, passo, esito, ripIdx, ripCnt, macro){
+    var c = S.caso;
+    var vel = passo.velocitaNorm * (ripCnt > 1 ? (0.55 + 0.45 * (ripIdx + 1) / ripCnt) : 1);
+    return {
+      ampiezza: daDb(valoreVariato(trovaDescrittore('smpLivelloDb'), p.smpLivelloDb, p.smpVarLivelloDb, c, macro)) * vel,
+      intonazioneSt: p.smpIntonazioneSt + passo.intonazioneSt +
+        Math.round(bipolare(c) * p.smpVarIntonazioneSt * (0.25 + 0.75 * macro)),
+      stonaturaCt: p.smpStonaturaCt,
+      puntoInizioNorm: valoreVariato(trovaDescrittore('smpPuntoInizioNorm'), p.smpPuntoInizioNorm, p.smpVarPuntoInizioNorm, c, macro),
+      puntoFineNorm: p.smpPuntoFineNorm,
+      inversione: !!p.smpInversioneFlag,
+      attaccoMs: p.smpAttaccoMs, tenutaMs: p.smpTenutaMs,
+      rilascioMs: p.smpRilascioMs * (1 + bipolare(c) * p.smpVarRilascioNorm * 0.9),
+      curvaNorm: p.smpCurvaNorm,
+      filtroTipoIdx: p.smpFiltroTipoIdx,
+      filtroTaglioHz: limita(p.smpFiltroTaglioHz * Math.pow(2, bipolare(c) * p.smpVarFiltroTaglioOct * (0.25 + 0.75 * macro)), 20, 20000),
+      filtroQRatio: p.smpFiltroQRatio, filtroEnvOct: p.smpFiltroEnvOct,
+      saturazioneNorm: p.smpSaturazioneNorm, quantizzBitCnt: p.smpQuantizzBitCnt,
+      panNorm: valoreVariato(trovaDescrittore('smpPanNorm'), p.smpPanNorm, p.smpVarPanNorm, c, macro),
+      mandataEcoNorm: p.smpMandataEcoNorm, mandataRiverberoNorm: p.smpMandataRiverberoNorm,
+      gruppoChokeIdx: p.smpGruppoChokeIdx
+    };
+  }
+
+  function pianificaGrani(limite){
+    var ctx = m.ctx, i;
+    for (i = 0; i < m.droni.length; i++){
+      var d = m.droni[i], p = stato.drn[i].par;
+      if (!p.drnAttivoFlag || p.drnModoIdx === 0 || mutoEffettivo(stato, 'drn', i)){ d.prossimoGranoSec = Math.max(d.prossimoGranoSec, ctx.currentTime); continue; }
+      var buf = m.slot[p.drnSorgenteSlotIdx] ? (p.drnGranoInversioneFlag ? m.slot[p.drnSorgenteSlotIdx].bufferInverso : m.slot[p.drnSorgenteSlotIdx].buffer) : null;
+      if (!buf) continue;
+      if (d.prossimoGranoSec < ctx.currentTime) d.prossimoGranoSec = ctx.currentTime;
+      var guardia = 0;
+      while (d.prossimoGranoSec < limite && guardia++ < 200){
+        var ancora = p.drnGranoPosizioneNorm;
+        var precedente = d.posizioneNorm === undefined ? ancora : d.posizioneNorm;
+        d.posizioneNorm = limita(precedente * 0.95 + ancora * 0.05
+                          + bipolare(S.caso) * p.drnGranoDerivaNorm * 0.05, 0, 1);
+        var sco = Math.round(bipolare(S.caso) * p.drnGranoVarIntonazioneSt);
+        suonaGrano(ctx, d.somma, buf, d.prossimoGranoSec, {
+          durataSec: p.drnGranoDurataMs / 1000 * (1 + bipolare(S.caso) * p.drnGranoDispersioneNorm * 0.6),
+          rapporto: Math.pow(2, (p.drnGranoIntonazioneSt + sco + stato.trs.trsTonicaSt * 0) / 12),
+          posizioneSec: (d.posizioneNorm + bipolare(S.caso) * p.drnGranoDispersioneNorm * 0.2) * buf.duration,
+          panNorm: bipolare(S.caso) * p.drnLarghezzaNorm,
+          ampiezza: 0.5
+        });
+        d.prossimoGranoSec += (1 / p.drnGranoDensitaHz) * (1 + bipolare(S.caso) * p.drnGranoDispersioneNorm * 0.8);
+      }
+    }
+    for (i = 0; i < m.rumori.length; i++){
+      var r = m.rumori[i], q = stato.noi[i].par;
+      var tipo = TIPI_RUMORE[q.noiTipoIdx];
+      /* campiona e tieni sul taglio */
+      if (r.prossimaTenutaSec < ctx.currentTime) r.prossimaTenutaSec = ctx.currentTime;
+      while (r.prossimaTenutaSec < limite){
+        r.tenutaValore = bipolare(S.caso) * q.noiTenutaProfonditaOct;
+        r.prossimaTenutaSec += 1 / q.noiTenutaFrequenzaHz;
+      }
+      r.spazzataOct = Math.sin(ctx.currentTime * 2 * Math.PI * q.noiSpazzolaFrequenzaHz) * q.noiSpazzolaProfonditaOct;
+      if (tipo !== 'crepitio' && tipo !== 'campione'){ r.prossimoGranoSec = Math.max(r.prossimoGranoSec, ctx.currentTime); continue; }
+      if (!q.noiAttivoFlag || mutoEffettivo(stato, 'noi', i)) { r.prossimoGranoSec = ctx.currentTime; continue; }
+      var sorgente = tipo === 'campione'
+        ? (m.slot[q.noiSorgenteSlotIdx] && m.slot[q.noiSorgenteSlotIdx].buffer)
+        : m.bufferRumori.bianco;
+      if (!sorgente) continue;
+      if (r.prossimoGranoSec < ctx.currentTime) r.prossimoGranoSec = ctx.currentTime;
+      var g2 = 0;
+      while (r.prossimoGranoSec < limite && g2++ < 400){
+        suonaGrano(ctx, r.grani, sorgente, r.prossimoGranoSec, {
+          durataSec: q.noiGranoDurataMs / 1000 * (1 + bipolare(S.caso) * q.noiGranoDispersioneNorm),
+          rapporto: 1 + bipolare(S.caso) * q.noiGranoDispersioneNorm * 0.9,
+          posizioneSec: S.caso() * sorgente.duration,
+          panNorm: bipolare(S.caso) * 0.7,
+          ampiezza: 0.35 + S.caso() * 0.4
+        });
+        r.prossimoGranoSec += (1 / q.noiDensitaHz) * (0.5 + S.caso());
+      }
+    }
+  }
+
+  function mutaPasso(seq, idx){
+    var p = seq.passi[idx % PASSI_MAX];
+    var r = S.caso();
+    if (r < 0.34) p.attivoFlag = p.attivoFlag ? 0 : 1;
+    else if (r < 0.67) p.velocitaNorm = limita(p.velocitaNorm + bipolare(S.caso) * 0.4, 0.05, 1);
+    else p.ripetizioniCnt = 1 + Math.floor(S.caso() * 3);
+  }
+  function evolvi(){
+    var e = stato.ale.aleEvoluzioneNorm;
+    if (e <= 0) return;
+    var tracce = elencoTracce(stato);
+    for (var t = 0; t < tracce.length; t++){
+      var seq = tracce[t].rif.seq;
+      for (var i = 0; i < Math.min(seq.seqLunghezzaCnt, PASSI_MAX); i++)
+        if (S.caso() < e * 0.05) mutaPasso(seq, i);
+    }
+  }
+  S.battito = battito;
+  S.posizione = function(){ return S.visivoIdx; };
+  return S;
+}
+
+/* ── operazioni generative sulla trama ───────────────────────────────────── */
+function riempiEuclideo(seq, pulsazioniCnt, rotazioneCnt){
+  var mappa = euclideo(pulsazioniCnt, seq.seqLunghezzaCnt, rotazioneCnt);
+  for (var i = 0; i < PASSI_MAX; i++) seq.passi[i].attivoFlag = i < seq.seqLunghezzaCnt ? mappa[i] : 0;
+}
+function riempiCasuale(seq, densitaNorm, caso){
+  for (var i = 0; i < seq.seqLunghezzaCnt; i++){
+    seq.passi[i].attivoFlag = caso() < densitaNorm ? 1 : 0;
+    seq.passi[i].velocitaNorm = limita(0.55 + caso() * 0.45, 0, 1);
+    seq.passi[i].probabilitaNorm = caso() < 0.18 ? 0.3 + caso() * 0.6 : 1;
+    seq.passi[i].ripetizioniCnt = caso() < 0.08 ? 2 + Math.floor(caso() * 3) : 1;
+  }
+}
+function ruotaSequenza(seq, quanti){
+  var L = seq.seqLunghezzaCnt, copia = seq.passi.slice(0, L), i;
+  var r = ((quanti % L) + L) % L;
+  for (i = 0; i < L; i++) seq.passi[i] = copia[(i - r + L) % L];
+}
+function svuotaSequenza(seq){
+  for (var i = 0; i < PASSI_MAX; i++) seq.passi[i] = passoIniziale();
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INTERFACCIA (iPad: bersagli grandi, trascinamento, nessuno scorrimento di pagina)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var STATO = null, MOTORE = null, SEQ = null, CTX = null;
+var CONTROLLI = [], TRACCIA_SEL = 0, SLOT_SEL = 0, DRONE_SEL = 0, RUMORE_SEL = 0;
+var STRUMENTO_SEL = 'bas', RIDISEGNA_STRUMENTI = null;
+var MODO_CELLA = 'passo', PAGINA_IDX = 0, REGISTRAZIONE = null;
+var CASO_UI = creaCaso(9176);
+
+function el(tag, classe, testo){
+  var e = document.createElement(tag);
+  if (classe) e.className = classe;
+  if (testo !== undefined && testo !== null) e.textContent = testo;
+  return e;
+}
+function bottone(testo, classe, azione){
+  var b = el('button', 'btn' + (classe ? ' ' + classe : ''), testo);
+  b.type = 'button';
+  b.addEventListener('click', function(ev){ ev.preventDefault(); azione(b); });
+  return b;
+}
+function avvisa(testo){
+  var a = document.getElementById('avviso');
+  a.textContent = testo; a.classList.add('vedi');
+  clearTimeout(avvisa._t);
+  avvisa._t = setTimeout(function(){ a.classList.remove('vedi'); }, 1700);
+}
+function aggiornaControlli(){ CONTROLLI.forEach(function(c){ if (c.aggiorna) c.aggiorna(); }); }
+
+/* ── cursore a trascinamento ─────────────────────────────────────────────── */
+function creaCursore(d, ottieni, imposta){
+  var c = el('div', 'cur' + (d.curva === 'flag' ? ' interruttore' : ''));
+  var riempimento = el('div', 'riemp'), tacche = el('div', 'tacche');
+  var etichetta = el('div', 'et', d.etichetta), valore = el('div', 'vl', '');
+  c.appendChild(riempimento); c.appendChild(tacche); c.appendChild(etichetta); c.appendChild(valore);
+  function dipingi(){
+    var v = ottieni();
+    riempimento.style.width = (valoreANorm(d, v) * 100) + '%';
+    valore.textContent = formattaValore(d, v);
+  }
+  var presaId = null, xInizio = 0, yInizio = 0, normInizio = 0, mosso = false, tPrec = 0;
+  c.addEventListener('pointerdown', function(ev){
+    if (presaId !== null) return;
+    presaId = ev.pointerId; try { c.setPointerCapture(presaId); } catch (e) {}
+    xInizio = ev.clientX; yInizio = ev.clientY; normInizio = valoreANorm(d, ottieni());
+    mosso = false; c.classList.add('presa');
+    ev.preventDefault();
+  });
+  c.addEventListener('pointermove', function(ev){
+    if (ev.pointerId !== presaId) return;
+    var dx = ev.clientX - xInizio, dy = Math.abs(ev.clientY - yInizio);
+    if (Math.abs(dx) > 3 || dy > 3) mosso = true;
+    var fine = dy > 46;
+    c.classList.toggle('fine', fine);
+    var sensibilita = fine ? 0.16 : 1;
+    var n = limita(normInizio + (dx / Math.max(60, c.offsetWidth)) * sensibilita, 0, 1);
+    imposta(normAValore(d, n)); dipingi();
+    ev.preventDefault();
+  });
+  function rilascia(ev){
+    if (ev.pointerId !== presaId) return;
+    try { c.releasePointerCapture(presaId); } catch (e) {}
+    presaId = null; c.classList.remove('presa', 'fine');
+    if (!mosso){
+      var ora = Date.now();
+      if (d.curva === 'flag'){ imposta(ottieni() ? 0 : 1); }
+      else if (ora - tPrec < 340){ imposta(d.dif); avvisa(d.etichetta + ' → iniziale'); }
+      tPrec = ora; dipingi();
+    }
+  }
+  c.addEventListener('pointerup', rilascia);
+  c.addEventListener('pointercancel', rilascia);
+  c.aggiorna = dipingi; dipingi(); CONTROLLI.push(c);
+  return c;
+}
+function creaScelta(d, ottieni, imposta){
+  var box = el('div', 'scelta'), bottoni = [];
+  d.opzioni.forEach(function(op, i){
+    var b = el('button', null, op.toUpperCase()); b.type = 'button';
+    b.addEventListener('click', function(){ imposta(i + d.min); dipingi(); });
+    box.appendChild(b); bottoni.push(b);
+  });
+  function dipingi(){
+    var v = Math.round(ottieni()) - d.min;
+    bottoni.forEach(function(b, i){ b.classList.toggle('attivo', i === v); });
+  }
+  var involucro = el('div');
+  involucro.appendChild(el('div', 'etg', d.etichetta));
+  involucro.appendChild(box);
+  involucro.aggiorna = dipingi; dipingi(); CONTROLLI.push(involucro);
+  return involucro;
+}
+function creaControllo(d, ottieni, imposta){
+  if (d.curva === 'enum' && d.opzioni.length <= 7) return creaScelta(d, ottieni, imposta);
+  return creaCursore(d, ottieni, imposta);
+}
+function costruisciPannelloParametri(dominio, contenitore, ottieniOggetto){
+  DESCRITTORI[dominio].forEach(function(d){
+    if (d.gruppo){ contenitore.appendChild(el('div', 'etg', d.gruppo)); return; }
+    contenitore.appendChild(creaControllo(d,
+      function(){ return ottieniOggetto()[d.id]; },
+      function(v){ ottieniOggetto()[d.id] = v; }));
+  });
+}
+function blocco(titolo, sottotitolo){
+  var b = el('div', 'blocco'), h = el('h3');
+  h.appendChild(el('span', null, titolo));
+  h.appendChild(el('em', null, sottotitolo || ''));
+  var corpo = el('div', 'corpo');
+  b.appendChild(h); b.appendChild(corpo); b.corpo = corpo;
+  return b;
+}
+
+/* ── griglia della trama ─────────────────────────────────────────────────── */
+var GRIGLIA = { celle:[], testate:[], radice:null };
+function costruisciGriglia(contenitore){
+  var avvolgi = el('div', 'tramaAvvolgi');
+  var trama = el('div', 'trama');
+  var testata = el('div', 'testataT');
+  testata.appendChild(el('div', 'vuoto'));
+  GRIGLIA.testate = [];
+  for (var s = 0; s < PASSI_PAGINA; s++){
+    var n = el('div', 'n' + (s % 4 === 0 ? ' batt' : ''), String(s + 1));
+    testata.appendChild(n); GRIGLIA.testate.push(n);
+  }
+  trama.appendChild(testata);
+  GRIGLIA.celle = [];
+  elencoTracce(STATO).forEach(function(traccia, ti){
+    var riga = el('div', 'trigaR');
+    var nome = el('div', 'nomeT');
+    var tt = el('button', 'tt', traccia.sigla + ' ' + traccia.rif.nome);
+    tt.type = 'button';
+    tt.addEventListener('click', function(){ selezionaTraccia(ti); });
+    var muto = el('button', 'mini', 'M'); muto.type = 'button';
+    muto.addEventListener('click', function(){
+      traccia.rif.seq.seqMutoFlag = traccia.rif.seq.seqMutoFlag ? 0 : 1; dipingiGriglia();
+    });
+    var solo = el('button', 'mini solo', 'S'); solo.type = 'button';
+    solo.addEventListener('click', function(){
+      traccia.rif.seq.seqSoloFlag = traccia.rif.seq.seqSoloFlag ? 0 : 1; dipingiGriglia();
+    });
+    nome.appendChild(tt); nome.appendChild(muto); nome.appendChild(solo);
+    nome.tt = tt; nome.muto = muto; nome.solo = solo;
+    riga.appendChild(nome);
+    var celle = [];
+    for (var s2 = 0; s2 < PASSI_PAGINA; s2++){
+      var cella = el('div', 'cella' + (s2 % 4 === 0 ? ' quarto' : ''));
+      cella.appendChild(el('div', 'lv'));
+      cella.appendChild(el('div', 'rip'));
+      collegaCella(cella, ti, s2);
+      riga.appendChild(cella); celle.push(cella);
+    }
+    trama.appendChild(riga);
+    GRIGLIA.celle.push({ riga:riga, nome:nome, celle:celle, traccia:traccia, ti:ti });
+  });
+  avvolgi.appendChild(trama);
+  contenitore.appendChild(avvolgi);
+  GRIGLIA.radice = trama;
+}
+function collegaCella(cella, ti, colonna){
+  var presaId = null, yInizio = 0, valInizio = 0, mosso = false;
+  function passo(){
+    var traccia = elencoTracce(STATO)[ti];
+    return traccia.rif.seq.passi[(PAGINA_IDX * PASSI_PAGINA + colonna) % PASSI_MAX];
+  }
+  cella.addEventListener('pointerdown', function(ev){
+    if (presaId !== null) return;
+    presaId = ev.pointerId; try { cella.setPointerCapture(presaId); } catch (e) {}
+    yInizio = ev.clientY; mosso = false;
+    var p = passo();
+    valInizio = MODO_CELLA === 'velocita' ? p.velocitaNorm
+              : MODO_CELLA === 'probabilita' ? p.probabilitaNorm
+              : MODO_CELLA === 'ripetizioni' ? (p.ripetizioniCnt - 1) / 7
+              : MODO_CELLA === 'micro' ? (p.microMs + 60) / 120
+              : MODO_CELLA === 'intonazione' ? (p.intonazioneSt + 24) / 48 : 0;
+    selezionaTraccia(ti);
+    ev.preventDefault();
+  });
+  cella.addEventListener('pointermove', function(ev){
+    if (ev.pointerId !== presaId || MODO_CELLA === 'passo') return;
+    var dy = yInizio - ev.clientY;
+    if (Math.abs(dy) > 4) mosso = true;
+    var n = limita(valInizio + dy / 160, 0, 1), p = passo();
+    if (MODO_CELLA === 'velocita') p.velocitaNorm = n;
+    else if (MODO_CELLA === 'probabilita') p.probabilitaNorm = n;
+    else if (MODO_CELLA === 'ripetizioni') p.ripetizioniCnt = 1 + Math.round(n * 7);
+    else if (MODO_CELLA === 'micro') p.microMs = Math.round(n * 120 - 60);
+    else if (MODO_CELLA === 'intonazione') p.intonazioneSt = Math.round(n * 48 - 24);
+    dipingiCella(ti, colonna); ev.preventDefault();
+  });
+  function su(ev){
+    if (ev.pointerId !== presaId) return;
+    try { cella.releasePointerCapture(presaId); } catch (e) {}
+    presaId = null;
+    if (!mosso){ var p = passo(); p.attivoFlag = p.attivoFlag ? 0 : 1; dipingiCella(ti, colonna); }
+  }
+  cella.addEventListener('pointerup', su);
+  cella.addEventListener('pointercancel', su);
+}
+function dipingiCella(ti, colonna){
+  var g = GRIGLIA.celle[ti]; if (!g) return;
+  var cella = g.celle[colonna];
+  var seq = g.traccia.rif.seq;
+  var indice = PAGINA_IDX * PASSI_PAGINA + colonna;
+  var p = seq.passi[indice % PASSI_MAX];
+  var fuori = indice >= Math.min(seq.seqLunghezzaCnt, STATO.trs.trsPassiCnt);
+  cella.classList.toggle('attiva', !!p.attivoFlag);
+  cella.classList.toggle('fuori', fuori);
+  var lv = cella.firstChild, rip = cella.childNodes[1];
+  var q = MODO_CELLA === 'probabilita' ? p.probabilitaNorm
+        : MODO_CELLA === 'ripetizioni' ? (p.ripetizioniCnt - 1) / 7
+        : MODO_CELLA === 'micro' ? (p.microMs + 60) / 120
+        : MODO_CELLA === 'intonazione' ? (p.intonazioneSt + 24) / 48
+        : p.velocitaNorm;
+    lv.style.height = (p.attivoFlag || MODO_CELLA !== 'passo' ? q * 100 : 0) + '%';
+  rip.textContent = p.ripetizioniCnt > 1 ? '×' + p.ripetizioniCnt : (p.probabilitaNorm < 1 ? '%' : '');
+}
+function dipingiGriglia(){
+  GRIGLIA.celle.forEach(function(g, ti){
+    g.nome.classList.toggle('sel', ti === TRACCIA_SEL);
+    g.nome.muto.classList.toggle('acceso', !!g.traccia.rif.seq.seqMutoFlag);
+    g.nome.solo.classList.toggle('acceso', !!g.traccia.rif.seq.seqSoloFlag);
+    g.nome.tt.textContent = g.traccia.sigla + ' ' + g.traccia.rif.nome;
+    for (var c = 0; c < PASSI_PAGINA; c++) dipingiCella(ti, c);
+  });
+  GRIGLIA.testate.forEach(function(n, i){
+    n.textContent = String(PAGINA_IDX * PASSI_PAGINA + i + 1);
+  });
+}
+function selezionaTraccia(ti){
+  TRACCIA_SEL = ti;
+  var traccia = elencoTracce(STATO)[ti];
+  if (traccia.genere === 'smp') SLOT_SEL = traccia.idx;
+  if (traccia.genere === 'drn') DRONE_SEL = traccia.idx;
+  if (traccia.genere === 'noi') RUMORE_SEL = traccia.idx;
+  if (traccia.genere === 'bas' || traccia.genere === 'chi' || traccia.genere === 'lea'){
+    STRUMENTO_SEL = traccia.genere;
+    if (RIDISEGNA_STRUMENTI) RIDISEGNA_STRUMENTI();
+  }
+  dipingiGriglia(); aggiornaControlli();
+  if (RIDISEGNA_SLOT) RIDISEGNA_SLOT();
+}
+
+/* ── forma d'onda dello slot ─────────────────────────────────────────────── */
+var RIDISEGNA_SLOT = null;
+function disegnaOnda(canvas, buffer){
+  var larghezza = canvas.clientWidth || 600, altezza = canvas.clientHeight || 120;
+  var dpr = Math.min(2, glob.devicePixelRatio || 1);
+  canvas.width = larghezza * dpr; canvas.height = altezza * dpr;
+  var g = canvas.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, larghezza, altezza);
+  g.strokeStyle = '#16262a'; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(0, altezza/2); g.lineTo(larghezza, altezza/2); g.stroke();
+  if (!buffer) return;
+  var dati = buffer.getChannelData(0), passo = Math.max(1, Math.floor(dati.length / larghezza));
+  g.strokeStyle = '#3dff88'; g.globalAlpha = 0.9; g.beginPath();
+  for (var x = 0; x < larghezza; x++){
+    var i0 = x * passo, min = 1, max = -1;
+    for (var i = 0; i < passo; i++){
+      var v = dati[i0 + i] || 0;
+      if (v < min) min = v; if (v > max) max = v;
+    }
+    g.moveTo(x + 0.5, altezza/2 - max * altezza/2 * 0.92);
+    g.lineTo(x + 0.5, altezza/2 - min * altezza/2 * 0.92);
+  }
+  g.stroke(); g.globalAlpha = 1;
+}
+
+/* ── caricamento campioni esterni ────────────────────────────────────────── */
+function decodifica(arrayBuffer){
+  return new Promise(function(risolvi, rifiuta){
+    var esito = CTX.decodeAudioData(arrayBuffer, risolvi, rifiuta);
+    if (esito && esito.then) esito.then(risolvi, rifiuta);
+  });
+}
+function caricaFileNelloSlot(file, slotIdx){
+  return file.arrayBuffer().then(decodifica).then(function(buffer){
+    MOTORE.slot[slotIdx].buffer = buffer;
+    MOTORE.slot[slotIdx].bufferInverso = inverteBuffer(CTX, buffer);
+    STATO.slot[slotIdx].nome = file.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 16).toUpperCase();
+    STATO.slot[slotIdx].origine = 'esterno';
+    dipingiGriglia(); if (RIDISEGNA_SLOT) RIDISEGNA_SLOT();
+    avvisa('slot ' + (slotIdx + 1) + ' ← ' + STATO.slot[slotIdx].nome);
+  }).catch(function(){
+    avvisa('file non leggibile: usa WAV, AIFF, MP3 o M4A');
+  });
+}
+function ripristinaCampioneInterno(slotIdx, internoIdx){
+  var pacchetto = generaCampioneProceduraleDati(CAMPIONI_INTERNI[internoIdx], CTX.sampleRate);
+  var buf = bufferDaDati(CTX, pacchetto);
+  MOTORE.slot[slotIdx].buffer = buf;
+  MOTORE.slot[slotIdx].bufferInverso = inverteBuffer(CTX, buf);
+  STATO.slot[slotIdx].nome = CAMPIONI_INTERNI[internoIdx].toUpperCase();
+  STATO.slot[slotIdx].origine = 'interno';
+  STATO.slot[slotIdx].internoIdx = internoIdx;
+  dipingiGriglia(); if (RIDISEGNA_SLOT) RIDISEGNA_SLOT();
+}
+
+/* ── registrazione dell'uscita ───────────────────────────────────────────── */
+function avviaRegistrazione(){
+  if (REGISTRAZIONE) return;
+  var nodo = CTX.createScriptProcessor ? CTX.createScriptProcessor(4096, 2, 2) : null;
+  if (!nodo){ avvisa('registrazione non disponibile su questo browser'); return; }
+  var sinistro = [], destro = [], campioniCnt = 0;
+  nodo.onaudioprocess = function(ev){
+    sinistro.push(new Float32Array(ev.inputBuffer.getChannelData(0)));
+    destro.push(new Float32Array(ev.inputBuffer.getChannelData(1)));
+    campioniCnt += ev.inputBuffer.length;
+    if (campioniCnt > CTX.sampleRate * 600) fermaRegistrazione();
+  };
+  var muto = CTX.createGain(); muto.gain.value = 0;
+  MOTORE.bus.uscita.connect(nodo); nodo.connect(muto); muto.connect(CTX.destination);
+  REGISTRAZIONE = { nodo:nodo, muto:muto, sinistro:sinistro, destro:destro, avvioSec:CTX.currentTime };
+  avvisa('registrazione avviata');
+}
+function fermaRegistrazione(){
+  if (!REGISTRAZIONE) return;
+  var r = REGISTRAZIONE; REGISTRAZIONE = null;
+  r.nodo.onaudioprocess = null;
+  try { MOTORE.bus.uscita.disconnect(r.nodo); r.nodo.disconnect(); r.muto.disconnect(); } catch (e) {}
+  function unisci(blocchi){
+    var n = blocchi.reduce(function(a, b){ return a + b.length; }, 0);
+    var fuori = new Float32Array(n), off = 0;
+    blocchi.forEach(function(b){ fuori.set(b, off); off += b.length; });
+    return fuori;
+  }
+  var s = unisci(r.sinistro), d = unisci(r.destro);
+  if (!s.length){ avvisa('nessun audio registrato'); return; }
+  var wav = codificaWav([s, d], CTX.sampleRate);
+  scarica(new Blob([wav], { type:'audio/wav' }), 'calamina-' + timbro() + '.wav');
+  avvisa('registrazione salvata (' + Math.round(s.length / CTX.sampleRate) + ' s)');
+}
+function timbro(){
+  var d = new Date(), z = function(v){ return (v < 10 ? '0' : '') + v; };
+  return d.getFullYear() + z(d.getMonth()+1) + z(d.getDate()) + '-' + z(d.getHours()) + z(d.getMinutes()) + z(d.getSeconds());
+}
+function scarica(blob, nome){
+  var url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = nome; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1200);
+}
+
+function copiaDentro(destinazione, sorgente){
+  for (var k in sorgente){
+    var v = sorgente[k];
+    if (v && typeof v === 'object'){
+      if (!destinazione[k] || typeof destinazione[k] !== 'object')
+        destinazione[k] = Array.isArray(v) ? [] : {};
+      copiaDentro(destinazione[k], v);
+    } else destinazione[k] = v;
+  }
+}
+
+/* ── pannelli ────────────────────────────────────────────────────────────── */
+function descrittoreSeq(id){
+  return DESCRITTORI.seq.filter(function(d){ return d.id === id; })[0];
+}
+function tracciaSelezionata(){ return elencoTracce(STATO)[TRACCIA_SEL]; }
+
+function pannelloTrama(){
+  var p = el('div', 'pannello attiva');
+  var pagine = el('div', 'riga');
+  var bottoniPagina = [];
+  for (var i = 0; i < PASSI_MAX / PASSI_PAGINA; i++){
+    (function(k){
+      var b = bottone('BATT ' + (k + 1), null, function(){
+        PAGINA_IDX = k; bottoniPagina.forEach(function(x, j){ x.classList.toggle('acceso', j === k); });
+        dipingiGriglia();
+      });
+      if (k === 0) b.classList.add('acceso');
+      bottoniPagina.push(b); pagine.appendChild(b);
+    })(i);
+  }
+  var modi = el('div', 'riga'), bottoniModo = [];
+  [['passo','PASSO'],['velocita','VELOCITÀ'],['probabilita','PROB'],['ripetizioni','RIPET'],['micro','MICRO'],['intonazione','INTON']].forEach(function(coppia){
+    var b = bottone(coppia[1], null, function(){
+      MODO_CELLA = coppia[0];
+      bottoniModo.forEach(function(x){ x.classList.toggle('acceso', x === b); });
+      dipingiGriglia();
+    });
+    if (coppia[0] === 'passo') b.classList.add('acceso');
+    bottoniModo.push(b); modi.appendChild(b);
+  });
+  p.appendChild(pagine);
+  costruisciGriglia(p);
+  p.appendChild(el('div', 'nota', 'Tocca una cella per accenderla. Negli altri modi, trascina la cella verso l\'alto o il basso per regolarne il valore.'));
+  p.appendChild(modi);
+
+  var col = el('div', 'colonne');
+  var bt = blocco('TRACCIA', '');
+  var titoloTraccia = bt.querySelector('em');
+  bt.corpo.appendChild(creaControllo(descrittoreSeq('seqLunghezzaCnt'),
+    function(){ return tracciaSelezionata().rif.seq.seqLunghezzaCnt; },
+    function(v){ tracciaSelezionata().rif.seq.seqLunghezzaCnt = v; dipingiGriglia(); }));
+  bt.corpo.appendChild(creaControllo(descrittoreSeq('seqDivisoreIdx'),
+    function(){ return tracciaSelezionata().rif.seq.seqDivisoreIdx; },
+    function(v){ tracciaSelezionata().rif.seq.seqDivisoreIdx = v; }));
+  bt.corpo.appendChild(creaControllo(descrittoreSeq('seqDirezioneIdx'),
+    function(){ return tracciaSelezionata().rif.seq.seqDirezioneIdx; },
+    function(v){ tracciaSelezionata().rif.seq.seqDirezioneIdx = v; }));
+  bt.corpo.appendChild(creaControllo(descrittoreSeq('seqMutaNorm'),
+    function(){ return tracciaSelezionata().rif.seq.seqMutaNorm; },
+    function(v){ tracciaSelezionata().rif.seq.seqMutaNorm = v; }));
+  bt.aggiorna = function(){ titoloTraccia.textContent = tracciaSelezionata().sigla + ' · ' + tracciaSelezionata().rif.nome; };
+  CONTROLLI.push(bt);
+
+  var bg = blocco('GENERATORE DI TRAMA', 'sulla traccia selezionata');
+  bg.corpo.appendChild(creaControllo(descrittoreSeq('seqPulsazioniCnt'),
+    function(){ return tracciaSelezionata().rif.seq.seqPulsazioniCnt; },
+    function(v){ tracciaSelezionata().rif.seq.seqPulsazioniCnt = v; }));
+  var r1 = el('div', 'riga');
+  r1.appendChild(bottone('EUCLIDEO', null, function(){
+    var s = tracciaSelezionata().rif.seq;
+    riempiEuclideo(s, s.seqPulsazioniCnt, 0); dipingiGriglia(); avvisa('trama euclidea applicata');
+  }));
+  r1.appendChild(bottone('CASUALE', null, function(){
+    riempiCasuale(tracciaSelezionata().rif.seq, STATO.ale.aleDensitaNorm, CASO_UI); dipingiGriglia();
+  }));
+  var r2 = el('div', 'riga');
+  r2.appendChild(bottone('◀ RUOTA', null, function(){ ruotaSequenza(tracciaSelezionata().rif.seq, -1); dipingiGriglia(); }));
+  r2.appendChild(bottone('RUOTA ▶', null, function(){ ruotaSequenza(tracciaSelezionata().rif.seq, 1); dipingiGriglia(); }));
+  r2.appendChild(bottone('SVUOTA', null, function(){ svuotaSequenza(tracciaSelezionata().rif.seq); dipingiGriglia(); }));
+  var r3 = el('div', 'riga');
+  r3.appendChild(bottone('TUTTE CASUALI', null, function(){
+    elencoTracce(STATO).forEach(function(t){ riempiCasuale(t.rif.seq, STATO.ale.aleDensitaNorm, CASO_UI); });
+    dipingiGriglia(); avvisa('tutte le tracce rigenerate');
+  }));
+  r3.appendChild(bottone('SVUOTA TUTTO', null, function(){
+    elencoTracce(STATO).forEach(function(t){ svuotaSequenza(t.rif.seq); }); dipingiGriglia();
+  }));
+  bg.corpo.appendChild(r1); bg.corpo.appendChild(r2); bg.corpo.appendChild(r3);
+
+  var bo = blocco('OROLOGIO', '');
+  costruisciPannelloParametri('trs', bo.corpo, function(){ return STATO.trs; });
+
+  col.appendChild(bt); col.appendChild(bg); col.appendChild(bo);
+  p.appendChild(col);
+  return p;
+}
+
+function pannelloSlot(){
+  var p = el('div', 'pannello');
+  var striscia = el('div', 'striscia'), bottoniSlot = [];
+  for (var i = 0; i < SLOT_CNT; i++){
+    (function(k){
+      var b = el('button'); b.type = 'button';
+      var titolo = el('span', null, 'SLOT ' + (k + 1)), sotto = el('small', null, '');
+      b.appendChild(titolo); b.appendChild(sotto);
+      b.addEventListener('click', function(){ selezionaTraccia(k); });
+      b.sotto = sotto; bottoniSlot.push(b); striscia.appendChild(b);
+    })(i);
+  }
+  p.appendChild(striscia);
+
+  var colonne = el('div', 'colonne');
+  var bs = blocco('CAMPIONE', '');
+  var em = bs.querySelector('em');
+  var scatolaOnda = el('div', 'onda');
+  var tela = el('canvas'); scatolaOnda.appendChild(tela);
+  var manigliaInizio = el('div', 'maniglia'); manigliaInizio.appendChild(el('b', null, 'IN'));
+  var manigliaFine = el('div', 'maniglia fine'); manigliaFine.appendChild(el('b', null, 'OUT'));
+  scatolaOnda.appendChild(manigliaInizio); scatolaOnda.appendChild(manigliaFine);
+  bs.corpo.appendChild(scatolaOnda);
+
+  function trascinaManiglia(maniglia, chiave){
+    var presaId = null;
+    maniglia.addEventListener('pointerdown', function(ev){
+      presaId = ev.pointerId; try { maniglia.setPointerCapture(presaId); } catch (e) {} ev.preventDefault();
+    });
+    maniglia.addEventListener('pointermove', function(ev){
+      if (ev.pointerId !== presaId) return;
+      var r = scatolaOnda.getBoundingClientRect();
+      STATO.slot[SLOT_SEL].par[chiave] = limita((ev.clientX - r.left) / r.width, 0, 1);
+      posizionaManiglie(); aggiornaControlli(); ev.preventDefault();
+    });
+    maniglia.addEventListener('pointerup', function(ev){
+      if (ev.pointerId === presaId){ try { maniglia.releasePointerCapture(presaId); } catch (e) {} presaId = null; }
+    });
+  }
+  trascinaManiglia(manigliaInizio, 'smpPuntoInizioNorm');
+  trascinaManiglia(manigliaFine, 'smpPuntoFineNorm');
+  function posizionaManiglie(){
+    manigliaInizio.style.left = (STATO.slot[SLOT_SEL].par.smpPuntoInizioNorm * 100) + '%';
+    manigliaFine.style.left = (STATO.slot[SLOT_SEL].par.smpPuntoFineNorm * 100) + '%';
+  }
+
+  var gocce = el('div', 'gocce', 'Trascina qui un file audio, oppure tocca CARICA FILE');
+  var ingresso = document.createElement('input');
+  ingresso.type = 'file'; ingresso.accept = 'audio/*'; ingresso.multiple = true;
+  ingresso.addEventListener('change', function(){
+    var elenco = Array.prototype.slice.call(ingresso.files);
+    elenco.forEach(function(f, j){
+      var destinazione = (SLOT_SEL + j) % SLOT_CNT;
+      caricaFileNelloSlot(f, destinazione);
+    });
+    ingresso.value = '';
+  });
+  bs.corpo.appendChild(gocce); bs.corpo.appendChild(ingresso);
+  var rf = el('div', 'riga');
+  rf.appendChild(bottone('CARICA FILE', null, function(){ ingresso.click(); }));
+  rf.appendChild(bottone('ASCOLTA', null, function(){
+    if (!MOTORE) return;
+    suonaCampione(MOTORE, SLOT_SEL, CTX.currentTime + 0.02, anteprimaEvento(STATO.slot[SLOT_SEL].par));
+  }));
+  bs.corpo.appendChild(rf);
+  var interni = el('div', 'scelta');
+  CAMPIONI_INTERNI.forEach(function(nome, k){
+    var b = el('button', null, nome.toUpperCase()); b.type = 'button';
+    b.addEventListener('click', function(){ ripristinaCampioneInterno(SLOT_SEL, k); });
+    interni.appendChild(b);
+  });
+  bs.corpo.appendChild(el('div', 'etg', 'campioni interni'));
+  bs.corpo.appendChild(interni);
+
+  var bp = blocco('PARAMETRI SLOT', '');
+  costruisciPannelloParametri('smp', bp.corpo, function(){ return STATO.slot[SLOT_SEL].par; });
+
+  colonne.appendChild(bs); colonne.appendChild(bp);
+  p.appendChild(colonne);
+
+  RIDISEGNA_SLOT = function(){
+    bottoniSlot.forEach(function(b, k){
+      b.classList.toggle('attivo', k === SLOT_SEL);
+      b.classList.toggle('carico', STATO.slot[k].origine === 'esterno');
+      b.sotto.textContent = STATO.slot[k].nome.slice(0, 10);
+    });
+    em.textContent = 'slot ' + (SLOT_SEL + 1) + ' · ' + STATO.slot[SLOT_SEL].nome;
+    if (MOTORE) disegnaOnda(tela, MOTORE.slot[SLOT_SEL].buffer);
+    posizionaManiglie();
+  };
+  ['dragover','dragenter'].forEach(function(n){
+    gocce.addEventListener(n, function(ev){ ev.preventDefault(); gocce.classList.add('sopra'); });
+  });
+  ['dragleave','drop'].forEach(function(n){
+    gocce.addEventListener(n, function(ev){ ev.preventDefault(); gocce.classList.remove('sopra'); });
+  });
+  gocce.addEventListener('drop', function(ev){
+    var f = ev.dataTransfer && ev.dataTransfer.files;
+    if (f) Array.prototype.slice.call(f).forEach(function(file, j){ caricaFileNelloSlot(file, (SLOT_SEL + j) % SLOT_CNT); });
+  });
+  return p;
+}
+function anteprimaEvento(p){
+  return {
+    ampiezza: daDb(p.smpLivelloDb), intonazioneSt:p.smpIntonazioneSt, stonaturaCt:p.smpStonaturaCt,
+    puntoInizioNorm:p.smpPuntoInizioNorm, puntoFineNorm:p.smpPuntoFineNorm, inversione:!!p.smpInversioneFlag,
+    attaccoMs:p.smpAttaccoMs, tenutaMs:p.smpTenutaMs, rilascioMs:p.smpRilascioMs, curvaNorm:p.smpCurvaNorm,
+    filtroTipoIdx:p.smpFiltroTipoIdx, filtroTaglioHz:p.smpFiltroTaglioHz, filtroQRatio:p.smpFiltroQRatio,
+    filtroEnvOct:p.smpFiltroEnvOct, saturazioneNorm:p.smpSaturazioneNorm, quantizzBitCnt:p.smpQuantizzBitCnt,
+    panNorm:p.smpPanNorm, mandataEcoNorm:p.smpMandataEcoNorm, mandataRiverberoNorm:p.smpMandataRiverberoNorm,
+    gruppoChokeIdx:p.smpGruppoChokeIdx
+  };
+}
+
+function pannelloStrumenti(){
+  var p = el('div', 'pannello');
+  var voci = [
+    { chiave:'bas', et:'BASSO',    sotto:'da DIAPASON' },
+    { chiave:'chi', et:'CHITARRA', sotto:'da SCORIA' },
+    { chiave:'lea', et:'LEAD',     sotto:'da CUORE STATICO' }
+  ];
+  var striscia = el('div', 'striscia'), bottoni = [];
+  voci.forEach(function(v){
+    var b = el('button'); b.type = 'button';
+    b.appendChild(el('span', null, v.et));
+    b.appendChild(el('small', null, v.sotto));
+    b.addEventListener('click', function(){
+      STRUMENTO_SEL = v.chiave;
+      var t = elencoTracce(STATO);
+      for (var i = 0; i < t.length; i++) if (t[i].genere === v.chiave){ selezionaTraccia(i); break; }
+      ridipingi();
+    });
+    bottoni.push(b); striscia.appendChild(b);
+  });
+  p.appendChild(striscia);
+
+  var colonne = el('div', 'colonne'), blocchi = {};
+  voci.forEach(function(v){
+    var b = blocco(v.et, v.sotto);
+    costruisciPannelloParametri(v.chiave, b.corpo, function(){
+      return STATO[v.chiave][0].par;
+    });
+    blocchi[v.chiave] = b;
+    colonne.appendChild(b);
+  });
+  blocchi.chi.corpo.appendChild(el('div', 'nota',
+    'La corda e sintetizzata con un anello Karplus-Strong a lunghezza corretta per inversione numerica: la fondamentale cade sulla nota anche in alto, dove il ritardo del filtro d\'anello sposterebbe l\'intonazione.'));
+  blocchi.bas.corpo.appendChild(el('div', 'nota',
+    'Un passo con velocita da 80% in su e accentato: piu livello, filtro piu aperto, risonanza maggiore. Con glide su LEGATO scivola solo se il passo precedente suonava.'));
+  p.appendChild(colonne);
+
+  function ridipingi(){
+    bottoni.forEach(function(b, i){ b.classList.toggle('attivo', voci[i].chiave === STRUMENTO_SEL); });
+    voci.forEach(function(v){ blocchi[v.chiave].style.order = v.chiave === STRUMENTO_SEL ? 0 : 1; });
+  }
+  ridipingi();
+  RIDISEGNA_STRUMENTI = ridipingi;
+  return p;
+}
+
+/* ── pannelli canali continui ─────────────────────────────────────────── */
+function pannelloCanale(dominio, quanti, ottieniSel, impostaSel, titolo){
+  var p = el('div', 'pannello');
+  var striscia = el('div', 'striscia'), bottoni = [];
+  for (var i = 0; i < quanti; i++){
+    (function(k){
+      var b = el('button'); b.type = 'button';
+      b.appendChild(el('span', null, titolo + ' ' + (k + 1)));
+      b.appendChild(el('small', null, ''));
+      b.addEventListener('click', function(){ impostaSel(k); ridipingi(); aggiornaControlli(); });
+      bottoni.push(b); striscia.appendChild(b);
+    })(i);
+  }
+  p.appendChild(striscia);
+  var b1 = blocco(titolo, '');
+  costruisciPannelloParametri(dominio, b1.corpo, function(){
+    return (dominio === 'drn' ? STATO.drn : STATO.noi)[ottieniSel()].par;
+  });
+  var colonne = el('div', 'colonne');
+  colonne.appendChild(b1);
+  p.appendChild(colonne);
+  function ridipingi(){
+    bottoni.forEach(function(b, k){ b.classList.toggle('attivo', k === ottieniSel()); });
+  }
+  ridipingi();
+  p.aggiorna = ridipingi; CONTROLLI.push(p);
+  return p;
+}
+
+function pannelloMaster(){
+  var p = el('div', 'pannello');
+  var colonne = el('div', 'colonne');
+  var bm = blocco('MASTER', '');
+  var mis = el('div', 'misuratore'); var barra = el('i'); mis.appendChild(barra);
+  bm.corpo.appendChild(mis);
+  costruisciPannelloParametri('bus', bm.corpo, function(){ return STATO.bus; });
+  var br = blocco('REGISTRAZIONE E ARCHIVIO', 'WAV 16 bit · preset JSON');
+  var rr = el('div', 'riga');
+  var bReg = bottone('REGISTRA', 'allarme', function(b){
+    if (REGISTRAZIONE){ fermaRegistrazione(); b.classList.remove('acceso'); b.textContent = 'REGISTRA'; }
+    else { avviaRegistrazione(); if (REGISTRAZIONE){ b.classList.add('acceso'); b.textContent = 'FERMA E SALVA'; } }
+  });
+  rr.appendChild(bReg);
+  br.corpo.appendChild(rr);
+  br.corpo.appendChild(el('div', 'nota', 'La registrazione cattura l\'uscita generale in tempo reale e la salva come WAV appena la fermi.'));
+  var rp = el('div', 'riga');
+  rp.appendChild(bottone('SALVA PRESET', null, function(){
+    scarica(new Blob([serializzaPreset(STATO)], { type:'application/json' }), 'calamina-' + timbro() + '.json');
+    avvisa('preset salvato');
+  }));
+  var ingressoPreset = document.createElement('input');
+  ingressoPreset.type = 'file'; ingressoPreset.accept = 'application/json,.json';
+  ingressoPreset.addEventListener('change', function(){
+    var f = ingressoPreset.files[0]; if (!f) return;
+    f.text().then(function(testo){
+      try {
+        var nuovo = deserializzaPreset(testo);
+        copiaDentro(STATO, nuovo);
+        if (SEQ) SEQ.aggiornaSoloContinui();
+        dipingiGriglia(); aggiornaControlli(); if (RIDISEGNA_SLOT) RIDISEGNA_SLOT();
+        avvisa('preset caricato');
+      } catch (e){ avvisa('preset non valido'); }
+    });
+    ingressoPreset.value = '';
+  });
+  rp.appendChild(bottone('CARICA PRESET', null, function(){ ingressoPreset.click(); }));
+  br.corpo.appendChild(rp);
+  br.corpo.appendChild(ingressoPreset);
+  br.corpo.appendChild(el('div', 'nota', 'Il preset conserva parametri e trame, non i campioni caricati: ricaricali dallo stesso slot.'));
+  colonne.appendChild(bm); colonne.appendChild(br);
+  p.appendChild(colonne);
+  p.barra = barra;
+  return p;
+}
+
+function pannelloAlea(){
+  var p = el('div', 'pannello');
+  var colonne = el('div', 'colonne');
+  var ba = blocco('ALEA', 'variazione globale');
+  costruisciPannelloParametri('ale', ba.corpo, function(){ return STATO.ale; });
+  var ra = el('div', 'riga');
+  ra.appendChild(bottone('NUOVO SEME', null, function(){
+    STATO.ale.aleSemeCnt = 1 + Math.floor(Math.random() * 9998);
+    CASO_UI = creaCaso(STATO.ale.aleSemeCnt);
+    aggiornaControlli(); avvisa('seme ' + STATO.ale.aleSemeCnt);
+  }));
+  ra.appendChild(bottone('SCUOTI PARAMETRI', null, function(){ scuotiParametri(0.25); }));
+  ra.appendChild(bottone('SCUOTI FORTE', null, function(){ scuotiParametri(0.6); }));
+  ba.corpo.appendChild(ra);
+  ba.corpo.appendChild(el('div', 'nota', 'Quantita globale scala tutte le variazioni ∆ dei canali. Evoluzione muta la trama a ogni giro di pattern.'));
+
+  var bn = blocco('NOMENCLATURA', 'registro parametri');
+  var tab = el('table', 'tabellina');
+  function riga(a, b){
+    var tr = el('tr'); tr.appendChild(el('td', null, a)); tr.appendChild(el('td', null, b)); tab.appendChild(tr);
+  }
+  riga('schema', '<dominio><Oggetto><Proprieta><Unita>');
+  DOMINI.forEach(function(d){
+    riga('dominio ' + d, soloParametri(DESCRITTORI[d] || []).length + ' parametri');
+  });
+  var errori = verificaNomenclatura();
+  riga('verifica', errori.length ? errori.length + ' anomalie' : 'coerente');
+  riga('unita ammesse', UNITA.join(' '));
+  bn.corpo.appendChild(tab);
+  bn.corpo.appendChild(el('div', 'nota', 'Ogni identificatore e unico e chiude con la sua unita di misura, cosi il nome dice sempre cosa contiene.'));
+
+  colonne.appendChild(ba); colonne.appendChild(bn);
+  p.appendChild(colonne);
+  return p;
+}
+function scuotiParametri(ampiezzaNorm){
+  function scuoti(oggetto, dominio){
+    soloParametri(DESCRITTORI[dominio]).forEach(function(d){
+      if (d.curva === 'flag' || d.id.indexOf('Var') > 0) return;
+      if (d.id === 'trsTempoBpm' || d.id === 'trsPassiCnt' || d.id === 'aleSemeCnt') return;
+      var n = valoreANorm(d, oggetto[d.id]);
+      oggetto[d.id] = normAValore(d, limita(n + bipolare(CASO_UI) * ampiezzaNorm, 0, 1));
+    });
+  }
+  STATO.slot.forEach(function(s){ scuoti(s.par, 'smp'); });
+  STATO.drn.forEach(function(s){ scuoti(s.par, 'drn'); });
+  STATO.noi.forEach(function(s){ scuoti(s.par, 'noi'); });
+  scuoti(STATO.bus, 'bus');
+  aggiornaControlli(); avvisa('parametri scossi');
+}
+
+/* ── barra di trasporto + montaggio ──────────────────────────────────────── */
+var PANNELLO_MASTER = null, OROLOGIO_GRANDE = null, OROLOGIO_PICCOLO = null;
+
+function costruisciInterfaccia(){
+  var app = document.getElementById('app');
+  app.innerHTML = '';
+
+  var trasporto = el('div', 'trasporto');
+  var marchio = el('div', 'marchio');
+  var back = el('a', null, '← tools_index'); back.href = '../';
+  marchio.appendChild(back);
+  marchio.appendChild(el('b', null, 'CALAMINA'));
+  marchio.appendChild(el('small', null, 'banco ritmico · drone · rumore'));
+  trasporto.appendChild(marchio);
+
+  var bRiproduci = bottone('▶', null, function(b){
+    if (!SEQ){ avvisa('tocca lo schermo per accendere l\'audio'); return; }
+    if (SEQ.attivo){ SEQ.ferma(); b.classList.remove('acceso'); b.textContent = '▶'; }
+    else { SEQ.avvia(); b.classList.add('acceso'); b.textContent = '■'; }
+  });
+  trasporto.appendChild(bRiproduci);
+  trasporto.appendChild(bottone('AZZERA', null, function(){
+    if (!SEQ){ avvisa('tocca lo schermo per accendere l\'audio'); return; }
+    if (SEQ.attivo){ SEQ.ferma(); bRiproduci.classList.remove('acceso'); bRiproduci.textContent = '▶'; }
+    SEQ.avvia(); bRiproduci.classList.add('acceso'); bRiproduci.textContent = '■';
+  }));
+
+  var contenitoreTempo = el('div'); contenitoreTempo.style.flex = '1'; contenitoreTempo.style.minWidth = '160px';
+  contenitoreTempo.appendChild(creaCursore(trovaDescrittore('trsTempoBpm'),
+    function(){ return STATO.trs.trsTempoBpm; }, function(v){ STATO.trs.trsTempoBpm = v; }));
+  trasporto.appendChild(contenitoreTempo);
+
+  var contenitoreAlea = el('div'); contenitoreAlea.style.flex = '1'; contenitoreAlea.style.minWidth = '150px';
+  contenitoreAlea.appendChild(creaCursore(trovaDescrittore('aleQuantitaNorm'),
+    function(){ return STATO.ale.aleQuantitaNorm; }, function(v){ STATO.ale.aleQuantitaNorm = v; }));
+  trasporto.appendChild(contenitoreAlea);
+
+  var orologio = el('div', 'orologio');
+  OROLOGIO_GRANDE = el('div', 'grande', '01');
+  OROLOGIO_PICCOLO = el('div', 'piccolo', 'PASSO / VOCI');
+  orologio.appendChild(OROLOGIO_GRANDE); orologio.appendChild(OROLOGIO_PICCOLO);
+  trasporto.appendChild(orologio);
+  app.appendChild(trasporto);
+
+  var schede = el('div', 'schede');
+  var pannelli = el('div', 'pannelli');
+  var elenco = [
+    ['TRAMA', pannelloTrama()],
+    ['SLOT', pannelloSlot()],
+    ['STRUMENTI', pannelloStrumenti()],
+    ['DRONI', pannelloCanale('drn', DRONE_CNT, function(){ return DRONE_SEL; }, function(v){ DRONE_SEL = v; }, 'DRONE')],
+    ['RUMORI', pannelloCanale('noi', RUMORE_CNT, function(){ return RUMORE_SEL; }, function(v){ RUMORE_SEL = v; }, 'RUMORE')],
+    ['MASTER', pannelloMaster()],
+    ['ALEA', pannelloAlea()]
+  ];
+  PANNELLO_MASTER = elenco[5][1];
+  var bottoniScheda = [];
+  elenco.forEach(function(voce, i){
+    var b = el('button', 'scheda' + (i === 0 ? ' attiva' : ''), voce[0]); b.type = 'button';
+    b.addEventListener('click', function(){
+      bottoniScheda.forEach(function(x, j){ x.classList.toggle('attiva', j === i); });
+      elenco.forEach(function(v, j){ v[1].classList.toggle('attivo', j === i); });
+      if (i === 1 && RIDISEGNA_SLOT) RIDISEGNA_SLOT();
+    });
+    bottoniScheda.push(b); schede.appendChild(b);
+    if (i === 0) voce[1].classList.add('attivo');
+    pannelli.appendChild(voce[1]);
+  });
+  app.appendChild(schede); app.appendChild(pannelli);
+
+  var avviso = el('div', 'avviso'); avviso.id = 'avviso';
+  document.body.appendChild(avviso);
+
+  dipingiGriglia(); selezionaTraccia(0);
+  if (RIDISEGNA_SLOT) RIDISEGNA_SLOT();
+}
+
+/* ── ciclo di disegno ────────────────────────────────────────────────────── */
+function cicloDisegno(){
+  if (cicloDisegno.ultimaColonna === undefined) cicloDisegno.ultimaColonna = -2;
+  requestAnimationFrame(cicloDisegno);
+  if (!MOTORE || !SEQ) return;
+  var passo = SEQ.posizione();
+  var colonna = SEQ.attivo ? passo - PAGINA_IDX * PASSI_PAGINA : -1;
+  if (colonna !== cicloDisegno.ultimaColonna){
+    var precedente = cicloDisegno.ultimaColonna;
+    cicloDisegno.ultimaColonna = colonna;
+    GRIGLIA.testate.forEach(function(n, i){ n.classList.toggle('qui', i === colonna); });
+    GRIGLIA.celle.forEach(function(g){
+      if (precedente >= 0 && g.celle[precedente]) g.celle[precedente].classList.remove('corrente');
+      if (colonna >= 0 && g.celle[colonna]) g.celle[colonna].classList.add('corrente');
+    });
+  }
+  OROLOGIO_GRANDE.textContent = (passo + 1 < 10 ? '0' : '') + (passo + 1);
+  OROLOGIO_PICCOLO.textContent = 'DI ' + STATO.trs.trsPassiCnt + ' · ' + MOTORE.vociAttive + ' VOCI';
+  if (PANNELLO_MASTER && PANNELLO_MASTER.classList.contains('attivo')){
+    var dati = new Uint8Array(MOTORE.bus.analizzatore.frequencyBinCount);
+    MOTORE.bus.analizzatore.getByteTimeDomainData(dati);
+    var picco = 0;
+    for (var i = 0; i < dati.length; i += 4){
+      var v = Math.abs(dati[i] - 128) / 128;
+      if (v > picco) picco = v;
+    }
+    PANNELLO_MASTER.barra.style.width = Math.min(100, picco * 118) + '%';
+  }
+}
+
+/* ── avvio ───────────────────────────────────────────────────────────────── */
+function accendiAudio(){
+  var Costruttore = glob.AudioContext || glob.webkitAudioContext;
+  CTX = new Costruttore({ latencyHint:'interactive' });
+  if (CTX.state === 'suspended') CTX.resume();
+  MOTORE = creaMotore(CTX, STATO);
+  SEQ = creaSequenziatore(MOTORE, STATO, null);
+  aggiornaContinui(MOTORE, CTX.currentTime);
+  /* sblocco iOS: un impulso silenzioso */
+  var s = CTX.createBufferSource();
+  s.buffer = CTX.createBuffer(1, 1, CTX.sampleRate);
+  s.connect(CTX.destination); s.start(0);
+}
+function mostraVelo(){
+  var velo = el('div', 'velo');
+  velo.appendChild(el('h1', null, 'CALAMINA'));
+  var p = el('p', null,
+    'Banco ritmico, drone e rumore per iPad. Otto slot campione con importazione di file, due droni, due canali di rumore, variazione controllata su ogni parametro.');
+  velo.appendChild(p);
+  velo.appendChild(el('p', null, 'Ruota in orizzontale e alza il volume. Il suono parte al tocco.'));
+  var b = bottone('TOCCA PER ENTRARE', 'acceso', function(){
+    try { accendiAudio(); } catch (e) { avvisa('audio non disponibile: ' + e.message); }
+    velo.remove();
+    if (RIDISEGNA_SLOT) RIDISEGNA_SLOT();
+    dipingiGriglia();
+  });
+  b.style.minWidth = '260px'; b.style.minHeight = '58px';
+  velo.appendChild(b);
+  document.body.appendChild(velo);
+}
+function avviaApplicazione(){
+  STATO = statoIniziale();
+  CASO_UI = creaCaso(STATO.ale.aleSemeCnt);
+  costruisciInterfaccia();
+  mostraVelo();
+  requestAnimationFrame(cicloDisegno);
+  document.addEventListener('gesturestart', function(ev){ ev.preventDefault(); });
+  document.addEventListener('dblclick', function(ev){ ev.preventDefault(); }, { passive:false });
+  ['dragover','drop'].forEach(function(n){
+    document.addEventListener(n, function(ev){ ev.preventDefault(); });
+  });
+  glob.addEventListener('visibilitychange', function(){
+    if (CTX && CTX.state === 'suspended') CTX.resume();
+  });
+}
+
+/* ── superficie pubblica (usata anche dalla suite di test) ───────────────── */
+var API = {
+  DOMINI:DOMINI, UNITA:UNITA, DESCRITTORI:DESCRITTORI, DIVISORI:DIVISORI, DIREZIONI:DIREZIONI,
+  SCALE:SCALE, ACCORDI:ACCORDI, TIPI_RUMORE:TIPI_RUMORE, CAMPIONI_INTERNI:CAMPIONI_INTERNI,
+  SLOT_CNT:SLOT_CNT, DRONE_CNT:DRONE_CNT, RUMORE_CNT:RUMORE_CNT, PASSI_MAX:PASSI_MAX,
+  BASSO_CNT:BASSO_CNT, CHITARRA_CNT:CHITARRA_CNT, LEAD_CNT:LEAD_CNT,
+  ritardoFasePolo:ritardoFasePolo, ritardoFaseInterpolazione:ritardoFaseInterpolazione,
+  anelloKarplus:anelloKarplus, sintetizzaCordaDati:sintetizzaCordaDati,
+  suonaBasso:suonaBasso, suonaChitarra:suonaChitarra, suonaLead:suonaLead,
+  verificaNomenclatura:verificaNomenclatura, soloParametri:soloParametri, trovaDescrittore:trovaDescrittore,
+  normAValore:normAValore, valoreANorm:valoreANorm, formattaValore:formattaValore, valoreVariato:valoreVariato,
+  statoIniziale:statoIniziale, elencoTracce:elencoTracce, sequenzaIniziale:sequenzaIniziale,
+  serializzaPreset:serializzaPreset, deserializzaPreset:deserializzaPreset,
+  euclideo:euclideo, durataPassoSec:durataPassoSec, offsetSwingSec:offsetSwingSec,
+  avanzaIndice:avanzaIndice, decidiPasso:decidiPasso, quantizzaAScala:quantizzaAScala,
+  creaCaso:creaCaso, limita:limita, daDb:daDb, aFreq:aFreq,
+  generaCampioneProceduraleDati:generaCampioneProceduraleDati, generaRumoreDati:generaRumoreDati,
+  codificaWav:codificaWav, curvaInviluppo:curvaInviluppo, curvaQuantizzazione:curvaQuantizzazione,
+  creaMotore:creaMotore, creaSequenziatore:creaSequenziatore, aggiornaContinui:aggiornaContinui,
+  suonaCampione:suonaCampione, creaBus:creaBus, bufferDaDati:bufferDaDati, inverteBuffer:inverteBuffer,
+  riempiEuclideo:riempiEuclideo, riempiCasuale:riempiCasuale, ruotaSequenza:ruotaSequenza,
+  svuotaSequenza:svuotaSequenza, mutoEffettivo:mutoEffettivo
+};
+glob.CALAMINA = API;
+
+if (!SENZA_DOM){
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avviaApplicazione);
+  else avviaApplicazione();
+}
+
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+</body>
+</html>
