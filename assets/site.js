@@ -88,18 +88,9 @@
 
     }
 
-    /* — VIDEO CARDS: play nativo, no lightbox — */
+    /* — VIDEO CARDS: native controls only (no wrapper toggle — breaks shadow DOM controls) — */
     document.querySelectorAll('.inv-img-video video').forEach(function(v){
-      v.addEventListener('click', function(e){ e.stopPropagation(); });
       v.addEventListener('play', function(){ v.muted = false; });
-      var wrap = v.closest('.inv-img');
-      if (!wrap) return;
-      wrap.addEventListener('click', function(e){
-        if (e.target === v || v.contains(e.target)) return;
-        e.stopPropagation();
-        if (v.paused) v.play();
-        else v.pause();
-      });
     });
 
     /* — HOME: servizi stampa 3D / stoccaggio (modali + mailto) — */

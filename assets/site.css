@@ -1015,6 +1015,7 @@ button.section-card {
   border: 2px solid var(--acc-dim);
   background: var(--bg-soft);
   z-index: 2;
+  pointer-events: none;
 }
 .inv-card .corner.tl { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
 .inv-card .corner.tr { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
@@ -1031,20 +1032,32 @@ button.section-card {
   border-bottom: 2px solid var(--line);
   position: relative;
 }
-.inv-img img, .inv-img svg, .inv-img video {
+.inv-img img, .inv-img svg {
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
 }
-.inv-img.inv-img-video { cursor: default; }
+.inv-img.inv-img-video {
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+}
 .inv-img.inv-img-video video {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  flex: 0 1 auto;
   object-fit: contain;
   background: #050505;
   position: relative;
   z-index: 1;
+  pointer-events: auto;
 }
 .inv-img .badge-id,
-.inv-img .badge-year {
+.inv-img .badge-year,
+.inv-img .video-flag {
   pointer-events: none;
 }
 .inv-img .video-flag {
