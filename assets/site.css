@@ -1037,6 +1037,16 @@ button.section-card {
   display: block;
 }
 .inv-img.inv-img-video { cursor: default; }
+.inv-img.inv-img-video video {
+  object-fit: contain;
+  background: #050505;
+  position: relative;
+  z-index: 1;
+}
+.inv-img .badge-id,
+.inv-img .badge-year {
+  pointer-events: none;
+}
 .inv-img .video-flag {
   position: absolute;
   bottom: 8px;
@@ -2400,7 +2410,7 @@ footer.site-foot a:hover { color: var(--acc); }
 .lb-prev { left: 10px; }
 .lb-next { right: 10px; }
 
-.inv-img { cursor: zoom-in; }
+.inv-img:not(.inv-img-video) { cursor: zoom-in; }
 
 /* ───────────────────────────────────────────────────────────
    WALL IVY MODULE — piano interattivo · copertura vegetale
