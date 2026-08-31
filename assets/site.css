@@ -1069,6 +1069,42 @@ button.section-card {
   position: relative;
   z-index: 1;
 }
+.inv-img.inv-img-yt .yt-facade {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  border: 0;
+  background: #050505;
+  color: #00ff41;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+  padding: 0;
+}
+.inv-img.inv-img-yt .yt-facade-play {
+  font-size: 28px;
+  line-height: 1;
+  opacity: 0.85;
+}
+.inv-img.inv-img-yt .yt-facade-label {
+  opacity: 0.55;
+}
+.inv-img.inv-img-yt .yt-facade:hover .yt-facade-play,
+.inv-img.inv-img-yt .yt-facade:focus-visible .yt-facade-play {
+  opacity: 1;
+}
+.inv-img.inv-img-yt .yt-facade:focus-visible {
+  outline: 1px solid #00ff41;
+  outline-offset: -2px;
+}
 .inv-img.inv-img-yt .badge-id,
 .inv-img.inv-img-yt .badge-year,
 .inv-img.inv-img-yt .video-flag {
