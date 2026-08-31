@@ -88,9 +88,23 @@
 
     }
 
-    /* — VIDEO CARDS: native controls only (no wrapper toggle — breaks shadow DOM controls) — */
-    document.querySelectorAll('.inv-img-video video').forEach(function(v){
+    /* — ARCHIVE VIDEO: inv + fluid-sim cards · multi-format (mp4/mov/webm) — */
+    document.querySelectorAll('.inv-img-video video, .fs-img-video video').forEach(function(v){
       v.addEventListener('play', function(){ v.muted = false; });
+      v.addEventListener('error', function(){
+        if (v.dataset.srcFallback) return;
+        var sources = Array.from(v.querySelectorAll('source'));
+        var tried = v.currentSrc || v.src || '';
+        for (var i = 0; i < sources.length; i++) {
+          var url = sources[i].src;
+          if (url && url !== tried) {
+            v.dataset.srcFallback = '1';
+            v.src = url;
+            v.load();
+            return;
+          }
+        }
+      });
     });
 
     /* — HOME: servizi stampa 3D / stoccaggio (modali + mailto) — */

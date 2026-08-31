@@ -9,5 +9,20 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
 
+/*.mp4
+  Content-Type: video/mp4
+
+/*.MP4
+  Content-Type: video/mp4
+
+/*.mov
+  Content-Type: video/quicktime
+
+/*.MOV
+  Content-Type: video/quicktime
+
+/*.webm
+  Content-Type: video/webm
+
 /tools/_auth/*
   Cache-Control: no-store

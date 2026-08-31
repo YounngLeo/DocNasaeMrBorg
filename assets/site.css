@@ -2020,6 +2020,27 @@ footer.site-foot a:hover { color: var(--acc); }
 .fs-card:hover .fs-img img {
   filter: saturate(1) contrast(1.1);
 }
+.fs-img.fs-img-video {
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+}
+.fs-img.fs-img-video video {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  flex: 0 1 auto;
+  object-fit: contain;
+  background: #050505;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+.fs-img.fs-img-video .video-flag {
+  pointer-events: none;
+}
 .fs-img .video-flag {
   position: absolute;
   bottom: 8px;
