@@ -456,10 +456,42 @@ button.section-card {
   color: var(--acc);
   cursor: pointer;
   flex-shrink: 0;
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
 }
 .disegni-cta-btn:hover {
   background: var(--acc);
   color: var(--bg);
+}
+.disegni-cta-btn.shop {
+  border-color: var(--amber, #e8a838);
+  color: var(--amber, #e8a838);
+}
+.disegni-cta-btn.shop:hover {
+  background: var(--amber, #e8a838);
+  color: var(--bg);
+}
+.disegni-buy-wrap {
+  margin-top: 28px;
+  margin-bottom: 8px;
+  padding-top: 22px;
+  border-top: 1px dotted var(--line-h);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+}
+.disegni-buy-meta {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--fg-fade);
+  line-height: 1.5;
+  max-width: 480px;
+}
+.disegni-buy-meta a {
+  color: var(--acc);
 }
 .disegni-cta-hint {
   font-family: var(--mono);
