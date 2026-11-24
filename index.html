@@ -163,14 +163,6 @@
       <div class="stats"><span>QUOTE</span><span>via mail</span></div>
     </button>
 
-    <button type="button" class="section-card service service-amber" id="open-modal-storage" aria-haspopup="dialog">
-      <div class="id">// 11</div>
-      <div class="icon">▣</div>
-      <div class="name">SERVIZIO STOCCAGGIO</div>
-      <div class="sub">magazzino coperto · pallet · CCTV</div>
-      <div class="stats"><span>LOGISTICA</span><span>richiesta slot</span></div>
-    </button>
-
     <a href="tools/" class="section-card tools">
       <div class="id">// X</div>
       <div class="icon">⚙</div>
@@ -221,42 +213,6 @@
     </form>
   </div>
 
-  <div id="modal-storage" class="home-modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-storage-title" hidden>
-    <div class="home-modal-head">
-      <h2 id="modal-storage-title">RICHIESTA STOCCAGGIO</h2>
-      <button type="button" class="home-modal-close" data-home-modal-close>CHIUDI</button>
-    </div>
-    <form class="home-modal-body" id="form-storage" novalidate>
-      <p class="hm-info" style="margin-top:0">
-        La merce viene <b>incellofanata</b>, posizionata su <b>pallet</b> in un <b>magazzino coperto</b>, vigilata da <b>telecamere</b>.
-      </p>
-      <div class="hm-row">
-        <label class="hm-lab" for="storage-dims">INGOMBRO TOTALE (L × P × H o volume indicativo)</label>
-        <input type="text" id="storage-dims" name="dims" required autocomplete="off" placeholder="es. 120×80×100 cm · ~1 m³">
-      </div>
-      <div class="hm-row">
-        <label class="hm-lab" for="storage-duration">DURATA STIMASTA DELLO STOCCAGGIO</label>
-        <input type="text" id="storage-duration" name="duration" required autocomplete="off" placeholder="es. 2 mesi · fino a settembre 2026">
-      </div>
-      <div class="hm-row">
-        <label class="hm-lab" for="storage-check">CONTROLLO / PRESENZA FISICA RICHIESTA</label>
-        <select id="storage-check" name="periodic" required>
-          <option value="" disabled selected>— scegli —</option>
-          <option value="Nessuna necessità di presenza fisica periodica">Nessuna necessità di presenza fisica periodica</option>
-          <option value="Controllo / accesso settimanale">Controllo / accesso settimanale</option>
-          <option value="Controllo / accesso mensile">Controllo / accesso mensile</option>
-          <option value="Controllo / accesso annuale">Controllo / accesso annuale</option>
-          <option value="Altro (vedi note)">Altro (vedi note)</option>
-        </select>
-      </div>
-      <div class="hm-row">
-        <label class="hm-lab" for="storage-notes">NOTE AGGIUNTIVE</label>
-        <textarea id="storage-notes" name="notes" rows="3" placeholder="Tipo di merce, vincoli, fasce orarie…"></textarea>
-      </div>
-      <button type="submit" class="home-modal-submit">INVIA RICHIESTA VIA MAIL</button>
-      <p class="hm-hint">Si aprirà il programma di posta con un messaggio bozza. Verifica l&apos;indirizzo e invia quando pronto.</p>
-    </form>
-  </div>
 </div>
 
 <script src="assets/site.js"></script>
