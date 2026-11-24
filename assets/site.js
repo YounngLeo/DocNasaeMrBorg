@@ -93,10 +93,14 @@
 
     }
 
-    /* — ARCHIVE VIDEO: inv + fluid-sim cards · multi-format (mp4/mov/webm) — */
+    /* — ARCHIVE VIDEO: inv + fluid-sim · autoplay muted when visible — */
     var archiveVideos = document.querySelectorAll('.inv-img-video video, .fs-img-video video');
     archiveVideos.forEach(function(v){
-      v.addEventListener('play', function(){ v.muted = false; });
+      /* Keep muted for autoplay policy; user can unmute via controls. */
+      v.muted = true;
+      v.setAttribute('muted', '');
+      v.setAttribute('playsinline', '');
+      v.playsInline = true;
       v.addEventListener('error', function(){
         if (v.dataset.srcFallback) return;
         var sources = Array.from(v.querySelectorAll('source'));
@@ -113,21 +117,32 @@
       });
     });
 
+    function tryPlayArchiveVideo(v) {
+      if (!v) return;
+      v.muted = true;
+      if (v.getAttribute('preload') === 'none') {
+        v.preload = 'auto';
+      }
+      var p = v.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function(){ /* autoplay blocked until gesture — controls remain */ });
+      }
+    }
+
     if ('IntersectionObserver' in window && archiveVideos.length) {
       var videoObserver = new IntersectionObserver(function(entries){
         entries.forEach(function(entry){
-          if (!entry.isIntersecting) return;
           var v = entry.target;
-          videoObserver.unobserve(v);
-          if (v.getAttribute('preload') === 'none') {
-            v.preload = 'metadata';
-            v.load();
+          if (entry.isIntersecting) {
+            tryPlayArchiveVideo(v);
+          } else if (!v.paused) {
+            v.pause();
           }
         });
-      }, { rootMargin: '240px 0px' });
-      archiveVideos.forEach(function(v){
-        if (v.getAttribute('preload') === 'none') videoObserver.observe(v);
-      });
+      }, { rootMargin: '120px 0px', threshold: 0.25 });
+      archiveVideos.forEach(function(v){ videoObserver.observe(v); });
+    } else {
+      archiveVideos.forEach(tryPlayArchiveVideo);
     }
 
     /* — YOUTUBE: click-to-load · youtube-nocookie · no eager iframes — */
