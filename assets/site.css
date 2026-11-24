@@ -493,6 +493,22 @@ button.section-card {
 .disegni-buy-meta a {
   color: var(--acc);
 }
+.inv-buy {
+  display: inline-block;
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 8px 12px;
+  border: 1px solid var(--amber, #e8a838);
+  color: var(--amber, #e8a838);
+}
+.inv-buy:hover {
+  background: var(--amber, #e8a838);
+  color: var(--bg);
+}
 .disegni-cta-hint {
   font-family: var(--mono);
   font-size: 9px;
