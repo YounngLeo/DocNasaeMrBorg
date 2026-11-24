@@ -95,12 +95,33 @@
 
     /* — ARCHIVE VIDEO: inv + fluid-sim · autoplay muted when visible — */
     var archiveVideos = document.querySelectorAll('.inv-img-video video, .fs-img-video video');
-    archiveVideos.forEach(function(v){
-      /* Keep muted for autoplay policy; user can unmute via controls. */
+
+    function armArchiveVideo(v) {
+      if (!v) return;
+      v.defaultMuted = true;
       v.muted = true;
+      v.volume = 0;
       v.setAttribute('muted', '');
       v.setAttribute('playsinline', '');
+      v.setAttribute('webkit-playsinline', '');
       v.playsInline = true;
+      v.preload = 'auto';
+      v.setAttribute('preload', 'auto');
+    }
+
+    function tryPlayArchiveVideo(v) {
+      if (!v) return;
+      armArchiveVideo(v);
+      var p = v.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function(){ /* autoplay blocked until gesture */ });
+      }
+    }
+
+    archiveVideos.forEach(function(v){
+      armArchiveVideo(v);
+      v.addEventListener('loadeddata', function(){ tryPlayArchiveVideo(v); }, { once: true });
+      v.addEventListener('canplay', function(){ tryPlayArchiveVideo(v); }, { once: true });
       v.addEventListener('error', function(){
         if (v.dataset.srcFallback) return;
         var sources = Array.from(v.querySelectorAll('source'));
@@ -115,19 +136,16 @@
           }
         }
       });
+      /* First tap/click forces play (mobile autoplay policies). */
+      var wrap = v.closest('.inv-img-video, .fs-img-video') || v.parentElement;
+      if (wrap && !wrap.dataset.videoTapBound) {
+        wrap.dataset.videoTapBound = '1';
+        wrap.addEventListener('click', function(){
+          if (v.paused) tryPlayArchiveVideo(v);
+        });
+      }
+      try { v.load(); } catch (e) {}
     });
-
-    function tryPlayArchiveVideo(v) {
-      if (!v) return;
-      v.muted = true;
-      if (v.getAttribute('preload') === 'none') {
-        v.preload = 'auto';
-      }
-      var p = v.play();
-      if (p && typeof p.catch === 'function') {
-        p.catch(function(){ /* autoplay blocked until gesture — controls remain */ });
-      }
-    }
 
     if ('IntersectionObserver' in window && archiveVideos.length) {
       var videoObserver = new IntersectionObserver(function(entries){
@@ -135,11 +153,9 @@
           var v = entry.target;
           if (entry.isIntersecting) {
             tryPlayArchiveVideo(v);
-          } else if (!v.paused) {
-            v.pause();
           }
         });
-      }, { rootMargin: '120px 0px', threshold: 0.25 });
+      }, { rootMargin: '200px 0px', threshold: 0.1 });
       archiveVideos.forEach(function(v){ videoObserver.observe(v); });
     } else {
       archiveVideos.forEach(tryPlayArchiveVideo);
